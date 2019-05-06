@@ -18,7 +18,13 @@ $GLOBALS['BE_MOD']['resourceReservation'] = array(
 		'tables'      => array('tl_resource_reservation_resource_type'),
 		'table'       => array('TableWizard', 'importTable'),
 		'list'        => array('ListWizard', 'importList')
-	)
+	),
+    'resource' => array
+    (
+        'tables'      => array('tl_resource_reservation_resource'),
+        'table'       => array('TableWizard', 'importTable'),
+        'list'        => array('ListWizard', 'importList')
+    )
 );
 
 
