@@ -17,7 +17,7 @@ $GLOBALS['TL_DCA']['tl_resource_reservation_resource_type'] = array(
     'config'   => array(
         'dataContainer'    => 'Table',
         'switchToEdit'     => true,
-        'ctable'           => array('tl_resource'),
+        'ctable'           => array('tl_resource_reservation_resource'),
         'enableVersioning' => true,
         'sql'              => array(
             'keys' => array(
@@ -95,14 +95,12 @@ $GLOBALS['TL_DCA']['tl_resource_reservation_resource_type'] = array(
             'sql' => "int(10) unsigned NOT NULL default '0'",
         ),
         'title'       => array(
-            'label'     => &$GLOBALS['TL_LANG']['tl_resource_reservation_resource_type']['number'],
-            'exclude'   => true,
-            'search'    => true,
-            'sorting'   => true,
-            'filter'    => true,
-            'inputType' => 'text',
-            'eval'      => array('mandatory' => true, 'decodeEntities' => false, 'maxlength' => 3, 'tl_class' => 'clr'),
-            'sql'       => "int(3) unsigned NOT NULL default '0'",
+            'label'                   => &$GLOBALS['TL_LANG']['tl_resource_reservation_resource_type']['title'],
+            'exclude'                 => true,
+            'search'                  => true,
+            'inputType'               => 'text',
+            'eval'                    => array('mandatory'=>true, 'maxlength'=>255, 'tl_class'=>'w50'),
+            'sql'                     => "varchar(255) NOT NULL default ''"
         ),
         'published'   => array(
             'label'     => &$GLOBALS['TL_LANG']['tl_resource_reservation_resource_type']['published'],
@@ -112,18 +110,16 @@ $GLOBALS['TL_DCA']['tl_resource_reservation_resource_type'] = array(
             'filter'    => true,
             'flag'      => 2,
             'inputType' => 'checkbox',
-            'eval'      => array('submitOnChange' => true, 'doNotCopy' => true, 'tl_class' => 'clr'),
+            'eval'      => array('doNotCopy' => true, 'tl_class' => 'clr'),
             'sql'       => "char(1) NOT NULL default ''",
         ),
         'description' => array(
             'label'     => &$GLOBALS['TL_LANG']['tl_resource_reservation_resource_type']['description'],
-            'exclude'   => true,
-            'search'    => true,
-            'sorting'   => true,
-            'filter'    => true,
-            'inputType' => 'textarea',
-            'eval'      => array('doNotCopy' => true, 'tl_class' => 'clr'),
-            'sql'       => "varchar(255) NOT NULL default ''",
+            'exclude'                 => true,
+            'search'                  => true,
+            'inputType'               => 'textarea',
+            'eval'                    => array(),
+            'sql'                     => "mediumtext NULL"
         )
     )
 
