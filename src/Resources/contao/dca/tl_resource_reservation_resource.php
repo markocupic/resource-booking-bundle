@@ -84,14 +84,14 @@ $GLOBALS['TL_DCA']['tl_resource_reservation_resource'] = array(
     ),
     // Palettes
     'palettes' => array(
-        'default' => '{published_legend},published;{title_legend},pid,title,description',
+        'default' => '{published_legend},published;{title_legend},pid,title,description,timeSlotType',
     ),
     // Fields
     'fields'   => array(
-        'id'          => array(
+        'id'           => array(
             'sql' => "int(10) unsigned NOT NULL auto_increment",
         ),
-        'pid'         => array(
+        'pid'          => array(
             'label'      => &$GLOBALS['TL_LANG']['tl_resource_reservation_resource']['pid'],
             'inputType'  => 'select',
             'foreignKey' => 'tl_resource_reservation_resource_type.title',
@@ -99,18 +99,18 @@ $GLOBALS['TL_DCA']['tl_resource_reservation_resource'] = array(
             'sql'        => "int(10) unsigned NOT NULL default '0'",
             'relation'   => array('type' => 'belongsTo', 'load' => 'lazy')
         ),
-        'tstamp'      => array(
+        'tstamp'       => array(
             'sql' => "int(10) unsigned NOT NULL default '0'",
         ),
-        'title'       => array(
+        'title'        => array(
             'label'     => &$GLOBALS['TL_LANG']['tl_resource_reservation_resource']['title'],
             'exclude'   => true,
             'search'    => true,
             'inputType' => 'text',
-            'eval'      => array('mandatory' => true, 'maxlength' => 255, 'tl_class' => 'w50'),
+            'eval'      => array('mandatory' => true, 'maxlength' => 255, 'tl_class' => 'clr'),
             'sql'       => "varchar(255) NOT NULL default ''"
         ),
-        'published'   => array(
+        'published'    => array(
             'label'     => &$GLOBALS['TL_LANG']['tl_resource_reservation_resource']['published'],
             'exclude'   => true,
             'search'    => true,
@@ -121,14 +121,22 @@ $GLOBALS['TL_DCA']['tl_resource_reservation_resource'] = array(
             'eval'      => array('doNotCopy' => true, 'tl_class' => 'clr'),
             'sql'       => "char(1) NOT NULL default ''",
         ),
-        'description' => array(
+        'description'  => array(
             'label'     => &$GLOBALS['TL_LANG']['tl_resource_reservation_resource']['description'],
-            'exclude'                 => true,
-            'search'                  => true,
-            'inputType'               => 'textarea',
-            'eval'                    => array(),
-            'sql'                     => "mediumtext NULL"
-        )
+            'exclude'   => true,
+            'search'    => true,
+            'inputType' => 'textarea',
+            'eval'      => array('tl_class' => 'clr'),
+            'sql'       => "mediumtext NULL"
+        ),
+        'timeSlotType' => array(
+            'label'      => &$GLOBALS['TL_LANG']['tl_resource_reservation_resource']['timeSlotType'],
+            'inputType'  => 'select',
+            'foreignKey' => 'tl_resource_reservation_time_slot_type.title',
+            'eval'       => array('mandatory' => true, 'tl_class' => 'clr'),
+            'sql'        => "int(10) unsigned NOT NULL default '0'",
+            'relation'   => array('type' => 'belongsTo', 'load' => 'lazy')
+        ),
     )
 
 );

@@ -1,0 +1,91 @@
+<?php $GLOBALS['TL_CSS'][] = MOD_RESOURCE_RESERVATION_ASSET_PATH . '/bootstrap/css/bootstrap.min.css||static'; ?>
+<?php $GLOBALS['TL_JAVASCRIPT'][] = MOD_RESOURCE_RESERVATION_ASSET_PATH . '/bootstrap/js/bootstrap.min.js||static'; ?>
+<?php $GLOBALS['TL_JAVASCRIPT'][] = MOD_RESOURCE_RESERVATION_ASSET_PATH . '/stupid-table/stupidtable.min.js||static'; ?>
+<?php $GLOBALS['TL_CSS'][] = MOD_RESOURCE_RESERVATION_ASSET_PATH . '/fontawesome/css/all.css||static'; ?>
+<?php $GLOBALS['TL_CSS'][] = MOD_RESOURCE_RESERVATION_ASSET_PATH . '/fontawesome/css/brands.css||static'; ?>
+<?php $GLOBALS['TL_JAVASCRIPT'][] = MOD_RESOURCE_RESERVATION_ASSET_PATH . '/vue/vue.min.js||static'; ?>
+<?php $GLOBALS['TL_JAVASCRIPT'][] = MOD_RESOURCE_RESERVATION_ASSET_PATH . '/popper/popper.js||static'; ?>
+<?php $GLOBALS['TL_CSS'][] = MOD_RESOURCE_RESERVATION_ASSET_PATH . '/css/chronometry.css||static'; ?>
+
+<?php $this->extend('block_unsearchable'); ?>
+
+<?php $this->block('content'); ?>
+
+<div id="resourceReservationApp">
+    <form id="resourceReservationForm" action="{{env::request}}" method="get">
+        <div class="form-row">
+            <div class="form-group col-sm-3">
+                <label for="resType" class="d-none">Typ</label>
+                <select id="resType" class="form-control" name="resType" v-on:change="submitForm">
+                    <option value="">Auswählen</option>
+                    <?php while($this->objResourceTypes->next()): ?>
+                    <option value="<?= $this->objResourceTypes->id ?>"
+                    <?php if($this->objSelectedResourceType->id == $this->objResourceTypes->id): ?> selected<?php endif; ?>><?= $this->objResourceTypes->title ?></option>
+                    <?php endwhile; ?>
+                </select>
+            </div>
+
+            <?php if($this->objSelectedResourceType): ?>
+            <div class="form-group col-sm-3">
+                <label for="res" class="d-none">Resource</label>
+                <select id="res" class="form-control" name="res" v-on:change="submitForm">
+                    <option>Auswählen</option>
+                    <?php while($this->objResources->next()): ?>
+                    <option value="<?= $this->objResources->id ?>"
+                    <?php if($this->objSelectedResource->id == $this->objResources->id): ?> selected<?php endif; ?>><?= $this->objResources->title ?></option>
+                    <?php endwhile; ?>
+                </select>
+            </div>
+            <?php endif; ?>
+
+            <div class="form-group col-sm-6">
+                <label for="date" class="d-none">Zeitraum</label>
+                <select id="date" class="form-control" name="date" v-on:change="submitForm">
+                    <?php foreach($this->weekSelection as $arrDate): ?>
+                    <option value="<?= $arrDate['tstamp'] ?>"<?php if($this->intSelectedDate == $arrDate['tstamp']): ?> selected<?php endif; ?>>KW <?= $arrDate['calWeek'] ?>/<?= $arrDate['year'] ?>: <?= $arrDate['daySpan'] ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+        </div>
+    </form>
+
+    <div><?= $this->errorMessages ?></div>
+
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Uhrzeit</th>
+            <th>Montag</th>
+            <th>Dienstag</th>
+            <th>Mittwoch</th>
+            <th>Donnerstag</th>
+            <th>Freitag</th>
+            <th>Samstag</th>
+            <th>Sonntag</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+
+<script>
+    RESOURCE_RESERVATION = {
+
+    }
+</script>
+<script src="<?= MOD_RESOURCE_RESERVATION_ASSET_PATH ?>/resource-reservation-app-vue.js"></script>
+
+
+<?php $this->endblock(); ?>

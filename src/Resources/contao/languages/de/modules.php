@@ -10,8 +10,8 @@
 
 
 // Backend modules
-$GLOBALS['TL_LANG']['MOD']['chronometry'] = array('Zeitmessung', 'Zeitmessung Athleten-Einstellungen');
+$GLOBALS['TL_LANG']['MOD']['resourceReservation'] = array('Resourcen Reservations Module', 'Resourcen Reservations Module');
 
 // Frontend modules
-$GLOBALS['TL_LANG']['FMD']['chronometry'] = 'Zeitmessung Module';
-$GLOBALS['TL_LANG']['FMD']['chronometryList'] = array('Zeitmessung Startliste', 'Zeitmessung Startliste');
+$GLOBALS['TL_LANG']['FMD']['resourceReservation'] = 'Resourcen Reservations Module';
+$GLOBALS['TL_LANG']['FMD']['resourceReservationWeekCalendar'] = array('Wochenkalender mit Resourcen-Reservierung', 'Wochenkalender mit Resourcen-Reservierung');

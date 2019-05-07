@@ -17,10 +17,32 @@ namespace Contao;
 class ResourceReservationResourceModel extends \Model
 {
 
-	/**
-	 * Table name
-	 * @var string
-	 */
-	protected static $strTable = 'tl_resource_reservation_resource';
+    /**
+     * Table name
+     * @var string
+     */
+    protected static $strTable = 'tl_resource_reservation_resource';
+
+    /**
+     * @param $intId
+     * @return Model\Collection|null
+     */
+    public static function findPublishedByPid($intId)
+    {
+        $arrRes = array();
+        $objRes = static::findByPid($intId);
+        if ($objRes !== null)
+        {
+            while ($objRes->next())
+            {
+                if ($objRes->published)
+                {
+                    $arrRes[] = $objRes->id;
+                }
+            }
+        }
+
+        return static::findMultipleByIds($arrRes);
+    }
 
 }
