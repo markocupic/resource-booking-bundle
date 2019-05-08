@@ -55,25 +55,14 @@
         <thead>
         <tr>
             <th>Uhrzeit</th>
-            <th>Montag</th>
-            <th>Dienstag</th>
-            <th>Mittwoch</th>
-            <th>Donnerstag</th>
-            <th>Freitag</th>
-            <th>Samstag</th>
-            <th>Sonntag</th>
+            <th v-for="(weekday, index) in weekdays" v-bind:data-index="index">{{ weekday }}</th>
         </tr>
+
         </thead>
         <tbody>
-        <tr>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
+        <tr v-for="(row, rowIndex) in rows" v-bind:data-row-index="rowIndex">
+            <td>{{ timeSlots[rowIndex].startTimeString }}{{br}}bis{{br}}{{ timeSlots[rowIndex].endTimeString }}</td>
+            <td v-for="(eventBox, colIndex) in row" v-bind:data-col-index="colIndex">{{ eventBox.startTimeString }}{{br}}bis{{br}}{{ eventBox.endTimeString }}{{br}}{{ eventBox.startTimestamp }}</td>
         </tr>
         </tbody>
     </table>
@@ -82,7 +71,7 @@
 
 <script>
     RESOURCE_RESERVATION = {
-
+        requestToken: '{{REQUEST_TOKEN}}'
     }
 </script>
 <script src="<?= MOD_RESOURCE_RESERVATION_ASSET_PATH ?>/resource-reservation-app-vue.js"></script>

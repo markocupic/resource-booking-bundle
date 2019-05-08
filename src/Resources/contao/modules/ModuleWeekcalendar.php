@@ -17,6 +17,7 @@ use Contao\Message;
 use Contao\Messages;
 use Contao\Module;
 use Contao\Input;
+use Contao\Environment;
 use Contao\ResourceReservationResourceModel;
 use Contao\ResourceReservationResourceTypeModel;
 use Contao\StringUtil;
@@ -35,17 +36,17 @@ class ModuleWeekcalendar extends Module
      */
     protected $strTemplate = 'mod_resource_reservation_weekcalendar';
 
-    protected $objResourceTypes;
+    public $objResourceTypes;
 
-    protected $objSelectedResourceType;
+    public $objSelectedResourceType;
 
-    protected $objResources;
+    public $objResources;
 
-    protected $objSelectedResource;
+    public $objSelectedResource;
 
-    protected $intSelectedDate;
+    public $intSelectedDate;
 
-    protected $hasError;
+    public $hasError;
 
     /**
      * Display a wildcard in the back end
@@ -65,6 +66,8 @@ class ModuleWeekcalendar extends Module
 
             return $objTemplate->parse();
         }
+
+
 
         // Set selected date from query string
         $this->intSelectedDate = $this->getMondayOfThisWeek();
@@ -116,6 +119,18 @@ class ModuleWeekcalendar extends Module
                     }
                 }
             }
+        }
+
+        // Handle ajax requests
+        if (Environment::get('isAjaxRequest') && Input::post('action') != '')
+        {
+            $action = Input::post('action');
+            $objXhr = new AjaxHandler();
+            if (is_callable(array($objXhr, $action)))
+            {
+                $objXhr->{$action}($this);
+            }
+            exit;
         }
 
         return parent::generate();

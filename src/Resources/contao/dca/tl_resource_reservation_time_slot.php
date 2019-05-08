@@ -152,10 +152,14 @@ $GLOBALS['TL_DCA']['tl_resource_reservation_time_slot'] = array
             'sorting'       => true,
             'flag'          => 8,
             'inputType'     => 'text',
-            'eval'          => array('rgxp' => 'time', 'mandatory' => true, 'tl_class' => 'w50'),
+            'eval'          => array('rgxp' => 'timeecc', 'mandatory' => true, 'tl_class' => 'w50'),
             'load_callback' => array
             (
                 array('tl_resource_reservation_time_slot', 'loadTime')
+            ),
+            'save_callback' => array
+            (
+                array('tl_resource_reservation_time_slot', 'setCorrectTime')
             ),
             'sql'           => "int(10) NULL"
         ),
@@ -165,14 +169,16 @@ $GLOBALS['TL_DCA']['tl_resource_reservation_time_slot'] = array
             'default'       => time(),
             'exclude'       => true,
             'inputType'     => 'text',
-            'eval'          => array('rgxp' => 'time', 'tl_class' => 'w50'),
+            'eval'          => array('rgxp' => 'timessss', 'tl_class' => 'w50'),
             'load_callback' => array
             (
-                array('tl_resource_reservation_time_slot', 'loadEndTime')
+                array('tl_resource_reservation_time_slot', 'loadTime')
             ),
             'save_callback' => array
             (
-                array('tl_resource_reservation_time_slot', 'setEmptyEndTime')
+                array('tl_resource_reservation_time_slot', 'setCorrectTime'),
+                //!!!!Todo
+                //array('tl_resource_reservation_time_slot', 'setCorrectEndTime')
             ),
             'sql'           => "int(10) NULL"
         ),
@@ -202,7 +208,7 @@ class tl_resource_reservation_time_slot extends Contao\Backend
      */
     public function childRecordCallback($row)
     {
-        return sprintf('<div class="tl_content_left"><span style="color:#999;padding-left:3px">' . $row['title'] . '</span> %s-%s</div>', Contao\Date::parse('H:i', $row['startTime']), Contao\Date::parse('H:i',$row['endTime']));
+        return sprintf('<div class="tl_content_left"><span style="color:#999;padding-left:3px">' . $row['title'] . '</span> %s-%s</div>', Markocupic\ResourceReservationBundle\ResourceReservationHelper::parseToUtcDate('H:i', $row['startTime']), Markocupic\ResourceReservationBundle\ResourceReservationHelper::parseToUtcDate('H:i', $row['endTime']));
     }
 
     /**
@@ -338,57 +344,64 @@ class tl_resource_reservation_time_slot extends Contao\Backend
     }
 
     /**
-     * Set the timestamp to 1970-01-01 (see #26)
-     *
-     * @param integer $value
-     *
-     * @return integer
-     */
-    public function loadTime($value)
-    {
-        return strtotime('1970-01-01 ' . date('H:i:s', $value));
-    }
-
-    /**
-     * Set the end time to an empty string (see #23)
-     *
-     * @param integer $value
-     * @param Contao\DataContainer $dc
-     *
-     * @return integer
-     */
-    public function loadEndTime($value, Contao\DataContainer $dc)
-    {
-        $return = strtotime('1970-01-01 ' . date('H:i:s', $value));
-
-        // Return an empty string if the start time is the same as the end time (see #23)
-        if ($dc->activeRecord && $return == $dc->activeRecord->startTime)
-        {
-            return '';
-        }
-
-        // Return an empty string if no time has been set yet
-        if ($dc->activeRecord && $return - $dc->activeRecord->startTime == 86399)
-        {
-            return '';
-        }
-
-        return strtotime('1970-01-01 ' . date('H:i:s', $value));
-    }
-
-    /**
-     * Automatically set the end time if not set
-     *
-     * @param mixed $varValue
-     * @param Contao\DataContainer $dc
-     *
+     * @param $timestamp
      * @return string
      */
-    public function setEmptyEndTime($varValue, Contao\DataContainer $dc)
+    public function loadTime($timestamp)
     {
-        if ($varValue === null)
+        $strValue = '';
+        if ($timestamp != '')
         {
-            $varValue = $dc->activeRecord->startTime;
+            $strValue = \Markocupic\ResourceReservationBundle\ResourceReservationHelper::parseToUtcDate('H:i', $timestamp);
+        }
+
+        return $strValue;
+    }
+
+    /**
+     * @param $varValue
+     * @param \Contao\DataContainer $dc
+     * @return false|int
+     */
+    public function setCorrectTime($varValue, Contao\DataContainer $dc)
+    {
+        if (strlen($varValue) === 5)
+        {
+            $varValue = strtotime($varValue) - strtotime(Contao\Date::parse('Y-m-d'));
+        }
+        else
+        {
+            $varValue = 0;
+        }
+
+        return $varValue;
+    }
+
+    /**
+     * @param $varValue
+     * @param \Contao\DataContainer $dc
+     * @return false|int
+     */
+    public function setCorrectEndTime($varValue, Contao\DataContainer $dc)
+    {
+        if ($dc->activeRecord->startTime != '')
+        {
+            $startTime = strtotime('01-01-1970 ' . $dc->activeRecord->startTime . ' UTC');
+            if ($startTime > 0)
+            {
+                if ($varValue <= $startTime)
+                {
+                    $varValue = $startTime + 60;
+                }
+            }
+            else
+            {
+                $varValue = 0;
+            }
+        }
+        else
+        {
+            $varValue = 0;
         }
 
         return $varValue;

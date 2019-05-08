@@ -10,6 +10,10 @@ var resourceReservationApp = new Vue({
     data: {
         isReady: false,
         isOnline: '',
+        requestToken: '',
+        weekdays: [],
+        timeSlots: [],
+        rows: [],
 
         modal: {
 
@@ -21,6 +25,7 @@ var resourceReservationApp = new Vue({
     },
     created: function () {
         let self = this;
+        self.requestToken = RESOURCE_RESERVATION.requestToken;
 
         window.setTimeout(function () {
             self.isReady = true;
@@ -30,6 +35,8 @@ var resourceReservationApp = new Vue({
         window.setInterval(function () {
             //self.checkOnlineStatus();
         }, 15000);
+
+        self.getDataAll();
 
     },
     methods: {
@@ -48,11 +55,17 @@ var resourceReservationApp = new Vue({
                 }
             });
             xhr.done(function (response) {
-                self.runners = response.data;
-                self.stats = response.stats;
-                self.categories = response.categories;
+                self.weekdays = response.weekdays;
+                self.rows = response.rows;
+                self.timeSlots = response.timeSlots;
+
+                console.log(response);
+
             });
-            xhr.fail(function () {
+            xhr.fail(function ($res,$bl) {
+                console.log($res);
+                console.log($bl);
+
                 alert("XHR-Request fehlgeschlagen!!!");
             });
             xhr.always(function () {
