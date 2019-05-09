@@ -15,8 +15,10 @@ var resourceReservationApp = new Vue({
         timeSlots: [],
         rows: [],
 
-        modal: {
-
+        bookingModal: {
+            activeTimeSlot:{},
+            alertSuccess:'',
+            alertError:'',
         },
         form: {
 
@@ -70,6 +72,54 @@ var resourceReservationApp = new Vue({
             });
             xhr.always(function () {
                 //
+            });
+        },
+
+        /**
+         * Open booking modal window
+         */
+        openBookingModal: function(objActiveTimeSlot){
+            let self = this;
+            console.log(objActiveTimeSlot);
+            self.bookingModal.activeTimeSlot = objActiveTimeSlot;
+            self.bookingModal.alertSuccess = '';
+            self.bookingModal.alertError = '';
+
+            $('#resourceBookingModal [name="bookingDescription"]').val('');
+            $('#resourceBookingModal').modal('show');
+        },
+        /**
+         * Send booking request
+         */
+        sendBookingRequest: function(){
+            let self = this;
+            let xhr = $.ajax({
+                url: window.location.href,
+                type: 'post',
+                dataType: 'json',
+                data: {
+                    'action': 'sendBookingRequest',
+                    'REQUEST_TOKEN': self.requestToken,
+                    'resourceId': self.bookingModal.activeTimeSlot.resourceId,
+                    'startTime': self.bookingModal.activeTimeSlot.startTimestamp,
+                    'endTime': self.bookingModal.activeTimeSlot.endTimestamp,
+                    'description': $('#resourceBookingModal [name="bookingDescription"]').val()
+                }
+            });
+            xhr.done(function (response) {
+                if (response.status == 'success') {
+                    self.bookingModal.alertSuccess = response.alertSuccess;
+                }else{
+                    self.bookingModal.alertError = response.alertError;
+                }
+                console.log(response);
+
+            });
+            xhr.fail(function () {
+                self.isOnline = false;
+            });
+            xhr.always(function () {
+                self.getDataAll();
             });
         },
 

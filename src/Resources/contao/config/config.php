@@ -27,6 +27,10 @@ $GLOBALS['BE_MOD']['resourceReservation'] = array(
     'timeSlotType' => array
     (
         'tables' => array('tl_resource_reservation_time_slot_type', 'tl_resource_reservation_time_slot'),
+    ),
+    'reservations' => array
+    (
+        'tables' => array('tl_resource_reservation'),
     )
 );
 
@@ -44,4 +48,6 @@ array_insert($GLOBALS['FE_MOD'], 2, array
 // Asset path
 define('MOD_RESOURCE_RESERVATION_ASSET_PATH', 'bundles/markocupicresourcereservation');
 
+// Hooks
+$GLOBALS['TL_HOOKS']['addCustomRegexp'][] = array('Markocupic\\ResourceReservationBundle\\RegexpHook', 'customRegexp');
 

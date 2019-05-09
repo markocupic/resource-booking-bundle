@@ -152,7 +152,7 @@ $GLOBALS['TL_DCA']['tl_resource_reservation_time_slot'] = array
             'sorting'       => true,
             'flag'          => 8,
             'inputType'     => 'text',
-            'eval'          => array('rgxp' => 'timeecc', 'mandatory' => true, 'tl_class' => 'w50'),
+            'eval'          => array('rgxp' => 'timeslottime', 'mandatory' => true, 'tl_class' => 'w50'),
             'load_callback' => array
             (
                 array('tl_resource_reservation_time_slot', 'loadTime')
@@ -169,7 +169,7 @@ $GLOBALS['TL_DCA']['tl_resource_reservation_time_slot'] = array
             'default'       => time(),
             'exclude'       => true,
             'inputType'     => 'text',
-            'eval'          => array('rgxp' => 'timessss', 'tl_class' => 'w50'),
+            'eval'          => array('rgxp' => 'timeslottime',  'mandatory' => true, 'tl_class' => 'w50'),
             'load_callback' => array
             (
                 array('tl_resource_reservation_time_slot', 'loadTime')
@@ -208,7 +208,7 @@ class tl_resource_reservation_time_slot extends Contao\Backend
      */
     public function childRecordCallback($row)
     {
-        return sprintf('<div class="tl_content_left"><span style="color:#999;padding-left:3px">' . $row['title'] . '</span> %s-%s</div>', Markocupic\ResourceReservationBundle\ResourceReservationHelper::parseToUtcDate('H:i', $row['startTime']), Markocupic\ResourceReservationBundle\ResourceReservationHelper::parseToUtcDate('H:i', $row['endTime']));
+        return sprintf('<div class="tl_content_left"><span style="color:#999;padding-left:3px">' . $row['title'] . '</span> %s-%s</div>', Markocupic\ResourceReservationBundle\UtcDate::parse('H:i', $row['startTime']), Markocupic\ResourceReservationBundle\UtcDate::parse('H:i', $row['endTime']));
     }
 
     /**
@@ -352,7 +352,7 @@ class tl_resource_reservation_time_slot extends Contao\Backend
         $strValue = '';
         if ($timestamp != '')
         {
-            $strValue = \Markocupic\ResourceReservationBundle\ResourceReservationHelper::parseToUtcDate('H:i', $timestamp);
+            $strValue = Markocupic\ResourceReservationBundle\UtcDate::parse('H:i', $timestamp);
         }
 
         return $strValue;
@@ -367,7 +367,7 @@ class tl_resource_reservation_time_slot extends Contao\Backend
     {
         if (strlen($varValue) === 5)
         {
-            $varValue = strtotime($varValue) - strtotime(Contao\Date::parse('Y-m-d'));
+            $varValue = Markocupic\ResourceReservationBundle\UtcDate::strtotime('1970-01-01 ' . $varValue);
         }
         else
         {

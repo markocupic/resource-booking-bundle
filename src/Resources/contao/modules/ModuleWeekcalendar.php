@@ -13,6 +13,7 @@ namespace Markocupic\ResourceReservationBundle;
 use Contao\BackendTemplate;
 use Contao\CoreBundle\Exception\PageNotFoundException;
 use Contao\Date;
+use Contao\FrontendUser;
 use Contao\Message;
 use Contao\Messages;
 use Contao\Module;
@@ -35,6 +36,8 @@ class ModuleWeekcalendar extends Module
      * @var string
      */
     protected $strTemplate = 'mod_resource_reservation_weekcalendar';
+
+    public $objUser;
 
     public $objResourceTypes;
 
@@ -66,6 +69,12 @@ class ModuleWeekcalendar extends Module
 
             return $objTemplate->parse();
         }
+
+        if(!FE_USER_LOGGED_IN){
+            return '';
+        }
+
+        $this->objUser = FrontendUser::getInstance();
 
 
 
@@ -161,6 +170,7 @@ class ModuleWeekcalendar extends Module
      */
     public function getWeekSelection()
     {
+
         $arrWeeks = array();
         for ($i = -27; $i <= 51; $i++)
         {

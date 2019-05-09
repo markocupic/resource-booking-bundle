@@ -22,7 +22,7 @@ $GLOBALS['TL_DCA']['tl_resource_reservation_resource'] = array(
         'sql'              => array(
             'keys' => array(
                 'id'        => 'primary',
-                'published' => 'index',
+                'published,pid' => 'index',
             ),
         ),
     ),

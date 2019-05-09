@@ -10,6 +10,10 @@
 
 namespace Markocupic\ResourceReservationBundle;
 
+use Contao\Database;
+use Contao\Date;
+use Contao\ResourceReservationModel;
+
 /**
  * Class ResourceReservationHelper
  * @package Markocupic\ResourceReservationBundle
@@ -18,20 +22,79 @@ class ResourceReservationHelper
 {
 
     /**
-     * @param $strFormat
-     * @param $tstamp
-     * @return string
+     * @param $objRes
+     * @param $slotStartTime
+     * @param $slotEndTime
+     * @return bool
      */
-    public static function parseToUtcDate($strFormat, $tstamp)
+    public function isResourceBooked($objRes, $slotStartTime, $slotEndTime)
     {
-        $strValue = '';
-        if ($tstamp != '')
-        {
-            $dt = new \DateTime();
-            $dt->setTimestamp($tstamp);
-            $dt->setTimezone(new \DateTimeZone("UTC"));
-            $strValue = $dt->format($strFormat);
+        if(static::getBookedResourcesInSlot($objRes, $slotStartTime, $slotEndTime) === null){
+            return false;
         }
-        return $strValue;
+        return true;
+    }
+
+    /**
+     * @param $objRes
+     * @param $slotStartTime
+     * @param $slotEndTime
+     * @return \Contao\Model\Collection|null
+     */
+    public function getBookedResourcesInSlot($objRes, $slotStartTime, $slotEndTime)
+    {
+
+        $arrIDS = array();
+        // 1. possible case  -|---- | or -|-----| or -|-----|--
+        $objDb = Database::getInstance()->prepare('SELECT id FROM tl_resource_reservation WHERE (startTime<? AND endTime>?) AND pid=?')
+            ->execute($slotStartTime, $slotStartTime, $objRes->id);
+        if ($objDb->numRows)
+        {
+            while($objDb->next())
+            {
+                $arrIDS[] = $objDb->id;
+            }
+        }
+
+        // 2. possible case  |----- | or |-----| or |-----|--
+        $objDb = Database::getInstance()->prepare('SELECT id FROM tl_resource_reservation WHERE (startTime=? AND endTime>?) AND pid=?')
+            ->execute($slotStartTime, $slotStartTime, $objRes->id);
+        if ($objDb->numRows)
+        {
+            while($objDb->next())
+            {
+                $arrIDS[] = $objDb->id;
+            }
+        }
+
+        // 3. possible case  | --- | or -| ----| or | ----|--
+        $objDb = Database::getInstance()->prepare('SELECT id FROM tl_resource_reservation WHERE (startTime>? AND startTime<? AND endTime>?) AND pid=?')
+            ->execute($slotStartTime, $slotEndTime, $slotEndTime, $objRes->id);
+        if ($objDb->numRows)
+        {
+            while($objDb->next())
+            {
+                $arrIDS[] = $objDb->id;
+            }
+        }
+
+        // 4. possible case  |----|
+        $objDb = Database::getInstance()->prepare('SELECT id FROM tl_resource_reservation WHERE (startTime=? AND endTime=?) AND pid=?')
+            ->execute($slotStartTime, $slotEndTime, $objRes->id);
+        if ($objDb->numRows)
+        {
+            while($objDb->next())
+            {
+                $arrIDS[] = $objDb->id;
+            }
+        }
+
+        if (count($arrIDS) > 0)
+        {
+            $arrIDS = array_unique($arrIDS);
+            return ResourceReservationModel::findMultipleByIds($arrIDS);
+        }
+
+        return null;
     }
 }
