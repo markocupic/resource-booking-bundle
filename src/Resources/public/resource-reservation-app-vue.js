@@ -23,6 +23,7 @@ var resourceReservationApp = new Vue({
             showConfirmationMsg: false,
             alertSuccess: '',
             alertError: '',
+            selectedTimeSlots: []
         },
         form: {},
 
@@ -81,15 +82,21 @@ var resourceReservationApp = new Vue({
 
         /**
          * Open booking modal window
+         * @param objActiveTimeSlot
+         * @param action
          */
         openBookingModal: function (objActiveTimeSlot, action) {
             let self = this;
-            console.log(objActiveTimeSlot);
+            self.bookingModal.selectedTimeSlots = [];
             self.bookingModal.action = action;
             self.bookingModal.showConfirmationMsg = false;
             self.bookingModal.activeTimeSlot = objActiveTimeSlot;
             self.bookingModal.alertSuccess = '';
             self.bookingModal.alertError = '';
+            console.log(objActiveTimeSlot);
+
+            self.bookingModal.selectedTimeSlots.push(objActiveTimeSlot.bookingCheckboxValue);
+
 
             $('#resourceBookingModal [name="bookingDescription"]').val('');
             $('#resourceBookingModal').modal('show');
@@ -107,15 +114,15 @@ var resourceReservationApp = new Vue({
                     'action': 'sendBookingRequest',
                     'REQUEST_TOKEN': self.requestToken,
                     'resourceId': self.bookingModal.activeTimeSlot.resourceId,
-                    'startTime': self.bookingModal.activeTimeSlot.startTimestamp,
-                    'endTime': self.bookingModal.activeTimeSlot.endTimestamp,
-                    'timeSlotId': self.bookingModal.activeTimeSlot.timeSlotId,
-                    'description': $('#resourceBookingModal [name="bookingDescription"]').val()
+                    'description': $('#resourceBookingModal [name="bookingDescription"]').val(),
+                    'bookedTimeSlots': self.bookingModal.selectedTimeSlots,
+                    'bookingRepeatStopWeekTstamp': $('#bookingRepeatStopWeekTstamp').val(),
                 }
             });
             xhr.done(function (response) {
                 if (response.status == 'success') {
                     self.bookingModal.alertSuccess = response.alertSuccess;
+                    window.setTimeout(function(){$('#resourceBookingModal').modal('hide');},2000);
                 } else {
                     self.bookingModal.alertError = response.alertError;
                 }

@@ -3,7 +3,7 @@
 <?php $GLOBALS['TL_JAVASCRIPT'][] = MOD_RESOURCE_RESERVATION_ASSET_PATH . '/stupid-table/stupidtable.min.js||static'; ?>
 <?php $GLOBALS['TL_CSS'][] = MOD_RESOURCE_RESERVATION_ASSET_PATH . '/fontawesome/css/all.css||static'; ?>
 <?php $GLOBALS['TL_CSS'][] = MOD_RESOURCE_RESERVATION_ASSET_PATH . '/fontawesome/css/brands.css||static'; ?>
-<?php $GLOBALS['TL_JAVASCRIPT'][] = MOD_RESOURCE_RESERVATION_ASSET_PATH . '/vue/vue.min.js||static'; ?>
+<?php $GLOBALS['TL_JAVASCRIPT'][] = MOD_RESOURCE_RESERVATION_ASSET_PATH . '/vue/vue.js||static'; ?>
 <?php $GLOBALS['TL_JAVASCRIPT'][] = MOD_RESOURCE_RESERVATION_ASSET_PATH . '/popper/popper.js||static'; ?>
 <?php $GLOBALS['TL_CSS'][] = MOD_RESOURCE_RESERVATION_ASSET_PATH . '/css/chronometry.css||static'; ?>
 
@@ -29,7 +29,7 @@
             <div class="form-group col-sm-3">
                 <label for="res" class="d-none">Resource</label>
                 <select id="res" class="form-control" name="res" v-on:change="submitForm">
-                    <option>Auswählen</option>
+                    <option value="">Auswählen</option>
                     <?php while($this->objResources->next()): ?>
                     <option value="<?= $this->objResources->id ?>"
                     <?php if($this->objSelectedResource->id == $this->objResources->id): ?> selected<?php endif; ?>><?= $this->objResources->title ?></option>
@@ -43,7 +43,7 @@
                 <select id="date" class="form-control" name="date" v-on:change="submitForm">
                     <?php foreach($this->weekSelection as $arrDate): ?>
                     <option value="<?= $arrDate['tstamp'] ?>"
-                    <?php if($this->intSelectedDate == $arrDate['tstamp']): ?> selected<?php endif; ?>>KW <?= $arrDate['calWeek'] ?>/<?= $arrDate['year'] ?>: <?= $arrDate['daySpan'] ?></option>
+                    <?php if($this->intSelectedDate == $arrDate['tstamp']): ?> selected<?php endif; ?>><?= $arrDate['optionText'] ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
@@ -51,29 +51,29 @@
     </form>
 
     <div><?= $this->errorMessages ?></div>
+    <div class="table-responsive-lg">
+        <table class="resource-reservation-table-main table">
+            <thead>
+            <tr>
+                <th width="12.5%">Uhrzeit</th>
+                <th width="12.5%" v-for="(weekday, index) in weekdays" v-bind:data-index="index">{{ weekday.title }}{{br}}{{ weekday.date }}</th>
+            </tr>
 
-    <table class="resource-reservation-table table">
-        <thead>
-        <tr>
-            <th width="12.5%">Uhrzeit</th>
-            <th width="12.5%" v-for="(weekday, index) in weekdays" v-bind:data-index="index">{{ weekday.title }}{{br}}{{ weekday.date }}</th>
-        </tr>
-
-        </thead>
-        <tbody>
-        <tr v-for="(row, rowIndex) in rows" v-bind:data-row-index="rowIndex">
-            <td>{{ timeSlots[rowIndex].startTimeString }} - {{ timeSlots[rowIndex].endTimeString }}</td>
-            <td class="time-slot-cell" v-for="(eventBox, colIndex) in row" v-bind:data-col-index="colIndex" v-bind:data-isbooked="eventBox.isBooked">
-                <div v-if="eventBox.isBooked">
-                    {{ eventBox.bookedByFirstname }} {{ eventBox.bookedByLastname }} {{br}} {{ eventBox.bookingDescription }}
-                </div>
-                <button class="btn btn-link" v-if="eventBox.isEditable && !eventBox.isBooked" v-on:click="openBookingModal(eventBox,'showBookingForm')" title="buchen"><i class="fas fa-pencil-alt"></i></button>
-                <button class="btn btn-link" v-if="eventBox.isEditable && eventBox.isBooked" v-on:click="openBookingModal(eventBox, 'showCancelBookingForm')" title="stornieren"><i class="fas fa-pencil-alt"></i></button>
-
-            </td>
-        </tr>
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+            <tr v-for="(row, rowIndex) in rows" v-bind:data-row-index="rowIndex">
+                <td>{{ timeSlots[rowIndex].startTimeString }} - {{ timeSlots[rowIndex].endTimeString }}</td>
+                <td class="time-slot-cell" v-for="(eventBox, colIndex) in row" v-bind:data-col-index="colIndex" v-bind:data-isbooked="eventBox.isBooked">
+                    <div v-if="eventBox.isBooked">
+                        {{ eventBox.bookedByFirstname }} {{ eventBox.bookedByLastname }} {{br}} {{ eventBox.bookingDescription }}
+                    </div>
+                    <button class="btn btn-link" v-if="eventBox.isEditable && !eventBox.isBooked" v-on:click="openBookingModal(eventBox,'showBookingForm')" title="buchen"><i class="fas fa-pencil-alt"></i></button>
+                    <button class="btn btn-link" v-if="eventBox.isEditable && eventBox.isBooked" v-on:click="openBookingModal(eventBox, 'showCancelBookingForm')" title="stornieren"><i class="fas fa-pencil-alt"></i></button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
 
 
     <div id="resourceBookingModal" class="modal" tabindex="-1" role="dialog">
@@ -88,15 +88,55 @@
                 </div>
                 <div class="modal-body">
                     <!-- alerts -->
-                    <div v-if="bookingModal.alertSuccess != ''" class="alert alert-success">{{ bookingModal.alertSuccess }}</div>
+                    <div v-if="bookingModal.alertSuccess != ''">
+                        <div class="alert alert-success">
+                            {{ bookingModal.alertSuccess }}
+                        </div>
+                        <p><small>Dieses Modal-Fenster schliesst automatisch.</small></p>
+                    </div>
                     <div v-if="bookingModal.alertError != ''" class="alert alert-danger">{{ bookingModal.alertError }}</div>
                     <div v-if="!bookingModal.showConfirmationMsg && bookingModal.action == 'showBookingForm'">
                         <form>
+                            <table class="resource-reservation-table-modal table">
+                                <thead>
+                                <tr>
+                                    <th width="12.5%">Uhrzeit</th>
+                                    <th width="12.5%" v-for="(weekday, index) in weekdays" v-bind:data-index="index">{{ weekday.titleShort }}</th>
+                                </tr>
+
+                                </thead>
+                                <tbody>
+                                <tr v-for="(row, rowIndex) in rows" v-bind:data-row-index="rowIndex">
+                                    <td>{{ timeSlots[rowIndex].startTimeString }} - {{ timeSlots[rowIndex].endTimeString }}</td>
+                                    <td class="time-slot-cell" v-for="(eventBox, colIndex) in row" v-bind:data-col-index="colIndex" v-bind:data-isbooked="eventBox.isBooked">
+                                        <div v-if="!eventBox.isBooked">
+                                            <div class="custom-control custom-checkbox">
+                                                <input type="checkbox" v-model="bookingModal.selectedTimeSlots" v-bind:value="eventBox.bookingCheckboxValue" class="custom-control-input" v-bind:id="eventBox.bookingCheckboxId">
+                                                <label class="custom-control-label" v-bind:for="eventBox.bookingCheckboxId"></label>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+
+
                             <div class="form-group">
                                 <label for="exampleInputEmail1">Kurzbeschreibung</label>
                                 <input type="text" class="form-control" id="bookingDescription" name="bookingDescription" aria-describedby="bookingDescriptionHelp" placeholder="Kurzbeschreibung eingeben">
                                 <small id="bookingDescriptionHelp" class="form-text text-muted">Kurzbeschreibung eingeben (max 40 Zeichen).</small>
                             </div>
+
+                            <div class="form-group">
+                                <label for="bookingRepeatStopWeekTstamp" class="d-none">Ressource buchen bis (Wiederholungen)</label>
+                                <select id="bookingRepeatStopWeekTstamp" class="form-control" name="bookingRepeatStopWeekTstamp">
+                                    <?php foreach($this->bookingRepeats as $arrDate): ?>
+                                    <option value="<?= $arrDate['tstamp'] ?>"
+                                    <?php if($this->intSelectedDate == $arrDate['tstamp']): ?> selected<?php endif; ?>><?= $arrDate['optionText'] ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+
                         </form>
                     </div>
                     <div v-if="bookingModal.action == 'showCancelBookingForm'">
@@ -106,7 +146,7 @@
 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Schliessen</button>
-                    <button type="button" class="btn btn-primary" v-if="!bookingModal.showConfirmationMsg && bookingModal.action == 'showBookingForm'" v-on:click="sendBookingRequest">Resource buchen</button>
+                    <button type="button" class="btn btn-primary" v-if="!bookingModal.showConfirmationMsg && bookingModal.action == 'showBookingForm'" v-on:click="sendBookingRequest">Ressource buchen</button>
                     <button type="button" class="btn btn-danger" v-if="!bookingModal.showConfirmationMsg && bookingModal.action == 'showCancelBookingForm'" v-on:click="sendCancelBookingRequest">Buchung stornieren</button>
                 </div>
             </div>
