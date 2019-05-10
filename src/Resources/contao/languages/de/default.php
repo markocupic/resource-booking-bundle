@@ -22,3 +22,6 @@ $GLOBALS['TL_LANG']['MSC']['timeslottime'] = 'Bitte geben Sie eine gülige Zeit 
 $GLOBALS['TL_LANG']['MSG']['successfullyBooked'] = '%s konnte erfolgreich für den gewünschten Zeitpunkt gebucht werden.';
 $GLOBALS['TL_LANG']['MSG']['noResourceSelected'] = 'Es wurde keine Resource ausgewählt';
 $GLOBALS['TL_LANG']['MSG']['resourceAlreadyBooked'] = 'Die Resource ist bereits ausgebucht.';
+$GLOBALS['TL_LANG']['MSG']['successfullyCanceledBooking'] = 'Ihre Buchung wurde erfolgreich storniert.';
+$GLOBALS['TL_LANG']['MSG']['notAllowedToCancelBooking'] = 'Sie besitzen nicht die nötigen Rechte, um diese Buchung zu stornieren.';
+

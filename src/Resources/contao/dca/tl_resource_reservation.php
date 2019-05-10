@@ -93,6 +93,14 @@ $GLOBALS['TL_DCA']['tl_resource_reservation'] = array(
         (
             'sql' => "int(10) unsigned NOT NULL default '0'"
         ),
+        'timeSlotId'         => array(
+            'label'      => &$GLOBALS['TL_LANG']['tl_resource_reservation']['timeSlotId'],
+            'inputType'  => 'select',
+            'foreignKey' => 'tl_resource_reservation_time_slot.title',
+            'eval'       => array('mandatory' => true),
+            'sql'        => "int(10) unsigned NOT NULL default '0'",
+            'relation'   => array('type' => 'belongsTo', 'load' => 'lazy')
+        ),
         'member'      => array(
             'label'      => &$GLOBALS['TL_LANG']['tl_resource_reservation']['member'],
             'inputType'  => 'select',

@@ -42,7 +42,8 @@
                 <label for="date" class="d-none">Zeitraum</label>
                 <select id="date" class="form-control" name="date" v-on:change="submitForm">
                     <?php foreach($this->weekSelection as $arrDate): ?>
-                    <option value="<?= $arrDate['tstamp'] ?>"<?php if($this->intSelectedDate == $arrDate['tstamp']): ?> selected<?php endif; ?>>KW <?= $arrDate['calWeek'] ?>/<?= $arrDate['year'] ?>: <?= $arrDate['daySpan'] ?></option>
+                    <option value="<?= $arrDate['tstamp'] ?>"
+                    <?php if($this->intSelectedDate == $arrDate['tstamp']): ?> selected<?php endif; ?>>KW <?= $arrDate['calWeek'] ?>/<?= $arrDate['year'] ?>: <?= $arrDate['daySpan'] ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
@@ -66,41 +67,47 @@
                 <div v-if="eventBox.isBooked">
                     {{ eventBox.bookedByFirstname }} {{ eventBox.bookedByLastname }} {{br}} {{ eventBox.bookingDescription }}
                 </div>
-                <button class="btn btn-link" v-if="eventBox.isEditable" v-on:click="openBookingModal(eventBox)"><i class="fas fa-pencil-alt"></i></button>
+                <button class="btn btn-link" v-if="eventBox.isEditable && !eventBox.isBooked" v-on:click="openBookingModal(eventBox,'showBookingForm')" title="buchen"><i class="fas fa-pencil-alt"></i></button>
+                <button class="btn btn-link" v-if="eventBox.isEditable && eventBox.isBooked" v-on:click="openBookingModal(eventBox, 'showCancelBookingForm')" title="stornieren"><i class="fas fa-pencil-alt"></i></button>
+
             </td>
         </tr>
         </tbody>
     </table>
 
 
-
     <div id="resourceBookingModal" class="modal" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Resource buchen</h5>
+                    <h5 class="modal-title" v-if="bookingModal.action == 'showBookingForm'">{{ activeResource.title }} buchen</h5>
+                    <h5 class="modal-title" v-if="bookingModal.action == 'showCancelBookingForm'">{{ activeResource.title }} stornieren</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <p>timeSlot-Id: {{ bookingModal.activeTimeSlot.timeSlotId }}</p>
                     <!-- alerts -->
                     <div v-if="bookingModal.alertSuccess != ''" class="alert alert-success">{{ bookingModal.alertSuccess }}</div>
                     <div v-if="bookingModal.alertError != ''" class="alert alert-danger">{{ bookingModal.alertError }}</div>
-
-
-                    <form>
-                        <div class="form-group">
-                            <label for="exampleInputEmail1">Kurzbeschreibung</label>
-                            <input type="text" class="form-control" id="bookingDescription" name="bookingDescription" aria-describedby="bookingDescriptionHelp" placeholder="Kurzbeschreibung eingeben">
-                            <small id="bookingDescriptionHelp" class="form-text text-muted">Kurzbeschreibung eingeben (max 40 Zeichen).</small>
-                        </div>
-                    </form>
+                    <div v-if="!bookingModal.showConfirmationMsg && bookingModal.action == 'showBookingForm'">
+                        <form>
+                            <div class="form-group">
+                                <label for="exampleInputEmail1">Kurzbeschreibung</label>
+                                <input type="text" class="form-control" id="bookingDescription" name="bookingDescription" aria-describedby="bookingDescriptionHelp" placeholder="Kurzbeschreibung eingeben">
+                                <small id="bookingDescriptionHelp" class="form-text text-muted">Kurzbeschreibung eingeben (max 40 Zeichen).</small>
+                            </div>
+                        </form>
+                    </div>
+                    <div v-if="bookingModal.action == 'showCancelBookingForm'">
+                        <p v-if="!bookingModal.showConfirmationMsg">Soll Ihre Buchung storniert werden?</p>
+                    </div>
                 </div>
+
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Schliessen</button>
-                    <button type="button" class="btn btn-primary" v-on:click="sendBookingRequest">Resource buchen</button>
+                    <button type="button" class="btn btn-primary" v-if="!bookingModal.showConfirmationMsg && bookingModal.action == 'showBookingForm'" v-on:click="sendBookingRequest">Resource buchen</button>
+                    <button type="button" class="btn btn-danger" v-if="!bookingModal.showConfirmationMsg && bookingModal.action == 'showCancelBookingForm'" v-on:click="sendCancelBookingRequest">Buchung stornieren</button>
                 </div>
             </div>
         </div>

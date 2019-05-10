@@ -14,17 +14,18 @@ $GLOBALS['TL_DCA']['tl_resource_reservation_time_slot'] = array
     // Config
     'config'   => array
     (
-        'dataContainer'    => 'Table',
-        'ptable'           => 'tl_resource_reservation_time_slot_type',
-        'enableVersioning' => true,
-        'sql'              => array
+        'dataContainer'     => 'Table',
+        'ptable'            => 'tl_resource_reservation_time_slot_type',
+        'enableVersioning'  => true,
+        'sql'               => array
         (
             'keys' => array
             (
                 'id'  => 'primary',
                 'pid' => 'index'
             )
-        )
+        ),
+        'ondelete_callback' => array(array('tl_resource_reservation_time_slot', 'removeChildRecords'))
     ),
 
     // List
@@ -169,7 +170,7 @@ $GLOBALS['TL_DCA']['tl_resource_reservation_time_slot'] = array
             'default'       => time(),
             'exclude'       => true,
             'inputType'     => 'text',
-            'eval'          => array('rgxp' => 'timeslottime',  'mandatory' => true, 'tl_class' => 'w50'),
+            'eval'          => array('rgxp' => 'timeslottime', 'mandatory' => true, 'tl_class' => 'w50'),
             'load_callback' => array
             (
                 array('tl_resource_reservation_time_slot', 'loadTime')
@@ -405,6 +406,21 @@ class tl_resource_reservation_time_slot extends Contao\Backend
         }
 
         return $varValue;
+    }
+
+
+    /**
+     * ondelete_callback
+     * @param \Contao\DataContainer $dc
+     */
+    public function removeChildRecords(Contao\DataContainer $dc)
+    {
+        if (!$dc->id)
+        {
+            return;
+        }
+        // Delete child reservations
+        $this->Database->prepare('DELETE FROM tl_resource_reservation WHERE timeSlotId=?')->execute($dc->id);
     }
 
 }

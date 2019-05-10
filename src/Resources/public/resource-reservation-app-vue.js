@@ -14,15 +14,17 @@ var resourceReservationApp = new Vue({
         weekdays: [],
         timeSlots: [],
         rows: [],
+        activeResource: {},
+        activeResourceType: {},
+
 
         bookingModal: {
-            activeTimeSlot:{},
-            alertSuccess:'',
-            alertError:'',
+            action: '',
+            showConfirmationMsg: false,
+            alertSuccess: '',
+            alertError: '',
         },
-        form: {
-
-        },
+        form: {},
 
     },
     created: function () {
@@ -60,11 +62,13 @@ var resourceReservationApp = new Vue({
                 self.weekdays = response.weekdays;
                 self.rows = response.rows;
                 self.timeSlots = response.timeSlots;
+                self.activeResource = response.activeResource;
+                self.activeResourceType = response.activeResourceType;
 
                 console.log(response);
 
             });
-            xhr.fail(function ($res,$bl) {
+            xhr.fail(function ($res, $bl) {
                 console.log($res);
                 console.log($bl);
 
@@ -78,9 +82,11 @@ var resourceReservationApp = new Vue({
         /**
          * Open booking modal window
          */
-        openBookingModal: function(objActiveTimeSlot){
+        openBookingModal: function (objActiveTimeSlot, action) {
             let self = this;
             console.log(objActiveTimeSlot);
+            self.bookingModal.action = action;
+            self.bookingModal.showConfirmationMsg = false;
             self.bookingModal.activeTimeSlot = objActiveTimeSlot;
             self.bookingModal.alertSuccess = '';
             self.bookingModal.alertError = '';
@@ -91,7 +97,7 @@ var resourceReservationApp = new Vue({
         /**
          * Send booking request
          */
-        sendBookingRequest: function(){
+        sendBookingRequest: function () {
             let self = this;
             let xhr = $.ajax({
                 url: window.location.href,
@@ -103,13 +109,14 @@ var resourceReservationApp = new Vue({
                     'resourceId': self.bookingModal.activeTimeSlot.resourceId,
                     'startTime': self.bookingModal.activeTimeSlot.startTimestamp,
                     'endTime': self.bookingModal.activeTimeSlot.endTimestamp,
+                    'timeSlotId': self.bookingModal.activeTimeSlot.timeSlotId,
                     'description': $('#resourceBookingModal [name="bookingDescription"]').val()
                 }
             });
             xhr.done(function (response) {
                 if (response.status == 'success') {
                     self.bookingModal.alertSuccess = response.alertSuccess;
-                }else{
+                } else {
                     self.bookingModal.alertError = response.alertError;
                 }
                 console.log(response);
@@ -119,6 +126,40 @@ var resourceReservationApp = new Vue({
                 self.isOnline = false;
             });
             xhr.always(function () {
+                self.bookingModal.showConfirmationMsg = true;
+                self.getDataAll();
+            });
+        },
+
+        /**
+         * Send booking request
+         */
+        sendCancelBookingRequest: function () {
+            let self = this;
+            let xhr = $.ajax({
+                url: window.location.href,
+                type: 'post',
+                dataType: 'json',
+                data: {
+                    'action': 'sendCancelBookingRequest',
+                    'REQUEST_TOKEN': self.requestToken,
+                    'bookingId': self.bookingModal.activeTimeSlot.bookingId,
+                }
+            });
+            xhr.done(function (response) {
+                if (response.status == 'success') {
+                    self.bookingModal.alertSuccess = response.alertSuccess;
+                } else {
+                    self.bookingModal.alertError = response.alertError;
+                }
+                console.log(response);
+
+            });
+            xhr.fail(function () {
+                self.isOnline = false;
+            });
+            xhr.always(function () {
+                self.bookingModal.showConfirmationMsg = true;
                 self.getDataAll();
             });
         },
@@ -154,7 +195,7 @@ var resourceReservationApp = new Vue({
 
         },
 
-        submitForm: function(){
+        submitForm: function () {
             let self = this;
             document.getElementById('resourceReservationForm').submit();
         }

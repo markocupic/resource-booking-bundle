@@ -45,8 +45,11 @@ class AjaxHandler
         $arrJson['weekdays'] = $arrWeek;
 
         // Get rows
-        if ($objModule->objSelectedResource !== null)
+        if ($objModule->objSelectedResource !== null && $objModule->objSelectedResourceType !== null)
         {
+            $arrJson['activeResource']['title'] = $objModule->objSelectedResource->title;
+            $arrJson['activeResourceType']['title'] = $objModule->objSelectedResourceType->title;
+
             $objSelectedResource = $objModule->objSelectedResource;
             $objTimeslots = ResourceReservationTimeSlotModel::findPublishedByPid($objSelectedResource->timeSlotType);
             $rows = array();
@@ -87,6 +90,7 @@ class AjaxHandler
                                 $objTs->bookedByFirstname = $objReservation->firstname;
                                 $objTs->bookedByLastname = $objReservation->lastname;
                                 $objTs->bookingDescription = $objReservation->description;
+                                $objTs->bookingId = $objReservation->id;
                             }
                         }
 
@@ -139,27 +143,31 @@ class AjaxHandler
             $startTime = Input::post('startTime');
             $endTime = Input::post('endTime');
             $objUser = FrontendUser::getInstance();
+            $timeSlotId = Input::post('timeSlotId');
 
             $objResource = ResourceReservationResourceModel::findByPk(Input::post('resourceId'));
             if ($objResource !== null)
             {
                 if (!ResourceReservationHelper::isResourceBooked($objResource, $startTime, $endTime))
                 {
-                    $objReservation = new ResourceReservationModel();
-                    $objReservation->member = $objUser->id;
-                    $objReservation->firstname = $objUser->firstname;
-                    $objReservation->lastname = $objUser->lastname;
-                    $objReservation->startTime = $startTime;
-                    $objReservation->endTime = $endTime;
-                    $objReservation->description = $descr;
-                    $objReservation->pid = $objResource->id;
-                    $objReservation->tstamp = time();
-                    $objReservation->title = $objResource->title . ': Booking for ' . $objUser->firstname . ' ' . $objUser->lastname;
-
-                    $objReservation->save();
-                    $arrJson['status'] = 'success';
-                    $arrJson['alertSuccess'] = sprintf($GLOBALS['TL_LANG']['MSG']['successfullyBooked'], $objResource->title);
-                }
+                    if(($objTimeslot = ResourceReservationTimeSlotModel::findByPk($timeSlotId)) !== null)
+                    {
+                        $objReservation = new ResourceReservationModel();
+                        $objReservation->member = $objUser->id;
+                        $objReservation->firstname = $objUser->firstname;
+                        $objReservation->lastname = $objUser->lastname;
+                        $objReservation->startTime = $startTime;
+                        $objReservation->endTime = $endTime;
+                        $objReservation->description = $descr;
+                        $objReservation->pid = $objResource->id;
+                        $objReservation->timeSlotId = $objTimeslot->id;
+                        $objReservation->tstamp = time();
+                        $objReservation->title = $objResource->title . ': Booking for ' . $objUser->firstname . ' ' . $objUser->lastname;
+                        $objReservation->save();
+                        $arrJson['status'] = 'success';
+                        $arrJson['alertSuccess'] = sprintf($GLOBALS['TL_LANG']['MSG']['successfullyBooked'], $objResource->title);
+                    }
+                   }
                 else
                 {
                     $arrJson['alertError'] = $GLOBALS['TL_LANG']['MSG']['resourceAlreadyBooked'];
@@ -174,4 +182,40 @@ class AjaxHandler
         $response = new JsonResponse($arrJson);
         return $response->send();
     }
+
+    /**
+     * @return JsonResponse
+     */
+    public function sendCancelBookingRequest()
+    {
+        $arrJson = array();
+        $arrJson['status'] = 'error';
+        if (FE_USER_LOGGED_IN && Input::post('bookingId') > 0)
+        {
+            $objUser = FrontendUser::getInstance();
+            $bookingId = Input::post('bookingId');
+            $objBooking = ResourceReservationModel::findByPk($bookingId);
+            if ($objBooking !== null)
+            {
+                if ($objBooking->member === $objUser->id)
+                {
+                    $objBooking->delete();
+                    $arrJson['status'] = 'success';
+                    $arrJson['alertSuccess'] = $GLOBALS['TL_LANG']['MSG']['successfullyCanceledBooking'];
+                }
+                else
+                {
+                    $arrJson['alertError'] = $GLOBALS['TL_LANG']['MSG']['notAllowedToCancelBooking'];
+                }
+            }
+            else
+            {
+                $arrJson['alertError'] = $GLOBALS['TL_LANG']['MSG']['notAllowedToCancelBooking'];
+            }
+        }
+
+        $response = new JsonResponse($arrJson);
+        return $response->send();
+    }
+
 }
