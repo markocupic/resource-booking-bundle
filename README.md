@@ -1,5 +1,5 @@
 # resource-booking-bundle
-Mit diesem Modul für Contao kann eine Online-Ressourcenverwaltung betrieben werden. 
+Mit diesem Modul für Contao kann eine einfache Online-Ressourcenverwaltung betrieben werden. 
 Das Modul wurde für eine Schule entwickelt, wo ein Raumreservations-System benötigt wurde. Natürlich kann das Plugin auch im Zusammenhang mit anderen Ressourcen betrieben werden. 
 
 Nach der Installation mit dem Contao Manager müssen:
@@ -8,8 +8,8 @@ Nach der Installation mit dem Contao Manager müssen:
 * Ressourcen-Typen und Ressourcen erstellt werden.
 * Mitglieder angelegt werden.
 
-Das Tool setzt auf vue.js, fontawesome und bootstrap 4.1 auf. Die benötigten Ressourcen werden im Template eingebunden.
-Zudem muss jQuery muss im Layout eingebunden sein.
+Das Tool setzt auf [vue.js](https://vuejs.org/), [Fontawesome](https://fontawesome.com/) und [Bootstrap](https://getbootstrap.com/) auf. Die benötigten Ressourcen werden im Template eingebunden.
+Zudem muss [jQuery](https://jquery.com/) im Layout eingebunden sein.
 
 Anm: Bei der Installation wird [codefog/contao-haste](https://github.com/codefog/contao-haste) mitinstalliert.
 
