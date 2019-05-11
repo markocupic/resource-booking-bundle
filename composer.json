@@ -1,6 +1,6 @@
 {
   "name": "markocupic/resource-booking-bundle",
-  "description": "resource-booking-tool for schools or other institutions",
+  "description": "Resource-booking-plugin for schools or other institutions. Book a resource for a predefined amount of time. This extension is a plugin for Contao CMS.",
   "keywords": [
     "contao",
     "resource",
