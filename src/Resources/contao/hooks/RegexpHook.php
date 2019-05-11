@@ -8,14 +8,14 @@
  * @link https://github.com/markocupic/chronometry-bundle
  */
 
-namespace Markocupic\ResourceReservationBundle;
+namespace Markocupic\ResourceBookingBundle;
 
 use Contao\Validator;
 use Contao\Widget;
 
 /**
  * Class RegexpHook
- * @package Markocupic\ResourceReservationBundle
+ * @package Markocupic\ResourceBookingBundle
  */
 class RegexpHook
 {

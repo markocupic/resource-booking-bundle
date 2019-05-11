@@ -8,7 +8,7 @@
  * @license LGPL-3.0-or-later
  */
 
-namespace Markocupic\ResourceReservationBundle;
+namespace Markocupic\ResourceBookingBundle;
 
 use Contao\BackendTemplate;
 use Contao\CoreBundle\Exception\PageNotFoundException;
@@ -20,14 +20,14 @@ use Contao\Module;
 use Contao\Input;
 use Contao\Environment;
 use Contao\Controller;
-use Contao\ResourceReservationResourceModel;
-use Contao\ResourceReservationResourceTypeModel;
+use Contao\ResourceBookingResourceModel;
+use Contao\ResourceBookingResourceTypeModel;
 use Contao\StringUtil;
 use Patchwork\Utf8;
 
 /**
  * Class ModuleWeekcalendar
- * @package Markocupic\ResourceReservationBundle
+ * @package Markocupic\ResourceBookingBundle
  */
 class ModuleWeekcalendar extends Module
 {
@@ -36,7 +36,7 @@ class ModuleWeekcalendar extends Module
      * Template
      * @var string
      */
-    protected $strTemplate = 'mod_resource_reservation_weekcalendar';
+    protected $strTemplate = 'mod_resource_booking_weekcalendar';
 
     public $objUser;
 
@@ -66,7 +66,7 @@ class ModuleWeekcalendar extends Module
         if (TL_MODE == 'BE')
         {
             $objTemplate = new BackendTemplate('be_wildcard');
-            $objTemplate->wildcard = '### ' . Utf8::strtoupper($GLOBALS['TL_LANG']['FMD']['resourceReservationWeekCalendar'][0]) . ' ###';
+            $objTemplate->wildcard = '### ' . Utf8::strtoupper($GLOBALS['TL_LANG']['FMD']['resourceBookingWeekCalendar'][0]) . ' ###';
             $objTemplate->title = $this->headline;
             $objTemplate->id = $this->id;
             $objTemplate->link = $this->name;
@@ -94,8 +94,8 @@ class ModuleWeekcalendar extends Module
         }
 
         // Get resource types
-        $arrResTypesIds = StringUtil::deserialize($this->resourceReservation_resourceTypes, true);
-        $this->objResourceTypes = ResourceReservationResourceTypeModel::findMultipleAndPublishedByIds($arrResTypesIds);
+        $arrResTypesIds = StringUtil::deserialize($this->resourceBooking_resourceTypes, true);
+        $this->objResourceTypes = ResourceBookingResourceTypeModel::findMultipleAndPublishedByIds($arrResTypesIds);
         if ($this->objResourceTypes === null)
         {
             Message::addError('Bitte legen Sie in den Moduleinstellungen mindestens einen Resourcen-Typ fest.');
@@ -112,7 +112,7 @@ class ModuleWeekcalendar extends Module
 
         if (Input::get('resType') != '')
         {
-            $objSelectedResourceType = ResourceReservationResourceTypeModel::findByPk(Input::get('resType'));
+            $objSelectedResourceType = ResourceBookingResourceTypeModel::findByPk(Input::get('resType'));
             if ($objSelectedResourceType === null)
             {
                 Message::addError($GLOBALS['TL_LANG']['MSG']['selectValidResourcePlease']);
@@ -124,10 +124,10 @@ class ModuleWeekcalendar extends Module
                 $this->objSelectedResourceType = $objSelectedResourceType;
 
                 // Get all resources of the selected resource type
-                $this->objResources = ResourceReservationResourceModel::findPublishedByPid($this->objSelectedResourceType->id);
+                $this->objResources = ResourceBookingResourceModel::findPublishedByPid($this->objSelectedResourceType->id);
                 if (Input::get('res') != '')
                 {
-                    $objSelectedResource = ResourceReservationResourceModel::findByPk(Input::get('res'));
+                    $objSelectedResource = ResourceBookingResourceModel::findByPk(Input::get('res'));
                     if ($objSelectedResource === null)
                     {
                         Message::addError($GLOBALS['TL_LANG']['MSG']['selectValidResourcePlease']);

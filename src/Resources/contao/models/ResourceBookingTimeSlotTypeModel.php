@@ -11,17 +11,17 @@
 namespace Contao;
 
 /**
- * Class ResourceReservationTimeSlotTypeModel
+ * Class ResourceBookingTimeSlotTypeModel
  * @package Contao
  */
-class ResourceReservationTimeSlotTypeModel extends \Model
+class ResourceBookingTimeSlotTypeModel extends \Model
 {
 
 	/**
 	 * Table name
 	 * @var string
 	 */
-	protected static $strTable = 'tl_resource_reservation_time_slot_type';
+	protected static $strTable = 'tl_resource_booking_time_slot_type';
 
 
 

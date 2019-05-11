@@ -11,18 +11,18 @@
 /**
  * Table tl_calendar_events
  */
-$GLOBALS['TL_DCA']['tl_resource_reservation_resource'] = array(
+$GLOBALS['TL_DCA']['tl_resource_booking_resource_type'] = array(
 
     // Config
     'config'   => array(
         'dataContainer'    => 'Table',
         'switchToEdit'     => true,
-        'ptable'           => 'tl_resource_reservation_resource_type',
+        'ctable'           => array('tl_resource_booking_resource'),
         'enableVersioning' => true,
         'sql'              => array(
             'keys' => array(
                 'id'        => 'primary',
-                'published,pid' => 'index',
+                'published' => 'index',
             ),
         ),
     ),
@@ -49,34 +49,34 @@ $GLOBALS['TL_DCA']['tl_resource_reservation_resource'] = array(
         'operations'        => array(
 
             'edit'   => array(
-                'label' => &$GLOBALS['TL_LANG']['tl_resource_reservation_resource']['editmeta'],
+                'label' => &$GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['editmeta'],
                 'href'  => 'act=edit',
                 'icon'  => 'edit.gif',
             ),
             'copy'   => array(
-                'label' => &$GLOBALS['TL_LANG']['tl_resource_reservation_resource']['copy'],
+                'label' => &$GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['copy'],
                 'href'  => 'act=paste&amp;mode=copy',
                 'icon'  => 'copy.gif',
             ),
             'cut'    => array(
-                'label' => &$GLOBALS['TL_LANG']['tl_resource_reservation_resource']['cut'],
+                'label' => &$GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['cut'],
                 'href'  => 'act=paste&amp;mode=cut',
                 'icon'  => 'cut.gif',
             ),
             'delete' => array(
-                'label'      => &$GLOBALS['TL_LANG']['tl_resource_reservation_resource']['delete'],
+                'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['delete'],
                 'href'       => 'act=delete',
                 'icon'       => 'delete.gif',
                 'attributes' => 'onclick="if(!confirm(\'' . $GLOBALS['TL_LANG']['MSC']['deleteConfirm'] . '\'))return false;Backend.getScrollOffset()"',
             ),
             'toggle' => array(
-                'label'      => &$GLOBALS['TL_LANG']['tl_resource_reservation_resource']['toggle'],
+                'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['toggle'],
                 'icon'       => 'visible.gif',
                 'attributes' => 'onclick="Backend.getScrollOffset();return AjaxRequest.toggleVisibility(this,%s)"',
-                //'button_callback' => array('tl_resource_reservation_resource', 'toggleIcon'),
+                //'button_callback' => array('tl_resource_booking_resource_type', 'toggleIcon'),
             ),
             'show'   => array(
-                'label' => &$GLOBALS['TL_LANG']['tl_resource_reservation_resource']['show'],
+                'label' => &$GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['show'],
                 'href'  => 'act=show',
                 'icon'  => 'show.gif',
             ),
@@ -84,34 +84,26 @@ $GLOBALS['TL_DCA']['tl_resource_reservation_resource'] = array(
     ),
     // Palettes
     'palettes' => array(
-        'default' => '{published_legend},published;{title_legend},pid,title,description,timeSlotType',
+        'default' => '{published_legend},published;{title_legend},title,description',
     ),
     // Fields
     'fields'   => array(
-        'id'           => array(
+        'id'          => array(
             'sql' => "int(10) unsigned NOT NULL auto_increment",
         ),
-        'pid'          => array(
-            'label'      => &$GLOBALS['TL_LANG']['tl_resource_reservation_resource']['pid'],
-            'inputType'  => 'select',
-            'foreignKey' => 'tl_resource_reservation_resource_type.title',
-            'eval'       => array('mandatory' => true),
-            'sql'        => "int(10) unsigned NOT NULL default '0'",
-            'relation'   => array('type' => 'belongsTo', 'load' => 'lazy')
-        ),
-        'tstamp'       => array(
+        'tstamp'      => array(
             'sql' => "int(10) unsigned NOT NULL default '0'",
         ),
-        'title'        => array(
-            'label'     => &$GLOBALS['TL_LANG']['tl_resource_reservation_resource']['title'],
-            'exclude'   => true,
-            'search'    => true,
-            'inputType' => 'text',
-            'eval'      => array('mandatory' => true, 'maxlength' => 255, 'tl_class' => 'clr'),
-            'sql'       => "varchar(255) NOT NULL default ''"
+        'title'       => array(
+            'label'                   => &$GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['title'],
+            'exclude'                 => true,
+            'search'                  => true,
+            'inputType'               => 'text',
+            'eval'                    => array('mandatory'=>true, 'maxlength'=>255, 'tl_class'=>'w50'),
+            'sql'                     => "varchar(255) NOT NULL default ''"
         ),
-        'published'    => array(
-            'label'     => &$GLOBALS['TL_LANG']['tl_resource_reservation_resource']['published'],
+        'published'   => array(
+            'label'     => &$GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['published'],
             'exclude'   => true,
             'search'    => true,
             'sorting'   => true,
@@ -121,22 +113,14 @@ $GLOBALS['TL_DCA']['tl_resource_reservation_resource'] = array(
             'eval'      => array('doNotCopy' => true, 'tl_class' => 'clr'),
             'sql'       => "char(1) NOT NULL default ''",
         ),
-        'description'  => array(
-            'label'     => &$GLOBALS['TL_LANG']['tl_resource_reservation_resource']['description'],
-            'exclude'   => true,
-            'search'    => true,
-            'inputType' => 'textarea',
-            'eval'      => array('tl_class' => 'clr'),
-            'sql'       => "mediumtext NULL"
-        ),
-        'timeSlotType' => array(
-            'label'      => &$GLOBALS['TL_LANG']['tl_resource_reservation_resource']['timeSlotType'],
-            'inputType'  => 'select',
-            'foreignKey' => 'tl_resource_reservation_time_slot_type.title',
-            'eval'       => array('mandatory' => true, 'tl_class' => 'clr'),
-            'sql'        => "int(10) unsigned NOT NULL default '0'",
-            'relation'   => array('type' => 'belongsTo', 'load' => 'lazy')
-        ),
+        'description' => array(
+            'label'     => &$GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['description'],
+            'exclude'                 => true,
+            'search'                  => true,
+            'inputType'               => 'textarea',
+            'eval'                    => array(),
+            'sql'                     => "mediumtext NULL"
+        )
     )
 
 );
@@ -146,7 +130,7 @@ $GLOBALS['TL_DCA']['tl_resource_reservation_resource'] = array(
  *
  * @author Leo Feyer <https://github.com/leofeyer>
  */
-class tl_resource_reservation_resource extends Backend
+class tl_resource_booking_resource_type extends Backend
 {
 
     /**

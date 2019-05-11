@@ -6,17 +6,21 @@
  * Time: 13:10
  */
 
-namespace Markocupic\ResourceReservationBundle;
+namespace Markocupic\ResourceBookingBundle;
 
 use Contao\Date;
 use Contao\FrontendUser;
-use Contao\ResourceReservationModel;
-use Contao\ResourceReservationResourceModel;
-use Contao\ResourceReservationResourceTypeModel;
-use Contao\ResourceReservationTimeSlotModel;
+use Contao\ResourceBookingModel;
+use Contao\ResourceBookingResourceModel;
+use Contao\ResourceBookingResourceTypeModel;
+use Contao\ResourceBookingTimeSlotModel;
 use Contao\Input;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
+/**
+ * Class AjaxHandler
+ * @package Markocupic\ResourceBookingBundle
+ */
 class AjaxHandler
 {
     /**
@@ -52,7 +56,7 @@ class AjaxHandler
             $arrJson['activeResourceType']['title'] = $objModule->objSelectedResourceType->title;
 
             $objSelectedResource = $objModule->objSelectedResource;
-            $objTimeslots = ResourceReservationTimeSlotModel::findPublishedByPid($objSelectedResource->timeSlotType);
+            $objTimeslots = ResourceBookingTimeSlotModel::findPublishedByPid($objSelectedResource->timeSlotType);
             $rows = array();
             $rowCount = 0;
             if ($objTimeslots !== null)
@@ -72,7 +76,7 @@ class AjaxHandler
                         $objTs->endTimeString = Date::parse('H:i', $endTimestamp);
                         $objTs->endTimestamp = $endTimestamp;
                         $objTs->mondayTimestampSelectedWeek = $objModule->intSelectedDate;
-                        $objTs->isBooked = ResourceReservationHelper::isResourceBooked($objSelectedResource, $startTimestamp, $endTimestamp);
+                        $objTs->isBooked = ResourceBookingHelper::isResourceBooked($objSelectedResource, $startTimestamp, $endTimestamp);
                         $objTs->isEditable = $objTs->isBooked ? false : true;
                         $objTs->timeSlotId = $objTimeslots->id;
                         $objTs->resourceId = $objSelectedResource->id;
@@ -83,19 +87,19 @@ class AjaxHandler
                         if ($objTs->isBooked)
                         {
                             $objTs->isEditable = false;
-                            $objRes = ResourceReservationHelper::getBookedResourcesInSlot($objSelectedResource, $startTimestamp, $endTimestamp);
+                            $objRes = ResourceBookingHelper::getBookedResourcesInSlot($objSelectedResource, $startTimestamp, $endTimestamp);
                             if ($objRes !== null)
                             {
-                                $objReservation = $objRes->first();
-                                if ($objReservation->member === $objModule->objUser->id)
+                                $objBooking = $objRes->first();
+                                if ($objBooking->member === $objModule->objUser->id)
                                 {
                                     $objTs->isEditable = true;
                                 }
 
-                                $objTs->bookedByFirstname = $objReservation->firstname;
-                                $objTs->bookedByLastname = $objReservation->lastname;
-                                $objTs->bookingDescription = $objReservation->description;
-                                $objTs->bookingId = $objReservation->id;
+                                $objTs->bookedByFirstname = $objBooking->firstname;
+                                $objTs->bookedByLastname = $objBooking->lastname;
+                                $objTs->bookingDescription = $objBooking->description;
+                                $objTs->bookingId = $objBooking->id;
                             }
                         }
 
@@ -115,7 +119,7 @@ class AjaxHandler
         $arrJson['rows'] = $rows;
 
         // Get time slots
-        $objTimeslots = ResourceReservationTimeSlotModel::findPublishedByPid($objSelectedResource->timeSlotType);
+        $objTimeslots = ResourceBookingTimeSlotModel::findPublishedByPid($objSelectedResource->timeSlotType);
         $timeSlots = array();
         if ($objTimeslots !== null)
         {
@@ -154,7 +158,7 @@ class AjaxHandler
                 $arrResObj = array();
 
                 $objUser = FrontendUser::getInstance();
-                $objResource = ResourceReservationResourceModel::findByPk(Input::post('resourceId'));
+                $objResource = ResourceBookingResourceModel::findByPk(Input::post('resourceId'));
                 if ($objResource !== null)
                 {
                     foreach (Input::post('bookedTimeSlots') as $strTimeSlot)
@@ -196,20 +200,20 @@ class AjaxHandler
                     }
                     foreach ($arrBookings as $arrData)
                     {
-                        if (!ResourceReservationHelper::isResourceBooked($objResource, $arrData['startTime'], $arrData['endTime']))
+                        if (!ResourceBookingHelper::isResourceBooked($objResource, $arrData['startTime'], $arrData['endTime']))
                         {
-                            if (($objTimeslot = ResourceReservationTimeSlotModel::findByPk($arrData['timeSlotId'])) !== null)
+                            if (($objTimeslot = ResourceBookingTimeSlotModel::findByPk($arrData['timeSlotId'])) !== null)
                             {
-                                $objReservation = new ResourceReservationModel();
+                                $objBooking = new ResourceBookingModel();
                                 foreach ($arrData as $k => $v)
                                 {
-                                    $objReservation->{$k} = $v;
+                                    $objBooking->{$k} = $v;
                                 }
-                                $arrResObj[] = $objReservation;
+                                $arrResObj[] = $objBooking;
                                 $counter++;
                             }
                         }
-                        elseif (null !== ResourceReservationModel::findOneByResourceIdStarttimeEndtimeAndOwnerId($objResource, $arrData['startTime'], $arrData['endTime'], $arrData['member']))
+                        elseif (null !== ResourceBookingModel::findOneByResourceIdStarttimeEndtimeAndOwnerId($objResource, $arrData['startTime'], $arrData['endTime'], $arrData['member']))
                         {
                             $counter++;
                         }
@@ -228,9 +232,9 @@ class AjaxHandler
 
                 if ($error === 0)
                 {
-                    foreach ($arrResObj as $objReservation)
+                    foreach ($arrResObj as $objBooking)
                     {
-                        $objReservation->save();
+                        $objBooking->save();
                     }
 
                     $arrJson['status'] = 'success';
@@ -254,7 +258,7 @@ class AjaxHandler
         {
             $objUser = FrontendUser::getInstance();
             $bookingId = Input::post('bookingId');
-            $objBooking = ResourceReservationModel::findByPk($bookingId);
+            $objBooking = ResourceBookingModel::findByPk($bookingId);
             if ($objBooking !== null)
             {
                 if ($objBooking->member === $objUser->id)

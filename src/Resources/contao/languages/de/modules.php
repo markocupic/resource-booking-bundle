@@ -10,8 +10,8 @@
 
 
 // Backend modules
-$GLOBALS['TL_LANG']['MOD']['resourceReservation'] = array('Resourcen Reservations Module', 'Resourcen Reservations Module');
+$GLOBALS['TL_LANG']['MOD']['resourceBooking'] = array('Resourcen-Buchungs-Module', 'Resourcen-Buchungs-Module');
 
 // Frontend modules
-$GLOBALS['TL_LANG']['FMD']['resourceReservation'] = 'Resourcen Reservations Module';
-$GLOBALS['TL_LANG']['FMD']['resourceReservationWeekCalendar'] = array('Wochenkalender mit Resourcen-Reservierung', 'Wochenkalender mit Resourcen-Reservierung');
+$GLOBALS['TL_LANG']['FMD']['resourceBooking'] = 'Resourcen-Buchungs-Module';
+$GLOBALS['TL_LANG']['FMD']['resourceBookingWeekCalendar'] = array('Wochenkalender mit Resourcen-Buchung', 'Wochenkalender mit Resourcen-Buchung');

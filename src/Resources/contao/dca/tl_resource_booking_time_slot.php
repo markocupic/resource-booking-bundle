@@ -8,14 +8,14 @@
  * @license LGPL-3.0-or-later
  */
 
-$GLOBALS['TL_DCA']['tl_resource_reservation_time_slot'] = array
+$GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = array
 (
 
     // Config
     'config'   => array
     (
         'dataContainer'     => 'Table',
-        'ptable'            => 'tl_resource_reservation_time_slot_type',
+        'ptable'            => 'tl_resource_booking_time_slot_type',
         'enableVersioning'  => true,
         'sql'               => array
         (
@@ -25,7 +25,7 @@ $GLOBALS['TL_DCA']['tl_resource_reservation_time_slot'] = array
                 'pid' => 'index'
             )
         ),
-        'ondelete_callback' => array(array('tl_resource_reservation_time_slot', 'removeChildRecords'))
+        'ondelete_callback' => array(array('tl_resource_booking_time_slot', 'removeChildRecords'))
     ),
 
     // List
@@ -37,7 +37,7 @@ $GLOBALS['TL_DCA']['tl_resource_reservation_time_slot'] = array
             'fields'                => array('sorting'),
             'panelLayout'           => 'filter;search,limit',
             'headerFields'          => array('title'),
-            'child_record_callback' => array('tl_resource_reservation_time_slot', 'childRecordCallback')
+            'child_record_callback' => array('tl_resource_booking_time_slot', 'childRecordCallback')
         ),
         'global_operations' => array
         (
@@ -53,42 +53,42 @@ $GLOBALS['TL_DCA']['tl_resource_reservation_time_slot'] = array
         (
             'edit'   => array
             (
-                'label' => &$GLOBALS['TL_LANG']['tl_resource_reservation_time_slot']['edit'],
+                'label' => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['edit'],
                 'href'  => 'act=edit',
                 'icon'  => 'edit.svg'
             ),
             'copy'   => array
             (
-                'label'      => &$GLOBALS['TL_LANG']['tl_resource_reservation_time_slot']['copy'],
+                'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['copy'],
                 'href'       => 'act=paste&amp;mode=copy',
                 'icon'       => 'copy.svg',
                 'attributes' => 'onclick="Backend.getScrollOffset()"'
             ),
             'cut'    => array
             (
-                'label'      => &$GLOBALS['TL_LANG']['tl_resource_reservation_time_slot']['cut'],
+                'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['cut'],
                 'href'       => 'act=paste&amp;mode=cut',
                 'icon'       => 'cut.svg',
                 'attributes' => 'onclick="Backend.getScrollOffset()"'
             ),
             'delete' => array
             (
-                'label'      => &$GLOBALS['TL_LANG']['tl_resource_reservation_time_slot']['delete'],
+                'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['delete'],
                 'href'       => 'act=delete',
                 'icon'       => 'delete.svg',
                 'attributes' => 'onclick="if(!confirm(\'' . $GLOBALS['TL_LANG']['MSC']['deleteConfirm'] . '\'))return false;Backend.getScrollOffset()"'
             ),
             'toggle' => array
             (
-                'label'           => &$GLOBALS['TL_LANG']['tl_resource_reservation_time_slot']['toggle'],
+                'label'           => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['toggle'],
                 'icon'            => 'visible.svg',
                 'attributes'      => 'onclick="Backend.getScrollOffset();return AjaxRequest.toggleVisibility(this,%s)"',
-                'button_callback' => array('tl_resource_reservation_time_slot', 'toggleIcon'),
+                'button_callback' => array('tl_resource_booking_time_slot', 'toggleIcon'),
                 'showInHeader'    => true
             ),
             'show'   => array
             (
-                'label' => &$GLOBALS['TL_LANG']['tl_resource_reservation_time_slot']['show'],
+                'label' => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['show'],
                 'href'  => 'act=show',
                 'icon'  => 'show.svg'
             )
@@ -118,7 +118,7 @@ $GLOBALS['TL_DCA']['tl_resource_reservation_time_slot'] = array
             'sql' => "int(10) unsigned NOT NULL default '0'"
         ),
         'title'       => array(
-            'label'     => &$GLOBALS['TL_LANG']['tl_resource_reservation_time_slot']['title'],
+            'label'     => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['title'],
             'exclude'   => true,
             'search'    => true,
             'inputType' => 'text',
@@ -126,7 +126,7 @@ $GLOBALS['TL_DCA']['tl_resource_reservation_time_slot'] = array
             'sql'       => "varchar(255) NOT NULL default ''"
         ),
         'published'   => array(
-            'label'     => &$GLOBALS['TL_LANG']['tl_resource_reservation_time_slot']['published'],
+            'label'     => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['published'],
             'exclude'   => true,
             'search'    => true,
             'sorting'   => true,
@@ -137,7 +137,7 @@ $GLOBALS['TL_DCA']['tl_resource_reservation_time_slot'] = array
             'sql'       => "char(1) NOT NULL default ''",
         ),
         'description' => array(
-            'label'     => &$GLOBALS['TL_LANG']['tl_resource_reservation_time_slot']['description'],
+            'label'     => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['description'],
             'exclude'   => true,
             'search'    => true,
             'inputType' => 'textarea',
@@ -156,11 +156,11 @@ $GLOBALS['TL_DCA']['tl_resource_reservation_time_slot'] = array
             'eval'          => array('rgxp' => 'timeslottime', 'mandatory' => true, 'tl_class' => 'w50'),
             'load_callback' => array
             (
-                array('tl_resource_reservation_time_slot', 'loadTime')
+                array('tl_resource_booking_time_slot', 'loadTime')
             ),
             'save_callback' => array
             (
-                array('tl_resource_reservation_time_slot', 'setCorrectTime')
+                array('tl_resource_booking_time_slot', 'setCorrectTime')
             ),
             'sql'           => "int(10) NULL"
         ),
@@ -173,13 +173,13 @@ $GLOBALS['TL_DCA']['tl_resource_reservation_time_slot'] = array
             'eval'          => array('rgxp' => 'timeslottime', 'mandatory' => true, 'tl_class' => 'w50'),
             'load_callback' => array
             (
-                array('tl_resource_reservation_time_slot', 'loadTime')
+                array('tl_resource_booking_time_slot', 'loadTime')
             ),
             'save_callback' => array
             (
-                array('tl_resource_reservation_time_slot', 'setCorrectTime'),
+                array('tl_resource_booking_time_slot', 'setCorrectTime'),
                 //!!!!Todo
-                //array('tl_resource_reservation_time_slot', 'setCorrectEndTime')
+                //array('tl_resource_booking_time_slot', 'setCorrectEndTime')
             ),
             'sql'           => "int(10) NULL"
         ),
@@ -191,7 +191,7 @@ $GLOBALS['TL_DCA']['tl_resource_reservation_time_slot'] = array
  *
  * @author Leo Feyer <https://github.com/leofeyer>
  */
-class tl_resource_reservation_time_slot extends Contao\Backend
+class tl_resource_booking_time_slot extends Contao\Backend
 {
 
     /**
@@ -209,7 +209,7 @@ class tl_resource_reservation_time_slot extends Contao\Backend
      */
     public function childRecordCallback($row)
     {
-        return sprintf('<div class="tl_content_left"><span style="color:#999;padding-left:3px">' . $row['title'] . '</span> %s-%s</div>', Markocupic\ResourceReservationBundle\UtcDate::parse('H:i', $row['startTime']), Markocupic\ResourceReservationBundle\UtcDate::parse('H:i', $row['endTime']));
+        return sprintf('<div class="tl_content_left"><span style="color:#999;padding-left:3px">' . $row['title'] . '</span> %s-%s</div>', Markocupic\ResourceBookingBundle\UtcDate::parse('H:i', $row['startTime']), Markocupic\ResourceBookingBundle\UtcDate::parse('H:i', $row['endTime']));
     }
 
     /**
@@ -263,9 +263,9 @@ class tl_resource_reservation_time_slot extends Contao\Backend
         }
 
         // Trigger the onload_callback
-        if (\is_array($GLOBALS['TL_DCA']['tl_resource_reservation_time_slot']['config']['onload_callback']))
+        if (\is_array($GLOBALS['TL_DCA']['tl_resource_booking_time_slot']['config']['onload_callback']))
         {
-            foreach ($GLOBALS['TL_DCA']['tl_resource_reservation_time_slot']['config']['onload_callback'] as $callback)
+            foreach ($GLOBALS['TL_DCA']['tl_resource_booking_time_slot']['config']['onload_callback'] as $callback)
             {
                 if (\is_array($callback))
                 {
@@ -282,7 +282,7 @@ class tl_resource_reservation_time_slot extends Contao\Backend
         // Set the current record
         if ($dc)
         {
-            $objRow = $this->Database->prepare("SELECT * FROM tl_resource_reservation_time_slot WHERE id=?")
+            $objRow = $this->Database->prepare("SELECT * FROM tl_resource_booking_time_slot WHERE id=?")
                 ->limit(1)
                 ->execute($intId);
 
@@ -292,13 +292,13 @@ class tl_resource_reservation_time_slot extends Contao\Backend
             }
         }
 
-        $objVersions = new Contao\Versions('tl_resource_reservation_time_slot', $intId);
+        $objVersions = new Contao\Versions('tl_resource_booking_time_slot', $intId);
         $objVersions->initialize();
 
         // Trigger the save_callback
-        if (\is_array($GLOBALS['TL_DCA']['tl_resource_reservation_time_slot']['fields']['published']['save_callback']))
+        if (\is_array($GLOBALS['TL_DCA']['tl_resource_booking_time_slot']['fields']['published']['save_callback']))
         {
-            foreach ($GLOBALS['TL_DCA']['tl_resource_reservation_time_slot']['fields']['published']['save_callback'] as $callback)
+            foreach ($GLOBALS['TL_DCA']['tl_resource_booking_time_slot']['fields']['published']['save_callback'] as $callback)
             {
                 if (\is_array($callback))
                 {
@@ -315,7 +315,7 @@ class tl_resource_reservation_time_slot extends Contao\Backend
         $time = time();
 
         // Update the database
-        $this->Database->prepare("UPDATE tl_resource_reservation_time_slot SET tstamp=$time, published='" . ($blnVisible ? '1' : '') . "' WHERE id=?")
+        $this->Database->prepare("UPDATE tl_resource_booking_time_slot SET tstamp=$time, published='" . ($blnVisible ? '1' : '') . "' WHERE id=?")
             ->execute($intId);
 
         if ($dc)
@@ -325,9 +325,9 @@ class tl_resource_reservation_time_slot extends Contao\Backend
         }
 
         // Trigger the onsubmit_callback
-        if (\is_array($GLOBALS['TL_DCA']['tl_resource_reservation_time_slot']['config']['onsubmit_callback']))
+        if (\is_array($GLOBALS['TL_DCA']['tl_resource_booking_time_slot']['config']['onsubmit_callback']))
         {
-            foreach ($GLOBALS['TL_DCA']['tl_resource_reservation_time_slot']['config']['onsubmit_callback'] as $callback)
+            foreach ($GLOBALS['TL_DCA']['tl_resource_booking_time_slot']['config']['onsubmit_callback'] as $callback)
             {
                 if (\is_array($callback))
                 {
@@ -353,7 +353,7 @@ class tl_resource_reservation_time_slot extends Contao\Backend
         $strValue = '';
         if ($timestamp != '')
         {
-            $strValue = Markocupic\ResourceReservationBundle\UtcDate::parse('H:i', $timestamp);
+            $strValue = Markocupic\ResourceBookingBundle\UtcDate::parse('H:i', $timestamp);
         }
 
         return $strValue;
@@ -368,7 +368,7 @@ class tl_resource_reservation_time_slot extends Contao\Backend
     {
         if (strlen($varValue) === 5)
         {
-            $varValue = Markocupic\ResourceReservationBundle\UtcDate::strtotime('1970-01-01 ' . $varValue);
+            $varValue = Markocupic\ResourceBookingBundle\UtcDate::strtotime('1970-01-01 ' . $varValue);
         }
         else
         {
@@ -419,8 +419,8 @@ class tl_resource_reservation_time_slot extends Contao\Backend
         {
             return;
         }
-        // Delete child reservations
-        $this->Database->prepare('DELETE FROM tl_resource_reservation WHERE timeSlotId=?')->execute($dc->id);
+        // Delete child bookings
+        $this->Database->prepare('DELETE FROM tl_resource_booking WHERE timeSlotId=?')->execute($dc->id);
     }
 
 }

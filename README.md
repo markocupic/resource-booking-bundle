@@ -1,2 +1,2 @@
-# resource-reservation-bundle
-Do not install this extension. It is under construction!
+# resource-booking-bundle
+Do not install this extension, due to it is under construction!

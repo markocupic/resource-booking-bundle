@@ -5,8 +5,8 @@
  * @author Marko Cupic m.cupic@gmx.ch, 2019
  * @link https://github.com/markocupic/chronometry-bundle
  */
-var resourceReservationApp = new Vue({
-    el: '#resourceReservationApp',
+var resourceBookingApp = new Vue({
+    el: '#resourceBookingApp',
     data: {
         isReady: false,
         isOnline: '',
@@ -30,7 +30,7 @@ var resourceReservationApp = new Vue({
     },
     created: function () {
         let self = this;
-        self.requestToken = RESOURCE_RESERVATION.requestToken;
+        self.requestToken = RESOURCE_BOOKING.requestToken;
 
         window.setTimeout(function () {
             self.isReady = true;
@@ -204,7 +204,7 @@ var resourceReservationApp = new Vue({
 
         submitForm: function () {
             let self = this;
-            document.getElementById('resourceReservationForm').submit();
+            document.getElementById('resourceBookingForm').submit();
         }
 
 

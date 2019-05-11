@@ -8,17 +8,17 @@
  * @link https://github.com/markocupic/chronometry-bundle
  */
 
-namespace Markocupic\ResourceReservationBundle;
+namespace Markocupic\ResourceBookingBundle;
 
 use Contao\Database;
 use Contao\Date;
-use Contao\ResourceReservationModel;
+use Contao\ResourceBookingModel;
 
 /**
- * Class ResourceReservationHelper
- * @package Markocupic\ResourceReservationBundle
+ * Class ResourceBookingHelper
+ * @package Markocupic\ResourceBookingBundle
  */
-class ResourceReservationHelper
+class ResourceBookingHelper
 {
 
     /**
@@ -46,7 +46,7 @@ class ResourceReservationHelper
 
         $arrIDS = array();
         // 1. possible case  -|---- | or -|-----| or -|-----|--
-        $objDb = Database::getInstance()->prepare('SELECT id FROM tl_resource_reservation WHERE (startTime<? AND endTime>?) AND pid=?')
+        $objDb = Database::getInstance()->prepare('SELECT id FROM tl_resource_booking WHERE (startTime<? AND endTime>?) AND pid=?')
             ->execute($slotStartTime, $slotStartTime, $objRes->id);
         if ($objDb->numRows)
         {
@@ -57,7 +57,7 @@ class ResourceReservationHelper
         }
 
         // 2. possible case  |----- | or |-----| or |-----|--
-        $objDb = Database::getInstance()->prepare('SELECT id FROM tl_resource_reservation WHERE (startTime=? AND endTime>?) AND pid=?')
+        $objDb = Database::getInstance()->prepare('SELECT id FROM tl_resource_booking WHERE (startTime=? AND endTime>?) AND pid=?')
             ->execute($slotStartTime, $slotStartTime, $objRes->id);
         if ($objDb->numRows)
         {
@@ -68,7 +68,7 @@ class ResourceReservationHelper
         }
 
         // 3. possible case  | --- | or -| ----| or | ----|--
-        $objDb = Database::getInstance()->prepare('SELECT id FROM tl_resource_reservation WHERE (startTime>? AND startTime<? AND endTime>?) AND pid=?')
+        $objDb = Database::getInstance()->prepare('SELECT id FROM tl_resource_booking WHERE (startTime>? AND startTime<? AND endTime>?) AND pid=?')
             ->execute($slotStartTime, $slotEndTime, $slotEndTime, $objRes->id);
         if ($objDb->numRows)
         {
@@ -79,7 +79,7 @@ class ResourceReservationHelper
         }
 
         // 4. possible case  |----|
-        $objDb = Database::getInstance()->prepare('SELECT id FROM tl_resource_reservation WHERE (startTime=? AND endTime=?) AND pid=?')
+        $objDb = Database::getInstance()->prepare('SELECT id FROM tl_resource_booking WHERE (startTime=? AND endTime=?) AND pid=?')
             ->execute($slotStartTime, $slotEndTime, $objRes->id);
         if ($objDb->numRows)
         {
@@ -92,7 +92,7 @@ class ResourceReservationHelper
         if (count($arrIDS) > 0)
         {
             $arrIDS = array_unique($arrIDS);
-            return ResourceReservationModel::findMultipleByIds($arrIDS);
+            return ResourceBookingModel::findMultipleByIds($arrIDS);
         }
 
         return null;

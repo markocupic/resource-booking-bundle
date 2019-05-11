@@ -8,7 +8,7 @@
  * @link https://github.com/markocupic/chronometry-bundle
  */
 
-namespace Markocupic\ResourceReservationBundle\ContaoManager;
+namespace Markocupic\ResourceBookingBundle\ContaoManager;
 
 use Contao\ManagerPlugin\Bundle\BundlePluginInterface;
 use Contao\ManagerPlugin\Bundle\Config\BundleConfig;
@@ -16,7 +16,7 @@ use Contao\ManagerPlugin\Bundle\Parser\ParserInterface;
 
 /**
  * Class Plugin
- * @package Markocupic\ResourceReservationBundle\ContaoManager
+ * @package Markocupic\ResourceBookingBundle\ContaoManager
  */
 class Plugin implements BundlePluginInterface
 {
@@ -26,7 +26,7 @@ class Plugin implements BundlePluginInterface
     public function getBundles(ParserInterface $parser)
     {
         return [
-            BundleConfig::create('Markocupic\ResourceReservationBundle\MarkocupicResourceReservationBundle')
+            BundleConfig::create('Markocupic\ResourceBookingBundle\MarkocupicResourceBookingBundle')
                 ->setLoadAfter(['Contao\CoreBundle\ContaoCoreBundle'])
         ];
     }

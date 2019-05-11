@@ -11,26 +11,26 @@
 /**
  * Back end modules
  */
-$GLOBALS['BE_MOD']['resourceReservation'] = array(
+$GLOBALS['BE_MOD']['resourceBooking'] = array(
     'resourceType' => array
     (
-        'tables' => array('tl_resource_reservation_resource_type'),
+        'tables' => array('tl_resource_booking_resource_type'),
         'table'  => array('TableWizard', 'importTable'),
         'list'   => array('ListWizard', 'importList')
     ),
     'resource'     => array
     (
-        'tables' => array('tl_resource_reservation_resource'),
+        'tables' => array('tl_resource_booking_resource'),
         'table'  => array('TableWizard', 'importTable'),
         'list'   => array('ListWizard', 'importList')
     ),
     'timeSlotType' => array
     (
-        'tables' => array('tl_resource_reservation_time_slot_type', 'tl_resource_reservation_time_slot'),
+        'tables' => array('tl_resource_booking_time_slot_type', 'tl_resource_booking_time_slot'),
     ),
-    'reservations' => array
+    'bookings' => array
     (
-        'tables' => array('tl_resource_reservation'),
+        'tables' => array('tl_resource_booking'),
     )
 );
 
@@ -39,15 +39,15 @@ $GLOBALS['BE_MOD']['resourceReservation'] = array(
  */
 array_insert($GLOBALS['FE_MOD'], 2, array
 (
-    'resourceReservation' => array
+    'resourceBooking' => array
     (
-        'resourceReservationWeekCalendar' => 'Markocupic\\ResourceReservationBundle\\ModuleWeekcalendar',
+        'resourceBookingWeekCalendar' => 'Markocupic\\ResourceBookingBundle\\ModuleWeekcalendar',
     )
 ));
 
 // Asset path
-define('MOD_RESOURCE_RESERVATION_ASSET_PATH', 'bundles/markocupicresourcereservation');
+define('MOD_RESOURCE_BOOKING_ASSET_PATH', 'bundles/markocupicresourcebooking');
 
 // Hooks
-$GLOBALS['TL_HOOKS']['addCustomRegexp'][] = array('Markocupic\\ResourceReservationBundle\\RegexpHook', 'customRegexp');
+$GLOBALS['TL_HOOKS']['addCustomRegexp'][] = array('Markocupic\\ResourceBookingBundle\\RegexpHook', 'customRegexp');
 

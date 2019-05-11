@@ -7,14 +7,14 @@
  * @link https://github.com/markocupic/chronometry-bundle
  */
 
-namespace Markocupic\ResourceReservationBundle;
+namespace Markocupic\ResourceBookingBundle;
 
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
 /**
- * Class MarkocupicResourceReservationBundle
- * @package Markocupic\ResourceReservationBundle
+ * Class MarkocupicResourceBookingBundle
+ * @package Markocupic\ResourceBookingBundle
  */
-class MarkocupicResourceReservationBundle extends Bundle
+class MarkocupicResourceBookingBundle extends Bundle
 {
 }

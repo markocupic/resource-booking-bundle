@@ -1,17 +1,17 @@
-<?php $GLOBALS['TL_CSS'][] = MOD_RESOURCE_RESERVATION_ASSET_PATH . '/bootstrap/css/bootstrap.min.css||static'; ?>
-<?php $GLOBALS['TL_JAVASCRIPT'][] = MOD_RESOURCE_RESERVATION_ASSET_PATH . '/bootstrap/js/bootstrap.min.js||static'; ?>
-<?php $GLOBALS['TL_CSS'][] = MOD_RESOURCE_RESERVATION_ASSET_PATH . '/fontawesome/css/all.css||static'; ?>
-<?php $GLOBALS['TL_JAVASCRIPT'][] = MOD_RESOURCE_RESERVATION_ASSET_PATH . '/vue/vue.js||static'; ?>
-<?php $GLOBALS['TL_JAVASCRIPT'][] = MOD_RESOURCE_RESERVATION_ASSET_PATH . '/popper/popper.js||static'; ?>
-<?php $GLOBALS['TL_CSS'][] = MOD_RESOURCE_RESERVATION_ASSET_PATH . '/css/style.css||static'; ?>
+<?php $GLOBALS['TL_CSS'][] = MOD_RESOURCE_BOOKING_ASSET_PATH . '/bootstrap/css/bootstrap.min.css||static'; ?>
+<?php $GLOBALS['TL_JAVASCRIPT'][] = MOD_RESOURCE_BOOKING_ASSET_PATH . '/bootstrap/js/bootstrap.min.js||static'; ?>
+<?php $GLOBALS['TL_CSS'][] = MOD_RESOURCE_BOOKING_ASSET_PATH . '/fontawesome/css/all.css||static'; ?>
+<?php $GLOBALS['TL_JAVASCRIPT'][] = MOD_RESOURCE_BOOKING_ASSET_PATH . '/vue/vue.js||static'; ?>
+<?php $GLOBALS['TL_JAVASCRIPT'][] = MOD_RESOURCE_BOOKING_ASSET_PATH . '/popper/popper.js||static'; ?>
+<?php $GLOBALS['TL_CSS'][] = MOD_RESOURCE_BOOKING_ASSET_PATH . '/css/style.css||static'; ?>
 
 <?php $this->extend('block_unsearchable'); ?>
 
 <?php $this->block('content'); ?>
 
-<div id="resourceReservationApp" v-bind:class="{ 'is-ready': isReady }">
+<div id="resourceBookingApp" v-bind:class="{ 'is-ready': isReady }">
 
-    <form id="resourceReservationForm" action="{{env::request}}" method="get">
+    <form id="resourceBookingForm" action="{{env::request}}" method="get">
         <div class="form-row">
             <div class="form-group col-sm-1">
                 <a href="<?= $this->minus1WeekUrl ?>" class="btn btn-primary btn-block<?php if($this->disableMinus1WeekBtn): ?> disabled<?php endif; ?>" role="button"<?php if($this->disableMinus1WeekBtn): ?> aria-disabled="true"<?php endif; ?>>-<span class="d-none d-lg-inline">1W</span></a>
@@ -64,7 +64,7 @@
     <!-- vue application container -->
     <div class="vue-application">
         <div class="table-responsive-lg">
-            <table class="resource-reservation-table-main table">
+            <table class="resource-booking-table-main table">
                 <thead>
                 <tr>
                     <th width="12.5%">Uhrzeit</th>
@@ -111,7 +111,7 @@
                         <div v-if="bookingModal.alertError != ''" class="alert alert-danger">{{ bookingModal.alertError }}</div>
                         <div v-if="!bookingModal.showConfirmationMsg && bookingModal.action == 'showBookingForm'">
                             <form>
-                                <table class="resource-reservation-table-modal table">
+                                <table class="resource-booking-table-modal table">
                                     <thead>
                                     <tr>
                                         <th width="12.5%">Uhrzeit</th>
@@ -173,11 +173,11 @@
 
 
 <script>
-    RESOURCE_RESERVATION = {
+    RESOURCE_BOOKING = {
         requestToken: '{{REQUEST_TOKEN}}'
     }
 </script>
-<script src="<?= MOD_RESOURCE_RESERVATION_ASSET_PATH ?>/resource-reservation-app-vue.js"></script>
+<script src="<?= MOD_RESOURCE_BOOKING_ASSET_PATH ?>/resource-booking-app-vue.js"></script>
 
 
 <?php $this->endblock(); ?>

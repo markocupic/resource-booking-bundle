@@ -8,13 +8,13 @@
  * @link https://github.com/markocupic/chronometry-bundle
  */
 
-namespace Markocupic\ResourceReservationBundle;
+namespace Markocupic\ResourceBookingBundle;
 
 use Contao\Date;
 
 /**
  * Class DateHelper
- * @package Markocupic\ResourceReservationBundle
+ * @package Markocupic\ResourceBookingBundle
  */
 class DateHelper
 {

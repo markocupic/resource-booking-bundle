@@ -1,13 +1,12 @@
 {
-  "name": "markocupic/resource-reservation-bundle",
-  "description": "Resource-Reservations-Tool für Schulen.",
+  "name": "markocupic/resource-booking-bundle",
+  "description": "resource-booking-tool for schools or other institutions",
   "keywords": [
     "contao",
     "resource",
     "room",
-    "reservation",
-    "school",
-    "vue"
+    "booking",
+    "school"
   ],
   "type": "contao-module",
   "license": "LGPL-3.0+",
@@ -20,8 +19,8 @@
     }
   ],
   "support": {
-    "issues": "https://github.com/markocupic/resource-reservation-bundle/issues",
-    "source": "https://github.com/markocupic/resource-reservation-bundle"
+    "issues": "https://github.com/markocupic/resource-booking-bundle/issues",
+    "source": "https://github.com/markocupic/resource-booking-bundle"
   },
   "require": {
     "php": ">=7.1",
@@ -30,7 +29,7 @@
   },
   "autoload": {
     "psr-4": {
-      "Markocupic\\ResourceReservationBundle\\": "src/"
+      "Markocupic\\ResourceBookingBundle\\": "src/"
     },
     "classmap": [
       "src/Resources/contao"
@@ -45,6 +44,6 @@
     ]
   },
   "extra": {
-    "contao-manager-plugin": "Markocupic\\ResourceReservationBundle\\ContaoManager\\Plugin"
+    "contao-manager-plugin": "Markocupic\\ResourceBookingBundle\\ContaoManager\\Plugin"
   }
 }

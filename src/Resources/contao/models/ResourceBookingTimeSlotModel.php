@@ -11,17 +11,17 @@
 namespace Contao;
 
 /**
- * Class ResourceReservationTimeSlotModel
+ * Class ResourceBookingTimeSlotModel
  * @package Contao
  */
-class ResourceReservationTimeSlotModel extends \Model
+class ResourceBookingTimeSlotModel extends \Model
 {
 
     /**
      * Table name
      * @var string
      */
-    protected static $strTable = 'tl_resource_reservation_time_slot';
+    protected static $strTable = 'tl_resource_booking_time_slot';
 
     /**
      * @param $intId
@@ -30,7 +30,7 @@ class ResourceReservationTimeSlotModel extends \Model
     public static function findPublishedByPid($intId)
     {
         $arrIds = array();
-        $objDb = Database::getInstance()->prepare('SELECT * FROM tl_resource_reservation_time_slot WHERE pid=? AND published=? ORDER BY sorting')->execute($intId, '1');
+        $objDb = Database::getInstance()->prepare('SELECT * FROM tl_resource_booking_time_slot WHERE pid=? AND published=? ORDER BY sorting')->execute($intId, '1');
         while($objDb->next())
         {
             $arrIds[] = $objDb->id;

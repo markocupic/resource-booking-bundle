@@ -1,11 +1,11 @@
-.mod_resourceReservationWeekCalendar {
-  #resourceReservationApp .vue-application {
+.mod_resourceBookingWeekCalendar {
+  #resourceBookingApp .vue-application {
     visibility: hidden;
   }
-  #resourceReservationApp.is-ready .vue-application {
+  #resourceBookingApp.is-ready .vue-application {
     visibility: visible;
   }
-  table.resource-reservation-table-main, table.resource-reservation-table-modal {
+  table.resource-booking-table-main, table.resource-booking-table-modal {
     * {
       font-size: small;
     }
@@ -32,8 +32,8 @@
     background-color: var(--danger);
     padding: 0.5rem;
   }
-  
-  table.resource-reservation-table-modal {
+
+  table.resource-booking-table-modal {
     td, th {
       height: auto !important;
       min-height: 2.5rem;

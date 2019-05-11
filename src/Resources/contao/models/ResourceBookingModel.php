@@ -11,24 +11,24 @@
 namespace Contao;
 
 /**
- * Class ResourceReservationModel
+ * Class ResourceBookingModel
  * @package Contao
  */
-class ResourceReservationModel extends \Model
+class ResourceBookingModel extends \Model
 {
 
     /**
      * Table name
      * @var string
      */
-    protected static $strTable = 'tl_resource_reservation';
+    protected static $strTable = 'tl_resource_booking';
 
     /**
      * @param $objResource
      * @param $starttime
      * @param $endtime
      * @param $memberid
-     * @return ResourceReservationModel
+     * @return ResourceBookingModel
      */
     public static function findOneByResourceIdStarttimeEndtimeAndOwnerId($objResource, $starttime, $endtime, $memberid)
     {
