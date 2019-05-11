@@ -105,7 +105,7 @@ let resourceBookingApp = new Vue({
                     self.bookingModal.alertSuccess = response.alertSuccess;
                     window.setTimeout(function () {
                         $('#resourceBookingModal').modal('hide');
-                    }, 2000);
+                    }, 2500);
                 } else {
                     self.bookingModal.alertError = response.alertError;
                 }
@@ -136,6 +136,9 @@ let resourceBookingApp = new Vue({
             xhr.done(function (response) {
                 if (response.status === 'success') {
                     self.bookingModal.alertSuccess = response.alertSuccess;
+                    window.setTimeout(function () {
+                        $('#resourceBookingModal').modal('hide');
+                    }, 2500);
                 } else {
                     self.bookingModal.alertError = response.alertError;
                 }
