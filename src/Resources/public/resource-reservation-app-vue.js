@@ -34,7 +34,7 @@ var resourceReservationApp = new Vue({
 
         window.setTimeout(function () {
             self.isReady = true;
-        }, 2000);
+        }, 800);
 
         //self.checkOnlineStatus();
         window.setInterval(function () {

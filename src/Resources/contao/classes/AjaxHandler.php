@@ -183,9 +183,9 @@ class AjaxHandler
                             $arrRepeat = $arrBooking;
                             while ($doRepeat === true)
                             {
-                                $arrRepeat['startTime'] = strtotime(Date::parse('Y-m-d H:i:s', $arrRepeat['startTime']) . ' + 7 days');
-                                $arrRepeat['endTime'] = strtotime(Date::parse('Y-m-d H:i:s', $arrRepeat['endTime']) . ' + 7 days');
-                                $arrRepeat['mondayTimestampSelectedWeek'] = strtotime(Date::parse('Y-m-d H:i:s', $arrRepeat['mondayTimestampSelectedWeek']) . ' + 7 days');
+                                $arrRepeat['startTime'] = DateHelper::addDaysToTime(7, $arrRepeat['startTime']);
+                                $arrRepeat['endTime'] = DateHelper::addDaysToTime(7, $arrRepeat['endTime']);
+                                $arrRepeat['mondayTimestampSelectedWeek'] = DateHelper::addDaysToTime(7, $arrRepeat['mondayTimestampSelectedWeek']);
                                 $arrBookings[] = $arrRepeat;
                                 if ($arrRepeat['mondayTimestampSelectedWeek'] >= Input::post('bookingRepeatStopWeekTstamp'))
                                 {

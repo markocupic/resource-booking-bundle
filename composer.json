@@ -25,7 +25,8 @@
   },
   "require": {
     "php": ">=7.1",
-    "contao/core-bundle": "^4.5"
+    "contao/core-bundle": "^4.5",
+    "codefog/contao-haste": "^4.23"
   },
   "autoload": {
     "psr-4": {

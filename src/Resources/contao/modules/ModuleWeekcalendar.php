@@ -19,6 +19,7 @@ use Contao\Messages;
 use Contao\Module;
 use Contao\Input;
 use Contao\Environment;
+use Contao\Controller;
 use Contao\ResourceReservationResourceModel;
 use Contao\ResourceReservationResourceTypeModel;
 use Contao\StringUtil;
@@ -49,6 +50,10 @@ class ModuleWeekcalendar extends Module
 
     public $intSelectedDate;
 
+    public $intBackWeeks = -27;
+
+    public $intAheadWeeks = 51;
+
     public $hasError;
 
     /**
@@ -77,14 +82,15 @@ class ModuleWeekcalendar extends Module
 
         $this->objUser = FrontendUser::getInstance();
 
-        // Set selected date from query string
-        $this->intSelectedDate = $this->getMondayOfThisWeek();
-        if (Input::get('date') != '')
+        // Set current week
+        if (Input::get('date') == '')
         {
-            if ($this->isValidDate(Input::get('date')))
-            {
-                $this->intSelectedDate = Input::get('date');
-            }
+            $url = \Haste\Util\Url::addQueryString('date=' . DateHelper::getMondayOfCurrentWeek());
+            Controller::redirect($url);
+        }
+        if ($this->isValidDate(Input::get('date')))
+        {
+            $this->intSelectedDate = Input::get('date');
         }
 
         // Get resource types
@@ -166,12 +172,29 @@ class ModuleWeekcalendar extends Module
         $this->Template->objSelectedResourceType = $this->objSelectedResourceType;
         $this->Template->objResources = $this->objResources;
         $this->Template->objSelectedResource = $this->objSelectedResource;
-        $this->Template->weekSelection = $this->getWeekSelection(-27, 51, true);
+        $this->Template->weekSelection = $this->getWeekSelection($this->intBackWeeks, $this->intAheadWeeks, true);
         $kwSelectedDate = (int)Date::parse('W', $this->intSelectedDate, true);
         $kwNow = (int)Date::parse('W');
-        $this->Template->bookingRepeats = $this->getWeekSelection($kwSelectedDate - $kwNow - 1, 51, false);
-        $this->Template->mondayOfThisWeek = $this->getMondayOfThisWeek();
+        $this->Template->bookingRepeats = $this->getWeekSelection($kwSelectedDate - $kwNow - 1, $this->intAheadWeeks, false);
+        $this->Template->mondayOfThisWeek = DateHelper::getMondayOfCurrentWeek();
         $this->Template->intSelectedDate = $this->intSelectedDate;
+
+        // Create 1 week back and 1 week ahead links
+        $url = \Haste\Util\Url::removeQueryString(['date'], Environment::get('request'));
+        $backTime = DateHelper::addDaysToTime(-7, $this->intSelectedDate);
+        $aheadTime = DateHelper::addDaysToTime(7, $this->intSelectedDate);
+        if (!$this->isValidDate($backTime))
+        {
+            $this->Template->disableMinus1WeekBtn = true;
+            $backTime = $this->intSelectedDate;
+        }
+        if (!$this->isValidDate($aheadTime))
+        {
+            $this->Template->disablePlus1WeekBtn = true;
+            $aheadTime = $this->intSelectedDate;
+        }
+        $this->Template->minus1WeekUrl = \Haste\Util\Url::addQueryString('date=' . $backTime, $url);
+        $this->Template->plus1WeekUrl = \Haste\Util\Url::addQueryString('date=' . $aheadTime, $url);
     }
 
     /**
@@ -186,7 +209,7 @@ class ModuleWeekcalendar extends Module
         for ($i = $start; $i <= $end; $i++)
         {
             // add empty
-            if ($injectEmptyLine && $this->getMondayOfThisWeek() == strtotime('monday ' . (string)$i . ' week'))
+            if ($injectEmptyLine && DateHelper::getMondayOfCurrentWeek() == strtotime('monday ' . (string)$i . ' week'))
             {
                 $arrWeeks[] = array(
                     'tstamp'     => '',
@@ -218,21 +241,13 @@ class ModuleWeekcalendar extends Module
     }
 
     /**
-     * @return false|int
-     */
-    public function getMondayOfThisWeek()
-    {
-        return strtotime('monday this week');
-    }
-
-    /**
      * @param $tstamp
      * @return bool
      */
     public function isValidDate($tstamp)
     {
         $arrWeeks = array();
-        for ($i = -27; $i <= 51; $i++)
+        for ($i = $this->intBackWeeks; $i <= $this->intAheadWeeks; $i++)
         {
             $arrWeeks[] = strtotime('monday ' . (string)$i . ' week');
         }
