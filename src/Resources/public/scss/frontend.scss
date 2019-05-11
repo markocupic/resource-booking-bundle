@@ -41,6 +41,13 @@
       vertical-align: middle;
     }
   }
+  table.table-no-border {
+    td, th {
+      border: none !important;
+      border: 0 !important;
+      border-color: transparent !important;
+    }
+  }
 }
 
 

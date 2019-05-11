@@ -97,4 +97,6 @@ class ResourceBookingHelper
 
         return null;
     }
+
+
 }

@@ -45,4 +45,15 @@ class ResourceBookingResourceModel extends \Model
         return static::findMultipleByIds($arrRes);
     }
 
+    /**
+     * @param $intId
+     * @return ResourceBookingResourceModel
+     */
+    public static function findPublishedByPk($intId)
+    {
+        $arrColumn = array('id=?', 'published=?');
+        $arrValues = array($intId, '1');
+        return self::findOneBy($arrColumn, $arrValues);
+    }
+
 }

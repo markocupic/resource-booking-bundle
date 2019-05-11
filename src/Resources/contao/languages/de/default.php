@@ -23,13 +23,15 @@ $GLOBALS['TL_LANG']['MSC']['bookingFor'] = 'Buchung für';
 
 // Errors
 $GLOBALS['TL_LANG']['MSC']['pleaseInsertValidBookingTime'] = 'Bitte geben Sie eine gültige Zeit in der Form hh:mm ein.';
-
-// Messages
-$GLOBALS['TL_LANG']['MSG']['successfullyBookedXSessions'] = 'Für %s konnte(n) erfolgreich %s Buchung(en) angelegt werden.';
+$GLOBALS['TL_LANG']['MSG']['generalBookingError'] = 'Beim Versuch die Ressource zu buchen ist ein Fehler aufgetreten.';
+$GLOBALS['TL_LANG']['MSG']['selectBookingDatesPlease'] = 'Bitte wählen Sie ein oder mehrere Buchungszeitfenster aus.';
 $GLOBALS['TL_LANG']['MSG']['noResourceSelected'] = 'Es wurde keine Ressource ausgewählt';
 $GLOBALS['TL_LANG']['MSG']['resourceAlreadyBooked'] = 'Die Ressource ist bereits ausgebucht.';
-$GLOBALS['TL_LANG']['MSG']['successfullyCanceledBooking'] = 'Ihre Buchung wurde erfolgreich storniert.';
 $GLOBALS['TL_LANG']['MSG']['notAllowedToCancelBooking'] = 'Sie besitzen nicht die nötigen Rechte, um diese Buchung zu stornieren.';
 $GLOBALS['TL_LANG']['MSG']['selectResourcePlease'] = 'Bitte wählen Sie eine Ressource aus.';
 $GLOBALS['TL_LANG']['MSG']['selectValidResourcePlease'] = 'Bitte wählen Sie eine gültige Ressource aus.';
+
+// Messages
+$GLOBALS['TL_LANG']['MSG']['successfullyBookedXItems'] = 'Für %s konnte(n) erfolgreich %s Buchung(en) angelegt werden.';
+$GLOBALS['TL_LANG']['MSG']['successfullyCanceledBooking'] = 'Ihre Buchung wurde erfolgreich storniert.';
 

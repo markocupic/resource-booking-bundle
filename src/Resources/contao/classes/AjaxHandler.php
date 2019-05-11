@@ -32,9 +32,17 @@ class AjaxHandler
     public function getDataAll($objModule)
     {
         $arrJson = array();
+        $arrData = array();
 
-        $arrJson['status'] = 'success';
-        $arrJson['intSelectedDate'] = $objModule->intSelectedDate;
+        $arrData['intSelectedDate'] = $objModule->intSelectedDate;
+        $arrData['activeWeek'] = array(
+            'tstampStart' => $objModule->intSelectedDate,
+            'tstampEnd'   => DateHelper::addDaysToTime(6, $objModule->intSelectedDate),
+            'dateStart'   => Date::parse(Config::get('dateFormat'), $objModule->intSelectedDate),
+            'dateEnd'     => Date::parse(Config::get('dateFormat'), DateHelper::addDaysToTime(6, $objModule->intSelectedDate)),
+            'weekNumber'  => Date::parse('W', $objModule->intSelectedDate),
+            'year'        => Date::parse('Y', $objModule->intSelectedDate),
+        );
 
         // Send dates and day
         $arrWeek = array();
@@ -48,13 +56,13 @@ class AjaxHandler
             );
         }
 
-        $arrJson['weekdays'] = $arrWeek;
+        $arrData['weekdays'] = $arrWeek;
 
         // Get rows
         if ($objModule->objSelectedResource !== null && $objModule->objSelectedResourceType !== null)
         {
-            $arrJson['activeResource']['title'] = $objModule->objSelectedResource->title;
-            $arrJson['activeResourceType']['title'] = $objModule->objSelectedResourceType->title;
+            $arrData['activeResource']['title'] = $objModule->objSelectedResource->title;
+            $arrData['activeResourceType']['title'] = $objModule->objSelectedResourceType->title;
 
             $objSelectedResource = $objModule->objSelectedResource;
             $objTimeslots = ResourceBookingTimeSlotModel::findPublishedByPid($objSelectedResource->timeSlotType);
@@ -117,7 +125,7 @@ class AjaxHandler
                 }
             }
         }
-        $arrJson['rows'] = $rows;
+        $arrData['rows'] = $rows;
 
         // Get time slots
         $objTimeslots = ResourceBookingTimeSlotModel::findPublishedByPid($objSelectedResource->timeSlotType);
@@ -136,7 +144,10 @@ class AjaxHandler
                 $timeSlots[] = $objTs;
             }
         }
-        $arrJson['timeSlots'] = $timeSlots;
+        $arrData['timeSlots'] = $timeSlots;
+
+        $arrJson['data'] = $arrData;
+        $arrJson['status'] = 'success';
 
         $response = new JsonResponse($arrJson);
         return $response->send();
@@ -145,104 +156,78 @@ class AjaxHandler
     /**
      * @return JsonResponse
      */
-    public function sendBookingRequest()
+    public function sendBookingRequest($objModule)
     {
         $arrJson = array();
         $arrJson['status'] = 'error';
-        if (FE_USER_LOGGED_IN && Input::post('bookingRepeatStopWeekTstamp') > 0 && Input::post('resourceId') > 0 && Input::post('bookedTimeSlots'))
+        $doNewInserts = true;
+        $errors = 0;
+        $arrBookings = array();
+        $intResourceId = Input::post('resourceId');
+        $objResource = ResourceBookingResourceModel::findPublishedByPk($intResourceId);
+        $arrBookingDateSelection = Input::post('bookingDateSelection');
+        $bookingRepeatStopWeekTstamp = Input::post('bookingRepeatStopWeekTstamp');
+
+        if (!FE_USER_LOGGED_IN || $objResource === null || !$bookingRepeatStopWeekTstamp > 0 || !is_array($arrBookingDateSelection))
         {
-            if (is_array(Input::post('bookedTimeSlots')) && !empty(Input::post('bookedTimeSlots')))
+            $errors++;
+            $arrJson['alertError'] = $GLOBALS['TL_LANG']['MSG']['generalBookingError'];
+        }
+
+        if (empty($arrBookingDateSelection))
+        {
+            $errors++;
+            $arrJson['alertError'] = $GLOBALS['TL_LANG']['MSG']['selectBookingDatesPlease'];
+        }
+
+        if ($errors === 0)
+        {
+            $objUser = FrontendUser::getInstance();
+
+            // Prepare $arrBookings with the helper method
+            $arrBookings = $this->prepareBookingSelection($objModule, $objUser, $objResource, $arrBookingDateSelection, $bookingRepeatStopWeekTstamp);
+
+            foreach ($arrBookings as $arrBooking)
             {
-                $error = 0;
-                $counter = 0;
-                $arrBookings = array();
-                $arrResObj = array();
-
-                $objUser = FrontendUser::getInstance();
-                $objResource = ResourceBookingResourceModel::findByPk(Input::post('resourceId'));
-                if ($objResource !== null)
+                if ($arrBooking['resourceAlreadyBooked'] === true)
                 {
-                    foreach (Input::post('bookedTimeSlots') as $strTimeSlot)
-                    {
-                        // slotId-startTime-endTime-mondayTimestampSelectedWeek
-                        $arrTimeSlot = explode('-', $strTimeSlot);
-                        $arrBooking = array(
-                            'timeSlotId'                  => $arrTimeSlot[0],
-                            'startTime'                   => $arrTimeSlot[1],
-                            'endTime'                     => $arrTimeSlot[2],
-                            'mondayTimestampSelectedWeek' => $arrTimeSlot[3],
-                            'pid'                         => Input::post('resourceId'),
-                            'description'                 => Input::post('description'),
-                            'member'                      => $objUser->id,
-                            'firstname'                   => $objUser->firstname,
-                            'lastname'                    => $objUser->lastname,
-                            'tstamp'                      => time(),
-                            'title'                       => sprintf('%s : %s %s %s [%s - %s]', $objResource->title, $GLOBALS['TL_LANG']['MSC']['bookingFor'], $objUser->firstname, $objUser->lastname, Date::parse(Config::get('datimFormat'), $arrTimeSlot[1]), Date::parse(Config::get('datimFormat'), $arrTimeSlot[2])),
-                        );
-                        $arrBookings[] = $arrBooking;
+                    $errors++;
+                }
+            }
 
-                        // Handle repetitions
-                        if ($arrTimeSlot[3] < Input::post('bookingRepeatStopWeekTstamp'))
-                        {
-                            $doRepeat = true;
-                            $arrRepeat = $arrBooking;
-                            while ($doRepeat === true)
-                            {
-                                $arrRepeat['startTime'] = DateHelper::addDaysToTime(7, $arrRepeat['startTime']);
-                                $arrRepeat['endTime'] = DateHelper::addDaysToTime(7, $arrRepeat['endTime']);
-                                $arrRepeat['mondayTimestampSelectedWeek'] = DateHelper::addDaysToTime(7, $arrRepeat['mondayTimestampSelectedWeek']);
-                                $arrBookings[] = $arrRepeat;
-                                if ($arrRepeat['mondayTimestampSelectedWeek'] >= Input::post('bookingRepeatStopWeekTstamp'))
-                                {
-                                    $doRepeat = false;
-                                }
-                            }
-                        }
-                    }
-                    foreach ($arrBookings as $arrData)
+            if ($errors > 0)
+            {
+                $arrJson['alertError'] = $GLOBALS['TL_LANG']['MSG']['resourceAlreadyBooked'];
+            }
+            else
+            {
+                foreach ($arrBookings as $i => $arrBooking)
+                {
+                    if ($arrBooking['resourceAlreadyBookedInThePastBySameMember'] === false)
                     {
-                        if (!ResourceBookingHelper::isResourceBooked($objResource, $arrData['startTime'], $arrData['endTime']))
+                        $objBooking = new ResourceBookingModel();
+                        foreach ($arrBooking as $k => $v)
                         {
-                            if (($objTimeslot = ResourceBookingTimeSlotModel::findByPk($arrData['timeSlotId'])) !== null)
-                            {
-                                $objBooking = new ResourceBookingModel();
-                                foreach ($arrData as $k => $v)
-                                {
-                                    $objBooking->{$k} = $v;
-                                }
-                                $arrResObj[] = $objBooking;
-                                $counter++;
-                            }
+                            $objBooking->{$k} = $v;
                         }
-                        elseif (null !== ResourceBookingModel::findOneByResourceIdStarttimeEndtimeAndOwnerId($objResource, $arrData['startTime'], $arrData['endTime'], $arrData['member']))
-                        {
-                            $counter++;
-                        }
-                        else
-                        {
-                            $error++;
-                            $arrJson['alertError'] = $GLOBALS['TL_LANG']['MSG']['resourceAlreadyBooked'];
-                        }
+                        $objBooking->save();
+                        $arrBookings[$i]['newEntry'] = true;
                     }
+                    $counter++;
+                }
+                if ($counter === 0)
+                {
+                    $arrJson['alertError'] = $GLOBALS['TL_LANG']['MSG']['noItemsBooked'];
                 }
                 else
                 {
-                    $error++;
-                    $arrJson['alertError'] = $GLOBALS['TL_LANG']['MSG']['noResourceSelected'];
-                }
-
-                if ($error === 0)
-                {
-                    foreach ($arrResObj as $objBooking)
-                    {
-                        $objBooking->save();
-                    }
-
                     $arrJson['status'] = 'success';
-                    $arrJson['alertSuccess'] = sprintf($GLOBALS['TL_LANG']['MSG']['successfullyBookedXSessions'], $objResource->title, $counter);
+                    $arrJson['alertSuccess'] = sprintf($GLOBALS['TL_LANG']['MSG']['successfullyBookedXItems'], $objResource->title, $counter);
                 }
             }
         }
+        // Return $arrBookings
+        $arrJson['bookingSelection'] = $arrBookings;
 
         $response = new JsonResponse($arrJson);
         return $response->send();
@@ -281,6 +266,75 @@ class AjaxHandler
 
         $response = new JsonResponse($arrJson);
         return $response->send();
+    }
+
+    /**
+     * @param $objModule
+     * @return array
+     */
+    protected function prepareBookingSelection($objModule, $objUser, $objResource, $arrBookingDateSelection, $bookingRepeatStopWeekTstamp)
+    {
+        $arrBookings = array();
+
+        $objUser = FrontendUser::getInstance();
+
+        foreach ($arrBookingDateSelection as $strTimeSlot)
+        {
+            // slotId-startTime-endTime-mondayTimestampSelectedWeek
+            $arrTimeSlot = explode('-', $strTimeSlot);
+            $arrBooking = array(
+                'timeSlotId'                                 => $arrTimeSlot[0],
+                'startTime'                                  => $arrTimeSlot[1],
+                'endTime'                                    => $arrTimeSlot[2],
+                'mondayTimestampSelectedWeek'                => $arrTimeSlot[3],
+                'pid'                                        => Input::post('resourceId'),
+                'description'                                => Input::post('description'),
+                'member'                                     => $objUser->id,
+                'firstname'                                  => $objUser->firstname,
+                'lastname'                                   => $objUser->lastname,
+                'tstamp'                                     => time(),
+                'title'                                      => sprintf('%s : %s %s %s [%s - %s]', $objResource->title, $GLOBALS['TL_LANG']['MSC']['bookingFor'], $objUser->firstname, $objUser->lastname, Date::parse(Config::get('datimFormat'), $arrTimeSlot[1]), Date::parse(Config::get('datimFormat'), $arrTimeSlot[2])),
+                'resourceAlreadyBooked'                      => true,
+                'resourceAlreadyBookedInThePastBySameMember' => false,
+                'newEntry'                                   => false,
+            );
+            $arrBookings[] = $arrBooking;
+
+            // Handle repetitions
+            if ($arrTimeSlot[3] < $bookingRepeatStopWeekTstamp)
+            {
+                $doRepeat = true;
+                $arrRepeat = $arrBooking;
+                while ($doRepeat === true)
+                {
+                    $arrRepeat['startTime'] = DateHelper::addDaysToTime(7, $arrRepeat['startTime']);
+                    $arrRepeat['endTime'] = DateHelper::addDaysToTime(7, $arrRepeat['endTime']);
+                    $arrRepeat['mondayTimestampSelectedWeek'] = DateHelper::addDaysToTime(7, $arrRepeat['mondayTimestampSelectedWeek']);
+                    $arrBookings[] = $arrRepeat;
+                    if ($arrRepeat['mondayTimestampSelectedWeek'] >= $bookingRepeatStopWeekTstamp)
+                    {
+                        $doRepeat = false;
+                    }
+                }
+            }
+        }
+        foreach ($arrBookings as $index => $arrData)
+        {
+            if (!ResourceBookingHelper::isResourceBooked($objResource, $arrData['startTime'], $arrData['endTime']))
+            {
+                if (($objTimeslot = ResourceBookingTimeSlotModel::findByPk($arrData['timeSlotId'])) !== null)
+                {
+                    $arrBookings[$index]['resourceAlreadyBooked'] = false;
+                }
+            }
+            elseif (null !== ResourceBookingModel::findOneByResourceIdStarttimeEndtimeAndOwnerId($objResource, $arrData['startTime'], $arrData['endTime'], $arrData['member']))
+            {
+                $arrBookings[$index]['resourceAlreadyBooked'] = false;
+                $arrBookings[$index]['resourceAlreadyBookedInThePastBySameMember'] = true;
+            }
+        }
+
+        return $arrBookings;
     }
 
 }

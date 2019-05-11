@@ -11,6 +11,7 @@ let resourceBookingApp = new Vue({
         isReady: false,
         requestToken: '',
         weekdays: [],
+        activeWeek: {},
         timeSlots: [],
         rows: [],
         activeResource: {},
@@ -50,11 +51,12 @@ let resourceBookingApp = new Vue({
                 }
             });
             xhr.done(function (response) {
-                self.weekdays = response.weekdays;
-                self.rows = response.rows;
-                self.timeSlots = response.timeSlots;
-                self.activeResource = response.activeResource;
-                self.activeResourceType = response.activeResourceType;
+                if(response.status === 'success')
+                {
+                    for (var key in response['data']) {
+                        self[key] = response['data'][key];
+                    }
+                }
             });
             xhr.fail(function ($res, $bl) {
                 alert("XHR-Request fehlgeschlagen!!!");
@@ -96,7 +98,7 @@ let resourceBookingApp = new Vue({
                     'REQUEST_TOKEN': self.requestToken,
                     'resourceId': self.bookingModal.activeTimeSlot.resourceId,
                     'description': $('#resourceBookingModal [name="bookingDescription"]').val(),
-                    'bookedTimeSlots': self.bookingModal.selectedTimeSlots,
+                    'bookingDateSelection': self.bookingModal.selectedTimeSlots,
                     'bookingRepeatStopWeekTstamp': $('#bookingRepeatStopWeekTstamp').val(),
                 }
             });
