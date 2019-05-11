@@ -45,8 +45,17 @@ array_insert($GLOBALS['FE_MOD'], 2, array
     )
 ));
 
+
+
 // Asset path
 define('MOD_RESOURCE_BOOKING_ASSET_PATH', 'bundles/markocupicresourcebooking');
+
+// CSS
+if(TL_MODE == 'BE')
+{
+    $GLOBALS['TL_CSS'][] = MOD_RESOURCE_BOOKING_ASSET_PATH . '/css/backend.css|static';
+}
+
 
 // Hooks
 $GLOBALS['TL_HOOKS']['addCustomRegexp'][] = array('Markocupic\\ResourceBookingBundle\\RegexpHook', 'customRegexp');

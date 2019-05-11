@@ -8,11 +8,11 @@
 
 namespace Markocupic\ResourceBookingBundle;
 
+use Contao\Config;
 use Contao\Date;
 use Contao\FrontendUser;
 use Contao\ResourceBookingModel;
 use Contao\ResourceBookingResourceModel;
-use Contao\ResourceBookingResourceTypeModel;
 use Contao\ResourceBookingTimeSlotModel;
 use Contao\Input;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -29,7 +29,6 @@ class AjaxHandler
      */
     public function getDataAll($objModule)
     {
-        $arrItems = array();
         $arrJson = array();
 
         $arrJson['status'] = 'success';
@@ -176,7 +175,7 @@ class AjaxHandler
                             'firstname'                   => $objUser->firstname,
                             'lastname'                    => $objUser->lastname,
                             'tstamp'                      => time(),
-                            'title'                       => $objResource->title . ': Booking for ' . $objUser->firstname . ' ' . $objUser->lastname
+                            'title'                       => sprintf('%s : %s %s %s [%s - %s]', $objResource->title, $GLOBALS['TL_LANG']['MSC']['bookingFor'], $objUser->firstname, $objUser->lastname, Date::parse(Config::get('datimFormat'), $arrTimeSlot[1]), Date::parse(Config::get('datimFormat'), $arrTimeSlot[2])),
                         );
                         $arrBookings[] = $arrBooking;
 

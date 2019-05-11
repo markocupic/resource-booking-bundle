@@ -12,6 +12,9 @@
 $GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['title_legend'] = 'Titel-Einstellungen';
 $GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['time_legend'] = 'Zeit-Einstellungen';
 
+// Global operations
+$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['new'] = array('Neu', 'Neues Buchungs-Zeit-Fenster erstellen.');
+
 // Fields
 $GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['published'] = array('Veröffentlichen');
 $GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['title'] = array('Titel');

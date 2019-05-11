@@ -1,13 +1,5 @@
 <?php
 
-/*
- * This file is part of Contao.
- *
- * (c) Leo Feyer
- *
- * @license LGPL-3.0-or-later
- */
-
 $GLOBALS['TL_DCA']['tl_resource_booking_time_slot_type'] = array
 (
 
@@ -100,7 +92,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot_type'] = array
     // Palettes
     'palettes' => array
     (
-        'default' => '{title_legend},published,title,description'
+        'default' => '{published_legend},published;{title_legend},title,description'
     ),
 
     // Fields
@@ -122,7 +114,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot_type'] = array
             'exclude'   => true,
             'inputType' => 'text',
             'search'    => true,
-            'eval'      => array('mandatory' => true, 'decodeEntities' => true, 'maxlength' => 255, 'tl_class' => 'w50'),
+            'eval'      => array('mandatory' => true, 'decodeEntities' => true, 'maxlength' => 255, 'tl_class' => 'clr'),
             'sql'       => "varchar(255) NOT NULL default ''"
         ),
         'published'   => array(
@@ -142,7 +134,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot_type'] = array
             'exclude'   => true,
             'search'    => true,
             'inputType' => 'textarea',
-            'eval'      => array(),
+            'eval'      => array('tl_class' => 'clr'),
             'sql'       => "mediumtext NULL"
         )
     )

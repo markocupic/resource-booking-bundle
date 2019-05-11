@@ -9,7 +9,7 @@
  */
 
 /**
- * Table tl_calendar_events
+ * Table tl_resource_booking_resource
  */
 $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = array(
 
@@ -21,7 +21,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = array(
         'enableVersioning' => true,
         'sql'              => array(
             'keys' => array(
-                'id'        => 'primary',
+                'id'            => 'primary',
                 'published,pid' => 'index',
             ),
         ),
@@ -29,7 +29,8 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = array(
     // List
     'list'     => array(
         'sorting'           => array(
-            'mode'        => 0,
+            'mode'        => 1,
+            'flag'        => 1,
             'fields'      => array('title ASC'),
             'panelLayout' => 'filter;sort,search,limit'
         ),
@@ -53,16 +54,6 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = array(
                 'href'  => 'act=edit',
                 'icon'  => 'edit.gif',
             ),
-            'copy'   => array(
-                'label' => &$GLOBALS['TL_LANG']['tl_resource_booking_resource']['copy'],
-                'href'  => 'act=paste&amp;mode=copy',
-                'icon'  => 'copy.gif',
-            ),
-            'cut'    => array(
-                'label' => &$GLOBALS['TL_LANG']['tl_resource_booking_resource']['cut'],
-                'href'  => 'act=paste&amp;mode=cut',
-                'icon'  => 'cut.gif',
-            ),
             'delete' => array(
                 'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking_resource']['delete'],
                 'href'       => 'act=delete',
@@ -70,10 +61,10 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = array(
                 'attributes' => 'onclick="if(!confirm(\'' . $GLOBALS['TL_LANG']['MSC']['deleteConfirm'] . '\'))return false;Backend.getScrollOffset()"',
             ),
             'toggle' => array(
-                'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking_resource']['toggle'],
-                'icon'       => 'visible.gif',
-                'attributes' => 'onclick="Backend.getScrollOffset();return AjaxRequest.toggleVisibility(this,%s)"',
-                //'button_callback' => array('tl_resource_booking_resource', 'toggleIcon'),
+                'label'           => &$GLOBALS['TL_LANG']['tl_resource_booking_resource']['toggle'],
+                'icon'            => 'visible.gif',
+                'attributes'      => 'onclick="Backend.getScrollOffset();return AjaxRequest.toggleVisibility(this,%s)"',
+                'button_callback' => array('tl_resource_booking_resource', 'toggleIcon'),
             ),
             'show'   => array(
                 'label' => &$GLOBALS['TL_LANG']['tl_resource_booking_resource']['show'],
@@ -107,6 +98,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = array(
             'exclude'   => true,
             'search'    => true,
             'inputType' => 'text',
+            'flag'      => 1,
             'eval'      => array('mandatory' => true, 'maxlength' => 255, 'tl_class' => 'clr'),
             'sql'       => "varchar(255) NOT NULL default ''"
         ),
@@ -156,6 +148,138 @@ class tl_resource_booking_resource extends Backend
     {
         parent::__construct();
         $this->import('BackendUser', 'User');
+    }
+
+    /**
+     * Return the "toggle visibility" button
+     *
+     * @param array $row
+     * @param string $href
+     * @param string $label
+     * @param string $title
+     * @param string $icon
+     * @param string $attributes
+     *
+     * @return string
+     */
+    public function toggleIcon($row, $href, $label, $title, $icon, $attributes)
+    {
+        if (\strlen(Contao\Input::get('tid')))
+        {
+            $this->toggleVisibility(Contao\Input::get('tid'), (Contao\Input::get('state') == 1), (@func_get_arg(12) ?: null));
+            $this->redirect($this->getReferer());
+        }
+
+        $href .= '&amp;tid=' . $row['id'] . '&amp;state=' . ($row['published'] ? '' : 1);
+
+        if (!$row['published'])
+        {
+            $icon = 'invisible.svg';
+        }
+
+        return '<a href="' . $this->addToUrl($href) . '" title="' . Contao\StringUtil::specialchars($title) . '"' . $attributes . '>' . Contao\Image::getHtml($icon, $label, 'data-state="' . ($row['published'] ? 1 : 0) . '"') . '</a> ';
+    }
+
+    /**
+     * Disable/enable item
+     *
+     * @param integer $intId
+     * @param boolean $blnVisible
+     * @param Contao\DataContainer $dc
+     *
+     * @throws Contao\CoreBundle\Exception\AccessDeniedException
+     */
+    public function toggleVisibility($intId, $blnVisible, Contao\DataContainer $dc = null)
+    {
+        // Set the ID and action
+        Contao\Input::setGet('id', $intId);
+        Contao\Input::setGet('act', 'toggle');
+
+        if ($dc)
+        {
+            $dc->id = $intId; // see #8043
+        }
+
+        // Trigger the onload_callback
+        if (\is_array($GLOBALS['TL_DCA']['tl_resource_booking_resource']['config']['onload_callback']))
+        {
+            foreach ($GLOBALS['TL_DCA']['tl_resource_booking_resource']['config']['onload_callback'] as $callback)
+            {
+                if (\is_array($callback))
+                {
+                    $this->import($callback[0]);
+                    $this->{$callback[0]}->{$callback[1]}($dc);
+                }
+                elseif (\is_callable($callback))
+                {
+                    $callback($dc);
+                }
+            }
+        }
+
+        // Set the current record
+        if ($dc)
+        {
+            $objRow = $this->Database->prepare("SELECT * FROM tl_resource_booking_resource WHERE id=?")
+                ->limit(1)
+                ->execute($intId);
+
+            if ($objRow->numRows)
+            {
+                $dc->activeRecord = $objRow;
+            }
+        }
+
+        $objVersions = new Contao\Versions('tl_resource_booking_resource', $intId);
+        $objVersions->initialize();
+
+        // Trigger the save_callback
+        if (\is_array($GLOBALS['TL_DCA']['tl_resource_booking_resource']['fields']['published']['save_callback']))
+        {
+            foreach ($GLOBALS['TL_DCA']['tl_resource_booking_resource']['fields']['published']['save_callback'] as $callback)
+            {
+                if (\is_array($callback))
+                {
+                    $this->import($callback[0]);
+                    $blnVisible = $this->{$callback[0]}->{$callback[1]}($blnVisible, $dc);
+                }
+                elseif (\is_callable($callback))
+                {
+                    $blnVisible = $callback($blnVisible, $dc);
+                }
+            }
+        }
+
+        $time = time();
+
+        // Update the database
+        $this->Database->prepare("UPDATE tl_resource_booking_resource SET tstamp=$time, published='" . ($blnVisible ? '1' : '') . "' WHERE id=?")
+            ->execute($intId);
+
+        if ($dc)
+        {
+            $dc->activeRecord->tstamp = $time;
+            $dc->activeRecord->published = ($blnVisible ? '1' : '');
+        }
+
+        // Trigger the onsubmit_callback
+        if (\is_array($GLOBALS['TL_DCA']['tl_resource_booking_resource']['config']['onsubmit_callback']))
+        {
+            foreach ($GLOBALS['TL_DCA']['tl_resource_booking_resource']['config']['onsubmit_callback'] as $callback)
+            {
+                if (\is_array($callback))
+                {
+                    $this->import($callback[0]);
+                    $this->{$callback[0]}->{$callback[1]}($dc);
+                }
+                elseif (\is_callable($callback))
+                {
+                    $callback($dc);
+                }
+            }
+        }
+
+        $objVersions->create();
     }
 
 }

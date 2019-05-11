@@ -16,9 +16,10 @@ $GLOBALS['TL_LANG']['MSC']['sunday'] = array('So', 'Sonntag');
 
 // Forms
 $GLOBALS['TL_LANG']['MSC']['weekSelectOptionText'] = 'KW %s/%s: %s - %s';
+$GLOBALS['TL_LANG']['MSC']['bookingFor'] = 'Buchung für';
 
 // Errors
-$GLOBALS['TL_LANG']['MSC']['timeslottime'] = 'Bitte geben Sie eine gülige Zeit in der Form hh:mm ein.';
+$GLOBALS['TL_LANG']['MSC']['pleaseInsertValidBookingTime'] = 'Bitte geben Sie eine gültige Zeit in der Form hh:mm ein.';
 
 // Messages
 $GLOBALS['TL_LANG']['MSG']['successfullyBookedXSessions'] = 'Für %s konnte(n) erfolgreich %s Buchung(en) angelegt werden.';

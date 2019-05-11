@@ -9,10 +9,11 @@
  */
 
 // Legends
-$GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['published_legend'] = 'Veröffentlichen';
-$GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['title_legend'] = 'Einstellungen Athlet';
+$GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['title_legend'] = 'Titel Einstellungen';
+
+// Global operations
+$GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['new'] = array('Neu', 'Neuen Ressourcen-Typ erstellen.');
 
 // Fields
-$GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['published'] = array('Veröffentlichen');
 $GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['title'] = array('Bezeichnung');
 $GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['description'] = array('Beschreibung');

@@ -22,7 +22,8 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = array(
         'sql'              => array(
             'keys' => array(
                 'id'  => 'primary',
-                'pid' => 'index',
+                'pid,member,startTime,endTime' => 'index',
+                'timeSlotId' => 'index',
             ),
         ),
     ),
@@ -83,6 +84,9 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = array(
         ),
         'pid'         => array(
             'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking']['pid'],
+            'search'     => true,
+            'sorting'    => true,
+            'filter'     => true,
             'inputType'  => 'select',
             'foreignKey' => 'tl_resource_booking_resource.title',
             'eval'       => array('mandatory' => true),
@@ -93,8 +97,11 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = array(
         (
             'sql' => "int(10) unsigned NOT NULL default '0'"
         ),
-        'timeSlotId'         => array(
+        'timeSlotId'  => array(
             'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking']['timeSlotId'],
+            'exclude'    => true,
+            'search'     => true,
+            'sorting'    => true,
             'inputType'  => 'select',
             'foreignKey' => 'tl_resource_booking_time_slot.title',
             'eval'       => array('mandatory' => true),
@@ -103,24 +110,30 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = array(
         ),
         'member'      => array(
             'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking']['member'],
+            'exclude'    => true,
+            'search'     => true,
+            'sorting'    => true,
+            'filter'     => true,
             'inputType'  => 'select',
             'foreignKey' => 'tl_member.CONCAT(firstname," ",lastname)',
             'eval'       => array('mandatory' => true, 'tl_class' => 'clr'),
             'relation'   => array('type' => 'belongsTo', 'load' => 'lazy'),
             'sql'        => "int(10) unsigned NOT NULL default '0'",
         ),
-        'firstname'       => array(
+        'firstname'   => array(
             'label'     => &$GLOBALS['TL_LANG']['tl_resource_booking']['firstname'],
             'exclude'   => true,
             'search'    => true,
+            'sorting'   => true,
             'inputType' => 'text',
             'eval'      => array('mandatory' => false, 'maxlength' => 255, 'tl_class' => 'clr'),
             'sql'       => "varchar(255) NOT NULL default ''"
         ),
-        'lastname'       => array(
+        'lastname'    => array(
             'label'     => &$GLOBALS['TL_LANG']['tl_resource_booking']['lastname'],
             'exclude'   => true,
             'search'    => true,
+            'sorting'   => true,
             'inputType' => 'text',
             'eval'      => array('mandatory' => false, 'maxlength' => 255, 'tl_class' => 'clr'),
             'sql'       => "varchar(255) NOT NULL default ''"
@@ -129,6 +142,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = array(
             'label'     => &$GLOBALS['TL_LANG']['tl_resource_booking']['title'],
             'exclude'   => true,
             'search'    => true,
+            'sorting'   => true,
             'inputType' => 'text',
             'eval'      => array('mandatory' => true, 'maxlength' => 255, 'tl_class' => 'clr'),
             'sql'       => "varchar(255) NOT NULL default ''"
@@ -143,28 +157,26 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = array(
         ),
         'startTime'   => array
         (
-            'label'         => &$GLOBALS['TL_LANG']['tl_resource_booking']['startTime'],
-            'default'       => time(),
-            'exclude'       => true,
-            'filter'        => true,
-            'sorting'       => true,
-            'flag'          => 8,
-            'inputType'     => 'text',
-            'eval'          => array('rgxp' => 'datim', 'mandatory' => true, 'doNotCopy' => true, 'datepicker' => true, 'tl_class' => 'w50 wizard'),
-            'load_callback' => array
-            (//array('tl_resource_booking', 'loadTime')
-            ),
-            'sql'           => "int(10) NULL"
+            'label'     => &$GLOBALS['TL_LANG']['tl_resource_booking']['startTime'],
+            'default'   => time(),
+            'exclude'   => true,
+            'flag'      => 8,
+            'inputType' => 'text',
+            'eval'      => array('rgxp' => 'datim', 'mandatory' => true, 'doNotCopy' => true, 'datepicker' => true, 'tl_class' => 'w50 wizard'),
+            'sql'       => "int(10) NULL"
         ),
         'endTime'     => array
         (
-            'label'         => &$GLOBALS['TL_LANG']['tl_calendar_events']['endTime'],
+            'label'         => &$GLOBALS['TL_LANG']['tl_resource_booking']['endTime'],
+            'label'         => &$GLOBALS['TL_LANG']['tl_resource_booking']['startTime'],
             'default'       => time(),
             'exclude'       => true,
+            'flag'          => 8,
             'inputType'     => 'text',
             'eval'          => array('rgxp' => 'datim', 'mandatory' => true, 'doNotCopy' => true, 'datepicker' => true, 'tl_class' => 'w50 wizard'),
-            'load_callback' => array
-            (//array('tl_resource_booking', 'loadTime')
+            'save_callback' => array
+            (
+                array('tl_resource_booking', 'setCorrectEndTime')
             ),
             'sql'           => "int(10) NULL"
         ),

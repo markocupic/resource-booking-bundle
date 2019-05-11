@@ -3,7 +3,7 @@
 <?php $GLOBALS['TL_CSS'][] = MOD_RESOURCE_BOOKING_ASSET_PATH . '/fontawesome/css/all.css||static'; ?>
 <?php $GLOBALS['TL_JAVASCRIPT'][] = MOD_RESOURCE_BOOKING_ASSET_PATH . '/vue/vue.js||static'; ?>
 <?php $GLOBALS['TL_JAVASCRIPT'][] = MOD_RESOURCE_BOOKING_ASSET_PATH . '/popper/popper.js||static'; ?>
-<?php $GLOBALS['TL_CSS'][] = MOD_RESOURCE_BOOKING_ASSET_PATH . '/css/style.css||static'; ?>
+<?php $GLOBALS['TL_CSS'][] = MOD_RESOURCE_BOOKING_ASSET_PATH . '/css/frontend.css||static'; ?>
 
 <?php $this->extend('block_unsearchable'); ?>
 

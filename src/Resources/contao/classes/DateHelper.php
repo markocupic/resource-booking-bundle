@@ -49,4 +49,14 @@ class DateHelper
         return strtotime('monday this week');
     }
 
+    /**
+     * @param $dateString
+     * @return bool
+     */
+    public static function isValidBookingTime($dateString) {
+        $format = 'H:i';
+        $dateObj = \DateTime::createFromFormat($format, $dateString);
+        return $dateObj && $dateObj->format($format) == $dateString;
+    }
+
 }

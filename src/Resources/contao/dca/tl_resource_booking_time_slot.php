@@ -153,7 +153,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = array
             'sorting'       => true,
             'flag'          => 8,
             'inputType'     => 'text',
-            'eval'          => array('rgxp' => 'timeslottime', 'mandatory' => true, 'tl_class' => 'w50'),
+            'eval'          => array('rgxp' => 'resourceBookingTime', 'mandatory' => true, 'tl_class' => 'w50'),
             'load_callback' => array
             (
                 array('tl_resource_booking_time_slot', 'loadTime')
@@ -170,7 +170,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = array
             'default'       => time(),
             'exclude'       => true,
             'inputType'     => 'text',
-            'eval'          => array('rgxp' => 'timeslottime', 'mandatory' => true, 'tl_class' => 'w50'),
+            'eval'          => array('rgxp' => 'resourceBookingTime', 'mandatory' => true, 'tl_class' => 'w50'),
             'load_callback' => array
             (
                 array('tl_resource_booking_time_slot', 'loadTime')
@@ -178,8 +178,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = array
             'save_callback' => array
             (
                 array('tl_resource_booking_time_slot', 'setCorrectTime'),
-                //!!!!Todo
-                //array('tl_resource_booking_time_slot', 'setCorrectEndTime')
+                array('tl_resource_booking_time_slot', 'setCorrectEndTime')
             ),
             'sql'           => "int(10) NULL"
         ),
@@ -379,16 +378,27 @@ class tl_resource_booking_time_slot extends Contao\Backend
     }
 
     /**
+     * Adjust endTime if it is smaller then the startTime
      * @param $varValue
      * @param \Contao\DataContainer $dc
      * @return false|int
      */
     public function setCorrectEndTime($varValue, Contao\DataContainer $dc)
     {
-        if ($dc->activeRecord->startTime != '')
+        // Adjust endTime if it is smaller then the startTime
+        if (Contao\Input::post('startTime') != '')
         {
-            $startTime = strtotime('01-01-1970 ' . $dc->activeRecord->startTime . ' UTC');
-            if ($startTime > 0)
+            $strStartTime = Contao\Input::post('startTime');
+        }
+        else
+        {
+            $strStartTime = $dc->activeRecord->startTime;
+        }
+
+        if ($strStartTime != '')
+        {
+            $startTime = \Markocupic\ResourceBookingBundle\UtcDate::strtotime('01-01-1970 ' . $strStartTime);
+            if ($startTime !== false)
             {
                 if ($varValue <= $startTime)
                 {
@@ -407,7 +417,6 @@ class tl_resource_booking_time_slot extends Contao\Backend
 
         return $varValue;
     }
-
 
     /**
      * ondelete_callback

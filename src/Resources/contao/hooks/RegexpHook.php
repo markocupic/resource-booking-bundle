@@ -28,11 +28,15 @@ class RegexpHook
      */
     public function customRegexp($strRegexp, $varValue, Widget $objWidget)
     {
-        if ($strRegexp === 'timeslottime')
+        if ($strRegexp === 'resourceBookingTime')
         {
             if (!Validator::isTime($varValue))
             {
-                $objWidget->addError($GLOBALS['TL_LANG']['MSC']['timeslottime']);
+                $objWidget->addError($GLOBALS['TL_LANG']['MSC']['pleaseInsertValidBookingTime']);
+            }
+            if(!DateHelper::isValidBookingTime($varValue))
+            {
+                $objWidget->addError($GLOBALS['TL_LANG']['MSC']['pleaseInsertValidBookingTime']);
             }
 
             return true;
