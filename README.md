@@ -14,3 +14,6 @@ Zudem muss jQuery muss im Layout eingebunden sein.
 Anm: Bei der Installation wird [codefog/contao-haste](https://github.com/codefog/contao-haste) mitinstalliert.
 
 ![Alt text](src/Resources/public/screenshot/screenshot.png?raw=true "Buchungstool im Frontend-Ansicht")
+
+![Alt text](src/Resources/public/screenshot/screenshot2.png?raw=true "Buchungstool im Frontend-Ansicht")
+
