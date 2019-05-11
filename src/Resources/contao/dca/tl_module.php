@@ -1,12 +1,13 @@
 <?php
 
 /**
- * Chronometry Module for Contao CMS
+ * Resource Booking Module for Contao CMS
  * Copyright (c) 2008-2019 Marko Cupic
- * @package chronometry-bundle
+ * @package resource-booking-bundle
  * @author Marko Cupic m.cupic@gmx.ch, 2019
- * @link https://github.com/markocupic/chronometry-bundle
+ * @link https://github.com/markocupic/resource-booking-bundle
  */
+
 
 /**
  * Add palettes to tl_module
@@ -23,6 +24,9 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_resourceTypes'] = arr
     'sql'              => "blob NULL"
 );
 
+/**
+ * Class tl_module_resource_booking
+ */
 class tl_module_resource_booking extends Contao\Backend
 {
 

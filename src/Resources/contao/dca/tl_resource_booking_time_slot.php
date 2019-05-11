@@ -1,11 +1,11 @@
 <?php
 
-/*
- * This file is part of Contao.
- *
- * (c) Leo Feyer
- *
- * @license LGPL-3.0-or-later
+/**
+ * Resource Booking Module for Contao CMS
+ * Copyright (c) 2008-2019 Marko Cupic
+ * @package resource-booking-bundle
+ * @author Marko Cupic m.cupic@gmx.ch, 2019
+ * @link https://github.com/markocupic/resource-booking-bundle
  */
 
 $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = array

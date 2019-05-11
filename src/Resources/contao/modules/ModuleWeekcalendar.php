@@ -1,21 +1,19 @@
 <?php
 
-/*
- * This file is part of Contao.
- *
- * (c) Leo Feyer
- *
- * @license LGPL-3.0-or-later
+/**
+ * Resource Booking Module for Contao CMS
+ * Copyright (c) 2008-2019 Marko Cupic
+ * @package resource-booking-bundle
+ * @author Marko Cupic m.cupic@gmx.ch, 2019
+ * @link https://github.com/markocupic/resource-booking-bundle
  */
 
 namespace Markocupic\ResourceBookingBundle;
 
 use Contao\BackendTemplate;
-use Contao\CoreBundle\Exception\PageNotFoundException;
 use Contao\Date;
 use Contao\FrontendUser;
 use Contao\Message;
-use Contao\Messages;
 use Contao\Module;
 use Contao\Input;
 use Contao\Environment;
@@ -23,6 +21,7 @@ use Contao\Controller;
 use Contao\ResourceBookingResourceModel;
 use Contao\ResourceBookingResourceTypeModel;
 use Contao\StringUtil;
+use Contao\Config;
 use Patchwork\Utf8;
 
 /**
@@ -38,22 +37,49 @@ class ModuleWeekcalendar extends Module
      */
     protected $strTemplate = 'mod_resource_booking_weekcalendar';
 
+    /**
+     * @var
+     */
     public $objUser;
 
+    /**
+     * @var
+     */
     public $objResourceTypes;
 
+    /**
+     * @var
+     */
     public $objSelectedResourceType;
 
+    /**
+     * @var
+     */
     public $objResources;
 
+    /**
+     * @var
+     */
     public $objSelectedResource;
 
+    /**
+     * @var
+     */
     public $intSelectedDate;
 
-    public $intBackWeeks = -27;
+    /**
+     * @var
+     */
+    public $intBackWeeks;
 
-    public $intAheadWeeks = 51;
+    /**
+     * @var
+     */
+    public $intAheadWeeks;
 
+    /**
+     * @var
+     */
     public $hasError;
 
     /**
@@ -80,7 +106,12 @@ class ModuleWeekcalendar extends Module
             return '';
         }
 
+        // Get the fe-user object
         $this->objUser = FrontendUser::getInstance();
+
+        // Get intBackWeeks && intBackWeeks
+        $this->intBackWeeks = Config::get('rbb_intBackWeeks');
+        $this->intAheadWeeks = Config::get('rbb_intAheadWeeks');
 
         // Set current week
         if (Input::get('date') == '')
@@ -120,7 +151,7 @@ class ModuleWeekcalendar extends Module
             }
             else
             {
-                // Set slected resource type
+                // Set selected resource type
                 $this->objSelectedResourceType = $objSelectedResourceType;
 
                 // Get all resources of the selected resource type
@@ -173,7 +204,7 @@ class ModuleWeekcalendar extends Module
         $this->Template->objResources = $this->objResources;
         $this->Template->objSelectedResource = $this->objSelectedResource;
         $this->Template->weekSelection = $this->getWeekSelection($this->intBackWeeks, $this->intAheadWeeks, true);
-        $kwSelectedDate = (int)Date::parse('W', $this->intSelectedDate, true);
+        $kwSelectedDate = (int)Date::parse('W', $this->intSelectedDate);
         $kwNow = (int)Date::parse('W');
         $this->Template->bookingRepeats = $this->getWeekSelection($kwSelectedDate - $kwNow - 1, $this->intAheadWeeks, false);
         $this->Template->mondayOfThisWeek = DateHelper::getMondayOfCurrentWeek();
@@ -225,7 +256,6 @@ class ModuleWeekcalendar extends Module
             $yearMonday = Date::parse('Y', $tstampMonday);
             $arrWeeks[] = array(
                 'tstamp'       => strtotime('monday ' . (string)$i . ' week'),
-                'date'         => Date::parse('d.m.Y', $monday),
                 'tstampMonday' => $tstampMonday,
                 'tstampSunday' => $tstampSunday,
                 'stringMonday' => $dateMonday,

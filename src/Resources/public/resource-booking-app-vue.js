@@ -1,23 +1,20 @@
 /**
- * Chronometry Module for Contao CMS
+ * Resource Booking Module for Contao CMS
  * Copyright (c) 2008-2019 Marko Cupic
- * @package chronometry-bundle
+ * @package resource-booking-bundle
  * @author Marko Cupic m.cupic@gmx.ch, 2019
- * @link https://github.com/markocupic/chronometry-bundle
+ * @link https://github.com/markocupic/resource-booking-bundle
  */
-var resourceBookingApp = new Vue({
+let resourceBookingApp = new Vue({
     el: '#resourceBookingApp',
     data: {
         isReady: false,
-        isOnline: '',
         requestToken: '',
         weekdays: [],
         timeSlots: [],
         rows: [],
         activeResource: {},
         activeResourceType: {},
-
-
         bookingModal: {
             action: '',
             showConfirmationMsg: false,
@@ -26,27 +23,20 @@ var resourceBookingApp = new Vue({
             selectedTimeSlots: []
         },
         form: {},
-
     },
     created: function () {
         let self = this;
         self.requestToken = RESOURCE_BOOKING.requestToken;
+        // Load data from server
+        self.getDataAll();
 
         window.setTimeout(function () {
             self.isReady = true;
         }, 800);
-
-        //self.checkOnlineStatus();
-        window.setInterval(function () {
-            //self.checkOnlineStatus();
-        }, 15000);
-
-        self.getDataAll();
-
     },
     methods: {
         /**
-         * Get all rows from server
+         * Get all the rows from server
          */
         getDataAll: function () {
             let self = this;
@@ -65,14 +55,8 @@ var resourceBookingApp = new Vue({
                 self.timeSlots = response.timeSlots;
                 self.activeResource = response.activeResource;
                 self.activeResourceType = response.activeResourceType;
-
-                console.log(response);
-
             });
             xhr.fail(function ($res, $bl) {
-                console.log($res);
-                console.log($bl);
-
                 alert("XHR-Request fehlgeschlagen!!!");
             });
             xhr.always(function () {
@@ -93,10 +77,7 @@ var resourceBookingApp = new Vue({
             self.bookingModal.activeTimeSlot = objActiveTimeSlot;
             self.bookingModal.alertSuccess = '';
             self.bookingModal.alertError = '';
-            console.log(objActiveTimeSlot);
-
             self.bookingModal.selectedTimeSlots.push(objActiveTimeSlot.bookingCheckboxValue);
-
 
             $('#resourceBookingModal [name="bookingDescription"]').val('');
             $('#resourceBookingModal').modal('show');
@@ -120,17 +101,16 @@ var resourceBookingApp = new Vue({
                 }
             });
             xhr.done(function (response) {
-                if (response.status == 'success') {
+                if (response.status === 'success') {
                     self.bookingModal.alertSuccess = response.alertSuccess;
-                    window.setTimeout(function(){$('#resourceBookingModal').modal('hide');},2000);
+                    window.setTimeout(function () {
+                        $('#resourceBookingModal').modal('hide');
+                    }, 2000);
                 } else {
                     self.bookingModal.alertError = response.alertError;
                 }
-                console.log(response);
-
             });
             xhr.fail(function () {
-                self.isOnline = false;
             });
             xhr.always(function () {
                 self.bookingModal.showConfirmationMsg = true;
@@ -139,7 +119,7 @@ var resourceBookingApp = new Vue({
         },
 
         /**
-         * Send booking request
+         * Send cancel booking request
          */
         sendCancelBookingRequest: function () {
             let self = this;
@@ -154,59 +134,26 @@ var resourceBookingApp = new Vue({
                 }
             });
             xhr.done(function (response) {
-                if (response.status == 'success') {
+                if (response.status === 'success') {
                     self.bookingModal.alertSuccess = response.alertSuccess;
                 } else {
                     self.bookingModal.alertError = response.alertError;
                 }
-                console.log(response);
-
             });
             xhr.fail(function () {
-                self.isOnline = false;
+                //
             });
             xhr.always(function () {
                 self.bookingModal.showConfirmationMsg = true;
                 self.getDataAll();
             });
         },
-
         /**
-         * Save data to server
-         * @param index
+         * submit form on change
          */
-        checkOnlineStatus: function () {
-            let self = this;
-            let xhr = $.ajax({
-                url: window.location.href,
-                type: 'post',
-                dataType: 'json',
-                data: {
-                    'action': 'checkOnlineStatus',
-                    'REQUEST_TOKEN': self.requestToken,
-                }
-            });
-            xhr.done(function (response) {
-                if (response.status === 'success') {
-                    self.isOnline = true;
-                } else {
-                    self.isOnline = false;
-                }
-            });
-            xhr.fail(function () {
-                self.isOnline = false;
-            });
-            xhr.always(function () {
-                //
-            });
-
-        },
-
         submitForm: function () {
             let self = this;
             document.getElementById('resourceBookingForm').submit();
         }
-
-
     }
 });

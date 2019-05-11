@@ -1,11 +1,14 @@
 <?php
+
 /**
- * Created by PhpStorm.
- * User: Marko
- * Date: 08.05.2019
- * Time: 13:42
+ * Resource Booking Module for Contao CMS
+ * Copyright (c) 2008-2019 Marko Cupic
+ * @package resource-booking-bundle
+ * @author Marko Cupic m.cupic@gmx.ch, 2019
+ * @link https://github.com/markocupic/resource-booking-bundle
  */
 
+// Misc
 $GLOBALS['TL_LANG']['MSC']['monday'] = array('Mo', 'Montag');
 $GLOBALS['TL_LANG']['MSC']['tuesday'] = array('Di', 'Dienstag');
 $GLOBALS['TL_LANG']['MSC']['wednesday'] = array('Mi', 'Mittwoch');

@@ -1,11 +1,11 @@
 <?php
 
 /**
- * Chronometry Module for Contao CMS
+ * Resource Booking Module for Contao CMS
  * Copyright (c) 2008-2019 Marko Cupic
- * @package chronometry-bundle
+ * @package resource-booking-bundle
  * @author Marko Cupic m.cupic@gmx.ch, 2019
- * @link https://github.com/markocupic/chronometry-bundle
+ * @link https://github.com/markocupic/resource-booking-bundle
  */
 
 /**
@@ -56,6 +56,9 @@ if(TL_MODE == 'BE')
     $GLOBALS['TL_CSS'][] = MOD_RESOURCE_BOOKING_ASSET_PATH . '/css/backend.css|static';
 }
 
+// Set backWeeks and aheadWeeks
+\Contao\Config::set('rbb_intBackWeeks', -27);
+\Contao\Config::set('rbb_intAheadWeeks', 51);
 
 // Hooks
 $GLOBALS['TL_HOOKS']['addCustomRegexp'][] = array('Markocupic\\ResourceBookingBundle\\RegexpHook', 'customRegexp');

@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * Resource Booking Module for Contao CMS
+ * Copyright (c) 2008-2019 Marko Cupic
+ * @package resource-booking-bundle
+ * @author Marko Cupic m.cupic@gmx.ch, 2019
+ * @link https://github.com/markocupic/resource-booking-bundle
+ */
+
 $GLOBALS['TL_DCA']['tl_resource_booking_time_slot_type'] = array
 (
 
@@ -141,9 +149,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot_type'] = array
 );
 
 /**
- * Provide miscellaneous methods that are used by the data configuration array.
- *
- * @author Leo Feyer <https://github.com/leofeyer>
+ * Class tl_resource_booking_time_slot_type
  */
 class tl_resource_booking_time_slot_type extends Contao\Backend
 {
