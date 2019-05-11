@@ -9,8 +9,7 @@
  */
 
 // Legends
-$GLOBALS['TL_LANG']['tl_resource_booking']['published_legend'] = 'Veröffentlichen';
-$GLOBALS['TL_LANG']['tl_resource_booking']['name_legend'] = 'Einstellungen Athlet';
+$GLOBALS['TL_LANG']['tl_resource_booking']['title_legend'] = 'Titel-Einstellungen';
 $GLOBALS['TL_LANG']['tl_resource_booking']['time_legend'] = 'Zeit-Einstellungen';
 
 // Fields
