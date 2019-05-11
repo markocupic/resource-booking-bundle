@@ -270,6 +270,10 @@ class AjaxHandler
 
     /**
      * @param $objModule
+     * @param $objUser
+     * @param $objResource
+     * @param $arrBookingDateSelection
+     * @param $bookingRepeatStopWeekTstamp
      * @return array
      */
     protected function prepareBookingSelection($objModule, $objUser, $objResource, $arrBookingDateSelection, $bookingRepeatStopWeekTstamp)
