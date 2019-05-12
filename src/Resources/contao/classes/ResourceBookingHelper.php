@@ -29,7 +29,8 @@ class ResourceBookingHelper
      */
     public function isResourceBooked($objRes, $slotStartTime, $slotEndTime)
     {
-        if(static::getBookedResourcesInSlot($objRes, $slotStartTime, $slotEndTime) === null){
+        if (static::getBookedResourcesInSlot($objRes, $slotStartTime, $slotEndTime) === null)
+        {
             return false;
         }
         return true;
@@ -43,14 +44,13 @@ class ResourceBookingHelper
      */
     public function getBookedResourcesInSlot($objRes, $slotStartTime, $slotEndTime)
     {
-
         $arrIDS = array();
         // 1. possible case  -|---- | or -|-----| or -|-----|--
         $objDb = Database::getInstance()->prepare('SELECT id FROM tl_resource_booking WHERE (startTime<? AND endTime>?) AND pid=?')
             ->execute($slotStartTime, $slotStartTime, $objRes->id);
         if ($objDb->numRows)
         {
-            while($objDb->next())
+            while ($objDb->next())
             {
                 $arrIDS[] = $objDb->id;
             }
@@ -61,7 +61,7 @@ class ResourceBookingHelper
             ->execute($slotStartTime, $slotStartTime, $objRes->id);
         if ($objDb->numRows)
         {
-            while($objDb->next())
+            while ($objDb->next())
             {
                 $arrIDS[] = $objDb->id;
             }
@@ -72,7 +72,7 @@ class ResourceBookingHelper
             ->execute($slotStartTime, $slotEndTime, $slotEndTime, $objRes->id);
         if ($objDb->numRows)
         {
-            while($objDb->next())
+            while ($objDb->next())
             {
                 $arrIDS[] = $objDb->id;
             }
@@ -83,7 +83,7 @@ class ResourceBookingHelper
             ->execute($slotStartTime, $slotEndTime, $objRes->id);
         if ($objDb->numRows)
         {
-            while($objDb->next())
+            while ($objDb->next())
             {
                 $arrIDS[] = $objDb->id;
             }
@@ -98,5 +98,46 @@ class ResourceBookingHelper
         return null;
     }
 
+    /**
+     * @param $start
+     * @param $end
+     * @param bool $injectEmptyLine
+     * @return array
+     */
+    public static function getWeekSelection($start, $end, $injectEmptyLine = false)
+    {
+        $arrWeeks = array();
+        for ($i = $start; $i <= $end; $i++)
+        {
+            // add empty
+            if ($injectEmptyLine && DateHelper::getMondayOfCurrentWeek() == strtotime('monday ' . (string)$i . ' week'))
+            {
+                $arrWeeks[] = array(
+                    'tstamp'     => '',
+                    'date'       => '',
+                    'optionText' => '-------------'
+                );
+            }
+            $tstampMonday = strtotime('monday ' . (string)$i . ' week');
+            $dateMonday = Date::parse('d.m.Y', $tstampMonday);
+            $tstampSunday = strtotime($dateMonday . ' + 6 days');
+            $dateSunday = Date::parse('d.m.Y', $tstampSunday);
+            $calWeek = Date::parse('W', $tstampMonday);
+            $yearMonday = Date::parse('Y', $tstampMonday);
+            $arrWeeks[] = array(
+                'tstamp'       => strtotime('monday ' . (string)$i . ' week'),
+                'tstampMonday' => $tstampMonday,
+                'tstampSunday' => $tstampSunday,
+                'stringMonday' => $dateMonday,
+                'stringSunday' => $dateSunday,
+                'daySpan'      => $dateMonday . ' - ' . $dateSunday,
+                'calWeek'      => $calWeek,
+                'year'         => $yearMonday,
+                'optionText'   => sprintf($GLOBALS['TL_LANG']['MSC']['weekSelectOptionText'], $calWeek, $yearMonday, $dateMonday, $dateSunday)
+            );
+        }
+
+        return $arrWeeks;
+    }
 
 }

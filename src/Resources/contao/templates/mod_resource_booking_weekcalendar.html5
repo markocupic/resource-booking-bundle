@@ -109,6 +109,10 @@
                                 <td>{{ activeResource.title }}</td>
                             </tr>
                             <tr>
+                                <td><strong>Name</strong></td>
+                                <td>{{ loggedInUser.firstname }} {{ loggedInUser.lastname }}</td>
+                            </tr>
+                            <tr>
                                 <td><strong>Woche</strong></td>
                                 <td>{{ activeWeek.weekNumber }}/{{ activeWeek.year }}: {{ activeWeek.dateStart }} - {{ activeWeek.dateEnd }}</td>
                             </tr>
@@ -126,6 +130,10 @@
                         </div>
                         <div v-if="bookingModal.alertError != ''" class="alert alert-danger">{{ bookingModal.alertError }}</div>
                         <div v-if="!bookingModal.showConfirmationMsg && bookingModal.action == 'showBookingForm'">
+                            <div id="resourceIsAvailable">
+                                <div v-if="resourceIsAvailable" class="alert alert-success" role="alert">{{ activeResource.title }} ist im gewünschten Zeitraum noch buchbar.</div>
+                                <div v-if="!resourceIsAvailable" class="alert alert-danger" role="alert">{{ activeResource.title }} ist im gewünschten Zeitraum <strong>nicht mehr buchbar.</strong></div>
+                            </div>
                             <form>
                                 <table class="resource-booking-table-modal table">
                                     <thead>
@@ -141,7 +149,7 @@
                                         <td class="time-slot-cell" v-for="(eventBox, colIndex) in row" v-bind:data-col-index="colIndex" v-bind:data-isbooked="eventBox.isBooked">
                                             <div v-if="!eventBox.isBooked">
                                                 <div class="custom-control custom-checkbox">
-                                                    <input type="checkbox" v-model="bookingModal.selectedTimeSlots" v-bind:value="eventBox.bookingCheckboxValue" class="custom-control-input" v-bind:id="eventBox.bookingCheckboxId">
+                                                    <input type="checkbox" v-on:change="sendResourceAvailabilityRequest()" v-model="bookingModal.selectedTimeSlots" v-bind:value="eventBox.bookingCheckboxValue" class="custom-control-input" v-bind:id="eventBox.bookingCheckboxId">
                                                     <label class="custom-control-label" v-bind:for="eventBox.bookingCheckboxId"></label>
                                                 </div>
                                             </div>
@@ -152,18 +160,16 @@
 
 
                                 <div class="form-group">
-                                    <label class="d-none" for="exampleInputEmail1">Kurzbeschreibung</label>
+                                    <label class="d-none" for="bookingDescription">Kurzbeschreibung</label>
                                     <input type="text" class="form-control" id="bookingDescription" name="bookingDescription" aria-describedby="bookingDescriptionHelp" placeholder="Kurzbeschreibung eingeben">
                                     <small id="bookingDescriptionHelp" class="form-text text-muted">Kurzbeschreibung eingeben (max 40 Zeichen).</small>
                                 </div>
 
+
                                 <div class="form-group">
                                     <label for="bookingRepeatStopWeekTstamp">Ressource buchen bis (Wiederholungen)</label>
-                                    <select id="bookingRepeatStopWeekTstamp" class="form-control" name="bookingRepeatStopWeekTstamp">
-                                        <?php foreach($this->bookingRepeats as $arrDate): ?>
-                                        <option value="<?= $arrDate['tstamp'] ?>"
-                                        <?php if($this->intSelectedDate == $arrDate['tstamp']): ?> selected<?php endif; ?>><?= $arrDate['optionText'] ?></option>
-                                        <?php endforeach; ?>
+                                    <select id="bookingRepeatStopWeekTstamp" class="form-control" name="bookingRepeatStopWeekTstamp" v-on:change="sendResourceAvailabilityRequest()">
+                                        <option v-for="(row, rowIndex) in bookingRepeatsSelection" v-bind:value="row.tstamp" v-bind:data-current-week="activeWeek.tstampStart==row.tstamp ? 'true' : 'false'">{{ row.optionText }}</option>
                                     </select>
                                 </div>
 
@@ -176,7 +182,7 @@
 
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Schliessen</button>
-                        <button type="button" class="btn btn-primary" v-if="!bookingModal.showConfirmationMsg && bookingModal.action == 'showBookingForm'" v-on:click="sendBookingRequest">Ressource buchen</button>
+                        <button type="button" class="btn btn-primary" v-if="resourceIsAvailable && !bookingModal.showConfirmationMsg && bookingModal.action == 'showBookingForm'" v-on:click="sendBookingRequest">Ressource buchen</button>
                         <button type="button" class="btn btn-danger" v-if="!bookingModal.showConfirmationMsg && bookingModal.action == 'showCancelBookingForm'" v-on:click="sendCancelBookingRequest">Buchung stornieren</button>
                     </div>
                 </div>
@@ -193,7 +199,7 @@
         requestToken: '{{REQUEST_TOKEN}}'
     }
 </script>
-<script src="<?= MOD_RESOURCE_BOOKING_ASSET_PATH ?>/resource-booking-app-vue.js"></script>
+<script src="<?= MOD_RESOURCE_BOOKING_ASSET_PATH ?>/resource-booking-app-vue.min.js"></script>
 
 
 <?php $this->endblock(); ?>

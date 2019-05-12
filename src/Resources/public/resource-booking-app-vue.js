@@ -5,10 +5,14 @@
  * @author Marko Cupic m.cupic@gmx.ch, 2019
  * @link https://github.com/markocupic/resource-booking-bundle
  */
-let resourceBookingApp = new Vue({
+"use strict";
+
+var resourceBookingApp = new Vue({
     el: '#resourceBookingApp',
     data: {
         isReady: false,
+        loggedInUser: [],
+        resourceIsAvailable: true,
         requestToken: '',
         weekdays: [],
         activeWeek: {},
@@ -16,6 +20,7 @@ let resourceBookingApp = new Vue({
         rows: [],
         activeResource: {},
         activeResourceType: {},
+        bookingRepeatsSelection: [],
         bookingModal: {
             action: '',
             showConfirmationMsg: false,
@@ -23,14 +28,13 @@ let resourceBookingApp = new Vue({
             alertError: '',
             selectedTimeSlots: []
         },
-        form: {},
+        form: {}
     },
-    created: function () {
-        let self = this;
-        self.requestToken = RESOURCE_BOOKING.requestToken;
-        // Load data from server
-        self.getDataAll();
+    created: function created() {
+        var self = this;
+        self.requestToken = RESOURCE_BOOKING.requestToken; // Load data from server
 
+        self.getDataAll();
         window.setTimeout(function () {
             self.isReady = true;
         }, 800);
@@ -39,9 +43,9 @@ let resourceBookingApp = new Vue({
         /**
          * Get all the rows from server
          */
-        getDataAll: function () {
-            let self = this;
-            let xhr = $.ajax({
+        getDataAll: function getDataAll() {
+            var self = this;
+            var xhr = $.ajax({
                 url: window.location.href,
                 type: 'post',
                 dataType: 'json',
@@ -51,8 +55,7 @@ let resourceBookingApp = new Vue({
                 }
             });
             xhr.done(function (response) {
-                if(response.status === 'success')
-                {
+                if (response.status === 'success') {
                     for (var key in response['data']) {
                         self[key] = response['data'][key];
                     }
@@ -61,8 +64,7 @@ let resourceBookingApp = new Vue({
             xhr.fail(function ($res, $bl) {
                 alert("XHR-Request fehlgeschlagen!!!");
             });
-            xhr.always(function () {
-                //
+            xhr.always(function () {//
             });
         },
 
@@ -71,8 +73,8 @@ let resourceBookingApp = new Vue({
          * @param objActiveTimeSlot
          * @param action
          */
-        openBookingModal: function (objActiveTimeSlot, action) {
-            let self = this;
+        openBookingModal: function openBookingModal(objActiveTimeSlot, action) {
+            var self = this;
             self.bookingModal.selectedTimeSlots = [];
             self.bookingModal.action = action;
             self.bookingModal.showConfirmationMsg = false;
@@ -80,16 +82,22 @@ let resourceBookingApp = new Vue({
             self.bookingModal.alertSuccess = '';
             self.bookingModal.alertError = '';
             self.bookingModal.selectedTimeSlots.push(objActiveTimeSlot.bookingCheckboxValue);
-
+            self.resourceIsAvailable = true;
+            window.setTimeout(function () {
+                self.sendResourceAvailabilityRequest();
+            }, 500);
             $('#resourceBookingModal [name="bookingDescription"]').val('');
+            $('#bookingRepeatStopWeekTstamp option').prop('selected', false);
+            $('#bookingRepeatStopWeekTstamp [data-current-week="true"]').prop('selected', 'selected');
             $('#resourceBookingModal').modal('show');
         },
+
         /**
          * Send booking request
          */
-        sendBookingRequest: function () {
-            let self = this;
-            let xhr = $.ajax({
+        sendBookingRequest: function sendBookingRequest() {
+            var self = this;
+            var xhr = $.ajax({
                 url: window.location.href,
                 type: 'post',
                 dataType: 'json',
@@ -99,7 +107,7 @@ let resourceBookingApp = new Vue({
                     'resourceId': self.bookingModal.activeTimeSlot.resourceId,
                     'description': $('#resourceBookingModal [name="bookingDescription"]').val(),
                     'bookingDateSelection': self.bookingModal.selectedTimeSlots,
-                    'bookingRepeatStopWeekTstamp': $('#bookingRepeatStopWeekTstamp').val(),
+                    'bookingRepeatStopWeekTstamp': $('#bookingRepeatStopWeekTstamp').val()
                 }
             });
             xhr.done(function (response) {
@@ -112,7 +120,7 @@ let resourceBookingApp = new Vue({
                     self.bookingModal.alertError = response.alertError;
                 }
             });
-            xhr.fail(function () {
+            xhr.fail(function () {//
             });
             xhr.always(function () {
                 self.bookingModal.showConfirmationMsg = true;
@@ -121,18 +129,46 @@ let resourceBookingApp = new Vue({
         },
 
         /**
+         * Send resource availability request
+         */
+        sendResourceAvailabilityRequest: function sendResourceAvailabilityRequest() {
+            var self = this;
+            var xhr = $.ajax({
+                url: window.location.href,
+                type: 'post',
+                dataType: 'json',
+                data: {
+                    'action': 'sendResourceAvailabilityRequest',
+                    'REQUEST_TOKEN': self.requestToken,
+                    'resourceId': self.bookingModal.activeTimeSlot.resourceId,
+                    'bookingDateSelection': self.bookingModal.selectedTimeSlots,
+                    'bookingRepeatStopWeekTstamp': $('#bookingRepeatStopWeekTstamp').val()
+                }
+            });
+            xhr.done(function (response) {
+                if (response.status === 'success') {
+                    self.resourceIsAvailable = response.resourceIsAvailable;
+                }
+            });
+            xhr.fail(function () {//
+            });
+            xhr.always(function () {//
+            });
+        },
+
+        /**
          * Send cancel booking request
          */
-        sendCancelBookingRequest: function () {
-            let self = this;
-            let xhr = $.ajax({
+        sendCancelBookingRequest: function sendCancelBookingRequest() {
+            var self = this;
+            var xhr = $.ajax({
                 url: window.location.href,
                 type: 'post',
                 dataType: 'json',
                 data: {
                     'action': 'sendCancelBookingRequest',
                     'REQUEST_TOKEN': self.requestToken,
-                    'bookingId': self.bookingModal.activeTimeSlot.bookingId,
+                    'bookingId': self.bookingModal.activeTimeSlot.bookingId
                 }
             });
             xhr.done(function (response) {
@@ -145,19 +181,19 @@ let resourceBookingApp = new Vue({
                     self.bookingModal.alertError = response.alertError;
                 }
             });
-            xhr.fail(function () {
-                //
+            xhr.fail(function () {//
             });
             xhr.always(function () {
                 self.bookingModal.showConfirmationMsg = true;
                 self.getDataAll();
             });
         },
+
         /**
          * submit form on change
          */
-        submitForm: function () {
-            let self = this;
+        submitForm: function submitForm() {
+            var self = this;
             document.getElementById('resourceBookingForm').submit();
         }
     }

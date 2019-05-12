@@ -203,10 +203,7 @@ class ModuleWeekcalendar extends Module
         $this->Template->objSelectedResourceType = $this->objSelectedResourceType;
         $this->Template->objResources = $this->objResources;
         $this->Template->objSelectedResource = $this->objSelectedResource;
-        $this->Template->weekSelection = $this->getWeekSelection($this->intBackWeeks, $this->intAheadWeeks, true);
-        $kwSelectedDate = (int)Date::parse('W', $this->intSelectedDate);
-        $kwNow = (int)Date::parse('W');
-        $this->Template->bookingRepeats = $this->getWeekSelection($kwSelectedDate - $kwNow - 1, $this->intAheadWeeks, false);
+        $this->Template->weekSelection = ResourceBookingHelper::getWeekSelection($this->intBackWeeks, $this->intAheadWeeks, true);
         $this->Template->mondayOfThisWeek = DateHelper::getMondayOfCurrentWeek();
         $this->Template->intSelectedDate = $this->intSelectedDate;
 
@@ -226,48 +223,6 @@ class ModuleWeekcalendar extends Module
         }
         $this->Template->minus1WeekUrl = \Haste\Util\Url::addQueryString('date=' . $backTime, $url);
         $this->Template->plus1WeekUrl = \Haste\Util\Url::addQueryString('date=' . $aheadTime, $url);
-    }
-
-    /**
-     * @param $start
-     * @param $end
-     * @param bool $injectEmptyLine
-     * @return array
-     */
-    public function getWeekSelection($start, $end, $injectEmptyLine = false)
-    {
-        $arrWeeks = array();
-        for ($i = $start; $i <= $end; $i++)
-        {
-            // add empty
-            if ($injectEmptyLine && DateHelper::getMondayOfCurrentWeek() == strtotime('monday ' . (string)$i . ' week'))
-            {
-                $arrWeeks[] = array(
-                    'tstamp'     => '',
-                    'date'       => '',
-                    'optionText' => '-------------'
-                );
-            }
-            $tstampMonday = strtotime('monday ' . (string)$i . ' week');
-            $dateMonday = Date::parse('d.m.Y', $tstampMonday);
-            $tstampSunday = strtotime($dateMonday . ' + 6 days');
-            $dateSunday = Date::parse('d.m.Y', $tstampSunday);
-            $calWeek = Date::parse('W', $tstampMonday);
-            $yearMonday = Date::parse('Y', $tstampMonday);
-            $arrWeeks[] = array(
-                'tstamp'       => strtotime('monday ' . (string)$i . ' week'),
-                'tstampMonday' => $tstampMonday,
-                'tstampSunday' => $tstampSunday,
-                'stringMonday' => $dateMonday,
-                'stringSunday' => $dateSunday,
-                'daySpan'      => $dateMonday . ' - ' . $dateSunday,
-                'calWeek'      => $calWeek,
-                'year'         => $yearMonday,
-                'optionText'   => sprintf($GLOBALS['TL_LANG']['MSC']['weekSelectOptionText'], $calWeek, $yearMonday, $dateMonday, $dateSunday)
-            );
-        }
-
-        return $arrWeeks;
     }
 
     /**
