@@ -28,7 +28,7 @@ $GLOBALS['BE_MOD']['resourceBooking'] = array(
     (
         'tables' => array('tl_resource_booking_time_slot_type', 'tl_resource_booking_time_slot'),
     ),
-    'bookings' => array
+    'bookings'     => array
     (
         'tables' => array('tl_resource_booking'),
     )
@@ -41,17 +41,15 @@ array_insert($GLOBALS['FE_MOD'], 2, array
 (
     'resourceBooking' => array
     (
-        'resourceBookingWeekCalendar' => 'Markocupic\\ResourceBookingBundle\\ModuleWeekcalendar',
+        'resourceBookingWeekCalendar' => 'Markocupic\ResourceBookingBundle\ModuleWeekcalendar',
     )
 ));
-
-
 
 // Asset path
 define('MOD_RESOURCE_BOOKING_ASSET_PATH', 'bundles/markocupicresourcebooking');
 
 // CSS
-if(TL_MODE == 'BE')
+if (TL_MODE == 'BE')
 {
     $GLOBALS['TL_CSS'][] = MOD_RESOURCE_BOOKING_ASSET_PATH . '/css/backend.css|static';
 }
@@ -61,5 +59,7 @@ if(TL_MODE == 'BE')
 \Contao\Config::set('rbb_intAheadWeeks', 51);
 
 // Hooks
-$GLOBALS['TL_HOOKS']['addCustomRegexp'][] = array('Markocupic\\ResourceBookingBundle\\RegexpHook', 'customRegexp');
+$GLOBALS['TL_HOOKS']['addCustomRegexp'][] = array('Markocupic\ResourceBookingBundle\RegexpHook', 'customRegexp');
 
+// Cron jobs
+$GLOBALS['TL_CRON']['daily']['rbb_deleteOldBookings'] = array('Markocupic\ResourceBookingBundle\Cron', 'deleteOldBookingsFromDb');

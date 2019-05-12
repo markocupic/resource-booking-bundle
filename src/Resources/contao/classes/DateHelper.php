@@ -30,12 +30,12 @@ class DateHelper
         }
         if ($intDays < 0)
         {
-            $intDays = $intDays * (-1);
-            $strAddDays = '- ' . $intDays . ' days';
+            $intDays = abs($intDays);
+            $strAddDays = '-' . $intDays . ' days';
         }
         else
         {
-            $strAddDays = '+ ' . $intDays . ' days';
+            $strAddDays = '+' . $intDays . ' days';
         }
 
         return strtotime(Date::parse('Y-m-d H:i:s', $time) . ' ' . $strAddDays);
