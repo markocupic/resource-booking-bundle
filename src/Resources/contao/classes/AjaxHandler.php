@@ -183,6 +183,7 @@ class AjaxHandler
         $objResource = ResourceBookingResourceModel::findPublishedByPk($intResourceId);
         $arrBookingDateSelection = Input::post('bookingDateSelection');
         $bookingRepeatStopWeekTstamp = Input::post('bookingRepeatStopWeekTstamp');
+        $counter = 0;
 
         if (!FE_USER_LOGGED_IN || $objResource === null || !$bookingRepeatStopWeekTstamp > 0 || !is_array($arrBookingDateSelection))
         {
@@ -205,7 +206,7 @@ class AjaxHandler
 
             foreach ($arrBookings as $arrBooking)
             {
-                if ($arrBooking['resourceAlreadyBooked'] === true)
+                if ($arrBooking['resourceAlreadyBooked'] && $arrBooking['resourceAlreadyBookedByLoggedInUser'] === false)
                 {
                     $errors++;
                 }
@@ -219,7 +220,7 @@ class AjaxHandler
             {
                 foreach ($arrBookings as $i => $arrBooking)
                 {
-                    if ($arrBooking['resourceAlreadyBookedInThePastBySameMember'] === false)
+                    if ($arrBooking['resourceAlreadyBookedByLoggedInUser'] === false)
                     {
                         // Set title
                         $arrBooking['title'] = sprintf('%s : %s %s %s [%s - %s]', $objResource->title, $GLOBALS['TL_LANG']['MSC']['bookingFor'], $objUser->firstname, $objUser->lastname, Date::parse(Config::get('datimFormat'), $arrBooking['startTime']), Date::parse(Config::get('datimFormat'), $arrBooking['endTime']));
@@ -255,20 +256,26 @@ class AjaxHandler
     /**
      * @return JsonResponse
      */
-    public function sendResourceAvailabilityRequest($objModule)
+    public function sendBookingFormValidationRequest($objModule)
     {
         $arrJson = array();
         $arrJson['status'] = 'error';
-        $arrJson['resourceIsAvailable'] = false;
+        $arrJson['bookingFormValidation'] = array(
+            'noDatesSelected'         => false,
+            'resourceIsAlreadyBooked' => false,
+            'passedValidation'        => false,
+        );
+
         $errors = 0;
-        $isAvailable = true;
+        $counter = 0;
+        $blnBookingsPossible = true;
         $arrBookings = array();
         $intResourceId = Input::post('resourceId');
         $objResource = ResourceBookingResourceModel::findPublishedByPk($intResourceId);
         $arrBookingDateSelection = Input::post('bookingDateSelection');
         $bookingRepeatStopWeekTstamp = Input::post('bookingRepeatStopWeekTstamp');
 
-        if (!FE_USER_LOGGED_IN || $objResource === null || !$bookingRepeatStopWeekTstamp > 0 || !is_array($arrBookingDateSelection))
+        if (!FE_USER_LOGGED_IN || $objResource === null || !$bookingRepeatStopWeekTstamp > 0)
         {
             $errors++;
             $arrJson['alertError'] = $GLOBALS['TL_LANG']['MSG']['generalBookingError'];
@@ -283,14 +290,29 @@ class AjaxHandler
 
             foreach ($arrBookings as $arrBooking)
             {
-                if ($arrBooking['resourceAlreadyBooked'] === true)
+                if ($arrBooking['resourceAlreadyBooked'] === true && $arrBooking['resourceAlreadyBookedByLoggedInUser'] === false)
                 {
-                    $isAvailable = false;
+                    $blnBookingsPossible = false;
                 }
+                $counter++;
             }
 
-            $arrJson['resourceIsAvailable'] = $isAvailable;
+            if ($counter === 0)
+            {
+                $arrJson['bookingFormValidation']['passedValidation'] = false;
+                $arrJson['bookingFormValidation']['noDatesSelected'] = true;
+            }
+            elseif (!$blnBookingsPossible)
+            {
+                $arrJson['bookingFormValidation']['passedValidation'] = false;
+                $arrJson['bookingFormValidation']['resourceIsAlreadyBooked'] = true;
+            }
+            else // All ok!
+            {
+                $arrJson['bookingFormValidation']['passedValidation'] = true;
+            }
         }
+
         // Return $arrBookings
         $arrJson['bookingSelection'] = $arrBookings;
         $arrJson['status'] = 'success';
@@ -352,19 +374,19 @@ class AjaxHandler
             // slotId-startTime-endTime-mondayTimestampSelectedWeek
             $arrTimeSlot = explode('-', $strTimeSlot);
             $arrBooking = array(
-                'timeSlotId'                                 => $arrTimeSlot[0],
-                'startTime'                                  => $arrTimeSlot[1],
-                'endTime'                                    => $arrTimeSlot[2],
-                'mondayTimestampSelectedWeek'                => $arrTimeSlot[3],
-                'pid'                                        => Input::post('resourceId'),
-                'description'                                => Input::post('description'),
-                'member'                                     => $objUser->id,
-                'firstname'                                  => $objUser->firstname,
-                'lastname'                                   => $objUser->lastname,
-                'tstamp'                                     => time(),
-                'resourceAlreadyBooked'                      => true,
-                'resourceAlreadyBookedInThePastBySameMember' => false,
-                'newEntry'                                   => false,
+                'timeSlotId'                          => $arrTimeSlot[0],
+                'startTime'                           => $arrTimeSlot[1],
+                'endTime'                             => $arrTimeSlot[2],
+                'mondayTimestampSelectedWeek'         => $arrTimeSlot[3],
+                'pid'                                 => Input::post('resourceId'),
+                'description'                         => Input::post('description'),
+                'member'                              => $objUser->id,
+                'firstname'                           => $objUser->firstname,
+                'lastname'                            => $objUser->lastname,
+                'tstamp'                              => time(),
+                'resourceAlreadyBooked'               => true,
+                'resourceAlreadyBookedByLoggedInUser' => false,
+                'newEntry'                            => false,
             );
             $arrBookings[] = $arrBooking;
 
@@ -395,10 +417,10 @@ class AjaxHandler
                     $arrBookings[$index]['resourceAlreadyBooked'] = false;
                 }
             }
-            elseif (null !== ResourceBookingModel::findOneByResourceIdStarttimeEndtimeAndOwnerId($objResource, $arrData['startTime'], $arrData['endTime'], $arrData['member']))
+            elseif (null !== ResourceBookingModel::findOneByResourceIdStarttimeEndtimeAndMember($objResource, $arrData['startTime'], $arrData['endTime'], $arrData['member']))
             {
-                $arrBookings[$index]['resourceAlreadyBooked'] = false;
-                $arrBookings[$index]['resourceAlreadyBookedInThePastBySameMember'] = true;
+                $arrBookings[$index]['resourceAlreadyBooked'] = true;
+                $arrBookings[$index]['resourceAlreadyBookedByLoggedInUser'] = true;
             }
         }
 

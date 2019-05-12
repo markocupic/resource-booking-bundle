@@ -11,9 +11,10 @@
 
 <div id="resourceBookingApp" v-bind:class="{ 'is-ready': isReady }">
 
+    <div id="loggedInUserData" class="logged-in-user-data mb-2"><strong>Angemeldet als:</strong> {{user::firstname}} {{user::lastname}}</div>
     <form id="resourceBookingForm" action="{{env::request}}" method="get">
         <div class="form-row">
-            <div class="form-group col-sm-1">
+            <div v-if="rows" class="form-group col-sm-1">
                 <a href="<?= $this->minus1WeekUrl ?>" class="btn btn-primary btn-block<?php if($this->disableMinus1WeekBtn): ?> disabled<?php endif; ?>" role="button"<?php if($this->disableMinus1WeekBtn): ?> aria-disabled="true"<?php endif; ?>>-<span class="d-none d-lg-inline">1W</span></a>
             </div>
             <div class="form-group col-sm-3">
@@ -40,7 +41,7 @@
             </div>
             <?php endif; ?>
 
-            <div class="form-group col-sm-4">
+            <div v-if="rows" class="form-group col-sm-4">
                 <label for="date" class="d-none">Zeitraum</label>
                 <select id="date" class="form-control" name="date" v-on:change="submitForm">
                     <?php foreach($this->weekSelection as $arrDate): ?>
@@ -49,7 +50,7 @@
                     <?php endforeach; ?>
                 </select>
             </div>
-            <div class="form-group col-sm-1">
+            <div v-if="rows" class="form-group col-sm-1">
                 <a href="<?= $this->plus1WeekUrl ?>" class="btn btn-primary btn-block<?php if($this->disablePlus1WeekBtn): ?> disabled<?php endif; ?>" role="button"<?php if($this->disablePlus1WeekBtn): ?> aria-disabled="true"<?php endif; ?>>+<span class="d-none d-lg-inline">1W</span></a>
             </div>
         </div>
@@ -65,7 +66,7 @@
 
     <!-- vue application container -->
     <div class="vue-application">
-        <div class="table-responsive-lg">
+        <div v-if="rows" class="table-responsive-lg">
             <table class="resource-booking-table-main table">
                 <thead>
                 <tr>
@@ -81,8 +82,8 @@
                         <div v-if="eventBox.isBooked">
                             {{ eventBox.bookedByFirstname }} {{ eventBox.bookedByLastname }} {{br}} {{ eventBox.bookingDescription }}
                         </div>
-                        <button class="btn btn-link" v-if="eventBox.isEditable && !eventBox.isBooked" v-on:click="openBookingModal(eventBox,'showBookingForm')" title="buchen"><i class="fas fa-pencil-alt"></i></button>
-                        <button class="btn btn-link" v-if="eventBox.isEditable && eventBox.isBooked" v-on:click="openBookingModal(eventBox, 'showCancelBookingForm')" title="stornieren"><i class="fas fa-pencil-alt"></i></button>
+                        <button class="btn btn-link btn-booking" v-if="eventBox.isEditable && !eventBox.isBooked" v-on:click="openBookingModal(eventBox,'showBookingForm')" title="buchen"><i class="fas fa-pencil-alt"></i></button>
+                        <button class="btn btn-link btn-cancel-booking" v-if="eventBox.isEditable && eventBox.isBooked" v-on:click="openBookingModal(eventBox, 'showCancelBookingForm')" title="stornieren"><i class="fas fa-times"></i></button>
                     </td>
                 </tr>
                 </tbody>
@@ -131,8 +132,9 @@
                         <div v-if="bookingModal.alertError != ''" class="alert alert-danger">{{ bookingModal.alertError }}</div>
                         <div v-if="!bookingModal.showConfirmationMsg && bookingModal.action == 'showBookingForm'">
                             <div id="resourceIsAvailable">
-                                <div v-if="resourceIsAvailable" class="alert alert-success" role="alert">{{ activeResource.title }} ist im gewünschten Zeitraum noch buchbar.</div>
-                                <div v-if="!resourceIsAvailable" class="alert alert-danger" role="alert">{{ activeResource.title }} ist im gewünschten Zeitraum <strong>nicht mehr buchbar.</strong></div>
+                                <div v-if="bookingFormValidation.noDatesSelected" class="alert alert-warning" role="alert">Bitte wählen Sie mindestens 1 Buchungszeitpunkt aus.</div>
+                                <div v-if="bookingFormValidation.passedValidation" class="alert alert-success" role="alert">{{ activeResource.title }} ist im gewünschten Zeitraum noch buchbar.</div>
+                                <div v-if="bookingFormValidation.resourceIsAlreadyBooked" class="alert alert-danger" role="alert">{{ activeResource.title }} ist im gewünschten Zeitraum <strong>nicht mehr buchbar.</strong></div>
                             </div>
                             <form>
                                 <table class="resource-booking-table-modal table">
@@ -149,7 +151,7 @@
                                         <td class="time-slot-cell" v-for="(eventBox, colIndex) in row" v-bind:data-col-index="colIndex" v-bind:data-isbooked="eventBox.isBooked">
                                             <div v-if="!eventBox.isBooked">
                                                 <div class="custom-control custom-checkbox">
-                                                    <input type="checkbox" v-on:change="sendResourceAvailabilityRequest()" v-model="bookingModal.selectedTimeSlots" v-bind:value="eventBox.bookingCheckboxValue" class="custom-control-input" v-bind:id="eventBox.bookingCheckboxId">
+                                                    <input type="checkbox" v-on:change="sendBookingFormValidationRequest()" v-model="bookingModal.selectedTimeSlots" v-bind:value="eventBox.bookingCheckboxValue" class="custom-control-input" v-bind:id="eventBox.bookingCheckboxId">
                                                     <label class="custom-control-label" v-bind:for="eventBox.bookingCheckboxId"></label>
                                                 </div>
                                             </div>
@@ -168,7 +170,7 @@
 
                                 <div class="form-group">
                                     <label for="bookingRepeatStopWeekTstamp">Ressource buchen bis (Wiederholungen)</label>
-                                    <select id="bookingRepeatStopWeekTstamp" class="form-control" name="bookingRepeatStopWeekTstamp" v-on:change="sendResourceAvailabilityRequest()">
+                                    <select id="bookingRepeatStopWeekTstamp" class="form-control" name="bookingRepeatStopWeekTstamp" v-on:change="sendBookingFormValidationRequest()">
                                         <option v-for="(row, rowIndex) in bookingRepeatsSelection" v-bind:value="row.tstamp" v-bind:data-current-week="activeWeek.tstampStart==row.tstamp ? 'true' : 'false'">{{ row.optionText }}</option>
                                     </select>
                                 </div>
@@ -182,7 +184,7 @@
 
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Schliessen</button>
-                        <button type="button" class="btn btn-primary" v-if="resourceIsAvailable && !bookingModal.showConfirmationMsg && bookingModal.action == 'showBookingForm'" v-on:click="sendBookingRequest">Ressource buchen</button>
+                        <button type="button" class="btn btn-primary" v-if="bookingFormValidation.passedValidation && !bookingModal.showConfirmationMsg && bookingModal.action == 'showBookingForm'" v-on:click="sendBookingRequest">Ressource buchen</button>
                         <button type="button" class="btn btn-danger" v-if="!bookingModal.showConfirmationMsg && bookingModal.action == 'showCancelBookingForm'" v-on:click="sendCancelBookingRequest">Buchung stornieren</button>
                     </div>
                 </div>

@@ -30,7 +30,7 @@ class ResourceBookingModel extends \Model
      * @param $memberid
      * @return ResourceBookingModel
      */
-    public static function findOneByResourceIdStarttimeEndtimeAndOwnerId($objResource, $starttime, $endtime, $memberid)
+    public static function findOneByResourceIdStarttimeEndtimeAndMember($objResource, $starttime, $endtime, $memberid)
     {
         $arrColumn = array('pid=?', 'startTime=?', 'endTime=?', 'member=?');
         $arrValues = array($objResource->id, $starttime, $endtime, $memberid);

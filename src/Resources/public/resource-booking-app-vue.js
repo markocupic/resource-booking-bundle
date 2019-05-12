@@ -21,13 +21,8 @@ var resourceBookingApp = new Vue({
         activeResource: {},
         activeResourceType: {},
         bookingRepeatsSelection: [],
-        bookingModal: {
-            action: '',
-            showConfirmationMsg: false,
-            alertSuccess: '',
-            alertError: '',
-            selectedTimeSlots: []
-        },
+        bookingFormValidation: [],
+        bookingModal: {},
         form: {}
     },
     created: function created() {
@@ -62,7 +57,7 @@ var resourceBookingApp = new Vue({
                 }
             });
             xhr.fail(function ($res, $bl) {
-                alert("XHR-Request fehlgeschlagen!!!");
+                alert("Verbindung zum Server fehlgeschlagen! Überprüfen Sie die Netzwerkverbindung bitte.");
             });
             xhr.always(function () {//
             });
@@ -82,9 +77,9 @@ var resourceBookingApp = new Vue({
             self.bookingModal.alertSuccess = '';
             self.bookingModal.alertError = '';
             self.bookingModal.selectedTimeSlots.push(objActiveTimeSlot.bookingCheckboxValue);
-            self.resourceIsAvailable = true;
+            self.bookingFormValidation = [];
             window.setTimeout(function () {
-                self.sendResourceAvailabilityRequest();
+                self.sendBookingFormValidationRequest();
             }, 500);
             $('#resourceBookingModal [name="bookingDescription"]').val('');
             $('#bookingRepeatStopWeekTstamp option').prop('selected', false);
@@ -120,7 +115,8 @@ var resourceBookingApp = new Vue({
                     self.bookingModal.alertError = response.alertError;
                 }
             });
-            xhr.fail(function () {//
+            xhr.fail(function () {
+                alert("Verbindung zum Server fehlgeschlagen! Überprüfen Sie die Netzwerkverbindung bitte.");
             });
             xhr.always(function () {
                 self.bookingModal.showConfirmationMsg = true;
@@ -131,14 +127,14 @@ var resourceBookingApp = new Vue({
         /**
          * Send resource availability request
          */
-        sendResourceAvailabilityRequest: function sendResourceAvailabilityRequest() {
+        sendBookingFormValidationRequest: function sendBookingFormValidationRequest() {
             var self = this;
             var xhr = $.ajax({
                 url: window.location.href,
                 type: 'post',
                 dataType: 'json',
                 data: {
-                    'action': 'sendResourceAvailabilityRequest',
+                    'action': 'sendBookingFormValidationRequest',
                     'REQUEST_TOKEN': self.requestToken,
                     'resourceId': self.bookingModal.activeTimeSlot.resourceId,
                     'bookingDateSelection': self.bookingModal.selectedTimeSlots,
@@ -147,10 +143,11 @@ var resourceBookingApp = new Vue({
             });
             xhr.done(function (response) {
                 if (response.status === 'success') {
-                    self.resourceIsAvailable = response.resourceIsAvailable;
+                    self.bookingFormValidation = response.bookingFormValidation;
                 }
             });
-            xhr.fail(function () {//
+            xhr.fail(function () {
+                alert("Verbindung zum Server fehlgeschlagen! Überprüfen Sie die Netzwerkverbindung bitte.");
             });
             xhr.always(function () {//
             });
@@ -181,7 +178,8 @@ var resourceBookingApp = new Vue({
                     self.bookingModal.alertError = response.alertError;
                 }
             });
-            xhr.fail(function () {//
+            xhr.fail(function () {
+                alert("Verbindung zum Server fehlgeschlagen! Überprüfen Sie die Netzwerkverbindung bitte.");
             });
             xhr.always(function () {
                 self.bookingModal.showConfirmationMsg = true;
