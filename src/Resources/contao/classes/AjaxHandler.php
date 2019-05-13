@@ -165,6 +165,7 @@ class AjaxHandler
             }
         }
         $arrData['timeSlots'] = $timeSlots;
+        //$arrData['isOnline'] = true;
 
         $arrJson['data'] = $arrData;
         $arrJson['status'] = 'success';

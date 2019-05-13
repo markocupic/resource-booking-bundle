@@ -11,7 +11,7 @@ var resourceBookingApp = new Vue({
     el: '#resourceBookingApp',
     data: {
         // idle time in milliseconds
-        idleTimeLimit: 600000,
+        idleTimeLimit: 300000,
         userLoggedOut: false,
         isOnline: true,
         isReady: false,
@@ -57,6 +57,7 @@ var resourceBookingApp = new Vue({
         isOnline: function isOnline(val) {
             var self = this;
             if (val === false) {
+                // Logout user after 5 min of idle time
                 self.sendLogoutRequest();
                 window.setTimeout(function () {
                     window.setTimeout(function () {
@@ -210,7 +211,6 @@ var resourceBookingApp = new Vue({
                 } else {
                     self.bookingModal.alertError = response.alertError;
                 }
-                self.lastUserRequest = response.lastUserRequest;
             });
             xhr.fail(function () {
                 self.isOnline = false;
