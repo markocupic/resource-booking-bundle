@@ -195,7 +195,7 @@
     </div>
 </div>
 
-
+<script src="<?= MOD_RESOURCE_BOOKING_ASSET_PATH ?>/jquery.idle/jquery.idle.min.min.js"></script>
 <script>
     RESOURCE_BOOKING = {
         requestToken: '{{REQUEST_TOKEN}}'

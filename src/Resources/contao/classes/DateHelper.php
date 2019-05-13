@@ -61,23 +61,4 @@ class DateHelper
         return $dateObj && $dateObj->format($format) == $dateString;
     }
 
-    /**
-     * @param int $time
-     * @return array
-     */
-    public static function getTimeArray($time = 0)
-    {
-        if ($time === 0)
-        {
-            $time = time();
-        }
-        // Send request time
-        return array(
-            'tstamp' => $time,
-            'time'   => Date::parse('H:i:s', $time),
-            'date'   => Date::parse(Config::get('dateFormat'), $time),
-            'datim'  => Date::parse(Config::get('datimFormat'), $time),
-        );
-    }
-
 }

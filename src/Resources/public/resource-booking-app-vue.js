@@ -10,17 +10,10 @@
 var resourceBookingApp = new Vue({
     el: '#resourceBookingApp',
     data: {
-        now: {
-            tstamp: '',
-            date: '',
-            time: ''
-        },
-        lastUserRequest: {
-            tstamp: '',
-            date: '',
-            datim: '',
-            time: '',
-        },
+        // idle time in milliseconds
+        idleTimeLimit: 600000,
+        userLoggedOut: false,
+        isOnline: true,
         isReady: false,
         loggedInUser: [],
         resourceIsAvailable: true,
@@ -39,26 +32,40 @@ var resourceBookingApp = new Vue({
     created: function created() {
         var self = this;
         self.requestToken = RESOURCE_BOOKING.requestToken; // Load data from server
-        // Set the time
-        window.setInterval(function () {
-            self.getTime();
-        }, 1000);
 
         // Get data from server each 15s
         self.getDataAll();
-        window.setTimeout(function () {
-            self.lastUserRequest.tstamp = self.now.tstamp;
-        }, 1100);
         window.setInterval(function () {
-            // Do not prolong server session more then 10 min due to ajax calls
-            if (self.lastUserRequest.tstamp + 600 > self.now.tstamp) {
-                self.getDataAll();
-            }
+            self.getDataAll();
         }, 15000);
+
+        // Initialize idle detector
+        self.initializeIdleDetector();
+
+        // Check Online status each 60 s
+        self.sendIsOnlineRequest();
+        window.setInterval(function () {
+            self.sendIsOnlineRequest();
+        }, 60000);
 
         window.setTimeout(function () {
             self.isReady = true;
         }, 800);
+    },
+    watch: {
+        // Watcher
+        isOnline: function isOnline(val) {
+            var self = this;
+            if (val === false) {
+                self.sendLogoutRequest();
+                window.setTimeout(function () {
+                    window.setTimeout(function () {
+                        alert('Sie wurden aus Sicherheitsgründen abgemeldet.');
+                        location.reload();
+                    }, 100);
+                }, 400);
+            }
+        }
     },
     methods: {
         /**
@@ -83,7 +90,7 @@ var resourceBookingApp = new Vue({
                 }
             });
             xhr.fail(function ($res, $bl) {
-                alert("Verbindung zum Server fehlgeschlagen! Überprüfen Sie die Netzwerkverbindung bitte.");
+                self.isOnline = false;
             });
             xhr.always(function () {//
             });
@@ -140,7 +147,6 @@ var resourceBookingApp = new Vue({
                 } else {
                     self.bookingModal.alertError = response.alertError;
                 }
-                self.lastUserRequest = response.lastUserRequest;
             });
             xhr.fail(function () {
                 alert("Verbindung zum Server fehlgeschlagen! Überprüfen Sie die Netzwerkverbindung bitte.");
@@ -171,11 +177,10 @@ var resourceBookingApp = new Vue({
             xhr.done(function (response) {
                 if (response.status === 'success') {
                     self.bookingFormValidation = response.bookingFormValidation;
-                    self.lastUserRequest = response.lastUserRequest;
                 }
             });
             xhr.fail(function () {
-                alert("Verbindung zum Server fehlgeschlagen! Überprüfen Sie die Netzwerkverbindung bitte.");
+                self.isOnline = false;
             });
             xhr.always(function () {//
             });
@@ -208,11 +213,73 @@ var resourceBookingApp = new Vue({
                 self.lastUserRequest = response.lastUserRequest;
             });
             xhr.fail(function () {
-                alert("Verbindung zum Server fehlgeschlagen! Überprüfen Sie die Netzwerkverbindung bitte.");
+                self.isOnline = false;
             });
             xhr.always(function () {
                 self.bookingModal.showConfirmationMsg = true;
                 self.getDataAll();
+            });
+        },
+
+        /**
+         * Send booking request
+         */
+        sendIsOnlineRequest: function sendIsOnlineRequest() {
+            var self = this;
+            var xhr = $.ajax({
+                url: window.location.href,
+                type: 'post',
+                dataType: 'json',
+                data: {
+                    'action': 'sendIsOnlineRequest',
+                    'REQUEST_TOKEN': self.requestToken,
+                }
+            });
+            xhr.done(function (response) {
+                if (response.status === 'success') {
+                    self.isOnline = response.isOnline;
+                } else {
+                    self.isOnline = false;
+                }
+            });
+            xhr.fail(function () {
+                self.isOnline = false;
+            });
+            xhr.always(function () {
+                //
+            });
+        },
+
+        /**
+         * Send logout request
+         */
+        sendLogoutRequest: function sendLogoutRequest() {
+            var self = this;
+            var xhr = $.ajax({
+                url: window.location.href,
+                type: 'post',
+                dataType: 'json',
+                data: {
+                    'action': 'sendLogoutRequest',
+                    'REQUEST_TOKEN': self.requestToken,
+                }
+            });
+            xhr.always(function () {
+                self.isOnline = false;
+                self.userLoggedOut = true;
+            });
+        },
+
+        /**
+         * initialize idle detector
+         */
+        initializeIdleDetector: function initializeIdleDetector() {
+            var self = this;
+            $(document).idle({
+                onIdle: function () {
+                    self.sendLogoutRequest();
+                },
+                idle: self.idleTimeLimit
             });
         },
 
@@ -224,16 +291,6 @@ var resourceBookingApp = new Vue({
             document.getElementById('resourceBookingForm').submit();
         },
 
-        /**
-         * Get the current timestamp
-         * @returns {number}
-         */
-        getTime: function getTime() {
-            var objDate = new Date();
-            this.now.tstamp = objDate.getTime() / 1000;
-            this.now.date = objDate.getDay() + '.' + objDate.getMonth() + '.' + objDate.getYear();
-            this.now.time = objDate.getHours() + ':' + objDate.getMinutes() + ':' + objDate.getSeconds();
-        }
 
     }
 });

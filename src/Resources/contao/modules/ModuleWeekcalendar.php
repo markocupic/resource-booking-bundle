@@ -100,9 +100,17 @@ class ModuleWeekcalendar extends Module
 
             return $objTemplate->parse();
         }
-
+        
+        // Remove query params from url if user is not logged in
+        // and...
+        // Return empty string if user is not logged in/**/
         if (!FE_USER_LOGGED_IN)
         {
+            if (Input::get('date') || Input::get('resType') || Input::get('res'))
+            {
+                $url = \Haste\Util\Url::removeQueryString(['date', 'resType', 'res'], Environment::get('request'));
+                Controller::redirect($url);
+            }
             return '';
         }
 

@@ -12,12 +12,16 @@ namespace Markocupic\ResourceBookingBundle;
 
 use Contao\Config;
 use Contao\Date;
+use Contao\Environment;
 use Contao\FrontendUser;
+use Contao\RequestToken;
 use Contao\ResourceBookingModel;
 use Contao\ResourceBookingResourceModel;
 use Contao\ResourceBookingTimeSlotModel;
 use Contao\Input;
+use Contao\System;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Contao\CoreBundle\Exception\RedirectResponseException;
 
 /**
  * Class AjaxHandler
@@ -165,9 +169,6 @@ class AjaxHandler
         $arrJson['data'] = $arrData;
         $arrJson['status'] = 'success';
 
-        // Send request time
-        //$arrJson['data']['lastRequest'] = DateHelper::getTimeArray();
-
         $response = new JsonResponse($arrJson);
         return $response->send();
     }
@@ -179,7 +180,6 @@ class AjaxHandler
     {
         $arrJson = array();
         $arrJson['status'] = 'error';
-        $doNewInserts = true;
         $errors = 0;
         $arrBookings = array();
         $intResourceId = Input::post('resourceId');
@@ -252,9 +252,6 @@ class AjaxHandler
         // Return $arrBookings
         $arrJson['bookingSelection'] = $arrBookings;
 
-        // Send request time
-        $arrJson['lastUserRequest'] = DateHelper::getTimeArray();
-
         $response = new JsonResponse($arrJson);
         return $response->send();
     }
@@ -323,9 +320,6 @@ class AjaxHandler
         $arrJson['bookingSelection'] = $arrBookings;
         $arrJson['status'] = 'success';
 
-        // Send request time
-        $arrJson['lastUserRequest'] = DateHelper::getTimeArray();
-
         $response = new JsonResponse($arrJson);
         return $response->send();
     }
@@ -361,11 +355,34 @@ class AjaxHandler
             }
         }
 
-        // Send request time
-        $arrJson['lastUserRequest'] = DateHelper::getTimeArray();
-
         $response = new JsonResponse($arrJson);
         return $response->send();
+    }
+
+    /**
+     * @return JsonResponse
+     */
+    public function sendIsOnlineRequest()
+    {
+        $arrJson = array();
+        $arrJson['status'] = 'success';
+        $arrJson['isOnline'] = 'true';
+        $response = new JsonResponse($arrJson);
+        return $response->send();
+    }
+
+    /**
+     * Logout user
+     */
+    public static function sendLogoutRequest()
+    {
+
+        $cookie_name = 'PHPSESSID';
+        unset($_COOKIE[$cookie_name]);
+        // Empty value and expiration one hour before
+        $res = setcookie($cookie_name, '', time() - 3600);
+        // Logout user
+        throw new RedirectResponseException(System::getContainer()->get('security.logout_url_generator')->getLogoutUrl());
     }
 
     /**
