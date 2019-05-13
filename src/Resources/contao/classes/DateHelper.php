@@ -11,6 +11,7 @@
 namespace Markocupic\ResourceBookingBundle;
 
 use Contao\Date;
+use Contao\Config;
 
 /**
  * Class DateHelper
@@ -53,10 +54,30 @@ class DateHelper
      * @param $dateString
      * @return bool
      */
-    public static function isValidBookingTime($dateString) {
+    public static function isValidBookingTime($dateString)
+    {
         $format = 'H:i';
         $dateObj = \DateTime::createFromFormat($format, $dateString);
         return $dateObj && $dateObj->format($format) == $dateString;
+    }
+
+    /**
+     * @param int $time
+     * @return array
+     */
+    public static function getTimeArray($time = 0)
+    {
+        if ($time === 0)
+        {
+            $time = time();
+        }
+        // Send request time
+        return array(
+            'tstamp' => $time,
+            'time'   => Date::parse('H:i:s', $time),
+            'date'   => Date::parse(Config::get('dateFormat'), $time),
+            'datim'  => Date::parse(Config::get('datimFormat'), $time),
+        );
     }
 
 }

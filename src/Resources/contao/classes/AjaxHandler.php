@@ -165,6 +165,9 @@ class AjaxHandler
         $arrJson['data'] = $arrData;
         $arrJson['status'] = 'success';
 
+        // Send request time
+        //$arrJson['data']['lastRequest'] = DateHelper::getTimeArray();
+
         $response = new JsonResponse($arrJson);
         return $response->send();
     }
@@ -249,6 +252,9 @@ class AjaxHandler
         // Return $arrBookings
         $arrJson['bookingSelection'] = $arrBookings;
 
+        // Send request time
+        $arrJson['lastUserRequest'] = DateHelper::getTimeArray();
+
         $response = new JsonResponse($arrJson);
         return $response->send();
     }
@@ -316,6 +322,10 @@ class AjaxHandler
         // Return $arrBookings
         $arrJson['bookingSelection'] = $arrBookings;
         $arrJson['status'] = 'success';
+
+        // Send request time
+        $arrJson['lastUserRequest'] = DateHelper::getTimeArray();
+
         $response = new JsonResponse($arrJson);
         return $response->send();
     }
@@ -350,6 +360,9 @@ class AjaxHandler
                 $arrJson['alertError'] = $GLOBALS['TL_LANG']['MSG']['notAllowedToCancelBooking'];
             }
         }
+
+        // Send request time
+        $arrJson['lastUserRequest'] = DateHelper::getTimeArray();
 
         $response = new JsonResponse($arrJson);
         return $response->send();

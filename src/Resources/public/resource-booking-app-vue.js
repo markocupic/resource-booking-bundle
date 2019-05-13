@@ -10,6 +10,17 @@
 var resourceBookingApp = new Vue({
     el: '#resourceBookingApp',
     data: {
+        now: {
+            tstamp: '',
+            date: '',
+            time: ''
+        },
+        lastUserRequest: {
+            tstamp: '',
+            date: '',
+            datim: '',
+            time: '',
+        },
         isReady: false,
         loggedInUser: [],
         resourceIsAvailable: true,
@@ -28,8 +39,23 @@ var resourceBookingApp = new Vue({
     created: function created() {
         var self = this;
         self.requestToken = RESOURCE_BOOKING.requestToken; // Load data from server
+        // Set the time
+        window.setInterval(function () {
+            self.getTime();
+        }, 1000);
 
+        // Get data from server each 15s
         self.getDataAll();
+        window.setTimeout(function () {
+            self.lastUserRequest.tstamp = self.now.tstamp;
+        }, 1100);
+        window.setInterval(function () {
+            // Do not prolong server session more then 10 min due to ajax calls
+            if (self.lastUserRequest.tstamp + 600 > self.now.tstamp) {
+                self.getDataAll();
+            }
+        }, 15000);
+
         window.setTimeout(function () {
             self.isReady = true;
         }, 800);
@@ -114,6 +140,7 @@ var resourceBookingApp = new Vue({
                 } else {
                     self.bookingModal.alertError = response.alertError;
                 }
+                self.lastUserRequest = response.lastUserRequest;
             });
             xhr.fail(function () {
                 alert("Verbindung zum Server fehlgeschlagen! Überprüfen Sie die Netzwerkverbindung bitte.");
@@ -144,6 +171,7 @@ var resourceBookingApp = new Vue({
             xhr.done(function (response) {
                 if (response.status === 'success') {
                     self.bookingFormValidation = response.bookingFormValidation;
+                    self.lastUserRequest = response.lastUserRequest;
                 }
             });
             xhr.fail(function () {
@@ -177,6 +205,7 @@ var resourceBookingApp = new Vue({
                 } else {
                     self.bookingModal.alertError = response.alertError;
                 }
+                self.lastUserRequest = response.lastUserRequest;
             });
             xhr.fail(function () {
                 alert("Verbindung zum Server fehlgeschlagen! Überprüfen Sie die Netzwerkverbindung bitte.");
@@ -193,6 +222,18 @@ var resourceBookingApp = new Vue({
         submitForm: function submitForm() {
             var self = this;
             document.getElementById('resourceBookingForm').submit();
+        },
+
+        /**
+         * Get the current timestamp
+         * @returns {number}
+         */
+        getTime: function getTime() {
+            var objDate = new Date();
+            this.now.tstamp = objDate.getTime() / 1000;
+            this.now.date = objDate.getDay() + '.' + objDate.getMonth() + '.' + objDate.getYear();
+            this.now.time = objDate.getHours() + ':' + objDate.getMinutes() + ':' + objDate.getSeconds();
         }
+
     }
 });
