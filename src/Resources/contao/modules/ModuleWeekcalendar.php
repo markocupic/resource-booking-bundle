@@ -100,7 +100,7 @@ class ModuleWeekcalendar extends Module
 
             return $objTemplate->parse();
         }
-        
+
         // Remove query params from url if user is not logged in
         // and...
         // Return empty string if user is not logged in/**/
@@ -211,9 +211,19 @@ class ModuleWeekcalendar extends Module
         $this->Template->objSelectedResourceType = $this->objSelectedResourceType;
         $this->Template->objResources = $this->objResources;
         $this->Template->objSelectedResource = $this->objSelectedResource;
-        $this->Template->weekSelection = ResourceBookingHelper::getWeekSelection($this->intBackWeeks, $this->intAheadWeeks, true);
+        $this->Template->weekSelection = ResourceBookingHelper::getWeekSelection(DateHelper::addDaysToTime($this->intBackWeeks * 7, DateHelper::getMondayOfCurrentWeek()), DateHelper::addDaysToTime($this->intAheadWeeks * 7, DateHelper::getMondayOfCurrentWeek()), true);
         $this->Template->mondayOfThisWeek = DateHelper::getMondayOfCurrentWeek();
         $this->Template->intSelectedDate = $this->intSelectedDate;
+        if ($this->objSelectedResourceType !== null)
+        {
+            $this->Template->showResourceSelector = true;
+        }
+        if ($this->objSelectedResourceType !== null && $this->objSelectedResource !== null)
+        {
+            $this->Template->showDateSelector = true;
+            $this->Template->showGoToPrevWeekBtn = true;
+            $this->Template->showGoToNextWeekBtn = true;
+        }
 
         // Create 1 week back and 1 week ahead links
         $url = \Haste\Util\Url::removeQueryString(['date'], Environment::get('request'));
@@ -221,12 +231,12 @@ class ModuleWeekcalendar extends Module
         $aheadTime = DateHelper::addDaysToTime(7, $this->intSelectedDate);
         if (!$this->isValidDate($backTime))
         {
-            $this->Template->disableMinus1WeekBtn = true;
+            $this->Template->disablePrevWeekBtn = true;
             $backTime = $this->intSelectedDate;
         }
         if (!$this->isValidDate($aheadTime))
         {
-            $this->Template->disablePlus1WeekBtn = true;
+            $this->Template->disableNextWeekBtn = true;
             $aheadTime = $this->intSelectedDate;
         }
         $this->Template->minus1WeekUrl = \Haste\Util\Url::addQueryString('date=' . $backTime, $url);

@@ -27,7 +27,8 @@ var resourceBookingApp = new Vue({
         bookingRepeatsSelection: [],
         bookingFormValidation: [],
         bookingModal: {},
-        form: {}
+        form: {},
+        intervals: [],
     },
     created: function created() {
         var self = this;
@@ -35,7 +36,7 @@ var resourceBookingApp = new Vue({
 
         // Get data from server each 15s
         self.getDataAll();
-        window.setInterval(function () {
+        self.intervals.getDataAll = window.setInterval(function () {
             self.getDataAll();
         }, 15000);
 
@@ -44,7 +45,7 @@ var resourceBookingApp = new Vue({
 
         // Check Online status each 60 s
         self.sendIsOnlineRequest();
-        window.setInterval(function () {
+        self.intervals.sendIsOnlineRequest = window.setInterval(function () {
             self.sendIsOnlineRequest();
         }, 60000);
 
@@ -57,6 +58,10 @@ var resourceBookingApp = new Vue({
         isOnline: function isOnline(val) {
             var self = this;
             if (val === false) {
+                // Clear interval
+                clearInterval(self.intervals.sendIsOnlineRequest);
+                clearInterval(self.intervals.getDataAll);
+
                 // Logout user after 5 min of idle time
                 self.sendLogoutRequest();
                 window.setTimeout(function () {
@@ -114,13 +119,17 @@ var resourceBookingApp = new Vue({
             self.bookingModal.alertError = '';
             self.bookingModal.selectedTimeSlots.push(objActiveTimeSlot.bookingCheckboxValue);
             self.bookingFormValidation = [];
+
             window.setTimeout(function () {
                 self.sendBookingFormValidationRequest();
             }, 500);
-            $('#resourceBookingModal [name="bookingDescription"]').val('');
-            $('#bookingRepeatStopWeekTstamp option').prop('selected', false);
-            $('#bookingRepeatStopWeekTstamp [data-current-week="true"]').prop('selected', 'selected');
+
+            $('#resourceBookingModal').on('show.bs.modal', function () {
+                $('#resourceBookingModal [name="bookingDescription"]').val('');
+                $('#bookingRepeatStopWeekTstamp option').prop('selected', false);
+            });
             $('#resourceBookingModal').modal('show');
+
         },
 
         /**

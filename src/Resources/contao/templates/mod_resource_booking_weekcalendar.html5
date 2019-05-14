@@ -14,9 +14,11 @@
     <div id="loggedInUserData" class="logged-in-user-data mb-2"><strong>Angemeldet als:</strong> {{user::firstname}} {{user::lastname}}</div>
     <form id="resourceBookingForm" action="{{env::request}}" method="get">
         <div class="form-row">
+            <?php if($this->showGoToPrevWeekBtn): ?>
             <div v-if="rows" class="form-group col-sm-1">
-                <a href="<?= $this->minus1WeekUrl ?>" class="btn btn-primary btn-block<?php if($this->disableMinus1WeekBtn): ?> disabled<?php endif; ?>" role="button"<?php if($this->disableMinus1WeekBtn): ?> aria-disabled="true"<?php endif; ?>>-<span class="d-none d-lg-inline">1W</span></a>
+                <a href="<?= $this->minus1WeekUrl ?>" class="btn btn-primary btn-block<?php if($this->disablePrevWeekBtn): ?> disabled<?php endif; ?>" role="button"<?php if($this->disableMinus1WeekBtn): ?> aria-disabled="true"<?php endif; ?>><i class="fas fa-chevron-left"></i></a>
             </div>
+            <?php endif; ?>
             <div class="form-group col-sm-3">
                 <label for="resType" class="d-none">Typ</label>
                 <select id="resType" class="form-control" name="resType" v-on:change="submitForm">
@@ -28,7 +30,7 @@
                 </select>
             </div>
 
-            <?php if($this->objSelectedResourceType): ?>
+            <?php if($this->showResourceSelector): ?>
             <div class="form-group col-sm-3">
                 <label for="res" class="d-none">Resource</label>
                 <select id="res" class="form-control" name="res" v-on:change="submitForm">
@@ -41,6 +43,7 @@
             </div>
             <?php endif; ?>
 
+            <?php if($this->showDateSelector): ?>
             <div v-if="rows" class="form-group col-sm-4">
                 <label for="date" class="d-none">Zeitraum</label>
                 <select id="date" class="form-control" name="date" v-on:change="submitForm">
@@ -50,9 +53,13 @@
                     <?php endforeach; ?>
                 </select>
             </div>
+            <?php endif; ?>
+
+            <?php if($this->showGoToNextWeekBtn): ?>
             <div v-if="rows" class="form-group col-sm-1">
-                <a href="<?= $this->plus1WeekUrl ?>" class="btn btn-primary btn-block<?php if($this->disablePlus1WeekBtn): ?> disabled<?php endif; ?>" role="button"<?php if($this->disablePlus1WeekBtn): ?> aria-disabled="true"<?php endif; ?>>+<span class="d-none d-lg-inline">1W</span></a>
+                <a href="<?= $this->plus1WeekUrl ?>" class="btn btn-primary btn-block<?php if($this->disableNextWeekBtn): ?> disabled<?php endif; ?>" role="button"<?php if($this->disablePlus1WeekBtn): ?> aria-disabled="true"<?php endif; ?>><i class="fas fa-chevron-right"></i></a>
             </div>
+            <?php endif; ?>
         </div>
     </form>
 
@@ -171,7 +178,7 @@
                                 <div class="form-group">
                                     <label for="bookingRepeatStopWeekTstamp">Ressource buchen bis (Wiederholungen)</label>
                                     <select id="bookingRepeatStopWeekTstamp" class="form-control" name="bookingRepeatStopWeekTstamp" v-on:change="sendBookingFormValidationRequest()">
-                                        <option v-for="(row, rowIndex) in bookingRepeatsSelection" v-bind:value="row.tstamp" v-bind:data-current-week="activeWeek.tstampStart==row.tstamp ? 'true' : 'false'">{{ row.optionText }}</option>
+                                        <option v-for="(row, rowIndex) in bookingRepeatsSelection" v-bind:value="row.tstamp">{{ row.optionText }}</option>
                                     </select>
                                 </div>
 

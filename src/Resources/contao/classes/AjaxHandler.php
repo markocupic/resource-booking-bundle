@@ -60,9 +60,7 @@ class AjaxHandler
         );
 
         // Get booking RepeatsSelection
-        $kwSelectedDate = (int)Date::parse('W', $objModule->intSelectedDate);
-        $kwNow = (int)Date::parse('W');
-        $arrData['bookingRepeatsSelection'] = ResourceBookingHelper::getWeekSelection($kwSelectedDate - $kwNow - 1, $objModule->intAheadWeeks, false);
+         $arrData['bookingRepeatsSelection'] = ResourceBookingHelper::getWeekSelection($objModule->intSelectedDate, DateHelper::addDaysToTime(7*$objModule->intAheadWeeks), false);
 
         // Send weekdays, dates and day
         $arrWeek = array();

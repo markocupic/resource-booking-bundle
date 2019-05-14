@@ -99,18 +99,21 @@ class ResourceBookingHelper
     }
 
     /**
-     * @param $start
-     * @param $end
+     * @param $startTstamp
+     * @param $endTstamp
      * @param bool $injectEmptyLine
      * @return array
      */
-    public static function getWeekSelection($start, $end, $injectEmptyLine = false)
+    public static function getWeekSelection($startTstamp, $endTstamp, $injectEmptyLine = false)
     {
+
         $arrWeeks = array();
-        for ($i = $start; $i <= $end; $i++)
+
+        $currentTstamp = $startTstamp;
+        while ($currentTstamp <= $endTstamp)
         {
             // add empty
-            if ($injectEmptyLine && DateHelper::getMondayOfCurrentWeek() == strtotime('monday ' . (string)$i . ' week'))
+            if ($injectEmptyLine && DateHelper::getMondayOfCurrentWeek() == $currentTstamp)
             {
                 $arrWeeks[] = array(
                     'tstamp'     => '',
@@ -118,14 +121,14 @@ class ResourceBookingHelper
                     'optionText' => '-------------'
                 );
             }
-            $tstampMonday = strtotime('monday ' . (string)$i . ' week');
-            $dateMonday = Date::parse('d.m.Y', $tstampMonday);
+            $tstampMonday = $currentTstamp;
+            $dateMonday = Date::parse('d.m.Y', $currentTstamp);
             $tstampSunday = strtotime($dateMonday . ' + 6 days');
             $dateSunday = Date::parse('d.m.Y', $tstampSunday);
             $calWeek = Date::parse('W', $tstampMonday);
             $yearMonday = Date::parse('Y', $tstampMonday);
             $arrWeeks[] = array(
-                'tstamp'       => strtotime('monday ' . (string)$i . ' week'),
+                'tstamp'       => $currentTstamp,
                 'tstampMonday' => $tstampMonday,
                 'tstampSunday' => $tstampSunday,
                 'stringMonday' => $dateMonday,
@@ -135,6 +138,8 @@ class ResourceBookingHelper
                 'year'         => $yearMonday,
                 'optionText'   => sprintf($GLOBALS['TL_LANG']['MSC']['weekSelectOptionText'], $calWeek, $yearMonday, $dateMonday, $dateSunday)
             );
+
+            $currentTstamp = DateHelper::addDaysToTime(7,$currentTstamp);
         }
 
         return $arrWeeks;
