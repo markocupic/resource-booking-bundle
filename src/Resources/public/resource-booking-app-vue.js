@@ -61,8 +61,10 @@ var resourceBookingApp = new Vue({
                 self.sendLogoutRequest();
                 window.setTimeout(function () {
                     window.setTimeout(function () {
-                        alert('Sie wurden aus Sicherheitsgründen abgemeldet.');
-                        location.reload();
+                        $('#autoLogoutModal').on('hidden.bs.modal', function () {
+                            location.reload();
+                        });
+                        $('#autoLogoutModal').modal('show');
                     }, 100);
                 }, 400);
             }
