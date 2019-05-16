@@ -65,6 +65,8 @@ var resourceBookingApp = new Vue({
                 // Logout user after 7 min (420000 ms) of idle time
                 self.sendLogoutRequest();
                 window.setTimeout(function () {
+                    // Close booking modal if it is still open
+                    $('#resourceBookingModal').modal('hide');
                     window.setTimeout(function () {
                         $('#autoLogoutModal').on('hidden.bs.modal', function () {
                             location.reload();

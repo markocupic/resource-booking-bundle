@@ -84,10 +84,10 @@
                 </thead>
                 <tbody>
                 <tr v-for="(row, rowIndex) in rows" v-bind:data-row-index="rowIndex" v-bind:class="row.rowData.cssRowClass">
-                    <td>{{ timeSlots[rowIndex].startTimeString }} - {{ timeSlots[rowIndex].endTimeString }}</td>
-                    <td class="time-slot-cell" v-for="(eventBox, colIndex) in row.cellData" v-bind:data-col-index="colIndex" v-bind:data-isbooked="eventBox.isBooked">
+                    <td>{{ timeSlots[rowIndex].timeSpanString }}</td>
+                    <td class="time-slot-cell" v-for="(eventBox, colIndex) in row.cellData" v-bind:data-col-index="colIndex" v-bind:data-is-holder="eventBox.isHolder ? 'true' : 'false'" v-bind:data-isbooked="eventBox.isBooked">
                         <div v-if="eventBox.isBooked">
-                            {{ eventBox.bookedByFirstname }} {{ eventBox.bookedByLastname }} {{br}} {{ eventBox.bookingDescription }}
+                            <span class="holder-box">{{ eventBox.bookedByFullname }}</span>{{br}}<span class="description-box">{{ eventBox.bookingDescription }}</span>
                         </div>
                         <button class="btn btn-link btn-booking" v-if="eventBox.isEditable && !eventBox.isBooked" v-on:click="openBookingModal(eventBox,'showBookingForm')" title="buchen"><i class="fas fa-pencil-alt"></i></button>
                         <button class="btn btn-link btn-cancel-booking" v-if="eventBox.isEditable && eventBox.isBooked" v-on:click="openBookingModal(eventBox, 'showCancelBookingForm')" title="stornieren"><i class="fas fa-times"></i></button>
@@ -154,7 +154,7 @@
                                     </thead>
                                     <tbody>
                                     <tr v-for="(row, rowIndex) in rows" v-bind:data-row-index="rowIndex" v-bind:class="row.rowData.cssRowClass">
-                                        <td>{{ timeSlots[rowIndex].startTimeString }} - {{ timeSlots[rowIndex].endTimeString }}</td>
+                                        <td>{{ timeSlots[rowIndex].timeSpanString }}</td>
                                         <td class="time-slot-cell" v-for="(eventBox, colIndex) in row.cellData" v-bind:data-col-index="colIndex" v-bind:data-isbooked="eventBox.isBooked">
                                             <div v-if="!eventBox.isBooked">
                                                 <div class="custom-control custom-checkbox">

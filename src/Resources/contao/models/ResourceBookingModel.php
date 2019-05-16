@@ -27,6 +27,19 @@ class ResourceBookingModel extends \Model
      * @param $objResource
      * @param $starttime
      * @param $endtime
+     * @return mixed
+     */
+    public static function findOneByResourceIdStarttimeAndEndtime($objResource, $starttime, $endtime)
+    {
+        $arrColumn = array('pid=?', 'startTime=?', 'endTime=?');
+        $arrValues = array($objResource->id, $starttime, $endtime);
+        return self::findOneBy($arrColumn, $arrValues);
+    }
+
+    /**
+     * @param $objResource
+     * @param $starttime
+     * @param $endtime
      * @param $memberid
      * @return ResourceBookingModel
      */

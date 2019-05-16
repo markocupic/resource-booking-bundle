@@ -60,7 +60,7 @@ class AjaxHandler
         );
 
         // Get booking RepeatsSelection
-         $arrData['bookingRepeatsSelection'] = ResourceBookingHelper::getWeekSelection($objModule->intSelectedDate, DateHelper::addDaysToTime(7*$objModule->intAheadWeeks), false);
+        $arrData['bookingRepeatsSelection'] = ResourceBookingHelper::getWeekSelection($objModule->intSelectedDate, DateHelper::addDaysToTime(7 * $objModule->intAheadWeeks), false);
 
         // Send weekdays, dates and day
         $arrWeek = array();
@@ -105,6 +105,7 @@ class AjaxHandler
                         $objTs->startTimestamp = $startTimestamp;
                         $objTs->endTimeString = Date::parse('H:i', $endTimestamp);
                         $objTs->endTimestamp = $endTimestamp;
+                        $objTs->timeSpanString = Date::parse('H:i', $startTimestamp) . ' - ' . Date::parse('H:i', $endTimestamp);
                         $objTs->mondayTimestampSelectedWeek = $objModule->intSelectedDate;
                         $objTs->isBooked = ResourceBookingHelper::isResourceBooked($objSelectedResource, $startTimestamp, $endTimestamp);
                         $objTs->isEditable = $objTs->isBooked ? false : true;
@@ -117,17 +118,18 @@ class AjaxHandler
                         if ($objTs->isBooked)
                         {
                             $objTs->isEditable = false;
-                            $objRes = ResourceBookingHelper::getBookedResourcesInSlot($objSelectedResource, $startTimestamp, $endTimestamp);
-                            if ($objRes !== null)
+                            $objBooking = ResourceBookingModel::findOneByResourceIdStarttimeAndEndtime($objSelectedResource, $startTimestamp, $endTimestamp);
+                            if ($objBooking !== null)
                             {
-                                $objBooking = $objRes->first();
                                 if ($objBooking->member === $objModule->objUser->id)
                                 {
                                     $objTs->isEditable = true;
+                                    $objTs->isHolder = true;
                                 }
 
                                 $objTs->bookedByFirstname = $objBooking->firstname;
                                 $objTs->bookedByLastname = $objBooking->lastname;
+                                $objTs->bookedByFullname = $objBooking->firstname . ' ' . $objBooking->lastname;
                                 $objTs->bookingDescription = $objBooking->description;
                                 $objTs->bookingId = $objBooking->id;
                             }
@@ -141,7 +143,7 @@ class AjaxHandler
 
                         $cells[] = $objTs;
                     }
-                    $rows[] = array('cellData' => $cells, 'rowData'=> $objRow);
+                    $rows[] = array('cellData' => $cells, 'rowData' => $objRow);
                     $rowCount++;
                 }
             }
@@ -161,6 +163,7 @@ class AjaxHandler
                 $objTs->startTimeString = UtcDate::parse('H:i', $startTimestamp);
                 $objTs->startTimestamp = $startTimestamp;
                 $objTs->endTimeString = UtcDate::parse('H:i', $endTimestamp);
+                $objTs->timeSpanString = UtcDate::parse('H:i', $startTimestamp) . ' - ' . UtcDate::parse('H:i', $startTimestamp);
                 $objTs->endTimestamp = $endTimestamp;
                 $timeSlots[] = $objTs;
             }
@@ -378,7 +381,6 @@ class AjaxHandler
      */
     public static function sendLogoutRequest()
     {
-
         $cookie_name = 'PHPSESSID';
         unset($_COOKIE[$cookie_name]);
         // Empty value and expiration one hour before

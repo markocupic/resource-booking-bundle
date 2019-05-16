@@ -22,17 +22,27 @@
     td.time-slot-cell[data-isbooked="true"] {
       background-color: rgba(255, 200, 196, 0.66);
     }
-    .btn-cancel-booking{
+    .btn-cancel-booking {
       color: red;
     }
     .btn-booking {
-      color:#666;
+      color: #666;
     }
   }
+  // Wrap long words
+  table.resource-booking-table-main {
+    td, th {
+      min-width: 100px;
+      max-width: 100px;
+      word-break: break-all;
 
-  .tl_info {
-    background-color: var(--warning);
-    padding: 0.5rem;
+    }
+    td.time-slot-cell[data-is-holder="true"] {
+      background-color: rgba(255, 164, 152, 0.63);
+      .holder-box {
+        font-weight: bold;
+      }
+    }
   }
   .tl_error {
     background-color: var(--danger);
@@ -55,7 +65,7 @@
     }
   }
 
-  .timeSpanSelect option[selected]{
+  .timeSpanSelect option[selected] {
     background-color: #149efb;
   }
 }
