@@ -46,7 +46,7 @@
             <?php if($this->showDateSelector): ?>
             <div v-if="rows" class="form-group col-sm-4">
                 <label for="date" class="d-none">Zeitraum</label>
-                <select id="date" class="form-control" name="date" v-on:change="submitForm">
+                <select id="date" class="form-control timeSpanSelect" name="date" v-on:change="submitForm">
                     <?php foreach($this->weekSelection as $arrDate): ?>
                     <option value="<?= $arrDate['tstamp'] ?>"
                     <?php if($this->intSelectedDate == $arrDate['tstamp']): ?> selected<?php endif; ?>><?= $arrDate['optionText'] ?></option>
@@ -83,9 +83,9 @@
 
                 </thead>
                 <tbody>
-                <tr v-for="(row, rowIndex) in rows" v-bind:data-row-index="rowIndex">
+                <tr v-for="(row, rowIndex) in rows" v-bind:data-row-index="rowIndex" v-bind:class="row.rowData.cssRowClass">
                     <td>{{ timeSlots[rowIndex].startTimeString }} - {{ timeSlots[rowIndex].endTimeString }}</td>
-                    <td class="time-slot-cell" v-for="(eventBox, colIndex) in row" v-bind:data-col-index="colIndex" v-bind:data-isbooked="eventBox.isBooked">
+                    <td class="time-slot-cell" v-for="(eventBox, colIndex) in row.cellData" v-bind:data-col-index="colIndex" v-bind:data-isbooked="eventBox.isBooked">
                         <div v-if="eventBox.isBooked">
                             {{ eventBox.bookedByFirstname }} {{ eventBox.bookedByLastname }} {{br}} {{ eventBox.bookingDescription }}
                         </div>
@@ -153,9 +153,9 @@
 
                                     </thead>
                                     <tbody>
-                                    <tr v-for="(row, rowIndex) in rows" v-bind:data-row-index="rowIndex">
+                                    <tr v-for="(row, rowIndex) in rows" v-bind:data-row-index="rowIndex" v-bind:class="row.rowData.cssRowClass">
                                         <td>{{ timeSlots[rowIndex].startTimeString }} - {{ timeSlots[rowIndex].endTimeString }}</td>
-                                        <td class="time-slot-cell" v-for="(eventBox, colIndex) in row" v-bind:data-col-index="colIndex" v-bind:data-isbooked="eventBox.isBooked">
+                                        <td class="time-slot-cell" v-for="(eventBox, colIndex) in row.cellData" v-bind:data-col-index="colIndex" v-bind:data-isbooked="eventBox.isBooked">
                                             <div v-if="!eventBox.isBooked">
                                                 <div class="custom-control custom-checkbox">
                                                     <input type="checkbox" v-on:change="sendBookingFormValidationRequest()" v-model="bookingModal.selectedTimeSlots" v-bind:value="eventBox.bookingCheckboxValue" class="custom-control-input" v-bind:id="eventBox.bookingCheckboxId">
@@ -177,7 +177,7 @@
 
                                 <div class="form-group">
                                     <label for="bookingRepeatStopWeekTstamp">Ressource buchen bis (Wiederholungen)</label>
-                                    <select id="bookingRepeatStopWeekTstamp" class="form-control" name="bookingRepeatStopWeekTstamp" v-on:change="sendBookingFormValidationRequest()">
+                                    <select id="bookingRepeatStopWeekTstamp" class="form-control timeSpanSelect" name="bookingRepeatStopWeekTstamp" v-on:change="sendBookingFormValidationRequest()">
                                         <option v-for="(row, rowIndex) in bookingRepeatsSelection" v-bind:value="row.tstamp">{{ row.optionText }}</option>
                                     </select>
                                 </div>

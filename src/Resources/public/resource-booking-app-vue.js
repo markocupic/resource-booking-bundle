@@ -11,7 +11,7 @@ var resourceBookingApp = new Vue({
     el: '#resourceBookingApp',
     data: {
         // idle time in milliseconds
-        idleTimeLimit: 300000,
+        idleTimeLimit: 420000,
         userLoggedOut: false,
         isOnline: true,
         isReady: false,
@@ -62,7 +62,7 @@ var resourceBookingApp = new Vue({
                 clearInterval(self.intervals.sendIsOnlineRequest);
                 clearInterval(self.intervals.getDataAll);
 
-                // Logout user after 5 min of idle time
+                // Logout user after 7 min (420000 ms) of idle time
                 self.sendLogoutRequest();
                 window.setTimeout(function () {
                     window.setTimeout(function () {
@@ -301,7 +301,5 @@ var resourceBookingApp = new Vue({
             var self = this;
             document.getElementById('resourceBookingForm').submit();
         },
-
-
     }
 });

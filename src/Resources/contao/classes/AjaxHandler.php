@@ -91,6 +91,9 @@ class AjaxHandler
                 while ($objTimeslots->next())
                 {
                     $cells = array();
+                    $objRow = new \stdClass();
+                    $objRow->cssRowClass = "time-slot-" . $objTimeslots->id;
+
                     for ($colCount = 0; $colCount < 7; $colCount++)
                     {
                         $startTimestamp = strtotime(sprintf('+%s day', $colCount), $objModule->intSelectedDate) + $objTimeslots->startTime;
@@ -138,7 +141,7 @@ class AjaxHandler
 
                         $cells[] = $objTs;
                     }
-                    $rows[] = $cells;
+                    $rows[] = array('cellData' => $cells, 'rowData'=> $objRow);
                     $rowCount++;
                 }
             }
