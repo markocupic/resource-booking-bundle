@@ -45,13 +45,11 @@ class ResourceBookingHelper
             $arrData['filterBoard']['resourceTypes'] = $rows;
         }
         unset($rows);
-        mail('m.cupic@gmx.ch', '00001111',print_r($_POST,true));
 
         // Filter form: get resource dropdown
         $rows = array();
         if (($objResources = ResourceBookingResourceModel::findPublishedByPid($objModule->objSelectedResourceType->id)) !== null)
         {
-            mail('m.cupic@gmx.ch', '1111','22');
             while ($objResources->next())
             {
                 $rows[] = $objResources->row();
