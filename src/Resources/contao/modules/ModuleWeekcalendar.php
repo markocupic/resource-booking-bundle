@@ -23,6 +23,7 @@ use Contao\ResourceBookingResourceTypeModel;
 use Contao\StringUtil;
 use Contao\Config;
 use Patchwork\Utf8;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 /**
  * Class ModuleWeekcalendar
@@ -89,6 +90,8 @@ class ModuleWeekcalendar extends Module
      */
     public function generate()
     {
+        session_start();
+
         if (TL_MODE == 'BE')
         {
             $objTemplate = new BackendTemplate('be_wildcard');
@@ -121,65 +124,28 @@ class ModuleWeekcalendar extends Module
         $this->intBackWeeks = Config::get('rbb_intBackWeeks');
         $this->intAheadWeeks = Config::get('rbb_intAheadWeeks');
 
-        // Set current week
-        if (Input::get('date') == '')
+        if (!isset($_SESSION['rbb']))
         {
-            $url = \Haste\Util\Url::addQueryString('date=' . DateHelper::getMondayOfCurrentWeek());
-            Controller::redirect($url);
+            $_SESSION['rbb'] = array();
         }
-        if ($this->isValidDate(Input::get('date')))
-        {
-            $this->intSelectedDate = Input::get('date');
-        }
+        $strResType = (isset($_SESSION['rbb']['resType']) && $_SESSION['rbb']['resType'] > 0) ? $_SESSION['rbb']['resType'] : '';
+        $strRes = (isset($_SESSION['rbb']['res']) && $_SESSION['rbb']['res'] > 0) ? $_SESSION['rbb']['res'] : '';
+        $strDate = (isset($_SESSION['rbb']['date']) && $_SESSION['rbb']['date'] > 0) ? $_SESSION['rbb']['date'] : '';
+        $strResType = Input::post('resType') != '' ? Input::post('resType') : $strResType;
+        $strRes = Input::post('res') != '' ? Input::post('res') : $strRes;
+        $strDate = Input::post('date') != '' ? Input::post('date') : $strDate;
 
-        // Get resource types
-        $arrResTypesIds = StringUtil::deserialize($this->resourceBooking_resourceTypes, true);
-        $this->objResourceTypes = ResourceBookingResourceTypeModel::findMultipleAndPublishedByIds($arrResTypesIds);
-        if ($this->objResourceTypes === null)
+        $this->objSelectedResourceType = ResourceBookingResourceTypeModel::findByPk($strResType);
+        $this->objSelectedResource = ResourceBookingResourceModel::findByPk($strRes);
+        $strDate = $this->isValidDate($strDate) ? $strDate : '';
+        if ($strDate == '')
         {
-            Message::addError('Bitte legen Sie in den Moduleinstellungen mindestens einen Resourcen-Typ fest.');
-            $this->hasError = true;
-            return parent::generate();
+            $strDate = DateHelper::getMondayOfCurrentWeek();
         }
-
-        // Send error message
-        if (Input::get('resType') == '' || Input::get('res') == '')
-        {
-            Message::addInfo($GLOBALS['TL_LANG']['MSG']['selectResourcePlease']);
-            $this->hasError = true;
-        }
-
-        if (Input::get('resType') != '')
-        {
-            $objSelectedResourceType = ResourceBookingResourceTypeModel::findByPk(Input::get('resType'));
-            if ($objSelectedResourceType === null)
-            {
-                Message::addError($GLOBALS['TL_LANG']['MSG']['selectValidResourcePlease']);
-                $this->hasError = true;
-            }
-            else
-            {
-                // Set selected resource type
-                $this->objSelectedResourceType = $objSelectedResourceType;
-
-                // Get all resources of the selected resource type
-                $this->objResources = ResourceBookingResourceModel::findPublishedByPid($this->objSelectedResourceType->id);
-                if (Input::get('res') != '')
-                {
-                    $objSelectedResource = ResourceBookingResourceModel::findByPk(Input::get('res'));
-                    if ($objSelectedResource === null)
-                    {
-                        Message::addError($GLOBALS['TL_LANG']['MSG']['selectValidResourcePlease']);
-                        $this->hasError = true;
-                    }
-                    else
-                    {
-                        // Set selected resource
-                        $this->objSelectedResource = $objSelectedResource;
-                    }
-                }
-            }
-        }
+        $this->intSelectedDate = $strDate;
+        $_SESSION['rbb']['resType'] = $strResType;
+        $_SESSION['rbb']['res'] = $strRes;
+        $_SESSION['rbb']['date'] = $strDate;
 
         // Handle ajax requests
         if (Environment::get('isAjaxRequest') && Input::post('action') != '')
@@ -207,11 +173,8 @@ class ModuleWeekcalendar extends Module
             $this->Template->errorMessages = Message::generateUnwrapped();
         }
 
-        $this->Template->objResourceTypes = $this->objResourceTypes;
         $this->Template->objSelectedResourceType = $this->objSelectedResourceType;
-        $this->Template->objResources = $this->objResources;
         $this->Template->objSelectedResource = $this->objSelectedResource;
-        $this->Template->weekSelection = ResourceBookingHelper::getWeekSelection(DateHelper::addDaysToTime($this->intBackWeeks * 7, DateHelper::getMondayOfCurrentWeek()), DateHelper::addDaysToTime($this->intAheadWeeks * 7, DateHelper::getMondayOfCurrentWeek()), true);
         $this->Template->mondayOfThisWeek = DateHelper::getMondayOfCurrentWeek();
         $this->Template->intSelectedDate = $this->intSelectedDate;
         if ($this->objSelectedResourceType !== null)

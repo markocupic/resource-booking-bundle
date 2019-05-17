@@ -10,6 +10,7 @@
 var resourceBookingApp = new Vue({
     el: '#resourceBookingApp',
     data: {
+        filterBoard: [],
         // idle time in milliseconds
         idleTimeLimit: 420000,
         userLoggedOut: false,
@@ -19,11 +20,11 @@ var resourceBookingApp = new Vue({
         resourceIsAvailable: true,
         requestToken: '',
         weekdays: [],
-        activeWeek: {},
         timeSlots: [],
         rows: [],
-        activeResource: {},
-        activeResourceType: {},
+        activeResource: [],
+        activeResourceType: [],
+        activeWeek: [],
         bookingRepeatsSelection: [],
         bookingFormValidation: [],
         bookingModal: {},
@@ -88,11 +89,15 @@ var resourceBookingApp = new Vue({
                 type: 'post',
                 dataType: 'json',
                 data: {
+                    'resType': self.activeResourceType.id,
+                    'res': self.activeResource.id,
+                    'date': self.activeWeek.tstampStart,
                     'REQUEST_TOKEN': self.requestToken,
                     'action': 'getDataAll'
                 }
             });
             xhr.done(function (response) {
+                console.log(response);
                 if (response.status === 'success') {
                     for (var key in response['data']) {
                         self[key] = response['data'][key];
@@ -144,6 +149,9 @@ var resourceBookingApp = new Vue({
                 type: 'post',
                 dataType: 'json',
                 data: {
+                    'resType': self.activeResourceType.id,
+                    'res': self.activeResource.id,
+                    'date': self.activeWeek.tstampStart,
                     'action': 'sendBookingRequest',
                     'REQUEST_TOKEN': self.requestToken,
                     'resourceId': self.bookingModal.activeTimeSlot.resourceId,
@@ -182,6 +190,9 @@ var resourceBookingApp = new Vue({
                 dataType: 'json',
                 data: {
                     'action': 'sendBookingFormValidationRequest',
+                    'resType': self.activeResourceType.id,
+                    'res': self.activeResource.id,
+                    'date': self.activeWeek.tstampStart,
                     'REQUEST_TOKEN': self.requestToken,
                     'resourceId': self.bookingModal.activeTimeSlot.resourceId,
                     'bookingDateSelection': self.bookingModal.selectedTimeSlots,
@@ -211,6 +222,9 @@ var resourceBookingApp = new Vue({
                 dataType: 'json',
                 data: {
                     'action': 'sendCancelBookingRequest',
+                    'resType': self.activeResourceType.id,
+                    'res': self.activeResource.id,
+                    'date': self.activeWeek.tstampStart,
                     'REQUEST_TOKEN': self.requestToken,
                     'bookingId': self.bookingModal.activeTimeSlot.bookingId
                 }
@@ -299,9 +313,35 @@ var resourceBookingApp = new Vue({
         /**
          * submit form on change
          */
-        submitForm: function submitForm() {
+        sendApplyFilterRequest: function sendApplyFilterRequest() {
             var self = this;
-            document.getElementById('resourceBookingForm').submit();
+            var xhr = $.ajax({
+                url: window.location.href,
+                type: 'post',
+                dataType: 'json',
+                data: {
+                    'resType': $('#resourceBookingForm [name="resType"]').val(),
+                    'res': $('#resourceBookingForm [name="res"]').val(),
+                    'date': $('#resourceBookingForm [name="date"]').val(),
+                    'action': 'sendApplyFilterRequest',
+                    'REQUEST_TOKEN': self.requestToken,
+                }
+            });
+            xhr.done(function (response) {
+                console.log(response);
+
+                if (response.status === 'success') {
+                    for (var key in response['data']) {
+                        self[key] = response['data'][key];
+                    }
+                } else {
+                    //self.isOnline = false;
+                }
+            });
+            xhr.fail(function () {
+                //self.isOnline = false;
+            });
+
         },
     }
 });
