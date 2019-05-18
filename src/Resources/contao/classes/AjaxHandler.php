@@ -12,15 +12,9 @@ namespace Markocupic\ResourceBookingBundle;
 
 use Contao\Config;
 use Contao\Date;
-use Contao\Environment;
-use Contao\StringUtil;
-use Contao\Message;
 use Contao\FrontendUser;
-use Contao\RequestToken;
 use Contao\ResourceBookingModel;
 use Contao\ResourceBookingResourceModel;
-use Contao\ResourceBookingTimeSlotModel;
-use Contao\ResourceBookingResourceTypeModel;
 use Contao\Input;
 use Contao\System;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -36,10 +30,10 @@ class AjaxHandler
      * @param $objModule
      * @return JsonResponse
      */
-    public function getDataAll($objModule)
+    public function sendDataAllRequest($objModule)
     {
         $arrJson = array();
-        $arrJson['data'] = ResourceBookingHelper::getDataAll($objModule);
+        $arrJson['data'] = ResourceBookingHelper::fetchData($objModule);
         $arrJson['status'] = 'success';
         $response = new JsonResponse($arrJson);
         return $response->send();
@@ -52,17 +46,17 @@ class AjaxHandler
     public function sendApplyFilterRequest($objModule)
     {
         $arrJson = array();
-        $arrJson['data'] = ResourceBookingHelper::getDataAll($objModule);
+        $arrJson['data'] = ResourceBookingHelper::fetchData($objModule);
         $arrJson['status'] = 'success';
         $response = new JsonResponse($arrJson);
+
         return $response->send();
     }
 
     /**
      * @return JsonResponse
      */
-    public
-    function sendBookingRequest($objModule)
+    public function sendBookingRequest($objModule)
     {
         $arrJson = array();
         $arrJson['status'] = 'error';
@@ -91,7 +85,7 @@ class AjaxHandler
             $objUser = FrontendUser::getInstance();
 
             // Prepare $arrBookings with the helper method
-            $arrBookings = $this->prepareBookingSelection($objModule, $objUser, $objResource, $arrBookingDateSelection, $bookingRepeatStopWeekTstamp);
+            $arrBookings = ResourceBookingHelper::prepareBookingSelection($objModule, $objUser, $objResource, $arrBookingDateSelection, $bookingRepeatStopWeekTstamp);
 
             foreach ($arrBookings as $arrBooking)
             {
@@ -175,7 +169,7 @@ class AjaxHandler
             $objUser = FrontendUser::getInstance();
 
             // Prepare $arrBookings with the helper method
-            $arrBookings = $this->prepareBookingSelection($objModule, $objUser, $objResource, $arrBookingDateSelection, $bookingRepeatStopWeekTstamp);
+            $arrBookings = ResourceBookingHelper::prepareBookingSelection($objModule, $objUser, $objResource, $arrBookingDateSelection, $bookingRepeatStopWeekTstamp);
 
             foreach ($arrBookings as $arrBooking)
             {
@@ -274,75 +268,5 @@ class AjaxHandler
         throw new RedirectResponseException(System::getContainer()->get('security.logout_url_generator')->getLogoutUrl());
     }
 
-    /**
-     * @param $objModule
-     * @param $objUser
-     * @param $objResource
-     * @param $arrBookingDateSelection
-     * @param $bookingRepeatStopWeekTstamp
-     * @return array
-     */
-    protected function prepareBookingSelection($objModule, $objUser, $objResource, $arrBookingDateSelection, $bookingRepeatStopWeekTstamp)
-    {
-        $arrBookings = array();
 
-        $objUser = FrontendUser::getInstance();
-
-        foreach ($arrBookingDateSelection as $strTimeSlot)
-        {
-            // slotId-startTime-endTime-mondayTimestampSelectedWeek
-            $arrTimeSlot = explode('-', $strTimeSlot);
-            $arrBooking = array(
-                'timeSlotId'                          => $arrTimeSlot[0],
-                'startTime'                           => $arrTimeSlot[1],
-                'endTime'                             => $arrTimeSlot[2],
-                'mondayTimestampSelectedWeek'         => $arrTimeSlot[3],
-                'pid'                                 => Input::post('resourceId'),
-                'description'                         => Input::post('description'),
-                'member'                              => $objUser->id,
-                'firstname'                           => $objUser->firstname,
-                'lastname'                            => $objUser->lastname,
-                'tstamp'                              => time(),
-                'resourceAlreadyBooked'               => true,
-                'resourceAlreadyBookedByLoggedInUser' => false,
-                'newEntry'                            => false,
-            );
-            $arrBookings[] = $arrBooking;
-
-            // Handle repetitions
-            if ($arrTimeSlot[3] < $bookingRepeatStopWeekTstamp)
-            {
-                $doRepeat = true;
-                $arrRepeat = $arrBooking;
-                while ($doRepeat === true)
-                {
-                    $arrRepeat['startTime'] = DateHelper::addDaysToTime(7, $arrRepeat['startTime']);
-                    $arrRepeat['endTime'] = DateHelper::addDaysToTime(7, $arrRepeat['endTime']);
-                    $arrRepeat['mondayTimestampSelectedWeek'] = DateHelper::addDaysToTime(7, $arrRepeat['mondayTimestampSelectedWeek']);
-                    $arrBookings[] = $arrRepeat;
-                    if ($arrRepeat['mondayTimestampSelectedWeek'] >= $bookingRepeatStopWeekTstamp)
-                    {
-                        $doRepeat = false;
-                    }
-                }
-            }
-        }
-        foreach ($arrBookings as $index => $arrData)
-        {
-            if (!ResourceBookingHelper::isResourceBooked($objResource, $arrData['startTime'], $arrData['endTime']))
-            {
-                if (($objTimeslot = ResourceBookingTimeSlotModel::findByPk($arrData['timeSlotId'])) !== null)
-                {
-                    $arrBookings[$index]['resourceAlreadyBooked'] = false;
-                }
-            }
-            elseif (null !== ResourceBookingModel::findOneByResourceIdStarttimeEndtimeAndMember($objResource, $arrData['startTime'], $arrData['endTime'], $arrData['member']))
-            {
-                $arrBookings[$index]['resourceAlreadyBooked'] = true;
-                $arrBookings[$index]['resourceAlreadyBookedByLoggedInUser'] = true;
-            }
-        }
-
-        return $arrBookings;
-    }
 }

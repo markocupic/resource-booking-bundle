@@ -12,41 +12,6 @@
 <div id="resourceBookingApp" v-bind:class="{ 'is-ready': isReady }">
 
     <div id="loggedInUserData" class="logged-in-user-data mb-2"><strong>Angemeldet als:</strong> {{user::firstname}} {{user::lastname}}</div>
-    <form id="resourceBookingForm" action="{{env::request}}" method="get">
-        <div class="form-row">
-            <div v-if="rows" class="form-group col-sm-1">
-                <a href="<?= $this->minus1WeekUrl ?>" class="btn btn-primary btn-block<?php if($this->disablePrevWeekBtn): ?> disabled<?php endif; ?>" role="button"<?php if($this->disableMinus1WeekBtn): ?> aria-disabled="true"<?php endif; ?>><i class="fas fa-chevron-left"></i></a>
-            </div>
-            <div class="form-group col-sm-3">
-                <label for="resType" class="d-none">Typ</label>
-                <select id="resType" class="form-control" name="resType" v-model="activeResourceType.id" v-on:change="sendApplyFilterRequest">
-                    <option value="undefined">Auswählen</option>
-                    <option v-for="(resourceType, index) in filterBoard.resourceTypes" v-bind:value="resourceType.id">{{ resourceType.title }}</option>
-                </select>
-            </div>
-
-            <div class="form-group col-sm-3">
-                <label for="res" class="d-none">Ressource</label>
-                <select id="res" class="form-control" name="res" v-model="activeResource.id" v-on:change="sendApplyFilterRequest">
-                    <option value="undefined">Auswählen</option>
-                    <option v-for="(resource, index) in filterBoard.resources" v-bind:value="resource.id">{{ resource.title }}</option>
-                </select>
-            </div>
-
-            <div v-if="rows" class="form-group col-sm-4">
-                <label for="date" class="d-none">Zeitraum</label>
-                <select id="date" class="form-control timeSpanSelect" name="date" v-model="activeWeek.tstampStart" v-on:change="sendApplyFilterRequest">
-                    <option v-for="(week, index) in filterBoard.weekSelection" v-bind:value="week.tstampMonday">{{ week.optionText }}</option>
-                </select>
-            </div>
-
-            <div v-if="rows" class="form-group col-sm-1">
-                <a href="<?= $this->plus1WeekUrl ?>" class="btn btn-primary btn-block<?php if($this->disableNextWeekBtn): ?> disabled<?php endif; ?>" role="button"<?php if($this->disablePlus1WeekBtn): ?> aria-disabled="true"<?php endif; ?>><i class="fas fa-chevron-right"></i></a>
-            </div>
-        </div>
-    </form>
-
-    <div><?= $this->errorMessages ?></div>
 
     <div class="text-center mt-5" v-if="isReady === false">
         <div class="spinner-border" role="status">
@@ -56,6 +21,49 @@
 
     <!-- vue application container -->
     <div class="vue-application">
+
+        <!-- filter board -->
+        <form id="resourceBookingForm" action="{{env::request}}" method="get">
+            <div v-if="filterBoard" class="form-row">
+                <div v-if="rows" class="form-group col-sm-1">
+                    <button v-on:click="sendJumpWeekRequest(filterBoard.jumpPrevWeek.tstamp,$event)" v-bind:data-tstamp="filterBoard.jumpPrevWeek.tstamp" role="button" class="btn btn-primary btn-block" title="1 Woche zurück" v-bind:class="filterBoard.jumpPrevWeek.disabled ? 'disabled' : ''" v-bind:aria-disabled="filterBoard.jumpPrevWeek.disabled ? 'true' : 'false'"><i class="fas fa-chevron-left"></i></button>
+                </div>
+                <div class="form-group col-sm-3">
+                    <label for="resType" class="d-none">Typ</label>
+                    <select id="resType" class="form-control" name="resType" v-model="activeResourceType.id" v-on:change="sendApplyFilterRequest">
+                        <option value="undefined">Auswählen</option>
+                        <option v-for="(resourceType, index) in filterBoard.resourceTypes" v-bind:value="resourceType.id">{{ resourceType.title }}</option>
+                    </select>
+                </div>
+
+                <div v-if="activeResourceType.id" class="form-group col-sm-3">
+                    <label for="res" class="d-none">Ressource</label>
+                    <select id="res" class="form-control" name="res" v-model="activeResource.id" v-on:change="sendApplyFilterRequest">
+                        <option value="undefined">Auswählen</option>
+                        <option v-for="(resource, index) in filterBoard.resources" v-bind:value="resource.id">{{ resource.title }}</option>
+                    </select>
+                </div>
+
+                <div v-if="rows" class="form-group col-sm-4">
+                    <label for="date" class="d-none">Zeitraum</label>
+                    <select id="date" class="form-control timeSpanSelect" name="date" v-model="activeWeek.tstampStart" v-on:change="sendApplyFilterRequest">
+                        <option v-for="(week, index) in filterBoard.weekSelection" v-bind:value="week.tstampMonday">{{ week.optionText }}</option>
+                    </select>
+                </div>
+
+                <div v-if="rows" class="form-group col-sm-1">
+                    <button v-on:click="sendJumpWeekRequest(filterBoard.jumpNextWeek.tstamp,$event)" v-bind:data-tstamp="filterBoard.jumpNextWeek.tstamp" role="button" class="btn btn-primary btn-block" title="1 Woche vor" v-bind:class="filterBoard.jumpNextWeek.disabled ? 'disabled' : ''" v-bind:aria-disabled="filterBoard.jumpNextWeek.disabled ? 'true' : 'false'"><i class="fas fa-chevron-right"></i></button>
+                </div>
+            </div>
+        </form>
+
+        <!-- Error & info messages -->
+        <div v-if="messages">
+            <div v-if="messages.info" class="alert alert-warning">{{ messages.info }}</div>
+            <div v-if="messages.error" class="alert alert-error">{{ messages.error }}</div>
+        </div>
+
+        <!-- booking table -->
         <div v-if="rows" class="table-responsive-lg">
             <table v-if="rows.length > 0" class="resource-booking-table-main table">
                 <thead>
@@ -80,7 +88,7 @@
             </table>
         </div>
 
-        <!-- modal start -->
+        <!-- booking modal -->
         <div id="resourceBookingModal" class="modal" tabindex="-1" role="dialog">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
@@ -180,9 +188,8 @@
                 </div>
             </div>
         </div>
-        <!-- modal end -->
 
-        <!-- modal logout -->
+        <!-- logout modal -->
         <div id="autoLogoutModal" class="modal" tabindex="-1" role="dialog">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
@@ -201,7 +208,6 @@
                 </div>
             </div>
         </div>
-        <!-- modal end -->
 
     </div>
 </div>
@@ -212,7 +218,7 @@
         requestToken: '{{REQUEST_TOKEN}}'
     }
 </script>
-<script src="<?= MOD_RESOURCE_BOOKING_ASSET_PATH ?>/resource-booking-app-vue.js"></script>
+<script src="<?= MOD_RESOURCE_BOOKING_ASSET_PATH ?>/resource-booking-app-vue.min.js"></script>
 
 
 <?php $this->endblock(); ?>
