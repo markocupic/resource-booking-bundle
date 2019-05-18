@@ -11,16 +11,13 @@
 namespace Markocupic\ResourceBookingBundle;
 
 use Contao\BackendTemplate;
-use Contao\Date;
 use Contao\FrontendUser;
-use Contao\Message;
 use Contao\Module;
 use Contao\Input;
 use Contao\Environment;
 use Contao\Controller;
 use Contao\ResourceBookingResourceModel;
 use Contao\ResourceBookingResourceTypeModel;
-use Contao\StringUtil;
 use Contao\Config;
 use Patchwork\Utf8;
 
@@ -65,7 +62,7 @@ class ModuleWeekcalendar extends Module
     /**
      * @var
      */
-    public $intSelectedDate;
+    public $tstampActiveWeek;
 
     /**
      * @var
@@ -80,6 +77,16 @@ class ModuleWeekcalendar extends Module
     /**
      * @var
      */
+    public $tstampFirstPossibleWeek;
+
+    /**
+     * @var
+     */
+    public $tstampLastPossibleWeek;
+
+    /**
+     * @var
+     */
     public $hasError;
 
     /**
@@ -89,6 +96,8 @@ class ModuleWeekcalendar extends Module
      */
     public function generate()
     {
+        session_start();
+
         if (TL_MODE == 'BE')
         {
             $objTemplate = new BackendTemplate('be_wildcard');
@@ -121,65 +130,46 @@ class ModuleWeekcalendar extends Module
         $this->intBackWeeks = Config::get('rbb_intBackWeeks');
         $this->intAheadWeeks = Config::get('rbb_intAheadWeeks');
 
-        // Set current week
-        if (Input::get('date') == '')
-        {
-            $url = \Haste\Util\Url::addQueryString('date=' . DateHelper::getMondayOfCurrentWeek());
-            Controller::redirect($url);
-        }
-        if ($this->isValidDate(Input::get('date')))
-        {
-            $this->intSelectedDate = Input::get('date');
-        }
+        // Get first ans last possible week tstamp
+        $this->tstampFirstPossibleWeek = DateHelper::addWeeksToTime($this->intBackWeeks, DateHelper::getMondayOfCurrentWeek());
+        $this->tstampLastPossibleWeek = DateHelper::addWeeksToTime($this->intAheadWeeks, DateHelper::getMondayOfCurrentWeek());
 
-        // Get resource types
-        $arrResTypesIds = StringUtil::deserialize($this->resourceBooking_resourceTypes, true);
-        $this->objResourceTypes = ResourceBookingResourceTypeModel::findMultipleAndPublishedByIds($arrResTypesIds);
-        if ($this->objResourceTypes === null)
+        if (Input::post('date') != '')
         {
-            Message::addError('Bitte legen Sie in den Moduleinstellungen mindestens einen Resourcen-Typ fest.');
-            $this->hasError = true;
-            return parent::generate();
-        }
-
-        // Send error message
-        if (Input::get('resType') == '' || Input::get('res') == '')
-        {
-            Message::addInfo($GLOBALS['TL_LANG']['MSG']['selectResourcePlease']);
-            $this->hasError = true;
-        }
-
-        if (Input::get('resType') != '')
-        {
-            $objSelectedResourceType = ResourceBookingResourceTypeModel::findByPk(Input::get('resType'));
-            if ($objSelectedResourceType === null)
+            if (Input::post('date') < $this->tstampFirstPossibleWeek)
             {
-                Message::addError($GLOBALS['TL_LANG']['MSG']['selectValidResourcePlease']);
-                $this->hasError = true;
+                Input::setPost('date', $this->tstampFirstPossibleWeek);
             }
-            else
+            if (Input::post('date') > $this->tstampLastPossibleWeek)
             {
-                // Set selected resource type
-                $this->objSelectedResourceType = $objSelectedResourceType;
-
-                // Get all resources of the selected resource type
-                $this->objResources = ResourceBookingResourceModel::findPublishedByPid($this->objSelectedResourceType->id);
-                if (Input::get('res') != '')
-                {
-                    $objSelectedResource = ResourceBookingResourceModel::findByPk(Input::get('res'));
-                    if ($objSelectedResource === null)
-                    {
-                        Message::addError($GLOBALS['TL_LANG']['MSG']['selectValidResourcePlease']);
-                        $this->hasError = true;
-                    }
-                    else
-                    {
-                        // Set selected resource
-                        $this->objSelectedResource = $objSelectedResource;
-                    }
-                }
+                Input::setPost('date', $this->tstampLastPossibleWeek);
             }
         }
+
+
+        if (!isset($_SESSION['rbb']))
+        {
+            $_SESSION['rbb'] = array();
+        }
+
+        $strResType = (isset($_SESSION['rbb']['resType']) && $_SESSION['rbb']['resType'] > 0) ? $_SESSION['rbb']['resType'] : '';
+        $strRes = (isset($_SESSION['rbb']['res']) && $_SESSION['rbb']['res'] > 0) ? $_SESSION['rbb']['res'] : '';
+        $strDate = (isset($_SESSION['rbb']['date']) && $_SESSION['rbb']['date'] > 0) ? $_SESSION['rbb']['date'] : '';
+        $strResType = Input::post('resType') != '' ? Input::post('resType') : $strResType;
+        $strRes = Input::post('res') != '' ? Input::post('res') : $strRes;
+        $strDate = Input::post('date') != '' ? Input::post('date') : $strDate;
+
+        $this->objSelectedResourceType = ResourceBookingResourceTypeModel::findByPk($strResType);
+        $this->objSelectedResource = ResourceBookingResourceModel::findByPk($strRes);
+        $strDate = DateHelper::isValidDate($strDate) ? $strDate : '';
+        if ($strDate == '')
+        {
+            $strDate = DateHelper::getMondayOfCurrentWeek();
+        }
+        $this->tstampActiveWeek = $strDate;
+        $_SESSION['rbb']['resType'] = (integer)$strResType;
+        $_SESSION['rbb']['res'] = (integer)$strRes;
+        $_SESSION['rbb']['date'] = (integer)$strDate;
 
         // Handle ajax requests
         if (Environment::get('isAjaxRequest') && Input::post('action') != '')
@@ -201,64 +191,6 @@ class ModuleWeekcalendar extends Module
      */
     protected function compile()
     {
-        if ($this->hasError)
-        {
-            $this->Template->hasError = $this->hasError;
-            $this->Template->errorMessages = Message::generateUnwrapped();
-        }
-
-        $this->Template->objResourceTypes = $this->objResourceTypes;
-        $this->Template->objSelectedResourceType = $this->objSelectedResourceType;
-        $this->Template->objResources = $this->objResources;
-        $this->Template->objSelectedResource = $this->objSelectedResource;
-        $this->Template->weekSelection = ResourceBookingHelper::getWeekSelection(DateHelper::addDaysToTime($this->intBackWeeks * 7, DateHelper::getMondayOfCurrentWeek()), DateHelper::addDaysToTime($this->intAheadWeeks * 7, DateHelper::getMondayOfCurrentWeek()), true);
-        $this->Template->mondayOfThisWeek = DateHelper::getMondayOfCurrentWeek();
-        $this->Template->intSelectedDate = $this->intSelectedDate;
-        if ($this->objSelectedResourceType !== null)
-        {
-            $this->Template->showResourceSelector = true;
-        }
-        if ($this->objSelectedResourceType !== null && $this->objSelectedResource !== null)
-        {
-            $this->Template->showDateSelector = true;
-            $this->Template->showGoToPrevWeekBtn = true;
-            $this->Template->showGoToNextWeekBtn = true;
-        }
-
-        // Create 1 week back and 1 week ahead links
-        $url = \Haste\Util\Url::removeQueryString(['date'], Environment::get('request'));
-        $backTime = DateHelper::addDaysToTime(-7, $this->intSelectedDate);
-        $aheadTime = DateHelper::addDaysToTime(7, $this->intSelectedDate);
-        if (!$this->isValidDate($backTime))
-        {
-            $this->Template->disablePrevWeekBtn = true;
-            $backTime = $this->intSelectedDate;
-        }
-        if (!$this->isValidDate($aheadTime))
-        {
-            $this->Template->disableNextWeekBtn = true;
-            $aheadTime = $this->intSelectedDate;
-        }
-        $this->Template->minus1WeekUrl = \Haste\Util\Url::addQueryString('date=' . $backTime, $url);
-        $this->Template->plus1WeekUrl = \Haste\Util\Url::addQueryString('date=' . $aheadTime, $url);
-    }
-
-    /**
-     * @param $tstamp
-     * @return bool
-     */
-    public function isValidDate($tstamp)
-    {
-        $arrWeeks = array();
-        for ($i = $this->intBackWeeks; $i <= $this->intAheadWeeks; $i++)
-        {
-            $arrWeeks[] = strtotime('monday ' . (string)$i . ' week');
-        }
-        if (in_array($tstamp, $arrWeeks))
-        {
-            return true;
-        }
-        return false;
     }
 
 }

@@ -10,34 +10,35 @@
 var resourceBookingApp = new Vue({
     el: '#resourceBookingApp',
     data: {
+        isReady: false,
+        filterBoard: null,
         // idle time in milliseconds
         idleTimeLimit: 420000,
         userLoggedOut: false,
         isOnline: true,
-        isReady: false,
         loggedInUser: [],
         resourceIsAvailable: true,
         requestToken: '',
         weekdays: [],
-        activeWeek: {},
         timeSlots: [],
         rows: [],
-        activeResource: {},
-        activeResourceType: {},
+        activeResourceType: [],
+        activeResource: [],
+        activeWeek: [],
         bookingRepeatsSelection: [],
         bookingFormValidation: [],
         bookingModal: {},
-        form: {},
         intervals: [],
+        messages: null,
     },
     created: function created() {
         var self = this;
         self.requestToken = RESOURCE_BOOKING.requestToken; // Load data from server
 
         // Get data from server each 15s
-        self.getDataAll();
-        self.intervals.getDataAll = window.setInterval(function () {
-            self.getDataAll();
+        self.sendDataAllRequest();
+        self.intervals.sendDataAllRequest = window.setInterval(function () {
+            self.sendDataAllRequest();
         }, 15000);
 
         // Initialize idle detector
@@ -48,10 +49,6 @@ var resourceBookingApp = new Vue({
         self.intervals.sendIsOnlineRequest = window.setInterval(function () {
             self.sendIsOnlineRequest();
         }, 60000);
-
-        window.setTimeout(function () {
-            self.isReady = true;
-        }, 800);
     },
     watch: {
         // Watcher
@@ -60,7 +57,7 @@ var resourceBookingApp = new Vue({
             if (val === false) {
                 // Clear interval
                 clearInterval(self.intervals.sendIsOnlineRequest);
-                clearInterval(self.intervals.getDataAll);
+                clearInterval(self.intervals.sendDataAllRequest);
 
                 // Logout user after 7 min (420000 ms) of idle time
                 self.sendLogoutRequest();
@@ -81,7 +78,7 @@ var resourceBookingApp = new Vue({
         /**
          * Get all the rows from server
          */
-        getDataAll: function getDataAll() {
+        sendDataAllRequest: function sendDataAllRequest() {
             var self = this;
             var xhr = $.ajax({
                 url: window.location.href,
@@ -89,7 +86,7 @@ var resourceBookingApp = new Vue({
                 dataType: 'json',
                 data: {
                     'REQUEST_TOKEN': self.requestToken,
-                    'action': 'getDataAll'
+                    'action': 'sendDataAllRequest'
                 }
             });
             xhr.done(function (response) {
@@ -167,7 +164,7 @@ var resourceBookingApp = new Vue({
             });
             xhr.always(function () {
                 self.bookingModal.showConfirmationMsg = true;
-                self.getDataAll();
+                self.sendDataAllRequest();
             });
         },
 
@@ -230,7 +227,7 @@ var resourceBookingApp = new Vue({
             });
             xhr.always(function () {
                 self.bookingModal.showConfirmationMsg = true;
-                self.getDataAll();
+                self.sendDataAllRequest();
             });
         },
 
@@ -299,9 +296,64 @@ var resourceBookingApp = new Vue({
         /**
          * submit form on change
          */
-        submitForm: function submitForm() {
+        sendApplyFilterRequest: function sendApplyFilterRequest(tstamp) {
+
             var self = this;
-            document.getElementById('resourceBookingForm').submit();
+            var xhr = $.ajax({
+                url: window.location.href,
+                type: 'post',
+                dataType: 'json',
+                data: {
+                    'resType': $('#resourceBookingForm [name="resType"]').val(),
+                    'res': $('#resourceBookingForm [name="res"]').val(),
+                    'date': tstamp > 0 ? tstamp : $('#resourceBookingForm [name="date"]').val(),
+                    'action': 'sendApplyFilterRequest',
+                    'REQUEST_TOKEN': self.requestToken,
+                }
+            });
+            xhr.done(function (response) {
+                if (response.status === 'success') {
+                    for (var key in response['data']) {
+                        self[key] = response['data'][key];
+                    }
+                } else {
+                    self.isOnline = false;
+                }
+            });
+            xhr.fail(function () {
+                self.isOnline = false;
+            });
+
+        },
+        /**
+         * jump week
+         * @param tstamp
+         */
+        sendJumpWeekRequest: function sendJumpWeekRequest(tstamp, event) {
+            var self = this;
+            event.preventDefault();
+            var xhr = $.ajax({
+                url: window.location.href,
+                type: 'post',
+                dataType: 'json',
+                data: {
+                    'resType': self.activeResourceType.id,
+                    'res': self.activeResource.id,
+                    'date': tstamp,
+                    'action': 'sendApplyFilterRequest',
+                    'REQUEST_TOKEN': self.requestToken,
+                }
+            });
+            xhr.done(function (response) {
+                if (response.status === 'success') {
+                    for (var key in response['data']) {
+                        self[key] = response['data'][key];
+                    }
+                }
+            });
+            xhr.fail(function () {
+                self.isOnline = false;
+            });
         },
     }
 });

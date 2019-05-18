@@ -10,9 +10,17 @@
 
 namespace Markocupic\ResourceBookingBundle;
 
-use Contao\Database;
 use Contao\Date;
+use Contao\Config;
+use Contao\Message;
+use Contao\StringUtil;
 use Contao\ResourceBookingModel;
+use Contao\ResourceBookingResourceModel;
+use Contao\ResourceBookingTimeSlotModel;
+use Contao\ResourceBookingResourceTypeModel;
+use Contao\FrontendUser;
+
+use Contao\Input;
 
 /**
  * Class ResourceBookingHelper
@@ -20,6 +28,284 @@ use Contao\ResourceBookingModel;
  */
 class ResourceBookingHelper
 {
+
+    /**
+     * @param $objModule
+     * @return array
+     */
+    public static function fetchData($objModule)
+    {
+        $arrData = array();
+
+        // Messages
+        if ($objModule->objSelectedResourceType === null && !Message::hasMessages())
+        {
+            Message::addInfo('Bitte wählen Sie einen Resourcentyp aus.');
+        }
+        if ($objModule->objSelectedResource === null && !Message::hasMessages())
+        {
+            Message::addInfo('Bitte wählen Sie eine Resource aus.');
+        }
+
+        // Filter form: get resource types dropdown
+        $rows = array();
+        $arrResTypesIds = StringUtil::deserialize($objModule->resourceBooking_resourceTypes, true);
+        if (($objResourceTypes = ResourceBookingResourceTypeModel::findMultipleAndPublishedByIds($arrResTypesIds)) !== null)
+        {
+            while ($objResourceTypes->next())
+            {
+                $rows[] = $objResourceTypes->row();
+            }
+            $arrData['filterBoard']['resourceTypes'] = $rows;
+        }
+        unset($rows);
+
+        // Filter form: get resource dropdown
+        $rows = array();
+        if (($objResources = ResourceBookingResourceModel::findPublishedByPid($objModule->objSelectedResourceType->id)) !== null)
+        {
+            while ($objResources->next())
+            {
+                $rows[] = $objResources->row();
+            }
+            $arrData['filterBoard']['resources'] = $rows;
+        }
+        unset($rows);
+
+        // Filter form get jump week array
+        $arrData['filterBoard']['jumpNextWeek'] = static::getJumpWeekDate(1, $objModule);
+        $arrData['filterBoard']['jumpPrevWeek'] = static::getJumpWeekDate(-1, $objModule);
+
+        // Filter form: get date dropdown
+        $arrData['filterBoard']['weekSelection'] = ResourceBookingHelper::getWeekSelection($objModule->tstampFirstPossibleWeek, $objModule->tstampLastPossibleWeek, true);
+
+        $objUser = $objModule->objUser;
+
+        // Logged in user
+        $arrData['loggedInUser'] = array(
+            'firstname' => $objUser->firstname,
+            'lastname'  => $objUser->lastname,
+            'gender'    => $GLOBALS['TL_LANG'][$objUser->gender] != '' ? $GLOBALS['TL_LANG'][$objUser->gender] : $objUser->gender,
+            'email'     => $objUser->email,
+            'id'        => $objUser->id,
+        );
+
+        // Selected week
+        $arrData['tstampActiveWeek'] = $objModule->tstampActiveWeek;
+        $arrData['activeWeek'] = array(
+            'tstampStart' => $objModule->tstampActiveWeek,
+            'tstampEnd'   => DateHelper::addDaysToTime(6, $objModule->tstampActiveWeek),
+            'dateStart'   => Date::parse(Config::get('dateFormat'), $objModule->tstampActiveWeek),
+            'dateEnd'     => Date::parse(Config::get('dateFormat'), DateHelper::addDaysToTime(6, $objModule->tstampActiveWeek)),
+            'weekNumber'  => Date::parse('W', $objModule->tstampActiveWeek),
+            'year'        => Date::parse('Y', $objModule->tstampActiveWeek),
+        );
+
+        // Get booking RepeatsSelection
+        $arrData['bookingRepeatsSelection'] = ResourceBookingHelper::getWeekSelection($objModule->tstampActiveWeek, DateHelper::addDaysToTime(7 * $objModule->intAheadWeeks), false);
+
+        // Send weekdays, dates and day
+        $arrWeek = array();
+        $arrWeekdays = array('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday');
+        for ($i = 0; $i < 7; $i++)
+        {
+            $arrWeek[] = array(
+                'title'      => $GLOBALS['TL_LANG']['MSC'][$arrWeekdays[$i]][1] != '' ? $GLOBALS['TL_LANG']['MSC'][$arrWeekdays[$i]][1] : $arrWeekdays[$i],
+                'titleShort' => $GLOBALS['TL_LANG']['MSC'][$arrWeekdays[$i]][0] != '' ? $GLOBALS['TL_LANG']['MSC'][$arrWeekdays[$i]][0] : $arrWeekdays[$i],
+                'date'       => Date::parse('d.m.Y', strtotime(Date::parse('Y-m-d', $objModule->tstampActiveWeek) . " +" . $i . " day"))
+            );
+        }
+        // Weekdays
+        $arrData['weekdays'] = $arrWeek;
+
+        if ($objModule->objSelectedResourceType !== null)
+        {
+            $arrData['activeResourceType'] = $objModule->objSelectedResourceType->row();
+        }
+
+        // Get rows
+        if ($objModule->objSelectedResource !== null && $objModule->objSelectedResourceType !== null)
+        {
+            $arrData['activeResource'] = $objModule->objSelectedResource->row();
+
+            $objSelectedResource = $objModule->objSelectedResource;
+            $objTimeslots = ResourceBookingTimeSlotModel::findPublishedByPid($objSelectedResource->timeSlotType);
+            $rows = array();
+            $rowCount = 0;
+            if ($objTimeslots !== null)
+            {
+                while ($objTimeslots->next())
+                {
+                    $cells = array();
+                    $objRow = new \stdClass();
+                    $objRow->cssRowClass = "time-slot-" . $objTimeslots->id;
+
+                    for ($colCount = 0; $colCount < 7; $colCount++)
+                    {
+                        $startTimestamp = strtotime(sprintf('+%s day', $colCount), $objModule->tstampActiveWeek) + $objTimeslots->startTime;
+                        $endTimestamp = strtotime(sprintf('+%s day', $colCount), $objModule->tstampActiveWeek) + $objTimeslots->endTime;
+
+                        $objTs = new \stdClass();
+                        $objTs->weekday = $arrWeekdays[$colCount];
+                        $objTs->startTimeString = Date::parse('H:i', $startTimestamp);
+                        $objTs->startTimestamp = $startTimestamp;
+                        $objTs->endTimeString = Date::parse('H:i', $endTimestamp);
+                        $objTs->endTimestamp = $endTimestamp;
+                        $objTs->timeSpanString = Date::parse('H:i', $startTimestamp) . ' - ' . Date::parse('H:i', $endTimestamp);
+                        $objTs->mondayTimestampSelectedWeek = $objModule->tstampActiveWeek;
+                        $objTs->isBooked = ResourceBookingHelper::isResourceBooked($objSelectedResource, $startTimestamp, $endTimestamp);
+                        $objTs->isEditable = $objTs->isBooked ? false : true;
+                        $objTs->timeSlotId = $objTimeslots->id;
+                        $objTs->resourceId = $objSelectedResource->id;
+                        $objTs->isEditable = true;
+                        // slotId-startTime-endTime-mondayTimestampSelectedWeek
+                        $objTs->bookingCheckboxValue = sprintf('%s-%s-%s-%s', $objTimeslots->id, $startTimestamp, $endTimestamp, $objModule->tstampActiveWeek);
+                        $objTs->bookingCheckboxId = sprintf('bookingCheckbox_%s_%s', $rowCount, $colCount);
+                        if ($objTs->isBooked)
+                        {
+                            $objTs->isEditable = false;
+                            $objBooking = ResourceBookingModel::findOneByResourceIdStarttimeAndEndtime($objSelectedResource, $startTimestamp, $endTimestamp);
+                            if ($objBooking !== null)
+                            {
+                                if ($objBooking->member === $objModule->objUser->id)
+                                {
+                                    $objTs->isEditable = true;
+                                    $objTs->isHolder = true;
+                                }
+
+                                $objTs->bookedByFirstname = $objBooking->firstname;
+                                $objTs->bookedByLastname = $objBooking->lastname;
+                                $objTs->bookedByFullname = $objBooking->firstname . ' ' . $objBooking->lastname;
+                                $objTs->bookingDescription = $objBooking->description;
+                                $objTs->bookingId = $objBooking->id;
+                            }
+                        }
+
+                        // If week lies in the past, then do not allow editing
+                        if ($objTs->mondayTimestampSelectedWeek < strtotime('monday this week'))
+                        {
+                            $objTs->isEditable = false;
+                        }
+
+                        $cells[] = $objTs;
+                    }
+                    $rows[] = array('cellData' => $cells, 'rowData' => $objRow);
+                    $rowCount++;
+                }
+            }
+        }
+        $arrData['rows'] = $rows;
+
+        // Get time slots
+        $objTimeslots = ResourceBookingTimeSlotModel::findPublishedByPid($objSelectedResource->timeSlotType);
+        $timeSlots = array();
+        if ($objTimeslots !== null)
+        {
+            while ($objTimeslots->next())
+            {
+                $startTimestamp = $objTimeslots->startTime;
+                $endTimestamp = $objTimeslots->endTime;
+                $objTs = new \stdClass();
+                $objTs->startTimeString = UtcDate::parse('H:i', $startTimestamp);
+                $objTs->startTimestamp = $startTimestamp;
+                $objTs->endTimeString = UtcDate::parse('H:i', $endTimestamp);
+                $objTs->timeSpanString = UtcDate::parse('H:i', $startTimestamp) . ' - ' . UtcDate::parse('H:i', $startTimestamp);
+                $objTs->endTimestamp = $endTimestamp;
+                $timeSlots[] = $objTs;
+            }
+        }
+        $arrData['timeSlots'] = $timeSlots;
+
+        // Get messages
+        $arrData['messages'] = array();
+        if (Message::hasMessages())
+        {
+            if (Message::hasInfo())
+            {
+                $arrData['messages']['info'] = Message::generateUnwrapped('FE', true);
+            }
+            if (Message::hasError())
+            {
+                $arrData['messages']['error'] = Message::generateUnwrapped('FE', true);
+            }
+        }
+
+        $arrData['isReady'] = true;
+
+        return $arrData;
+    }
+
+    /**
+     * @param $objModule
+     * @param $objUser
+     * @param $objResource
+     * @param $arrBookingDateSelection
+     * @param $bookingRepeatStopWeekTstamp
+     * @return array
+     */
+    public static function prepareBookingSelection($objModule, $objUser, $objResource, $arrBookingDateSelection, $bookingRepeatStopWeekTstamp)
+    {
+        $arrBookings = array();
+
+        $objUser = FrontendUser::getInstance();
+
+        foreach ($arrBookingDateSelection as $strTimeSlot)
+        {
+            // slotId-startTime-endTime-mondayTimestampSelectedWeek
+            $arrTimeSlot = explode('-', $strTimeSlot);
+            $arrBooking = array(
+                'timeSlotId'                          => $arrTimeSlot[0],
+                'startTime'                           => $arrTimeSlot[1],
+                'endTime'                             => $arrTimeSlot[2],
+                'mondayTimestampSelectedWeek'         => $arrTimeSlot[3],
+                'pid'                                 => Input::post('resourceId'),
+                'description'                         => Input::post('description'),
+                'member'                              => $objUser->id,
+                'firstname'                           => $objUser->firstname,
+                'lastname'                            => $objUser->lastname,
+                'tstamp'                              => time(),
+                'resourceAlreadyBooked'               => true,
+                'resourceAlreadyBookedByLoggedInUser' => false,
+                'newEntry'                            => false,
+            );
+            $arrBookings[] = $arrBooking;
+
+            // Handle repetitions
+            if ($arrTimeSlot[3] < $bookingRepeatStopWeekTstamp)
+            {
+                $doRepeat = true;
+                $arrRepeat = $arrBooking;
+                while ($doRepeat === true)
+                {
+                    $arrRepeat['startTime'] = DateHelper::addDaysToTime(7, $arrRepeat['startTime']);
+                    $arrRepeat['endTime'] = DateHelper::addDaysToTime(7, $arrRepeat['endTime']);
+                    $arrRepeat['mondayTimestampSelectedWeek'] = DateHelper::addDaysToTime(7, $arrRepeat['mondayTimestampSelectedWeek']);
+                    $arrBookings[] = $arrRepeat;
+                    if ($arrRepeat['mondayTimestampSelectedWeek'] >= $bookingRepeatStopWeekTstamp)
+                    {
+                        $doRepeat = false;
+                    }
+                }
+            }
+        }
+        foreach ($arrBookings as $index => $arrData)
+        {
+            if (!ResourceBookingHelper::isResourceBooked($objResource, $arrData['startTime'], $arrData['endTime']))
+            {
+                if (($objTimeslot = ResourceBookingTimeSlotModel::findByPk($arrData['timeSlotId'])) !== null)
+                {
+                    $arrBookings[$index]['resourceAlreadyBooked'] = false;
+                }
+            }
+            elseif (null !== ResourceBookingModel::findOneByResourceIdStarttimeEndtimeAndMember($objResource, $arrData['startTime'], $arrData['endTime'], $arrData['member']))
+            {
+                $arrBookings[$index]['resourceAlreadyBooked'] = true;
+                $arrBookings[$index]['resourceAlreadyBookedByLoggedInUser'] = true;
+            }
+        }
+
+        return $arrBookings;
+    }
 
     /**
      * @param $objResource
@@ -80,6 +366,33 @@ class ResourceBookingHelper
         }
 
         return $arrWeeks;
+    }
+
+    /**
+     * Get 1 Week back/ahead date
+     * @param $intJumpWeek
+     * @param $objModule
+     * @return array
+     */
+    public static function getJumpWeekDate($intJumpWeek, $objModule)
+    {
+        $arrReturn = array(
+            'disabled' => false,
+            'tstamp'   => null
+        );
+
+        $intJumpDays = 7 * $intJumpWeek;
+        // Create 1 week back and 1 week ahead links
+        $jumpTime = DateHelper::addDaysToTime($intJumpDays, $objModule->tstampActiveWeek);
+        if (!DateHelper::isValidDate($jumpTime))
+        {
+            $jumpTime = $objModule->tstampActiveWeek;
+            $arrReturn['disabled'] = true;
+        }
+
+        $arrReturn['tstamp'] = $jumpTime;
+
+        return $arrReturn;
     }
 
 }
