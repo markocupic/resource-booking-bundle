@@ -30,7 +30,7 @@ class AjaxHandler
      * @param $objModule
      * @return JsonResponse
      */
-    public function sendDataAllRequest($objModule)
+    public function fetchDataRequest($objModule)
     {
         $arrJson = array();
         $arrJson['data'] = ResourceBookingHelper::fetchData($objModule);
@@ -197,10 +197,10 @@ class AjaxHandler
         }
 
         // Return $arrBookings
-        $arrJson['bookingSelection'] = $arrBookings;
-        $arrJson['status'] = 'success';
+        $arrJson['bookingFormValidation']['bookingSelection'] = $arrBookings;
 
-        $response = new JsonResponse($arrJson);
+        $arrReturn = array('data' => $arrJson['bookingFormValidation'], 'status' => 'success');
+        $response = new JsonResponse($arrReturn);
         return $response->send();
     }
 

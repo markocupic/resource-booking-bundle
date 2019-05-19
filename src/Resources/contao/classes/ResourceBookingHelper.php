@@ -12,6 +12,7 @@ namespace Markocupic\ResourceBookingBundle;
 
 use Contao\Date;
 use Contao\Config;
+use Contao\MemberModel;
 use Contao\Message;
 use Contao\StringUtil;
 use Contao\ResourceBookingModel;
@@ -144,7 +145,6 @@ class ResourceBookingHelper
                     {
                         $startTimestamp = strtotime(sprintf('+%s day', $colCount), $objModule->tstampActiveWeek) + $objTimeslots->startTime;
                         $endTimestamp = strtotime(sprintf('+%s day', $colCount), $objModule->tstampActiveWeek) + $objTimeslots->endTime;
-
                         $objTs = new \stdClass();
                         $objTs->weekday = $arrWeekdays[$colCount];
                         $objTs->startTimeString = Date::parse('H:i', $startTimestamp);
@@ -209,7 +209,7 @@ class ResourceBookingHelper
                 $objTs->startTimeString = UtcDate::parse('H:i', $startTimestamp);
                 $objTs->startTimestamp = $startTimestamp;
                 $objTs->endTimeString = UtcDate::parse('H:i', $endTimestamp);
-                $objTs->timeSpanString = UtcDate::parse('H:i', $startTimestamp) . ' - ' . UtcDate::parse('H:i', $startTimestamp);
+                $objTs->timeSpanString = UtcDate::parse('H:i', $startTimestamp) . ' - ' . UtcDate::parse('H:i', $endTimestamp);
                 $objTs->endTimestamp = $endTimestamp;
                 $timeSlots[] = $objTs;
             }
@@ -257,6 +257,8 @@ class ResourceBookingHelper
                 'timeSlotId'                          => $arrTimeSlot[0],
                 'startTime'                           => $arrTimeSlot[1],
                 'endTime'                             => $arrTimeSlot[2],
+                'date'                                => '',
+                'datim'                               => '',
                 'mondayTimestampSelectedWeek'         => $arrTimeSlot[3],
                 'pid'                                 => Input::post('resourceId'),
                 'description'                         => Input::post('description'),
@@ -267,6 +269,7 @@ class ResourceBookingHelper
                 'resourceAlreadyBooked'               => true,
                 'resourceAlreadyBookedByLoggedInUser' => false,
                 'newEntry'                            => false,
+                'holder'                              => ''
             );
             $arrBookings[] = $arrBooking;
 
@@ -274,22 +277,39 @@ class ResourceBookingHelper
             if ($arrTimeSlot[3] < $bookingRepeatStopWeekTstamp)
             {
                 $doRepeat = true;
-                $arrRepeat = $arrBooking;
                 while ($doRepeat === true)
                 {
+                    $arrRepeat = $arrBooking;
                     $arrRepeat['startTime'] = DateHelper::addDaysToTime(7, $arrRepeat['startTime']);
                     $arrRepeat['endTime'] = DateHelper::addDaysToTime(7, $arrRepeat['endTime']);
                     $arrRepeat['mondayTimestampSelectedWeek'] = DateHelper::addDaysToTime(7, $arrRepeat['mondayTimestampSelectedWeek']);
                     $arrBookings[] = $arrRepeat;
+                    // Stop repeating
                     if ($arrRepeat['mondayTimestampSelectedWeek'] >= $bookingRepeatStopWeekTstamp)
                     {
                         $doRepeat = false;
                     }
+                    $arrBooking = $arrRepeat;
+                    unset($arrRepeat);
                 }
             }
         }
+
+        if (count($arrBookings) > 0)
+        {
+            // Sort array by startTime
+            usort($arrBookings, function ($a, $b) {
+                return $a['startTime'] <=> $b['startTime'];
+            });
+        }
+
         foreach ($arrBookings as $index => $arrData)
         {
+            // Set date
+            $arrBookings[$index]['date'] = Date::parse(Config::get('dateFormat'), $arrData['startTime']);
+
+            $arrBookings[$index]['datim'] = sprintf('%s, %s: %s - %s', Date::parse('D', $arrData['startTime']), Date::parse(Config::get('dateFormat'), $arrData['startTime']), Date::parse('H:i', $arrData['startTime']), Date::parse('H:i', $arrData['endTime']));
+
             if (!ResourceBookingHelper::isResourceBooked($objResource, $arrData['startTime'], $arrData['endTime']))
             {
                 if (($objTimeslot = ResourceBookingTimeSlotModel::findByPk($arrData['timeSlotId'])) !== null)
@@ -301,6 +321,21 @@ class ResourceBookingHelper
             {
                 $arrBookings[$index]['resourceAlreadyBooked'] = true;
                 $arrBookings[$index]['resourceAlreadyBookedByLoggedInUser'] = true;
+            }
+            else
+            {
+                $arrBookings[$index]['holder'] = '';
+
+                $objRes = ResourceBookingModel::findOneByResourceIdStarttimeAndEndtime($objResource, $arrData['startTime'], $arrData['endTime']);
+                if ($objRes !== null)
+                {
+                    $arrBookings[$index]['holder'] = 'undefined';
+                    $objMember = MemberModel::findByPk($objRes->member);
+                    if ($objMember !== null)
+                    {
+                        $arrBookings[$index]['holder'] = StringUtil::substr($objMember->firstname, 1, '') . '. ' . $objMember->lastname;
+                    }
+                }
             }
         }
 
