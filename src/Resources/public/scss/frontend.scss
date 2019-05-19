@@ -1,3 +1,7 @@
+$notBookableBg: rgba(255, 200, 196, 0.66);
+$bookableBg: rgba(182, 228, 182, 0.38);
+$loggedInUserIsHolderBg: rgba(255, 164, 152, 0.63);
+
 .mod_resourceBookingWeekCalendar {
   #resourceBookingApp .vue-application {
     visibility: hidden;
@@ -16,11 +20,11 @@
     }
 
     td.time-slot-cell {
-      background-color: rgba(182, 228, 182, 0.38);
+      background-color: $bookableBg;
       height: 6rem;
     }
     td.time-slot-cell[data-isbooked="true"] {
-      background-color: rgba(255, 200, 196, 0.66);
+      background-color: $notBookableBg;
     }
     .btn-cancel-booking {
       color: red;
@@ -38,7 +42,7 @@
 
     }
     td.time-slot-cell[data-is-holder="true"] {
-      background-color: rgba(255, 164, 152, 0.63);
+      background-color: $loggedInUserIsHolderBg;
       .holder-box {
         font-weight: bold;
       }
@@ -62,6 +66,18 @@
       border: none !important;
       border: 0 !important;
       border-color: transparent !important;
+    }
+  }
+  table#bookingPreview {
+    tr td {
+      padding-left: 4px;
+      padding-right: 4px;
+    }
+    tr.bookable td {
+      background-color: $bookableBg;
+    }
+    tr.not-bookable td {
+      background-color: $notBookableBg;
     }
   }
 

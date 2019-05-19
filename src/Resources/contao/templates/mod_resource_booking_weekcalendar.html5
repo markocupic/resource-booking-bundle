@@ -129,11 +129,33 @@
                         </div>
                         <div v-if="bookingModal.alertError != ''" class="alert alert-danger">{{ bookingModal.alertError }}</div>
                         <div v-if="!bookingModal.showConfirmationMsg && bookingModal.action == 'showBookingForm'">
-                            <div id="resourceIsAvailable">
+                            <div id="modalMessageBox">
                                 <div v-if="bookingFormValidation.noDatesSelected" class="alert alert-warning" role="alert">Bitte wählen Sie mindestens 1 Buchungszeitpunkt aus.</div>
                                 <div v-if="bookingFormValidation.passedValidation" class="alert alert-success" role="alert">{{ activeResource.title }} ist im gewünschten Zeitraum noch buchbar.</div>
                                 <div v-if="bookingFormValidation.resourceIsAlreadyBooked" class="alert alert-danger" role="alert">{{ activeResource.title }} ist im gewünschten Zeitraum <strong>nicht mehr buchbar.</strong></div>
                             </div>
+
+                            <div v-if="bookingFormValidation.resourceIsAlreadyBooked">
+                                <div class="mt-2 mb-2">
+                                    <button class="btn btn-sm btn-danger" type="button" data-toggle="collapse" data-target="#bookingPreview" aria-expanded="false" aria-controls="bookingPreview">
+                                        Besetzte Ressource(n) anzeigen
+                                    </button>
+                                </div>
+
+                                <table id="bookingPreview" class="table table-sm collapse">
+                                    <tbody>
+                                    <tr v-for="(booking, index) in bookingFormValidation.bookingSelection" v-bind:class="booking.resourceAlreadyBooked ? 'not-bookable' : 'bookable'">
+                                        <td><small>{{ booking.datim }}</small></td>
+                                        <td>
+                                            <span v-if="booking.resourceAlreadyBooked"><small>{{ booking.holder }}</small></span>
+                                            <span v-if="!booking.resourceAlreadyBooked"><small>verfügbar</small></span>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+
+                            </div>
+
                             <form>
                                 <table v-if="rows.length > 0" class="resource-booking-table-modal table">
                                     <thead>
