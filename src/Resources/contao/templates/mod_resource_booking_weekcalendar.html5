@@ -144,10 +144,11 @@
 
                                 <table id="bookingPreview" class="table table-sm collapse">
                                     <tbody>
-                                    <tr v-for="(booking, index) in bookingFormValidation.bookingSelection" v-bind:class="booking.resourceAlreadyBooked ? 'not-bookable' : 'bookable'">
+                                    <tr v-for="(booking, index) in bookingFormValidation.bookingSelection" v-bind:class="booking.resourceBlocked ? 'not-bookable' : 'bookable'">
                                         <td><small>{{ booking.datim }}</small></td>
                                         <td>
-                                            <span v-if="booking.resourceAlreadyBooked"><small>{{ booking.holder }}</small></span>
+                                            <span v-if="booking.resourceAlreadyBooked && !booking.resourceAlreadyBookedByLoggedInUser"><small>{{ booking.holder }}</small></span>
+                                            <span v-if="booking.resourceAlreadyBooked && booking.resourceAlreadyBookedByLoggedInUser"><small>bereits von Ihnen gebucht</small></span>
                                             <span v-if="!booking.resourceAlreadyBooked"><small>verfügbar</small></span>
                                         </td>
                                     </tr>

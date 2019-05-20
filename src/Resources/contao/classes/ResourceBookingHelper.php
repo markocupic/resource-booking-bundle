@@ -280,6 +280,7 @@ class ResourceBookingHelper
                 'lastname'                            => $objUser->lastname,
                 'tstamp'                              => time(),
                 'resourceAlreadyBooked'               => true,
+                'resourceBlocked'                     => true,
                 'resourceAlreadyBookedByLoggedInUser' => false,
                 'newEntry'                            => false,
                 'holder'                              => ''
@@ -328,12 +329,14 @@ class ResourceBookingHelper
                 if (($objTimeslot = ResourceBookingTimeSlotModel::findByPk($arrData['timeSlotId'])) !== null)
                 {
                     $arrBookings[$index]['resourceAlreadyBooked'] = false;
+                    $arrBookings[$index]['resourceBlocked'] = false;
                 }
             }
             elseif (null !== ResourceBookingModel::findOneByResourceIdStarttimeEndtimeAndMember($objResource, $arrData['startTime'], $arrData['endTime'], $arrData['member']))
             {
                 $arrBookings[$index]['resourceAlreadyBooked'] = true;
                 $arrBookings[$index]['resourceAlreadyBookedByLoggedInUser'] = true;
+                $arrBookings[$index]['resourceBlocked'] = false;
             }
             else
             {
