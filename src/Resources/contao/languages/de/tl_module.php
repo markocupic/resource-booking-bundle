@@ -10,3 +10,8 @@
 
 // Fields
 $GLOBALS['TL_LANG']['tl_module']['resourceBooking_resourceTypes'] = array('Ressourcen-Typen', 'Wählen Sie mindestens 1 Ressourcen-Typ aus.');
+$GLOBALS['TL_LANG']['tl_module']['resourceBooking_hideDays'] = array('Buchungen nur für ausgewählte Wochentage zulassen', 'Geben Sie an, ob Buchungen nur für ausgewählte Wochentage zulassen werden sollen.');
+$GLOBALS['TL_LANG']['tl_module']['resourceBooking_hideDaysSelection'] = array('Wochentage auswählen.', 'Wählen Sie die Wochentage aus, an denen Buchungen ermöglicht werden sollen.');
+
+
+

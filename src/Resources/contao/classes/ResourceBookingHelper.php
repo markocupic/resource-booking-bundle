@@ -110,9 +110,15 @@ class ResourceBookingHelper
         $arrWeekdays = array('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday');
         for ($i = 0; $i < 7; $i++)
         {
+            // Skip days
+            if ($objModule->resourceBooking_hideDays && !in_array($i, StringUtil::deserialize($objModule->resourceBooking_hideDaysSelection, true)))
+            {
+                continue;
+            }
             $arrWeek[] = array(
-                'title'      => $GLOBALS['TL_LANG']['MSC'][$arrWeekdays[$i]][1] != '' ? $GLOBALS['TL_LANG']['MSC'][$arrWeekdays[$i]][1] : $arrWeekdays[$i],
-                'titleShort' => $GLOBALS['TL_LANG']['MSC'][$arrWeekdays[$i]][0] != '' ? $GLOBALS['TL_LANG']['MSC'][$arrWeekdays[$i]][0] : $arrWeekdays[$i],
+                'index'      => $i,
+                'title'      => $GLOBALS['TL_LANG']['DAYS_LONG'][$i] != '' ? $GLOBALS['TL_LANG']['DAYS_LONG'][$i] : $arrWeekdays[$i],
+                'titleShort' => $GLOBALS['TL_LANG']['DAYS_SHORT'][$i] != '' ? $GLOBALS['TL_LANG']['DAYS_SHORT'][$i] : $arrWeekdays[$i],
                 'date'       => Date::parse('d.m.Y', strtotime(Date::parse('Y-m-d', $objModule->tstampActiveWeek) . " +" . $i . " day"))
             );
         }
@@ -143,9 +149,16 @@ class ResourceBookingHelper
 
                     for ($colCount = 0; $colCount < 7; $colCount++)
                     {
+                        // Skip days
+                        if ($objModule->resourceBooking_hideDays && !in_array($colCount, StringUtil::deserialize($objModule->resourceBooking_hideDaysSelection, true)))
+                        {
+                            continue;
+                        }
+
                         $startTimestamp = strtotime(sprintf('+%s day', $colCount), $objModule->tstampActiveWeek) + $objTimeslots->startTime;
                         $endTimestamp = strtotime(sprintf('+%s day', $colCount), $objModule->tstampActiveWeek) + $objTimeslots->endTime;
                         $objTs = new \stdClass();
+                        $objTs->index = $colCount;
                         $objTs->weekday = $arrWeekdays[$colCount];
                         $objTs->startTimeString = Date::parse('H:i', $startTimestamp);
                         $objTs->startTimestamp = $startTimestamp;
@@ -267,6 +280,7 @@ class ResourceBookingHelper
                 'lastname'                            => $objUser->lastname,
                 'tstamp'                              => time(),
                 'resourceAlreadyBooked'               => true,
+                'resourceBlocked'                     => true,
                 'resourceAlreadyBookedByLoggedInUser' => false,
                 'newEntry'                            => false,
                 'holder'                              => ''
@@ -315,12 +329,14 @@ class ResourceBookingHelper
                 if (($objTimeslot = ResourceBookingTimeSlotModel::findByPk($arrData['timeSlotId'])) !== null)
                 {
                     $arrBookings[$index]['resourceAlreadyBooked'] = false;
+                    $arrBookings[$index]['resourceBlocked'] = false;
                 }
             }
             elseif (null !== ResourceBookingModel::findOneByResourceIdStarttimeEndtimeAndMember($objResource, $arrData['startTime'], $arrData['endTime'], $arrData['member']))
             {
                 $arrBookings[$index]['resourceAlreadyBooked'] = true;
                 $arrBookings[$index]['resourceAlreadyBookedByLoggedInUser'] = true;
+                $arrBookings[$index]['resourceBlocked'] = false;
             }
             else
             {
