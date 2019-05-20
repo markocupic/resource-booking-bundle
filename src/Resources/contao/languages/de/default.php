@@ -8,14 +8,22 @@
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
-// Misc
-$GLOBALS['TL_LANG']['MSC']['monday'] = array('Mo', 'Montag');
-$GLOBALS['TL_LANG']['MSC']['tuesday'] = array('Di', 'Dienstag');
-$GLOBALS['TL_LANG']['MSC']['wednesday'] = array('Mi', 'Mittwoch');
-$GLOBALS['TL_LANG']['MSC']['thursday'] = array('Do', 'Donnerstag');
-$GLOBALS['TL_LANG']['MSC']['friday'] = array('Fr', 'Freitag');
-$GLOBALS['TL_LANG']['MSC']['saturday'] = array('Sa', 'Samstag');
-$GLOBALS['TL_LANG']['MSC']['sunday'] = array('So', 'Sonntag');
+// Days
+$GLOBALS['TL_LANG']['DAYS_SHORT'][0] = 'Mo';
+$GLOBALS['TL_LANG']['DAYS_SHORT'][1] = 'Di';
+$GLOBALS['TL_LANG']['DAYS_SHORT'][2] = 'Mi';
+$GLOBALS['TL_LANG']['DAYS_SHORT'][3] = 'Do';
+$GLOBALS['TL_LANG']['DAYS_SHORT'][4] = 'Fr';
+$GLOBALS['TL_LANG']['DAYS_SHORT'][5] = 'Sa';
+$GLOBALS['TL_LANG']['DAYS_SHORT'][6] = 'So';
+
+$GLOBALS['TL_LANG']['DAYS_LONG'][0] = 'Montag';
+$GLOBALS['TL_LANG']['DAYS_LONG'][1] = 'Dienstag';
+$GLOBALS['TL_LANG']['DAYS_LONG'][2] = 'Mittwoch';
+$GLOBALS['TL_LANG']['DAYS_LONG'][3] = 'Donnerstag';
+$GLOBALS['TL_LANG']['DAYS_LONG'][4] = 'Freitag';
+$GLOBALS['TL_LANG']['DAYS_LONG'][5] = 'Samstag';
+$GLOBALS['TL_LANG']['DAYS_LONG'][6] = 'Sonntag';
 
 // Forms
 $GLOBALS['TL_LANG']['MSC']['weekSelectOptionText'] = 'KW %s/%s: %s - %s';

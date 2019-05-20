@@ -69,14 +69,14 @@
                 <thead>
                 <tr>
                     <th width="12.5%">Uhrzeit</th>
-                    <th width="12.5%" v-for="(weekday, index) in weekdays" v-bind:data-col-index="index">{{ weekday.title }}{{br}}{{ weekday.date }}</th>
+                    <th width="12.5%" v-for="(weekday, index) in weekdays" v-bind:data-day-index="weekday.index">{{ weekday.title }}{{br}}{{ weekday.date }}</th>
                 </tr>
 
                 </thead>
                 <tbody>
                 <tr v-for="(row, rowIndex) in rows" v-bind:data-row-index="rowIndex" v-bind:class="row.rowData.cssRowClass">
                     <td>{{ timeSlots[rowIndex].timeSpanString }}</td>
-                    <td class="time-slot-cell" v-for="(eventBox, colIndex) in row.cellData" v-bind:data-col-index="colIndex" v-bind:data-is-holder="eventBox.isHolder ? 'true' : 'false'" v-bind:data-isbooked="eventBox.isBooked">
+                    <td class="time-slot-cell" v-for="(eventBox, colIndex) in row.cellData" v-bind:data-day-index="eventBox.index" v-bind:data-is-holder="eventBox.isHolder ? 'true' : 'false'" v-bind:data-isbooked="eventBox.isBooked">
                         <div v-if="eventBox.isBooked">
                             <span class="holder-box">{{ eventBox.bookedByFullname }}</span>{{br}}<span class="description-box">{{ eventBox.bookingDescription }}</span>
                         </div>
@@ -161,14 +161,14 @@
                                     <thead>
                                     <tr>
                                         <th width="12.5%">Uhrzeit</th>
-                                        <th width="12.5%" v-for="(weekday, index) in weekdays" v-bind:data-col-index="index">{{ weekday.titleShort }}</th>
+                                        <th width="12.5%" v-for="(weekday, index) in weekdays" v-bind:data-day-index="weekday.index">{{ weekday.titleShort }}</th>
                                     </tr>
 
                                     </thead>
                                     <tbody>
                                     <tr v-for="(row, rowIndex) in rows" v-bind:data-row-index="rowIndex" v-bind:class="row.rowData.cssRowClass">
                                         <td>{{ timeSlots[rowIndex].timeSpanString }}</td>
-                                        <td class="time-slot-cell" v-for="(eventBox, colIndex) in row.cellData" v-bind:data-col-index="colIndex" v-bind:data-isbooked="eventBox.isBooked">
+                                        <td class="time-slot-cell" v-for="(eventBox, colIndex) in row.cellData" v-bind:data-day-index="eventBox.index" v-bind:data-isbooked="eventBox.isBooked">
                                             <div v-if="!eventBox.isBooked">
                                                 <div class="custom-control custom-checkbox">
                                                     <input type="checkbox" v-on:change="sendBookingFormValidationRequest()" v-model="bookingModal.selectedTimeSlots" v-bind:value="eventBox.bookingCheckboxValue" class="custom-control-input" v-bind:id="eventBox.bookingCheckboxId">

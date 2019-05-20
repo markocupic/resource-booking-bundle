@@ -15,7 +15,7 @@ $loggedInUserIsHolderBg: rgba(255, 164, 152, 0.63);
     }
     td, th {
       background-color: #fff;
-      border: 2px solid #fff;
+      border: 3px solid #fff;
       padding: .25rem;
     }
 
@@ -85,3 +85,22 @@ $loggedInUserIsHolderBg: rgba(255, 164, 152, 0.63);
     background-color: #149efb;
   }
 }
+
+// Customizing
+// Etwas Abstand nach dem Mittag
+tr.time-slot-6 td {
+  border-top: 20px solid #fff !important;
+}
+
+// Etwas Abstand nach de Pausen
+tr.time-slot-4 td, tr.time-slot-8 td {
+  border-top: 8px solid #fff !important;
+}
+
+tr.time-slot-6 td {
+  border-top: 20px solid #fff !important;
+}
+
+
+
+

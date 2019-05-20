@@ -32,7 +32,8 @@ var resourceBookingApp = new Vue({
     },
     created: function created() {
         var self = this;
-        self.requestToken = RESOURCE_BOOKING.requestToken; // Load data from server
+        // Post requests require a request token
+        self.requestToken = RESOURCE_BOOKING.requestToken;
 
         // Get data from server each 15s
         self.fetchDataRequest();
@@ -334,7 +335,6 @@ var resourceBookingApp = new Vue({
                 $('#bookingRepeatStopWeekTstamp option').prop('selected', false);
             });
             $('#resourceBookingModal').modal('show');
-
-        },
+        }
     }
 });
