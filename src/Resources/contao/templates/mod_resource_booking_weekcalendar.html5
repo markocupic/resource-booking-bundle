@@ -69,7 +69,7 @@
                 <thead>
                 <tr>
                     <th width="12.5%">Uhrzeit</th>
-                    <th width="12.5%" v-for="(weekday, index) in weekdays" v-bind:data-index="index">{{ weekday.title }}{{br}}{{ weekday.date }}</th>
+                    <th width="12.5%" v-for="(weekday, index) in weekdays" v-bind:data-col-index="index">{{ weekday.title }}{{br}}{{ weekday.date }}</th>
                 </tr>
 
                 </thead>
@@ -161,7 +161,7 @@
                                     <thead>
                                     <tr>
                                         <th width="12.5%">Uhrzeit</th>
-                                        <th width="12.5%" v-for="(weekday, index) in weekdays" v-bind:data-index="index">{{ weekday.titleShort }}</th>
+                                        <th width="12.5%" v-for="(weekday, index) in weekdays" v-bind:data-col-index="index">{{ weekday.titleShort }}</th>
                                     </tr>
 
                                     </thead>
