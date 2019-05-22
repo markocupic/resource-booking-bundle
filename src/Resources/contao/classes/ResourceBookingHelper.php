@@ -92,18 +92,18 @@ class ResourceBookingHelper
         );
 
         // Selected week
-        $arrData['tstampActiveWeek'] = $objModule->tstampActiveWeek;
+        $arrData['activeWeekTstamp'] = (int)$objModule->activeWeekTstamp;
         $arrData['activeWeek'] = array(
-            'tstampStart' => $objModule->tstampActiveWeek,
-            'tstampEnd'   => DateHelper::addDaysToTime(6, $objModule->tstampActiveWeek),
-            'dateStart'   => Date::parse(Config::get('dateFormat'), $objModule->tstampActiveWeek),
-            'dateEnd'     => Date::parse(Config::get('dateFormat'), DateHelper::addDaysToTime(6, $objModule->tstampActiveWeek)),
-            'weekNumber'  => Date::parse('W', $objModule->tstampActiveWeek),
-            'year'        => Date::parse('Y', $objModule->tstampActiveWeek),
+            'tstampStart' => $objModule->activeWeekTstamp,
+            'tstampEnd'   => DateHelper::addDaysToTime(6, $objModule->activeWeekTstamp),
+            'dateStart'   => Date::parse(Config::get('dateFormat'), $objModule->activeWeekTstamp),
+            'dateEnd'     => Date::parse(Config::get('dateFormat'), DateHelper::addDaysToTime(6, $objModule->activeWeekTstamp)),
+            'weekNumber'  => Date::parse('W', $objModule->activeWeekTstamp),
+            'year'        => Date::parse('Y', $objModule->activeWeekTstamp),
         );
 
         // Get booking RepeatsSelection
-        $arrData['bookingRepeatsSelection'] = ResourceBookingHelper::getWeekSelection($objModule->tstampActiveWeek, DateHelper::addDaysToTime(7 * $objModule->intAheadWeeks), false);
+        $arrData['bookingRepeatsSelection'] = ResourceBookingHelper::getWeekSelection($objModule->activeWeekTstamp, DateHelper::addDaysToTime(7 * $objModule->intAheadWeeks), false);
 
         // Send weekdays, dates and day
         $arrWeek = array();
@@ -119,20 +119,24 @@ class ResourceBookingHelper
                 'index'      => $i,
                 'title'      => $GLOBALS['TL_LANG']['DAYS_LONG'][$i] != '' ? $GLOBALS['TL_LANG']['DAYS_LONG'][$i] : $arrWeekdays[$i],
                 'titleShort' => $GLOBALS['TL_LANG']['DAYS_SHORT'][$i] != '' ? $GLOBALS['TL_LANG']['DAYS_SHORT'][$i] : $arrWeekdays[$i],
-                'date'       => Date::parse('d.m.Y', strtotime(Date::parse('Y-m-d', $objModule->tstampActiveWeek) . " +" . $i . " day"))
+                'date'       => Date::parse('d.m.Y', strtotime(Date::parse('Y-m-d', $objModule->activeWeekTstamp) . " +" . $i . " day"))
             );
         }
         // Weekdays
         $arrData['weekdays'] = $arrWeek;
 
+        $arrData['activeResourceTypeId'] = 'undefined';
         if ($objModule->objSelectedResourceType !== null)
         {
             $arrData['activeResourceType'] = $objModule->objSelectedResourceType->row();
+            $arrData['activeResourceTypeId'] = $objModule->objSelectedResourceType->id;
         }
 
         // Get rows
+        $arrData['activeResourceId'] = 'undefined';
         if ($objModule->objSelectedResource !== null && $objModule->objSelectedResourceType !== null)
         {
+            $arrData['activeResourceId'] = $objModule->objSelectedResource->id;
             $arrData['activeResource'] = $objModule->objSelectedResource->row();
 
             $objSelectedResource = $objModule->objSelectedResource;
@@ -155,24 +159,24 @@ class ResourceBookingHelper
                             continue;
                         }
 
-                        $startTimestamp = strtotime(sprintf('+%s day', $colCount), $objModule->tstampActiveWeek) + $objTimeslots->startTime;
-                        $endTimestamp = strtotime(sprintf('+%s day', $colCount), $objModule->tstampActiveWeek) + $objTimeslots->endTime;
+                        $startTimestamp = strtotime(sprintf('+%s day', $colCount), $objModule->activeWeekTstamp) + $objTimeslots->startTime;
+                        $endTimestamp = strtotime(sprintf('+%s day', $colCount), $objModule->activeWeekTstamp) + $objTimeslots->endTime;
                         $objTs = new \stdClass();
                         $objTs->index = $colCount;
                         $objTs->weekday = $arrWeekdays[$colCount];
                         $objTs->startTimeString = Date::parse('H:i', $startTimestamp);
-                        $objTs->startTimestamp = $startTimestamp;
+                        $objTs->startTimestamp = (int)$startTimestamp;
                         $objTs->endTimeString = Date::parse('H:i', $endTimestamp);
-                        $objTs->endTimestamp = $endTimestamp;
+                        $objTs->endTimestamp = (int)$endTimestamp;
                         $objTs->timeSpanString = Date::parse('H:i', $startTimestamp) . ' - ' . Date::parse('H:i', $endTimestamp);
-                        $objTs->mondayTimestampSelectedWeek = $objModule->tstampActiveWeek;
+                        $objTs->mondayTimestampSelectedWeek = (int)$objModule->activeWeekTstamp;
                         $objTs->isBooked = ResourceBookingHelper::isResourceBooked($objSelectedResource, $startTimestamp, $endTimestamp);
                         $objTs->isEditable = $objTs->isBooked ? false : true;
                         $objTs->timeSlotId = $objTimeslots->id;
                         $objTs->resourceId = $objSelectedResource->id;
                         $objTs->isEditable = true;
                         // slotId-startTime-endTime-mondayTimestampSelectedWeek
-                        $objTs->bookingCheckboxValue = sprintf('%s-%s-%s-%s', $objTimeslots->id, $startTimestamp, $endTimestamp, $objModule->tstampActiveWeek);
+                        $objTs->bookingCheckboxValue = sprintf('%s-%s-%s-%s', $objTimeslots->id, $startTimestamp, $endTimestamp, $objModule->activeWeekTstamp);
                         $objTs->bookingCheckboxId = sprintf('bookingCheckbox_%s_%s', $rowCount, $colCount);
                         if ($objTs->isBooked)
                         {
@@ -220,10 +224,10 @@ class ResourceBookingHelper
                 $endTimestamp = $objTimeslots->endTime;
                 $objTs = new \stdClass();
                 $objTs->startTimeString = UtcDate::parse('H:i', $startTimestamp);
-                $objTs->startTimestamp = $startTimestamp;
+                $objTs->startTimestamp = (int)$startTimestamp;
                 $objTs->endTimeString = UtcDate::parse('H:i', $endTimestamp);
                 $objTs->timeSpanString = UtcDate::parse('H:i', $startTimestamp) . ' - ' . UtcDate::parse('H:i', $endTimestamp);
-                $objTs->endTimestamp = $endTimestamp;
+                $objTs->endTimestamp = (int)$endTimestamp;
                 $timeSlots[] = $objTs;
             }
         }
@@ -268,11 +272,11 @@ class ResourceBookingHelper
             $arrTimeSlot = explode('-', $strTimeSlot);
             $arrBooking = array(
                 'timeSlotId'                          => $arrTimeSlot[0],
-                'startTime'                           => $arrTimeSlot[1],
-                'endTime'                             => $arrTimeSlot[2],
+                'startTime'                           => (int)$arrTimeSlot[1],
+                'endTime'                             => (int)$arrTimeSlot[2],
                 'date'                                => '',
                 'datim'                               => '',
-                'mondayTimestampSelectedWeek'         => $arrTimeSlot[3],
+                'mondayTimestampSelectedWeek'         => (int)$arrTimeSlot[3],
                 'pid'                                 => Input::post('resourceId'),
                 'description'                         => Input::post('description'),
                 'member'                              => $objUser->id,
@@ -402,13 +406,13 @@ class ResourceBookingHelper
             $calWeek = Date::parse('W', $tstampMonday);
             $yearMonday = Date::parse('Y', $tstampMonday);
             $arrWeeks[] = array(
-                'tstamp'       => $currentTstamp,
-                'tstampMonday' => $tstampMonday,
-                'tstampSunday' => $tstampSunday,
+                'tstamp'       => (int)$currentTstamp,
+                'tstampMonday' => (int)$tstampMonday,
+                'tstampSunday' => (int)$tstampSunday,
                 'stringMonday' => $dateMonday,
                 'stringSunday' => $dateSunday,
                 'daySpan'      => $dateMonday . ' - ' . $dateSunday,
-                'calWeek'      => $calWeek,
+                'calWeek'      => (int)$calWeek,
                 'year'         => $yearMonday,
                 'optionText'   => sprintf($GLOBALS['TL_LANG']['MSC']['weekSelectOptionText'], $calWeek, $yearMonday, $dateMonday, $dateSunday)
             );
@@ -434,14 +438,19 @@ class ResourceBookingHelper
 
         $intJumpDays = 7 * $intJumpWeek;
         // Create 1 week back and 1 week ahead links
-        $jumpTime = DateHelper::addDaysToTime($intJumpDays, $objModule->tstampActiveWeek);
+        $jumpTime = DateHelper::addDaysToTime($intJumpDays, $objModule->activeWeekTstamp);
         if (!DateHelper::isValidDate($jumpTime))
         {
-            $jumpTime = $objModule->tstampActiveWeek;
+            $jumpTime = $objModule->activeWeekTstamp;
             $arrReturn['disabled'] = true;
         }
 
-        $arrReturn['tstamp'] = $jumpTime;
+        if (!$objModule->activeWeekTstamp > 0 || $objModule->objSelectedResourceType === null || $objModule->objSelectedResource === null)
+        {
+            $arrReturn['disabled'] = true;
+        }
+
+        $arrReturn['tstamp'] = (int)$jumpTime;
 
         return $arrReturn;
     }
