@@ -62,7 +62,7 @@ class ModuleWeekcalendar extends Module
     /**
      * @var
      */
-    public $tstampActiveWeek;
+    public $activeWeekTstamp;
 
     /**
      * @var
@@ -126,27 +126,6 @@ class ModuleWeekcalendar extends Module
         // Get the fe-user object
         $this->objUser = FrontendUser::getInstance();
 
-        // Get intBackWeeks && intBackWeeks
-        $this->intBackWeeks = Config::get('rbb_intBackWeeks');
-        $this->intAheadWeeks = Config::get('rbb_intAheadWeeks');
-
-        // Get first ans last possible week tstamp
-        $this->tstampFirstPossibleWeek = DateHelper::addWeeksToTime($this->intBackWeeks, DateHelper::getMondayOfCurrentWeek());
-        $this->tstampLastPossibleWeek = DateHelper::addWeeksToTime($this->intAheadWeeks, DateHelper::getMondayOfCurrentWeek());
-
-        if (Input::post('date') != '')
-        {
-            if (Input::post('date') < $this->tstampFirstPossibleWeek)
-            {
-                Input::setPost('date', $this->tstampFirstPossibleWeek);
-            }
-            if (Input::post('date') > $this->tstampLastPossibleWeek)
-            {
-                Input::setPost('date', $this->tstampLastPossibleWeek);
-            }
-        }
-
-
         if (!isset($_SESSION['rbb']))
         {
             $_SESSION['rbb'] = array();
@@ -156,17 +135,46 @@ class ModuleWeekcalendar extends Module
         $strRes = (isset($_SESSION['rbb']['res']) && $_SESSION['rbb']['res'] > 0) ? $_SESSION['rbb']['res'] : '';
         $strDate = (isset($_SESSION['rbb']['date']) && $_SESSION['rbb']['date'] > 0) ? $_SESSION['rbb']['date'] : '';
         $strResType = Input::post('resType') != '' ? Input::post('resType') : $strResType;
-        $strRes = Input::post('res') != '' ? Input::post('res') : $strRes;
-        $strDate = Input::post('date') != '' ? Input::post('date') : $strDate;
+
+        $strResType = isset($_POST['resType']) ? Input::post('resType') : $strResType;
+        if (!$strResType > 0)
+        {
+            $strResType = 0;
+        }
+        $strRes = isset($_POST['res']) ? Input::post('res') : $strRes;
+        if (!$strRes > 0)
+        {
+            $strRes = 0;
+        }
 
         $this->objSelectedResourceType = ResourceBookingResourceTypeModel::findByPk($strResType);
         $this->objSelectedResource = ResourceBookingResourceModel::findByPk($strRes);
+
+        // Date settings
+        // Get intBackWeeks && intBackWeeks
+        $this->intBackWeeks = Config::get('rbb_intBackWeeks');
+        $this->intAheadWeeks = Config::get('rbb_intAheadWeeks');
+
+        // Get first ans last possible week tstamp
+        $this->tstampFirstPossibleWeek = DateHelper::addWeeksToTime($this->intBackWeeks, DateHelper::getMondayOfCurrentWeek());
+        $this->tstampLastPossibleWeek = DateHelper::addWeeksToTime($this->intAheadWeeks, DateHelper::getMondayOfCurrentWeek());
+
+        $strDate = isset($_POST['date']) ? Input::post('date') : $strDate;
         $strDate = DateHelper::isValidDate($strDate) ? $strDate : '';
-        if ($strDate == '')
+        if (!$strDate > 0)
         {
             $strDate = DateHelper::getMondayOfCurrentWeek();
         }
-        $this->tstampActiveWeek = $strDate;
+        if ($strDate < $this->tstampFirstPossibleWeek)
+        {
+            $strDate = $this->tstampFirstPossibleWeek;
+        }
+        if ($strDate > $this->tstampLastPossibleWeek)
+        {
+            $strDate = $this->tstampLastPossibleWeek;
+        }
+
+        $this->activeWeekTstamp = $strDate;
         $_SESSION['rbb']['resType'] = (integer)$strResType;
         $_SESSION['rbb']['res'] = (integer)$strRes;
         $_SESSION['rbb']['date'] = (integer)$strDate;

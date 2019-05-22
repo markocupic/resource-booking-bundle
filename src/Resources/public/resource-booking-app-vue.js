@@ -21,6 +21,9 @@ var resourceBookingApp = new Vue({
         weekdays: [],
         timeSlots: [],
         rows: [],
+        activeResourceTypeId: '',
+        activeResourceId: '',
+        activeWeekTstamp: 0,
         activeResourceType: [],
         activeResource: [],
         activeWeek: [],
@@ -28,33 +31,31 @@ var resourceBookingApp = new Vue({
         bookingFormValidation: [],
         bookingModal: {},
         intervals: [],
-        messages: null,
+        messages: null
     },
     created: function created() {
-        var self = this;
-        // Post requests require a request token
+        var self = this; // Post requests require a request token
+
         self.requestToken = RESOURCE_BOOKING.requestToken;
 
-        // Get data from server each 15s
+        // Fetch data from server each 30s
         self.fetchDataRequest();
         self.intervals.fetchDataRequest = window.setInterval(function () {
             self.fetchDataRequest();
-        }, 15000);
+        }, 30000); // Initialize idle detector
 
-        // Initialize idle detector
         self.initializeIdleDetector();
-
-
     },
+    // Watchers
     watch: {
         // Watcher
         isOnline: function isOnline(val) {
             var self = this;
+
             if (val === false) {
                 // Clear interval
-                clearInterval(self.intervals.fetchDataRequest);
+                clearInterval(self.intervals.fetchDataRequest); // Logout user after 7 min (420000 ms) of idle time
 
-                // Logout user after 7 min (420000 ms) of idle time
                 self.sendLogoutRequest();
                 window.setTimeout(function () {
                     // Close booking modal if it is still open
@@ -67,6 +68,15 @@ var resourceBookingApp = new Vue({
                     }, 100);
                 }, 400);
             }
+        },
+        activeResourceTypeId: function activeResourceTypeId(newObj, oldObj) {
+            this.sendApplyFilterRequest();
+        },
+        activeResourceId: function activeResourceId(newObj, oldObj) {
+            this.sendApplyFilterRequest();
+        },
+        activeWeekTstamp: function activeWeekTstamp(newObj, oldObj) {
+            this.sendApplyFilterRequest();
         }
     },
     methods: {
@@ -89,8 +99,10 @@ var resourceBookingApp = new Vue({
                     for (var key in response['data']) {
                         self[key] = response['data'][key];
                     }
+
                     self.isReady = true;
                 }
+
                 self.isOnline = true;
             });
             xhr.fail(function ($res, $bl) {
@@ -125,6 +137,7 @@ var resourceBookingApp = new Vue({
                 } else {
                     self.bookingModal.alertError = response.alertError;
                 }
+
                 self.isOnline = true;
             });
             xhr.fail(function () {
@@ -155,9 +168,9 @@ var resourceBookingApp = new Vue({
             });
             xhr.done(function (response) {
                 if (response.status === 'success') {
-
                     self.bookingFormValidation = response.data;
                 }
+
                 self.isOnline = true;
             });
             xhr.fail(function () {
@@ -189,6 +202,7 @@ var resourceBookingApp = new Vue({
                 } else {
                     self.bookingModal.alertError = response.alertError;
                 }
+
                 self.isOnline = true;
             });
             xhr.fail(function () {
@@ -211,7 +225,7 @@ var resourceBookingApp = new Vue({
                 dataType: 'json',
                 data: {
                     'action': 'sendLogoutRequest',
-                    'REQUEST_TOKEN': self.requestToken,
+                    'REQUEST_TOKEN': self.requestToken
                 }
             });
             xhr.always(function () {
@@ -224,19 +238,21 @@ var resourceBookingApp = new Vue({
          * Apply the filter changes
          * @param tstamp
          */
-        sendApplyFilterRequest: function sendApplyFilterRequest(tstamp) {
-
+        sendApplyFilterRequest: function sendApplyFilterRequest() {
             var self = this;
+            var resType = self.activeResourceTypeId;
+            var res = self.activeResourceId;
+            var date = self.activeWeekTstamp;
             var xhr = $.ajax({
                 url: window.location.href,
                 type: 'post',
                 dataType: 'json',
                 data: {
-                    'resType': $('#resourceBookingForm [name="resType"]').val(),
-                    'res': $('#resourceBookingForm [name="res"]').val(),
-                    'date': tstamp > 0 ? tstamp : $('#resourceBookingForm [name="date"]').val(),
+                    'resType': resType,
+                    'res': res,
+                    'date': date,
                     'action': 'sendApplyFilterRequest',
-                    'REQUEST_TOKEN': self.requestToken,
+                    'REQUEST_TOKEN': self.requestToken
                 }
             });
             xhr.done(function (response) {
@@ -245,12 +261,12 @@ var resourceBookingApp = new Vue({
                         self[key] = response['data'][key];
                     }
                 }
+
                 self.isOnline = true;
             });
             xhr.fail(function () {
                 self.isOnline = false;
             });
-
         },
 
         /**
@@ -268,11 +284,11 @@ var resourceBookingApp = new Vue({
                 type: 'post',
                 dataType: 'json',
                 data: {
-                    'resType': self.activeResourceType.id,
-                    'res': self.activeResource.id,
+                    'resType': self.activeResourceTypeId,
+                    'res': self.activeResourceId,
                     'date': tstamp,
                     'action': 'sendApplyFilterRequest',
-                    'REQUEST_TOKEN': self.requestToken,
+                    'REQUEST_TOKEN': self.requestToken
                 }
             });
             xhr.done(function (response) {
@@ -281,16 +297,16 @@ var resourceBookingApp = new Vue({
                         self[key] = response['data'][key];
                     }
                 }
+
                 self.isOnline = true;
             });
             xhr.fail(function () {
                 self.isOnline = false;
             });
             xhr.always(function () {
-                window.setTimeout(
-                    function () {
-                        $('.modal-backdrop').remove();
-                    }, 200);
+                window.setTimeout(function () {
+                    $('.modal-backdrop').remove();
+                }, 200);
             });
         },
 
@@ -300,7 +316,7 @@ var resourceBookingApp = new Vue({
         initializeIdleDetector: function initializeIdleDetector() {
             var self = this;
             $(document).idle({
-                onIdle: function () {
+                onIdle: function onIdle() {
                     self.sendLogoutRequest();
                 },
                 idle: self.idleTimeLimit
@@ -322,14 +338,11 @@ var resourceBookingApp = new Vue({
             self.bookingModal.alertError = '';
             self.bookingModal.selectedTimeSlots.push(objActiveTimeSlot.bookingCheckboxValue);
             self.bookingFormValidation = [];
-
             // Hide booking preview
             $('#bookingPreview').collapse('hide');
-
             window.setTimeout(function () {
                 self.sendBookingFormValidationRequest();
             }, 500);
-
             $('#resourceBookingModal').on('show.bs.modal', function () {
                 $('#resourceBookingModal [name="bookingDescription"]').val('');
                 $('#bookingRepeatStopWeekTstamp option').prop('selected', false);

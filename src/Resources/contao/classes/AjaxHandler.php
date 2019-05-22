@@ -18,6 +18,8 @@ use Contao\ResourceBookingResourceModel;
 use Contao\Input;
 use Contao\System;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Contao\CoreBundle\Monolog\ContaoContext;
+use Psr\Log\LogLevel;
 use Contao\CoreBundle\Exception\RedirectResponseException;
 
 /**
@@ -115,6 +117,11 @@ class AjaxHandler
                         }
                         $objBooking->save();
                         $arrBookings[$i]['newEntry'] = true;
+
+                        // Log
+                        $logger = System::getContainer()->get('monolog.logger.contao');
+                        $strLog = sprintf('New resource with ID %s has been booked.', $objBooking->id);
+                        $logger->log(LogLevel::INFO, $strLog, array('contao' => new ContaoContext(__METHOD__, 'INFO')));
                     }
                     $counter++;
                 }
@@ -220,7 +227,17 @@ class AjaxHandler
             {
                 if ($objBooking->member === $objUser->id)
                 {
-                    $objBooking->delete();
+                    $intId = $objBooking->id;
+                    // Delete entry
+                    $intAffected = $objBooking->delete();
+                    if ($intAffected)
+                    {
+                        // Log
+                        $logger = System::getContainer()->get('monolog.logger.contao');
+                        $strLog = sprintf('Resource Booking with ID %s has been deleted.', $intId);
+                        $logger->log(LogLevel::INFO, $strLog, array('contao' => new ContaoContext(__METHOD__, 'INFO')));
+                    }
+
                     $arrJson['status'] = 'success';
                     $arrJson['alertSuccess'] = $GLOBALS['TL_LANG']['MSG']['successfullyCanceledBooking'];
                 }
@@ -267,6 +284,5 @@ class AjaxHandler
         // Logout user
         throw new RedirectResponseException(System::getContainer()->get('security.logout_url_generator')->getLogoutUrl());
     }
-
 
 }
