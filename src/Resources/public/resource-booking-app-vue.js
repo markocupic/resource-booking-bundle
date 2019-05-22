@@ -236,7 +236,6 @@ var resourceBookingApp = new Vue({
 
         /**
          * Apply the filter changes
-         * @param tstamp
          */
         sendApplyFilterRequest: function sendApplyFilterRequest() {
             var self = this;
@@ -272,6 +271,7 @@ var resourceBookingApp = new Vue({
         /**
          * Jump to next/previous week
          * @param tstamp
+         * @param event
          */
         sendJumpWeekRequest: function sendJumpWeekRequest(tstamp, event) {
             $('.modal-backdrop').remove();
