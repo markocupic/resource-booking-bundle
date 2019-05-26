@@ -11,7 +11,7 @@
 /**
  * Back end modules
  */
-$GLOBALS['BE_MOD']['resourceBooking'] = array(
+$GLOBALS['BE_MOD']['resourceBookingTool'] = array(
     'resource'     => array
     (
         'tables' => array('tl_resource_booking_resource_type', 'tl_resource_booking_resource', 'tl_resource_booking'),
