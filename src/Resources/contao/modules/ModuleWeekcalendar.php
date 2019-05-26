@@ -12,13 +12,16 @@ namespace Markocupic\ResourceBookingBundle;
 
 use Contao\BackendTemplate;
 use Contao\FrontendUser;
+use Contao\MemberModel;
 use Contao\Module;
 use Contao\Input;
 use Contao\Environment;
 use Contao\Controller;
+use Contao\RequestToken;
 use Contao\ResourceBookingResourceModel;
 use Contao\ResourceBookingResourceTypeModel;
 use Contao\Config;
+use Contao\User;
 use Patchwork\Utf8;
 
 /**

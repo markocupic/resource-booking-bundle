@@ -17,32 +17,10 @@ namespace Contao;
 class ResourceBookingResourceTypeModel extends \Model
 {
 
-	/**
-	 * Table name
-	 * @var string
-	 */
-	protected static $strTable = 'tl_resource_booking_resource_type';
-
     /**
-     * @param $arrIds
-     * @return Model\Collection|null
+     * Table name
+     * @var string
      */
-    public static function findMultipleAndPublishedByIds($arrIds)
-    {
-        $newArrIds = array();
-        $objResTypes = static::findMultipleByIds($arrIds);
-        if ($objResTypes !== null)
-        {
-            while ($objResTypes->next())
-            {
-                if ($objResTypes->published)
-                {
-                    $newArrIds[] = $objResTypes->id;
-                }
-            }
-        }
-
-        return static::findMultipleByIds($newArrIds);
-    }
+    protected static $strTable = 'tl_resource_booking_resource_type';
 
 }
