@@ -21,7 +21,7 @@ $GLOBALS['TL_LANG']['tl_resource_booking_resource']['new'] = array('Neu', 'Neue 
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['published'] = array('Veröffentlichen');
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['title'] = array('Bezeichnung');
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['description'] = array('Beschreibung');
-$GLOBALS['TL_LANG']['tl_resource_booking_resource']['timeSlotType'] = array('Zeitraum-Buchungs-System');
+$GLOBALS['TL_LANG']['tl_resource_booking_resource']['timeSlotType'] = array('Buchungszeitplan');
 
 
 

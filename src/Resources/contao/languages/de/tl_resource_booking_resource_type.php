@@ -12,8 +12,8 @@
 $GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['title_legend'] = 'Titel Einstellungen';
 
 // Global operations
-$GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['new'] = array('Neu', 'Neuen Ressourcen-Typ erstellen.');
+$GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['new'] = array('Neu', 'Neue Ressourcen-Gruppe erstellen.');
 
 // Fields
-$GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['title'] = array('Bezeichnung');
+$GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['title'] = array('Ressourcen-Gruppe');
 $GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['description'] = array('Beschreibung');
