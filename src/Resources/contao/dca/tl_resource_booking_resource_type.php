@@ -18,15 +18,16 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource_type'] = array(
         'enableVersioning' => true,
         'sql'              => array(
             'keys' => array(
-                'id'        => 'primary',
+                'id' => 'primary',
             ),
         ),
     ),
     // List
     'list'     => array(
         'sorting'           => array(
-            'mode'        => 0,
+            'mode'        => 1,
             'fields'      => array('title ASC'),
+            'flag'        => 1,
             'panelLayout' => 'filter;sort,search,limit'
         ),
         'label'             => array
@@ -44,23 +45,30 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource_type'] = array(
         ),
         'operations'        => array(
 
-            'edit'   => array(
+            'edit'       => array(
                 'label' => &$GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['editmeta'],
-                'href'  => 'act=edit',
+                'href'  => 'table=tl_resource_booking_resource',
                 'icon'  => 'edit.gif',
             ),
-            'cut'    => array(
+            'editheader' => array
+            (
+                'label'           => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot_type']['editheader'],
+                'href'            => 'table=tl_resource_booking_time_slot_type&amp;act=edit',
+                'icon'            => 'header.svg',
+                'button_callback' => array('tl_resource_booking_resource_type', 'editHeader')
+            ),
+            'cut'        => array(
                 'label' => &$GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['cut'],
                 'href'  => 'act=paste&amp;mode=cut',
                 'icon'  => 'cut.gif',
             ),
-            'delete' => array(
+            'delete'     => array(
                 'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['delete'],
                 'href'       => 'act=delete',
                 'icon'       => 'delete.gif',
                 'attributes' => 'onclick="if(!confirm(\'' . $GLOBALS['TL_LANG']['MSC']['deleteConfirm'] . '\'))return false;Backend.getScrollOffset()"',
             ),
-            'show'   => array(
+            'show'       => array(
                 'label' => &$GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['show'],
                 'href'  => 'act=show',
                 'icon'  => 'show.gif',
@@ -80,20 +88,20 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource_type'] = array(
             'sql' => "int(10) unsigned NOT NULL default '0'",
         ),
         'title'       => array(
-            'label'                   => &$GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['title'],
-            'exclude'                 => true,
-            'search'                  => true,
-            'inputType'               => 'text',
-            'eval'                    => array('mandatory'=>true, 'maxlength'=>255, 'tl_class'=>'clr'),
-            'sql'                     => "varchar(255) NOT NULL default ''"
+            'label'     => &$GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['title'],
+            'exclude'   => true,
+            'search'    => true,
+            'inputType' => 'text',
+            'eval'      => array('mandatory' => true, 'maxlength' => 255, 'tl_class' => 'clr'),
+            'sql'       => "varchar(255) NOT NULL default ''"
         ),
         'description' => array(
             'label'     => &$GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['description'],
-            'exclude'                 => true,
-            'search'                  => true,
-            'inputType'               => 'textarea',
-            'eval'                    => array('tl_class' => 'clr'),
-            'sql'                     => "mediumtext NULL"
+            'exclude'   => true,
+            'search'    => true,
+            'inputType' => 'textarea',
+            'eval'      => array('tl_class' => 'clr'),
+            'sql'       => "mediumtext NULL"
         )
     )
 
@@ -112,6 +120,23 @@ class tl_resource_booking_resource_type extends Backend
     {
         parent::__construct();
         $this->import('BackendUser', 'User');
+    }
+
+    /**
+     * Return the edit header button
+     *
+     * @param array $row
+     * @param string $href
+     * @param string $label
+     * @param string $title
+     * @param string $icon
+     * @param string $attributes
+     *
+     * @return string
+     */
+    public function editHeader($row, $href, $label, $title, $icon, $attributes)
+    {
+        return '<a href="' . $this->addToUrl($href . '&amp;id=' . $row['id']) . '" title="' . Contao\StringUtil::specialchars($title) . '"' . $attributes . '>' . Contao\Image::getHtml($icon, $label) . '</a> ';
     }
 
 }

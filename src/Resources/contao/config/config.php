@@ -12,25 +12,13 @@
  * Back end modules
  */
 $GLOBALS['BE_MOD']['resourceBooking'] = array(
-    'resourceType' => array
-    (
-        'tables' => array('tl_resource_booking_resource_type'),
-        'table'  => array('TableWizard', 'importTable'),
-        'list'   => array('ListWizard', 'importList')
-    ),
     'resource'     => array
     (
-        'tables' => array('tl_resource_booking_resource'),
-        'table'  => array('TableWizard', 'importTable'),
-        'list'   => array('ListWizard', 'importList')
+        'tables' => array('tl_resource_booking_resource_type', 'tl_resource_booking_resource', 'tl_resource_booking'),
     ),
     'timeSlotType' => array
     (
         'tables' => array('tl_resource_booking_time_slot_type', 'tl_resource_booking_time_slot'),
-    ),
-    'bookings'     => array
-    (
-        'tables' => array('tl_resource_booking'),
     )
 );
 
