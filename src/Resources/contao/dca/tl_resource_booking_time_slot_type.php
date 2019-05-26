@@ -23,7 +23,6 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot_type'] = array
             'keys' => array
             (
                 'id'    => 'primary',
-                'title' => 'unique'
             )
         ),
         'ondelete_callback' => array(array('tl_resource_booking_time_slot_type', 'removeChildRecords'))
@@ -72,15 +71,8 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot_type'] = array
             'copy'       => array
             (
                 'label' => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot_type']['copy'],
-                'href'  => 'act=paste&amp;mode=copy',
+                'href'  => 'act=copy',
                 'icon'  => 'copy.svg'
-            ),
-            'cut'        => array
-            (
-                'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot_type']['cut'],
-                'href'       => 'act=paste&amp;mode=cut',
-                'icon'       => 'cut.svg',
-                'attributes' => 'onclick="Backend.getScrollOffset()"'
             ),
             'delete'     => array
             (
@@ -101,7 +93,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot_type'] = array
     // Palettes
     'palettes' => array
     (
-        'default' => '{published_legend},published;{title_legend},title,description'
+        'default' => '{title_legend},title,description'
     ),
 
     // Fields
@@ -125,17 +117,6 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot_type'] = array
             'search'    => true,
             'eval'      => array('mandatory' => true, 'decodeEntities' => true, 'maxlength' => 255, 'tl_class' => 'clr'),
             'sql'       => "varchar(255) NOT NULL default ''"
-        ),
-        'published'   => array(
-            'label'     => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot_type']['published'],
-            'exclude'   => true,
-            'search'    => true,
-            'sorting'   => true,
-            'filter'    => true,
-            'flag'      => 2,
-            'inputType' => 'checkbox',
-            'eval'      => array('doNotCopy' => true, 'tl_class' => 'clr'),
-            'sql'       => "char(1) NOT NULL default ''",
         ),
         'description' => array
         (
@@ -192,7 +173,7 @@ class tl_resource_booking_time_slot_type extends Contao\Backend
             return;
         }
         // Delete child bookings
-        $this->Database->prepare('DELETE FROM tl_resource_booking WHERE tl_resource_booking.timeSlotId = (SELECT id FROM tl_resource_booking_time_slot WHERE tl_resource_booking_time_slot.pid=?)')->execute($dc->id);
+        $this->Database->prepare('DELETE FROM tl_resource_booking WHERE tl_resource_booking.timeSlotId IN (SELECT id FROM tl_resource_booking_time_slot WHERE tl_resource_booking_time_slot.pid=?)')->execute($dc->id);
 
         // Delete time slot children
         $this->Database->prepare('DELETE FROM tl_resource_booking_time_slot WHERE pid=?')->execute($dc->id);

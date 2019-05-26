@@ -99,7 +99,6 @@ var resourceBookingApp = new Vue({
                     for (var key in response['data']) {
                         self[key] = response['data'][key];
                     }
-
                     self.isReady = true;
                 }
 

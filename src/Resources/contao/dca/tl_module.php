@@ -66,7 +66,7 @@ class tl_module_resource_booking extends Contao\Backend
     public function getResourceTypes()
     {
         $opt = array();
-        $objDb = Contao\Database::getInstance()->prepare('SELECT * FROM tl_resource_booking_resource_type WHERE published=?')->execute('1');
+        $objDb = Contao\Database::getInstance()->prepare('SELECT * FROM tl_resource_booking_resource_type')->execute();
         while ($objDb->next())
         {
             $opt[$objDb->id] = $objDb->title;

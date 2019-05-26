@@ -56,4 +56,16 @@ class ResourceBookingResourceModel extends \Model
         return self::findOneBy($arrColumn, $arrValues);
     }
 
+    /**
+     * @param $intId
+     * @param $intPid
+     * @return mixed
+     */
+    public static function findPublishedByPkAndPid($intId, $intPid)
+    {
+        $arrColumn = array('id=?', 'pid=?', 'published=?');
+        $arrValues = array($intId, $intPid, '1');
+        return self::findOneBy($arrColumn, $arrValues);
+    }
+
 }

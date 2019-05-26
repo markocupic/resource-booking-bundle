@@ -81,7 +81,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = array(
     ),
     // Palettes
     'palettes' => array(
-        'default' => '{title_legend},pid,title,description',
+        'default' => '{title_legend},title,description,timeSlotType',
     ),
     // Fields
     'fields'   => array(
@@ -89,12 +89,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = array(
             'sql' => "int(10) unsigned NOT NULL auto_increment",
         ),
         'pid'          => array(
-            'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking_resource']['pid'],
-            'inputType'  => 'select',
-            'foreignKey' => 'tl_resource_booking_resource_type.title',
-            'eval'       => array('mandatory' => true),
-            'sql'        => "int(10) unsigned NOT NULL default '0'",
-            'relation'   => array('type' => 'belongsTo', 'load' => 'lazy')
+            'sql' => "int(10) unsigned NOT NULL default '0'",
         ),
         'tstamp'       => array(
             'sql' => "int(10) unsigned NOT NULL default '0'",
@@ -128,7 +123,12 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = array(
             'sql'       => "mediumtext NULL"
         ),
         'timeSlotType' => array(
-            'sql' => "int(10) unsigned NOT NULL default '0'",
+            'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking_resource']['timeSlotType'],
+            'inputType'  => 'select',
+            'foreignKey' => 'tl_resource_booking_time_slot_type.title',
+            'eval'       => array('mandatory' => true, 'tl_class' => 'clr'),
+            'sql'        => "int(10) unsigned NOT NULL default '0'",
+            'relation'   => array('type' => 'belongsTo', 'load' => 'lazy')
         ),
     )
 
