@@ -9,6 +9,7 @@
  */
 
 // Backend modules
+$GLOBALS['TL_LANG']['MOD']['resourceBookingTool'] = 'Ressourcen-Buchung';
 $GLOBALS['TL_LANG']['MOD']['resource'] = array('Ressourcen', 'Ressourcen verwalten');
 $GLOBALS['TL_LANG']['MOD']['timeSlotType'] = array('Zeitpläne', 'Buchungs-Zeitpläne verwalten');
 
