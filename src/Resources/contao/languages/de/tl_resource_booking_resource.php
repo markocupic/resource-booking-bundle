@@ -18,7 +18,6 @@ $GLOBALS['TL_LANG']['tl_resource_booking_resource']['bookingsmeta'] = 'Buchungen
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['new'] = array('Neu', 'Neue Ressource erstellen.');
 
 // Fields
-$GLOBALS['TL_LANG']['tl_resource_booking_resource']['pid'] = array('Ressourcen-Typ');
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['published'] = array('Veröffentlichen');
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['title'] = array('Bezeichnung');
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['description'] = array('Beschreibung');

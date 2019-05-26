@@ -151,7 +151,7 @@ class ModuleWeekcalendar extends Module
         }
 
         $this->objSelectedResourceType = ResourceBookingResourceTypeModel::findByPk($strResType);
-        $this->objSelectedResource = ResourceBookingResourceModel::findByPk($strRes);
+        $this->objSelectedResource = ResourceBookingResourceModel::findPublishedByPkAndPid($strRes,$strResType);
 
         // Date settings
         // Get intBackWeeks && intBackWeeks
