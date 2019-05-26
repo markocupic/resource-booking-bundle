@@ -9,11 +9,8 @@
  */
 
 // Backend modules
-$GLOBALS['TL_LANG']['MOD']['resourceBooking'] = array('Resourcen-Buchungs-Module', 'Resourcen-Buchungs-Module');
-$GLOBALS['TL_LANG']['MOD']['resourceType'] = array('Ressourcen-Typen', 'Ressourcen-Typen verwalten');
 $GLOBALS['TL_LANG']['MOD']['resource'] = array('Ressourcen', 'Ressourcen verwalten');
-$GLOBALS['TL_LANG']['MOD']['timeSlotType'] = array('Zeitraster', 'Buchungs-Zeitraster verwalten');
-$GLOBALS['TL_LANG']['MOD']['bookings'] = array('Buchungen', 'Buchungen verwalten');
+$GLOBALS['TL_LANG']['MOD']['timeSlotType'] = array('Zeitpläne', 'Buchungs-Zeitpläne verwalten');
 
 // Frontend modules
 $GLOBALS['TL_LANG']['FMD']['resourceBooking'] = 'Resourcen-Buchungs-Module';

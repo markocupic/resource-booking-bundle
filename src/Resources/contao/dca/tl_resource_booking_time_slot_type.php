@@ -14,34 +14,35 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot_type'] = array
     // Config
     'config'   => array
     (
-        'dataContainer'    => 'Table',
-        'ctable'           => array('tl_resource_booking_time_slot'),
-        'switchToEdit'     => true,
-        'enableVersioning' => true,
-        'sql'              => array
+        'dataContainer'     => 'Table',
+        'ctable'            => array('tl_resource_booking_time_slot'),
+        'switchToEdit'      => true,
+        'enableVersioning'  => true,
+        'sql'               => array
         (
             'keys' => array
             (
                 'id'    => 'primary',
                 'title' => 'unique'
             )
-        )
+        ),
+        'ondelete_callback' => array(array('tl_resource_booking_time_slot_type', 'removeChildRecords'))
     ),
 
     // List
     'list'     => array
     (
-        'sorting' => array
+        'sorting'           => array
         (
-            'mode'                    => 1,
-            'fields'                  => array('title'),
-            'flag'                    => 1,
-            'panelLayout'             => 'filter;search,limit'
+            'mode'        => 1,
+            'fields'      => array('title'),
+            'flag'        => 1,
+            'panelLayout' => 'filter;search,limit'
         ),
-        'label' => array
+        'label'             => array
         (
-            'fields'                  => array('title'),
-            'format'                  => '%s'
+            'fields' => array('title'),
+            'format' => '%s'
         ),
         'global_operations' => array
         (
@@ -163,7 +164,6 @@ class tl_resource_booking_time_slot_type extends Contao\Backend
         $this->import('Contao\BackendUser', 'User');
     }
 
-
     /**
      * Return the edit header button
      *
@@ -179,5 +179,22 @@ class tl_resource_booking_time_slot_type extends Contao\Backend
     public function editHeader($row, $href, $label, $title, $icon, $attributes)
     {
         return '<a href="' . $this->addToUrl($href . '&amp;id=' . $row['id']) . '" title="' . Contao\StringUtil::specialchars($title) . '"' . $attributes . '>' . Contao\Image::getHtml($icon, $label) . '</a> ';
+    }
+
+    /**
+     * ondelete_callback
+     * @param \Contao\DataContainer $dc
+     */
+    public function removeChildRecords(Contao\DataContainer $dc)
+    {
+        if (!$dc->id)
+        {
+            return;
+        }
+        // Delete child bookings
+        $this->Database->prepare('DELETE FROM tl_resource_booking WHERE tl_resource_booking.timeSlotId = (SELECT id FROM tl_resource_booking_time_slot WHERE tl_resource_booking_time_slot.pid=?)')->execute($dc->id);
+
+        // Delete time slot children
+        $this->Database->prepare('DELETE FROM tl_resource_booking_time_slot WHERE pid=?')->execute($dc->id);
     }
 }

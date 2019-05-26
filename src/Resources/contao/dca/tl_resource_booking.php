@@ -19,19 +19,21 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = array(
         'switchToEdit'     => true,
         'ptable'           => 'tl_resource_booking_resource',
         'enableVersioning' => true,
+        'notCreatable' => true,
+        'notCopyable' => true,
         'sql'              => array(
             'keys' => array(
-                'id'  => 'primary',
+                'id'                           => 'primary',
                 'pid,member,startTime,endTime' => 'index',
-                'timeSlotId' => 'index',
+                'timeSlotId'                   => 'index',
             ),
         ),
     ),
     // List
     'list'     => array(
         'sorting'           => array(
-            'mode'        => 0,
-            'fields'      => array('title ASC'),
+            'mode'        => 2,
+            'fields'      => array('startTime DESC'),
             'panelLayout' => 'filter;sort,search,limit'
         ),
         'label'             => array
@@ -75,7 +77,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = array(
     ),
     // Palettes
     'palettes' => array(
-        'default' => '{title_legend},pid,title,description,member;{time_legend},startTime,endTime',
+        'default' => '{title_legend},title,description,member;{time_legend},startTime,endTime',
     ),
     // Fields
     'fields'   => array(
@@ -83,60 +85,26 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = array(
             'sql' => "int(10) unsigned NOT NULL auto_increment",
         ),
         'pid'         => array(
-            'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking']['pid'],
-            'search'     => true,
-            'sorting'    => true,
-            'filter'     => true,
-            'inputType'  => 'select',
-            'foreignKey' => 'tl_resource_booking_resource.title',
-            'eval'       => array('mandatory' => true),
-            'sql'        => "int(10) unsigned NOT NULL default '0'",
-            'relation'   => array('type' => 'belongsTo', 'load' => 'lazy')
+            'sql' => "int(10) unsigned NOT NULL default '0'",
         ),
         'tstamp'      => array
         (
             'sql' => "int(10) unsigned NOT NULL default '0'"
         ),
         'timeSlotId'  => array(
-            'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking']['timeSlotId'],
-            'exclude'    => true,
-            'search'     => true,
-            'sorting'    => true,
-            'inputType'  => 'select',
-            'foreignKey' => 'tl_resource_booking_time_slot.title',
-            'eval'       => array('mandatory' => true),
-            'sql'        => "int(10) unsigned NOT NULL default '0'",
-            'relation'   => array('type' => 'belongsTo', 'load' => 'lazy')
+            'sql' => "int(10) unsigned NOT NULL default '0'",
         ),
         'member'      => array(
             'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking']['member'],
             'exclude'    => true,
-            'search'     => true,
-            'sorting'    => true,
+            'search'     => false,
+            'sorting'    => false,
             'filter'     => true,
             'inputType'  => 'select',
             'foreignKey' => 'tl_member.CONCAT(firstname," ",lastname)',
             'eval'       => array('mandatory' => true, 'tl_class' => 'clr'),
             'relation'   => array('type' => 'belongsTo', 'load' => 'lazy'),
             'sql'        => "int(10) unsigned NOT NULL default '0'",
-        ),
-        'firstname'   => array(
-            'label'     => &$GLOBALS['TL_LANG']['tl_resource_booking']['firstname'],
-            'exclude'   => true,
-            'search'    => true,
-            'sorting'   => true,
-            'inputType' => 'text',
-            'eval'      => array('mandatory' => false, 'maxlength' => 255, 'tl_class' => 'clr'),
-            'sql'       => "varchar(255) NOT NULL default ''"
-        ),
-        'lastname'    => array(
-            'label'     => &$GLOBALS['TL_LANG']['tl_resource_booking']['lastname'],
-            'exclude'   => true,
-            'search'    => true,
-            'sorting'   => true,
-            'inputType' => 'text',
-            'eval'      => array('mandatory' => false, 'maxlength' => 255, 'tl_class' => 'clr'),
-            'sql'       => "varchar(255) NOT NULL default ''"
         ),
         'title'       => array(
             'label'     => &$GLOBALS['TL_LANG']['tl_resource_booking']['title'],
@@ -162,7 +130,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = array(
             'exclude'   => true,
             'flag'      => 8,
             'inputType' => 'text',
-            'eval'      => array('rgxp' => 'datim', 'mandatory' => true, 'doNotCopy' => true, 'datepicker' => true, 'tl_class' => 'w50 wizard'),
+            'eval'      => array('readonly' => true, 'rgxp' => 'datim', 'mandatory' => true, 'doNotCopy' => true, 'datepicker' => false, 'tl_class' => 'w50 wizard'),
             'sql'       => "int(10) NULL"
         ),
         'endTime'     => array
@@ -173,7 +141,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = array(
             'exclude'       => true,
             'flag'          => 8,
             'inputType'     => 'text',
-            'eval'          => array('rgxp' => 'datim', 'mandatory' => true, 'doNotCopy' => true, 'datepicker' => true, 'tl_class' => 'w50 wizard'),
+            'eval'          => array('readonly' => true, 'rgxp' => 'datim', 'mandatory' => true, 'doNotCopy' => true, 'datepicker' => false, 'tl_class' => 'w50 wizard'),
             'save_callback' => array
             (
                 array('tl_resource_booking', 'setCorrectEndTime')

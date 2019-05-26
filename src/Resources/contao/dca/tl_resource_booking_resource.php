@@ -29,10 +29,11 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = array(
     // List
     'list'     => array(
         'sorting'           => array(
-            'mode'        => 1,
-            'flag'        => 1,
-            'fields'      => array('title ASC'),
-            'panelLayout' => 'filter;sort,search,limit'
+            'mode'                  => 4,
+            'fields'                => array('title ASC'),
+            'headerFields'          => array('title'),
+            'panelLayout'           => 'filter;sort,search,limit',
+            'child_record_callback' => array('tl_resource_booking_resource', 'childRecordCallback')
         ),
         'label'             => array
         (
@@ -49,24 +50,29 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = array(
         ),
         'operations'        => array(
 
-            'edit'   => array(
+            'edit'     => array(
                 'label' => &$GLOBALS['TL_LANG']['tl_resource_booking_resource']['editmeta'],
                 'href'  => 'act=edit',
                 'icon'  => 'edit.gif',
             ),
-            'delete' => array(
+            'bookings' => array(
+                'label' => &$GLOBALS['TL_LANG']['tl_resource_booking_resource']['bookingsmeta'],
+                'href'  => 'table=tl_resource_booking',
+                'icon'  => MOD_RESOURCE_BOOKING_ASSET_PATH . '/icons/calendar.svg',
+            ),
+            'delete'   => array(
                 'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking_resource']['delete'],
                 'href'       => 'act=delete',
                 'icon'       => 'delete.gif',
                 'attributes' => 'onclick="if(!confirm(\'' . $GLOBALS['TL_LANG']['MSC']['deleteConfirm'] . '\'))return false;Backend.getScrollOffset()"',
             ),
-            'toggle' => array(
+            'toggle'   => array(
                 'label'           => &$GLOBALS['TL_LANG']['tl_resource_booking_resource']['toggle'],
                 'icon'            => 'visible.gif',
                 'attributes'      => 'onclick="Backend.getScrollOffset();return AjaxRequest.toggleVisibility(this,%s)"',
                 'button_callback' => array('tl_resource_booking_resource', 'toggleIcon'),
             ),
-            'show'   => array(
+            'show'     => array(
                 'label' => &$GLOBALS['TL_LANG']['tl_resource_booking_resource']['show'],
                 'href'  => 'act=show',
                 'icon'  => 'show.gif',
@@ -75,7 +81,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = array(
     ),
     // Palettes
     'palettes' => array(
-        'default' => '{published_legend},published;{title_legend},pid,title,description,timeSlotType',
+        'default' => '{title_legend},pid,title,description',
     ),
     // Fields
     'fields'   => array(
@@ -122,12 +128,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = array(
             'sql'       => "mediumtext NULL"
         ),
         'timeSlotType' => array(
-            'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking_resource']['timeSlotType'],
-            'inputType'  => 'select',
-            'foreignKey' => 'tl_resource_booking_time_slot_type.title',
-            'eval'       => array('mandatory' => true, 'tl_class' => 'clr'),
-            'sql'        => "int(10) unsigned NOT NULL default '0'",
-            'relation'   => array('type' => 'belongsTo', 'load' => 'lazy')
+            'sql' => "int(10) unsigned NOT NULL default '0'",
         ),
     )
 
@@ -146,6 +147,15 @@ class tl_resource_booking_resource extends Backend
     {
         parent::__construct();
         $this->import('BackendUser', 'User');
+    }
+
+    /**
+     * @param $row
+     * @return string
+     */
+    public function childRecordCallback($row)
+    {
+        return sprintf('<div class="tl_content_left">' . $row['title'] . '</div>');
     }
 
     /**

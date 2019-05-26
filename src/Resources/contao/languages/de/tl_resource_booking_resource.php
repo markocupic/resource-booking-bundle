@@ -9,8 +9,10 @@
  */
 
 // Legends
-$GLOBALS['TL_LANG']['tl_resource_booking_resource']['published_legend'] = 'Veröffentlichungs-Einstellungen';
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['title_legend'] = 'Titel-Einstellungen';
+
+// Operations
+$GLOBALS['TL_LANG']['tl_resource_booking_resource']['bookingsmeta'] = 'Buchungen ansehen';
 
 // Global operations
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['new'] = array('Neu', 'Neue Ressource erstellen.');

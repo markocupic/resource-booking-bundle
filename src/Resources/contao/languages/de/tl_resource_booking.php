@@ -17,7 +17,7 @@ $GLOBALS['TL_LANG']['tl_resource_booking']['new'] = array('Neu', 'Neue Buchung e
 
 // Fields
 $GLOBALS['TL_LANG']['tl_resource_booking']['pid'] = array('Ressource');
-$GLOBALS['TL_LANG']['tl_resource_booking']['timeSlotId'] = array('Zeitraum');
+$GLOBALS['TL_LANG']['tl_resource_booking']['timeSlotId'] = array('Zeitpunkt');
 $GLOBALS['TL_LANG']['tl_resource_booking']['member'] = array('Reserviert durch Mitglied');
 $GLOBALS['TL_LANG']['tl_resource_booking']['firstname'] = array('Vorname');
 $GLOBALS['TL_LANG']['tl_resource_booking']['lastname'] = array('Nachname');

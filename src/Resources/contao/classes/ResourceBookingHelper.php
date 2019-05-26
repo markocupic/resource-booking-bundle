@@ -190,9 +190,19 @@ class ResourceBookingHelper
                                     $objTs->isHolder = true;
                                 }
 
-                                $objTs->bookedByFirstname = $objBooking->firstname;
-                                $objTs->bookedByLastname = $objBooking->lastname;
-                                $objTs->bookedByFullname = $objBooking->firstname . ' ' . $objBooking->lastname;
+                                // Presets
+                                $objTs->bookedByFirstname = '';
+                                $objTs->bookedByLastname = '';
+                                $objTs->bookedByFullname = '';
+
+                                $objMember = MemberModel::findByPk($objBooking->member);
+                                if ($objMember !== null)
+                                {
+                                    $objTs->bookedByFirstname = $objMember->firstname;
+                                    $objTs->bookedByLastname = $objMember->lastname;
+                                    $objTs->bookedByFullname = $objMember->firstname . ' ' . $objMember->lastname;
+                                }
+
                                 $objTs->bookingDescription = $objBooking->description;
                                 $objTs->bookingId = $objBooking->id;
                             }
@@ -280,8 +290,6 @@ class ResourceBookingHelper
                 'pid'                                 => Input::post('resourceId'),
                 'description'                         => Input::post('description'),
                 'member'                              => $objUser->id,
-                'firstname'                           => $objUser->firstname,
-                'lastname'                            => $objUser->lastname,
                 'tstamp'                              => time(),
                 'resourceAlreadyBooked'               => true,
                 'resourceBlocked'                     => true,
