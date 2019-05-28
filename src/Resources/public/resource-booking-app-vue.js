@@ -31,19 +31,21 @@ var resourceBookingApp = new Vue({
         bookingFormValidation: [],
         bookingModal: {},
         intervals: [],
-        messages: null
+        messages: null,
     },
     created: function created() {
-        var self = this; // Post requests require a request token
+        var self = this;
 
+        // Post requests require a request token
         self.requestToken = RESOURCE_BOOKING.requestToken;
 
         // Fetch data from server each 30s
         self.fetchDataRequest();
         self.intervals.fetchDataRequest = window.setInterval(function () {
             self.fetchDataRequest();
-        }, 30000); // Initialize idle detector
+        }, 30000);
 
+        // Initialize idle detector
         self.initializeIdleDetector();
     },
     // Watchers
@@ -54,8 +56,9 @@ var resourceBookingApp = new Vue({
 
             if (val === false) {
                 // Clear interval
-                clearInterval(self.intervals.fetchDataRequest); // Logout user after 7 min (420000 ms) of idle time
+                clearInterval(self.intervals.fetchDataRequest);
 
+                // Logout user after 7 min (420000 ms) of idle time
                 self.sendLogoutRequest();
                 window.setTimeout(function () {
                     // Close booking modal if it is still open
@@ -81,7 +84,7 @@ var resourceBookingApp = new Vue({
     },
     methods: {
         /**
-         * Load all the data from the server
+         * Fetch all the data from the server
          */
         fetchDataRequest: function fetchDataRequest() {
             var self = this;
@@ -92,7 +95,7 @@ var resourceBookingApp = new Vue({
                 data: {
                     'REQUEST_TOKEN': self.requestToken,
                     'action': 'fetchDataRequest'
-                }
+                },
             });
             xhr.done(function (response) {
                 if (response.status === 'success') {
@@ -125,7 +128,7 @@ var resourceBookingApp = new Vue({
                     'description': $('#resourceBookingModal [name="bookingDescription"]').val(),
                     'bookingDateSelection': self.bookingModal.selectedTimeSlots,
                     'bookingRepeatStopWeekTstamp': $('#bookingRepeatStopWeekTstamp').val()
-                }
+                },
             });
             xhr.done(function (response) {
                 if (response.status === 'success') {
@@ -162,7 +165,7 @@ var resourceBookingApp = new Vue({
                     'REQUEST_TOKEN': self.requestToken,
                     'resourceId': self.bookingModal.activeTimeSlot.resourceId,
                     'bookingDateSelection': self.bookingModal.selectedTimeSlots,
-                    'bookingRepeatStopWeekTstamp': $('#bookingRepeatStopWeekTstamp').val()
+                    'bookingRepeatStopWeekTstamp': $('#bookingRepeatStopWeekTstamp').val(),
                 }
             });
             xhr.done(function (response) {
@@ -190,7 +193,7 @@ var resourceBookingApp = new Vue({
                     'action': 'sendCancelBookingRequest',
                     'REQUEST_TOKEN': self.requestToken,
                     'bookingId': self.bookingModal.activeTimeSlot.bookingId
-                }
+                },
             });
             xhr.done(function (response) {
                 if (response.status === 'success') {
@@ -224,7 +227,7 @@ var resourceBookingApp = new Vue({
                 dataType: 'json',
                 data: {
                     'action': 'sendLogoutRequest',
-                    'REQUEST_TOKEN': self.requestToken
+                    'REQUEST_TOKEN': self.requestToken,
                 }
             });
             xhr.always(function () {
@@ -250,7 +253,7 @@ var resourceBookingApp = new Vue({
                     'res': res,
                     'date': date,
                     'action': 'sendApplyFilterRequest',
-                    'REQUEST_TOKEN': self.requestToken
+                    'REQUEST_TOKEN': self.requestToken,
                 }
             });
             xhr.done(function (response) {
@@ -287,7 +290,7 @@ var resourceBookingApp = new Vue({
                     'res': self.activeResourceId,
                     'date': tstamp,
                     'action': 'sendApplyFilterRequest',
-                    'REQUEST_TOKEN': self.requestToken
+                    'REQUEST_TOKEN': self.requestToken,
                 }
             });
             xhr.done(function (response) {

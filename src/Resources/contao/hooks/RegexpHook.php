@@ -34,6 +34,7 @@ class RegexpHook
             {
                 $objWidget->addError($GLOBALS['TL_LANG']['MSC']['pleaseInsertValidBookingTime']);
             }
+
             if(!DateHelper::isValidBookingTime($varValue))
             {
                 $objWidget->addError($GLOBALS['TL_LANG']['MSC']['pleaseInsertValidBookingTime']);

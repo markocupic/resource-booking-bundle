@@ -19,8 +19,8 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = array(
         'switchToEdit'     => true,
         'ptable'           => 'tl_resource_booking_resource',
         'enableVersioning' => true,
-        'notCreatable' => true,
-        'notCopyable' => true,
+        'notCreatable'     => true,
+        'notCopyable'      => true,
         'sql'              => array(
             'keys' => array(
                 'id'                           => 'primary',
@@ -61,12 +61,6 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = array(
                 'href'       => 'act=delete',
                 'icon'       => 'delete.gif',
                 'attributes' => 'onclick="if(!confirm(\'' . $GLOBALS['TL_LANG']['MSC']['deleteConfirm'] . '\'))return false;Backend.getScrollOffset()"',
-            ),
-            'toggle' => array(
-                'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking']['toggle'],
-                'icon'       => 'visible.gif',
-                'attributes' => 'onclick="Backend.getScrollOffset();return AjaxRequest.toggleVisibility(this,%s)"',
-                //'button_callback' => array('tl_resource_booking', 'toggleIcon'),
             ),
             'show'   => array(
                 'label' => &$GLOBALS['TL_LANG']['tl_resource_booking']['show'],
