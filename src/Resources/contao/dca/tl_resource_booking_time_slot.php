@@ -80,11 +80,21 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = array
             ),
             'toggle' => array
             (
-                'label'           => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['toggle'],
-                'icon'            => 'visible.svg',
-                'attributes'      => 'onclick="Backend.getScrollOffset();return AjaxRequest.toggleVisibility(this,%s)"',
-                'button_callback' => array('tl_resource_booking_time_slot', 'toggleIcon'),
-                'showInHeader'    => true
+                'label'                => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['toggle'],
+                'attributes'           => 'onclick="Backend.getScrollOffset();return AjaxRequest.toggleVisibility(this,%s)"',
+                'haste_ajax_operation' => [
+                    'field'   => 'published',
+                    'options' => [
+                        [
+                            'value' => '',
+                            'icon'  => 'invisible.svg'
+                        ],
+                        [
+                            'value' => '1',
+                            'icon'  => 'visible.svg'
+                        ]
+                    ]
+                ]
             ),
             'show'   => array
             (
@@ -209,138 +219,6 @@ class tl_resource_booking_time_slot extends Contao\Backend
     public function childRecordCallback($row)
     {
         return sprintf('<div class="tl_content_left"><span style="color:#999;padding-left:3px">' . $row['title'] . '</span> %s-%s</div>', Markocupic\ResourceBookingBundle\UtcDate::parse('H:i', $row['startTime']), Markocupic\ResourceBookingBundle\UtcDate::parse('H:i', $row['endTime']));
-    }
-
-    /**
-     * Return the "toggle visibility" button
-     *
-     * @param array $row
-     * @param string $href
-     * @param string $label
-     * @param string $title
-     * @param string $icon
-     * @param string $attributes
-     *
-     * @return string
-     */
-    public function toggleIcon($row, $href, $label, $title, $icon, $attributes)
-    {
-        if (\strlen(Contao\Input::get('tid')))
-        {
-            $this->toggleVisibility(Contao\Input::get('tid'), (Contao\Input::get('state') == 1), (@func_get_arg(12) ?: null));
-            $this->redirect($this->getReferer());
-        }
-
-        $href .= '&amp;tid=' . $row['id'] . '&amp;state=' . ($row['published'] ? '' : 1);
-
-        if (!$row['published'])
-        {
-            $icon = 'invisible.svg';
-        }
-
-        return '<a href="' . $this->addToUrl($href) . '" title="' . Contao\StringUtil::specialchars($title) . '"' . $attributes . '>' . Contao\Image::getHtml($icon, $label, 'data-state="' . ($row['published'] ? 1 : 0) . '"') . '</a> ';
-    }
-
-    /**
-     * Disable/enable a user group
-     *
-     * @param integer $intId
-     * @param boolean $blnVisible
-     * @param Contao\DataContainer $dc
-     *
-     * @throws Contao\CoreBundle\Exception\AccessDeniedException
-     */
-    public function toggleVisibility($intId, $blnVisible, Contao\DataContainer $dc = null)
-    {
-        // Set the ID and action
-        Contao\Input::setGet('id', $intId);
-        Contao\Input::setGet('act', 'toggle');
-
-        if ($dc)
-        {
-            $dc->id = $intId; // see #8043
-        }
-
-        // Trigger the onload_callback
-        if (\is_array($GLOBALS['TL_DCA']['tl_resource_booking_time_slot']['config']['onload_callback']))
-        {
-            foreach ($GLOBALS['TL_DCA']['tl_resource_booking_time_slot']['config']['onload_callback'] as $callback)
-            {
-                if (\is_array($callback))
-                {
-                    $this->import($callback[0]);
-                    $this->{$callback[0]}->{$callback[1]}($dc);
-                }
-                elseif (\is_callable($callback))
-                {
-                    $callback($dc);
-                }
-            }
-        }
-
-        // Set the current record
-        if ($dc)
-        {
-            $objRow = $this->Database->prepare("SELECT * FROM tl_resource_booking_time_slot WHERE id=?")
-                ->limit(1)
-                ->execute($intId);
-
-            if ($objRow->numRows)
-            {
-                $dc->activeRecord = $objRow;
-            }
-        }
-
-        $objVersions = new Contao\Versions('tl_resource_booking_time_slot', $intId);
-        $objVersions->initialize();
-
-        // Trigger the save_callback
-        if (\is_array($GLOBALS['TL_DCA']['tl_resource_booking_time_slot']['fields']['published']['save_callback']))
-        {
-            foreach ($GLOBALS['TL_DCA']['tl_resource_booking_time_slot']['fields']['published']['save_callback'] as $callback)
-            {
-                if (\is_array($callback))
-                {
-                    $this->import($callback[0]);
-                    $blnVisible = $this->{$callback[0]}->{$callback[1]}($blnVisible, $dc);
-                }
-                elseif (\is_callable($callback))
-                {
-                    $blnVisible = $callback($blnVisible, $dc);
-                }
-            }
-        }
-
-        $time = time();
-
-        // Update the database
-        $this->Database->prepare("UPDATE tl_resource_booking_time_slot SET tstamp=$time, published='" . ($blnVisible ? '1' : '') . "' WHERE id=?")
-            ->execute($intId);
-
-        if ($dc)
-        {
-            $dc->activeRecord->tstamp = $time;
-            $dc->activeRecord->published = ($blnVisible ? '1' : '');
-        }
-
-        // Trigger the onsubmit_callback
-        if (\is_array($GLOBALS['TL_DCA']['tl_resource_booking_time_slot']['config']['onsubmit_callback']))
-        {
-            foreach ($GLOBALS['TL_DCA']['tl_resource_booking_time_slot']['config']['onsubmit_callback'] as $callback)
-            {
-                if (\is_array($callback))
-                {
-                    $this->import($callback[0]);
-                    $this->{$callback[0]}->{$callback[1]}($dc);
-                }
-                elseif (\is_callable($callback))
-                {
-                    $callback($dc);
-                }
-            }
-        }
-
-        $objVersions->create();
     }
 
     /**

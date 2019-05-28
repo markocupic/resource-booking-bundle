@@ -30,7 +30,6 @@ class UtcDate
         {
             $tstamp = time();
         }
-        $strValue = '';
 
         date_default_timezone_set('UTC');
         $strValue = Date::parse($strFormat, $tstamp);
@@ -45,7 +44,6 @@ class UtcDate
      */
     public static function strtotime($strDate)
     {
-        $strValue = '';
         date_default_timezone_set('UTC');
         $timestamp = strtotime($strDate);
         date_default_timezone_set($GLOBALS['TL_CONFIG']['timeZone']);
