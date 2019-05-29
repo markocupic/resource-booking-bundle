@@ -24,18 +24,38 @@ class ResourceBookingTimeSlotModel extends \Model
     protected static $strTable = 'tl_resource_booking_time_slot';
 
     /**
-     * @param $intId
+     * @param $intPid
      * @return Model\Collection|null
      */
-    public static function findPublishedByPid($intId)
+    public static function findPublishedByPid($intPid)
     {
         $arrIds = array();
-        $objDb = Database::getInstance()->prepare('SELECT * FROM tl_resource_booking_time_slot WHERE pid=? AND published=? ORDER BY sorting')->execute($intId, '1');
-        while($objDb->next())
+
+        $objDb = static::findByPid($intPid);
+        if ($objDb !== null)
         {
-            $arrIds[] = $objDb->id;
+            while ($objDb->next())
+            {
+                if ($objDb->published)
+                {
+                    // Return if parent is published too
+                    $objParent = $objDb->getRelated('pid');
+                    if ($objParent !== null)
+                    {
+                        if ($objParent->published)
+                        {
+                            $arrIds[] = $objDb->id;
+                        }
+                    }
+                }
+            }
         }
-        return static::findMultipleByIds($arrIds);
+
+        $arrOptions = array(
+            'order' => 'tl_resource_booking_time_slot.sorting ASC',
+        );
+
+        return static::findMultipleByIds($arrIds, $arrOptions);
     }
 
 }

@@ -147,7 +147,7 @@ class ModuleWeekcalendar extends Module
             $strRes = 0;
         }
 
-        $this->objSelectedResourceType = ResourceBookingResourceTypeModel::findByPk($strResType);
+        $this->objSelectedResourceType = ResourceBookingResourceTypeModel::findPublishedByPk($strResType);
         $this->objSelectedResource = ResourceBookingResourceModel::findPublishedByPkAndPid($strRes,$strResType);
 
         // Date settings

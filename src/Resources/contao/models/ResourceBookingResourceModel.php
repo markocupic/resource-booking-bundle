@@ -29,20 +29,28 @@ class ResourceBookingResourceModel extends \Model
      */
     public static function findPublishedByPid($intId)
     {
-        $arrRes = array();
-        $objRes = static::findByPid($intId);
-        if ($objRes !== null)
+        $arrIds = array();
+        $objDb = static::findByPid($intId);
+        if ($objDb !== null)
         {
-            while ($objRes->next())
+            while ($objDb->next())
             {
-                if ($objRes->published)
+                if ($objDb->published)
                 {
-                    $arrRes[] = $objRes->id;
+                    // Return if parent is published too
+                    $objParent = $objDb->getRelated('pid');
+                    if ($objParent !== null)
+                    {
+                        if ($objParent->published)
+                        {
+                            $arrIds[] = $objDb->id;
+                        }
+                    }
                 }
             }
         }
 
-        return static::findMultipleByIds($arrRes);
+        return static::findMultipleByIds($arrIds);
     }
 
     /**
@@ -53,7 +61,21 @@ class ResourceBookingResourceModel extends \Model
     {
         $arrColumn = array('id=?', 'published=?');
         $arrValues = array($intId, '1');
-        return self::findOneBy($arrColumn, $arrValues);
+        $objDb = self::findOneBy($arrColumn, $arrValues);
+        if ($objDb !== null)
+        {
+            // Return if parent is published too
+            $objParent = $objDb->getRelated('pid');
+            if ($objParent !== null)
+            {
+                if ($objParent->published)
+                {
+                    return $objDb;
+                }
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -65,7 +87,51 @@ class ResourceBookingResourceModel extends \Model
     {
         $arrColumn = array('id=?', 'pid=?', 'published=?');
         $arrValues = array($intId, $intPid, '1');
-        return self::findOneBy($arrColumn, $arrValues);
+
+        $objDb = self::findOneBy($arrColumn, $arrValues);
+        if ($objDb !== null)
+        {
+            // Return if parent is published too
+            $objParent = $objDb->getRelated('pid');
+            if ($objParent !== null)
+            {
+                if ($objParent->published)
+                {
+                    return $objDb;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param $arrIds
+     * @return mixed
+     */
+    public static function findMultipleAndPublishedByIds($arrIds)
+    {
+        $arrIdsNew = [];
+        if (($objDb = static::findMultipleByIds($arrIds)) !== null)
+        {
+            while ($objDb->next())
+            {
+                if ($objDb->published)
+                {
+                    // Return if parent is published too
+                    $objParent = $objDb->getRelated('pid');
+                    if ($objParent !== null)
+                    {
+                        if ($objParent->published)
+                        {
+                            $arrIdsNew[] = $objDb->id;
+                        }
+                    }
+                }
+            }
+        }
+
+        return static::findMultipleByIds($arrIdsNew);
     }
 
 }

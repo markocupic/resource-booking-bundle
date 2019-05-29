@@ -22,7 +22,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot_type'] = array
         (
             'keys' => array
             (
-                'id'    => 'primary',
+                'id' => 'primary',
             )
         ),
         'ondelete_callback' => array(array('tl_resource_booking_time_slot_type', 'removeChildRecords'))
@@ -81,6 +81,23 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot_type'] = array
                 'icon'       => 'delete.svg',
                 'attributes' => 'onclick="if(!confirm(\'' . $GLOBALS['TL_LANG']['MSC']['deleteConfirm'] . '\'))return false;Backend.getScrollOffset()"'
             ),
+            'toggle'     => array(
+                'label'                => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot_type']['toggle'],
+                'attributes'           => 'onclick="Backend.getScrollOffset();"',
+                'haste_ajax_operation' => [
+                    'field'   => 'published',
+                    'options' => [
+                        [
+                            'value' => '',
+                            'icon'  => 'invisible.svg'
+                        ],
+                        [
+                            'value' => '1',
+                            'icon'  => 'visible.svg'
+                        ]
+                    ]
+                ]
+            ),
             'show'       => array
             (
                 'label' => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot_type']['show'],
@@ -117,6 +134,17 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot_type'] = array
             'search'    => true,
             'eval'      => array('mandatory' => true, 'decodeEntities' => true, 'maxlength' => 255, 'tl_class' => 'clr'),
             'sql'       => "varchar(255) NOT NULL default ''"
+        ),
+        'published'   => array(
+            'label'     => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot_type']['published'],
+            'exclude'   => true,
+            'search'    => true,
+            'sorting'   => true,
+            'filter'    => true,
+            'flag'      => 2,
+            'inputType' => 'checkbox',
+            'eval'      => array('doNotCopy' => true, 'tl_class' => 'clr'),
+            'sql'       => "char(1) NOT NULL default ''",
         ),
         'description' => array
         (

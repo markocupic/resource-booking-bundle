@@ -51,7 +51,7 @@ class ResourceBookingHelper
         // Filter form: get resource types dropdown
         $rows = array();
         $arrResTypesIds = StringUtil::deserialize($objModule->resourceBooking_resourceTypes, true);
-        if (($objResourceTypes = ResourceBookingResourceTypeModel::findMultipleByIds($arrResTypesIds)) !== null)
+        if (($objResourceTypes = ResourceBookingResourceTypeModel::findMultipleAndPublishedByIds($arrResTypesIds)) !== null)
         {
             while ($objResourceTypes->next())
             {
