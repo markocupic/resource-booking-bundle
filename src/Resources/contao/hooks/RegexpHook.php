@@ -32,12 +32,12 @@ class RegexpHook
         {
             if (!Validator::isTime($varValue))
             {
-                $objWidget->addError($GLOBALS['TL_LANG']['MSC']['pleaseInsertValidBookingTime']);
+                $objWidget->addError($GLOBALS['TL_LANG']['MSG']['pleaseInsertValidBookingTime']);
             }
 
             if(!DateHelper::isValidBookingTime($varValue))
             {
-                $objWidget->addError($GLOBALS['TL_LANG']['MSC']['pleaseInsertValidBookingTime']);
+                $objWidget->addError($GLOBALS['TL_LANG']['MSG']['pleaseInsertValidBookingTime']);
             }
 
             return true;

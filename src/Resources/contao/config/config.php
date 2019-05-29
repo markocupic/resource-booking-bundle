@@ -48,6 +48,7 @@ if (TL_MODE == 'BE')
 
 // Hooks
 $GLOBALS['TL_HOOKS']['addCustomRegexp'][] = array('Markocupic\ResourceBookingBundle\RegexpHook', 'customRegexp');
+$GLOBALS['TL_HOOKS']['replaceInsertTags'][] = array('Markocupic\ResourceBookingBundle\ReplaceInsertTagsHook', 'replaceInsertTags');
 
 // Cron jobs
 $GLOBALS['TL_CRON']['daily']['rbb_deleteOldBookings'] = array('Markocupic\ResourceBookingBundle\Cron', 'deleteOldBookingsFromDb');
