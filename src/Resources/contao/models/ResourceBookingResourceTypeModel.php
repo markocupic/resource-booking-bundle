@@ -23,4 +23,37 @@ class ResourceBookingResourceTypeModel extends \Model
      */
     protected static $strTable = 'tl_resource_booking_resource_type';
 
+    /**
+     * @param $intId
+     * @return mixed
+     */
+    public static function findPublishedByPk($intId)
+    {
+        $arrColumn = array('id=?', 'published=?');
+        $arrValues = array($intId, '1');
+
+        return self::findOneBy($arrColumn, $arrValues);
+    }
+
+    /**
+     * @param $arrIds
+     * @return mixed
+     */
+    public static function findMultipleAndPublishedByIds($arrIds)
+    {
+        $arrIdsNew = [];
+        if (($objDb = static::findMultipleByIds($arrIds)) !== null)
+        {
+            while ($objDb->next())
+            {
+                if ($objDb->published)
+                {
+                    $arrIdsNew[] = $objDb->id;
+                }
+            }
+        }
+
+        return static::findMultipleByIds($arrIdsNew);
+    }
+
 }

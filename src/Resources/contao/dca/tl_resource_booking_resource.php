@@ -100,7 +100,9 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = array(
             'sql' => "int(10) unsigned NOT NULL auto_increment",
         ),
         'pid'          => array(
-            'sql' => "int(10) unsigned NOT NULL default '0'",
+            'foreignKey' => 'tl_resource_booking_resource_type.title',
+            'relation'   => array('type' => 'belongsTo', 'load' => 'lazy'),
+            'sql'        => "int(10) unsigned NOT NULL default '0'",
         ),
         'tstamp'       => array(
             'sql' => "int(10) unsigned NOT NULL default '0'",
