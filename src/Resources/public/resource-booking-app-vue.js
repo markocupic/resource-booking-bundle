@@ -156,26 +156,30 @@ var resourceBookingApp = new Vue({
          */
         sendBookingFormValidationRequest: function sendBookingFormValidationRequest() {
             var self = this;
-            var xhr = $.ajax({
-                url: window.location.href,
-                type: 'post',
-                dataType: 'json',
-                data: {
-                    'action': 'sendBookingFormValidationRequest',
-                    'REQUEST_TOKEN': self.requestToken,
-                    'resourceId': self.bookingModal.activeTimeSlot.resourceId,
-                    'bookingDateSelection': self.bookingModal.selectedTimeSlots,
-                    'bookingRepeatStopWeekTstamp': $('#bookingRepeatStopWeekTstamp').val(),
-                }
-            });
-            xhr.done(function (response) {
-                if (response.status === 'success') {
-                    self.bookingFormValidation = response.data;
-                }
+            var data = new FormData();
+            data.append('action', 'sendBookingFormValidationRequest');
+            data.append('REQUEST_TOKEN', self.requestToken);
+            data.append('resourceId', self.bookingModal.activeTimeSlot.resourceId);
+            data.append('bookingRepeatStopWeekTstamp', $('#bookingRepeatStopWeekTstamp').val());
+            var i;
+            for (i = 0; i < self.bookingModal.selectedTimeSlots.length; i++) {
+                data.append('bookingDateSelection[]', self.bookingModal.selectedTimeSlots[i]);
+            }
 
+            fetch(window.location.href, {
+                method: 'POST',
+                headers: {
+                    'X_REQUESTED_WITH': 'XMLHttpRequest',
+                },
+                body: data,
+            }).then(function (response) {
+                return response.json();
+            }).then(function (objJson) {
+                if (objJson.status === 'success') {
+                    self.bookingFormValidation = objJson.data;
+                }
                 self.isOnline = true;
-            });
-            xhr.fail(function () {
+            }).catch(function (error) {
                 self.isOnline = false;
             });
         },
