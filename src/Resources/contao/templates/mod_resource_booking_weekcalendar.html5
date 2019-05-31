@@ -5,6 +5,7 @@
 <?php $GLOBALS['TL_JAVASCRIPT'][] = MOD_RESOURCE_BOOKING_ASSET_PATH . '/popper/popper.js|static'; ?>
 <?php $GLOBALS['TL_CSS'][] = MOD_RESOURCE_BOOKING_ASSET_PATH . '/css/frontend.css|static'; ?>
 <?php $GLOBALS['TL_JAVASCRIPT'][] = MOD_RESOURCE_BOOKING_ASSET_PATH . '/jquery.idle/jquery.idle.min.min.js'; ?>
+<?php $GLOBALS['TL_JAVASCRIPT'][] = MOD_RESOURCE_BOOKING_ASSET_PATH . '/axios/axios.min.js|static'; ?>
 
 <?php $this->extend('block_unsearchable'); ?>
 
@@ -235,7 +236,6 @@
 
     </div>
 </div>
-
 <script>
     RESOURCE_BOOKING = {
         requestToken: '{{REQUEST_TOKEN}}'
