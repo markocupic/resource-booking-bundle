@@ -8,7 +8,7 @@ Nach der Installation mit dem Contao Manager müssen:
 * Ressourcen-Typen und Ressourcen erstellt werden.
 * Mitglieder angelegt werden.
 
-Das Tool setzt auf [vue.js](https://vuejs.org/), [Fontawesome](https://fontawesome.com/) und [Bootstrap](https://getbootstrap.com/) auf. Die benötigten Ressourcen werden im Template eingebunden.
+Das Tool setzt auf [vue.js](https://vuejs.org/), [axios](https://github.com/axios/axios), [Fontawesome](https://fontawesome.com/) und [Bootstrap](https://getbootstrap.com/) auf. Die benötigten Ressourcen werden im Template eingebunden.
 Zudem muss [jQuery](https://jquery.com/) im Layout eingebunden sein.
 
 Anm: Bei der Installation wird [codefog/contao-haste](https://github.com/codefog/contao-haste) mitinstalliert.
