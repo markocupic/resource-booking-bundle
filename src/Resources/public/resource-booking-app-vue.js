@@ -116,36 +116,40 @@ var resourceBookingApp = new Vue({
          * Send booking request
          */
         sendBookingRequest: function sendBookingRequest() {
+
             var self = this;
-            var xhr = $.ajax({
+            var data = new FormData();
+            data.append('action', 'sendBookingRequest');
+            data.append('REQUEST_TOKEN', self.requestToken);
+            data.append('resourceId', self.bookingModal.activeTimeSlot.resourceId);
+            data.append('description', $('#resourceBookingModal [name="bookingDescription"]').val());
+            data.append('bookingRepeatStopWeekTstamp', $('#bookingRepeatStopWeekTstamp').val());
+            var i;
+            for (i = 0; i < self.bookingModal.selectedTimeSlots.length; i++) {
+                data.append('bookingDateSelection[]', self.bookingModal.selectedTimeSlots[i]);
+            }
+
+            axios({
+                method: 'post',
                 url: window.location.href,
-                type: 'post',
-                dataType: 'json',
-                data: {
-                    'action': 'sendBookingRequest',
-                    'REQUEST_TOKEN': self.requestToken,
-                    'resourceId': self.bookingModal.activeTimeSlot.resourceId,
-                    'description': $('#resourceBookingModal [name="bookingDescription"]').val(),
-                    'bookingDateSelection': self.bookingModal.selectedTimeSlots,
-                    'bookingRepeatStopWeekTstamp': $('#bookingRepeatStopWeekTstamp').val()
-                },
-            });
-            xhr.done(function (response) {
-                if (response.status === 'success') {
-                    self.bookingModal.alertSuccess = response.alertSuccess;
+                data: data,
+                headers: {
+                    'X_REQUESTED_WITH': 'XMLHttpRequest',
+                }
+            }).then(function (response) {
+                if (response.data.status === 'success') {
+                    self.bookingModal.alertSuccess = response.data.alertSuccess;
                     window.setTimeout(function () {
                         $('#resourceBookingModal').modal('hide');
                     }, 2500);
                 } else {
-                    self.bookingModal.alertError = response.alertError;
+                    self.bookingModal.alertError = response.data.alertError;
                 }
-
                 self.isOnline = true;
-            });
-            xhr.fail(function () {
+            }).catch(function (response) {
                 self.isOnline = false;
-            });
-            xhr.always(function () {
+            }).then(function (response) {
+                // Always
                 self.bookingModal.showConfirmationMsg = true;
                 self.fetchDataRequest();
             });
@@ -156,27 +160,34 @@ var resourceBookingApp = new Vue({
          */
         sendBookingFormValidationRequest: function sendBookingFormValidationRequest() {
             var self = this;
-            var xhr = $.ajax({
-                url: window.location.href,
-                type: 'post',
-                dataType: 'json',
-                data: {
-                    'action': 'sendBookingFormValidationRequest',
-                    'REQUEST_TOKEN': self.requestToken,
-                    'resourceId': self.bookingModal.activeTimeSlot.resourceId,
-                    'bookingDateSelection': self.bookingModal.selectedTimeSlots,
-                    'bookingRepeatStopWeekTstamp': $('#bookingRepeatStopWeekTstamp').val(),
-                }
-            });
-            xhr.done(function (response) {
-                if (response.status === 'success') {
-                    self.bookingFormValidation = response.data;
-                }
+            var data = new FormData();
+            data.append('action', 'sendBookingFormValidationRequest');
+            data.append('REQUEST_TOKEN', self.requestToken);
+            data.append('resourceId', self.bookingModal.activeTimeSlot.resourceId);
+            data.append('bookingRepeatStopWeekTstamp', $('#bookingRepeatStopWeekTstamp').val());
+            var i;
+            for (i = 0; i < self.bookingModal.selectedTimeSlots.length; i++) {
+                data.append('bookingDateSelection[]', self.bookingModal.selectedTimeSlots[i]);
+            }
 
-                self.isOnline = true;
-            });
-            xhr.fail(function () {
+            axios({
+                method: 'post',
+                url: window.location.href,
+                data: data,
+                headers: {
+                    'X_REQUESTED_WITH': 'XMLHttpRequest',
+                }
+            }).then(function (response) {
+                if (response.data.status === 'success') {
+                    self.bookingFormValidation = response.data.data;
+                    self.isOnline = true;
+                } else {
+                    self.isOnline = false;
+                }
+            }).catch(function (response) {
                 self.isOnline = false;
+            }).then(function (response) {
+                // Always
             });
         },
 
@@ -185,32 +196,31 @@ var resourceBookingApp = new Vue({
          */
         sendCancelBookingRequest: function sendCancelBookingRequest() {
             var self = this;
-            var xhr = $.ajax({
+            var data = new FormData();
+            data.append('action', 'sendCancelBookingRequest');
+            data.append('REQUEST_TOKEN', self.requestToken);
+            data.append('bookingId', self.bookingModal.activeTimeSlot.bookingId);
+
+            axios({
+                method: 'post',
                 url: window.location.href,
-                type: 'post',
-                dataType: 'json',
-                data: {
-                    'action': 'sendCancelBookingRequest',
-                    'REQUEST_TOKEN': self.requestToken,
-                    'bookingId': self.bookingModal.activeTimeSlot.bookingId
-                },
-            });
-            xhr.done(function (response) {
-                if (response.status === 'success') {
-                    self.bookingModal.alertSuccess = response.alertSuccess;
+                data: data,
+                headers: {
+                    'X_REQUESTED_WITH': 'XMLHttpRequest',
+                }
+            }).then(function (response) {
+                if (response.data.status === 'success') {
+                    self.bookingModal.alertSuccess = response.data.alertSuccess;
                     window.setTimeout(function () {
                         $('#resourceBookingModal').modal('hide');
                     }, 2500);
                 } else {
-                    self.bookingModal.alertError = response.alertError;
+                    self.bookingModal.alertError = response.data.alertError;
                 }
-
-                self.isOnline = true;
-            });
-            xhr.fail(function () {
+            }).catch(function (response) {
                 self.isOnline = false;
-            });
-            xhr.always(function () {
+            }).then(function (response) {
+                // Always
                 self.bookingModal.showConfirmationMsg = true;
                 self.fetchDataRequest();
             });
@@ -220,17 +230,23 @@ var resourceBookingApp = new Vue({
          * Send logout request
          */
         sendLogoutRequest: function sendLogoutRequest() {
+
             var self = this;
-            var xhr = $.ajax({
+            var data = new FormData();
+            data.append('action', 'sendLogoutRequest');
+            data.append('REQUEST_TOKEN', self.requestToken);
+
+            axios({
+                method: 'post',
                 url: window.location.href,
-                type: 'post',
-                dataType: 'json',
-                data: {
-                    'action': 'sendLogoutRequest',
-                    'REQUEST_TOKEN': self.requestToken,
+                data: data,
+                headers: {
+                    'X_REQUESTED_WITH': 'XMLHttpRequest',
                 }
-            });
-            xhr.always(function () {
+            }).then(function (response) {
+            }).catch(function (response) {
+            }).then(function (response) {
+                // Always
                 self.isOnline = false;
                 self.userLoggedOut = true;
             });
@@ -240,33 +256,33 @@ var resourceBookingApp = new Vue({
          * Apply the filter changes
          */
         sendApplyFilterRequest: function sendApplyFilterRequest() {
+
             var self = this;
-            var resType = self.activeResourceTypeId;
-            var res = self.activeResourceId;
-            var date = self.activeWeekTstamp;
-            var xhr = $.ajax({
+            var data = new FormData();
+            data.append('action', 'sendApplyFilterRequest');
+            data.append('REQUEST_TOKEN', self.requestToken);
+            data.append('resType', self.activeResourceTypeId);
+            data.append('res', self.activeResourceId);
+            data.append('date', self.activeWeekTstamp);
+
+            axios({
+                method: 'post',
                 url: window.location.href,
-                type: 'post',
-                dataType: 'json',
-                data: {
-                    'resType': resType,
-                    'res': res,
-                    'date': date,
-                    'action': 'sendApplyFilterRequest',
-                    'REQUEST_TOKEN': self.requestToken,
+                data: data,
+                headers: {
+                    'X_REQUESTED_WITH': 'XMLHttpRequest',
                 }
-            });
-            xhr.done(function (response) {
-                if (response.status === 'success') {
-                    for (var key in response['data']) {
-                        self[key] = response['data'][key];
+            }).then(function (response) {
+                if (response.data.status === 'success') {
+                    for (var key in response.data.data) {
+                        self[key] = response.data.data[key];
                     }
                 }
-
                 self.isOnline = true;
-            });
-            xhr.fail(function () {
+            }).catch(function (response) {
                 self.isOnline = false;
+            }).then(function (response) {
+                // Always
             });
         },
 
@@ -276,36 +292,37 @@ var resourceBookingApp = new Vue({
          * @param event
          */
         sendJumpWeekRequest: function sendJumpWeekRequest(tstamp, event) {
+
+            var self = this;
+            event.preventDefault();
             $('.modal-backdrop').remove();
             var backdrop = '<div class="modal-backdrop show"></div>';
             $("body").append(backdrop);
-            var self = this;
-            event.preventDefault();
-            var xhr = $.ajax({
+
+            var data = new FormData();
+            data.append('action', 'sendLogoutRequest');
+            data.append('REQUEST_TOKEN', self.requestToken);
+            data.append('resType', self.activeResourceTypeId);
+            data.append('res', self.activeResourceId);
+            data.append('date', tstamp);
+            axios({
+                method: 'post',
                 url: window.location.href,
-                type: 'post',
-                dataType: 'json',
-                data: {
-                    'resType': self.activeResourceTypeId,
-                    'res': self.activeResourceId,
-                    'date': tstamp,
-                    'action': 'sendApplyFilterRequest',
-                    'REQUEST_TOKEN': self.requestToken,
+                data: data,
+                headers: {
+                    'X_REQUESTED_WITH': 'XMLHttpRequest',
                 }
-            });
-            xhr.done(function (response) {
-                if (response.status === 'success') {
-                    for (var key in response['data']) {
-                        self[key] = response['data'][key];
+            }).then(function (response) {
+                if (response.data.status === 'success') {
+                    for (var key in response.data.data) {
+                        self[key] = response.data.data[key];
                     }
                 }
-
                 self.isOnline = true;
-            });
-            xhr.fail(function () {
+            }).catch(function (response) {
                 self.isOnline = false;
-            });
-            xhr.always(function () {
+            }).then(function (response) {
+                // Always
                 window.setTimeout(function () {
                     $('.modal-backdrop').remove();
                 }, 200);
