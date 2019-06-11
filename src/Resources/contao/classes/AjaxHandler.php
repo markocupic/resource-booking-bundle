@@ -56,6 +56,14 @@ class AjaxHandler
     }
 
     /**
+     * @param $objModule
+     */
+    public function sendJumpWeekRequest($objModule)
+    {
+        $this->sendApplyFilterRequest($objModule);
+    }
+
+    /**
      * @return JsonResponse
      */
     public function sendBookingRequest($objModule)
