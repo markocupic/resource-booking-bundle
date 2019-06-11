@@ -300,7 +300,7 @@ var resourceBookingApp = new Vue({
             $("body").append(backdrop);
 
             var data = new FormData();
-            data.append('action', 'sendLogoutRequest');
+            data.append('action', 'sendJumpWeekRequest');
             data.append('REQUEST_TOKEN', self.requestToken);
             data.append('resType', self.activeResourceTypeId);
             data.append('res', self.activeResourceId);
