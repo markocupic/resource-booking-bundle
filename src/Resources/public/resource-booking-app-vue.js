@@ -10,10 +10,9 @@
 var resourceBookingApp = new Vue({
     el: '#resourceBookingApp',
     data: {
+        opt: [],
         isReady: false,
         filterBoard: null,
-        // idle time in milliseconds
-        idleTimeLimit: 420000,
         userLoggedOut: false,
         isOnline: false,
         loggedInUser: [],
@@ -46,7 +45,9 @@ var resourceBookingApp = new Vue({
         }, 30000);
 
         // Initialize idle detector
-        self.initializeIdleDetector();
+        window.setTimeout(function () {
+            self.initializeIdleDetector();
+        }, 10000);
     },
     // Watchers
     watch: {
@@ -65,7 +66,11 @@ var resourceBookingApp = new Vue({
                     $('#resourceBookingModal').modal('hide');
                     window.setTimeout(function () {
                         $('#autoLogoutModal').on('hidden.bs.modal', function () {
-                            location.reload();
+                            if (self.opt.autologout) {
+                                location.href = self.opt.autologoutRedirect;
+                            } else {
+                                location.href = '';
+                            }
                         });
                         $('#autoLogoutModal').modal('show');
                     }, 100);
@@ -334,12 +339,14 @@ var resourceBookingApp = new Vue({
          */
         initializeIdleDetector: function initializeIdleDetector() {
             var self = this;
-            $(document).idle({
-                onIdle: function onIdle() {
-                    self.sendLogoutRequest();
-                },
-                idle: self.idleTimeLimit
-            });
+            if (self.opt.autologout && parseInt(self.opt.autologoutDelay) > 0) {
+                $(document).idle({
+                    onIdle: function onIdle() {
+                        self.sendLogoutRequest();
+                    },
+                    idle: parseInt(self.opt.autologoutDelay) * 1000
+                });
+            }
         },
 
         /**

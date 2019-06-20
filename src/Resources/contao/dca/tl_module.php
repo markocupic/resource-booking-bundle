@@ -11,9 +11,12 @@
 /**
  * Add palettes to tl_module
  */
-$GLOBALS['TL_DCA']['tl_module']['palettes']['resourceBookingWeekCalendar'] = '{title_legend},name,headline,type;{config_legend},resourceBooking_resourceTypes,resourceBooking_hideDays;{template_legend:hide},customTpl;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['resourceBookingWeekCalendar'] = '{title_legend},name,headline,type;{config_legend},resourceBooking_resourceTypes,resourceBooking_hideDays,resourceBooking_autologout;{template_legend:hide},customTpl;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 $GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'resourceBooking_hideDays';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'resourceBooking_autologout';
+
 $GLOBALS['TL_DCA']['tl_module']['subpalettes']['resourceBooking_hideDays'] = 'resourceBooking_hideDaysSelection';
+$GLOBALS['TL_DCA']['tl_module']['subpalettes']['resourceBooking_autologout'] = 'resourceBooking_autologoutRedirect,resourceBooking_autologoutDelay';
 
 $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_resourceTypes'] = array
 (
@@ -43,6 +46,35 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_hideDaysSelection'] =
     'reference' => &$GLOBALS['TL_LANG']['DAYS_LONG'],
     'eval'      => array('multiple' => true, 'tl_class' => 'clr'),
     'sql'       => "blob NULL"
+);
+
+$GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_autologout'] = array
+(
+    'label'     => &$GLOBALS['TL_LANG']['tl_module']['resourceBooking_autologout'],
+    'exclude'   => true,
+    'inputType' => 'checkbox',
+    'eval'      => array('submitOnChange' => true, 'tl_class' => 'clr'),
+    'sql'       => "char(1) NOT NULL default ''"
+);
+
+$GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_autologoutDelay'] = array
+(
+    'label'     => &$GLOBALS['TL_LANG']['tl_module']['resourceBooking_autologoutDelay'],
+    'exclude'   => true,
+    'inputType' => 'text',
+    'eval'      => array('maxlength' => 5, 'rgxp' => 'natural', 'tl_class' => 'w50'),
+    'sql'       => "smallint(5) unsigned NOT NULL default '0'"
+);
+
+$GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_autologoutRedirect'] = array
+(
+    'label'      => &$GLOBALS['TL_LANG']['tl_module']['resourceBooking_autologoutRedirect'],
+    'exclude'    => true,
+    'inputType'  => 'pageTree',
+    'foreignKey' => 'tl_page.title',
+    'eval'       => array('fieldType' => 'radio', 'tl_class' => 'clr'),
+    'sql'        => "int(10) unsigned NOT NULL default '0'",
+    'relation'   => array('type' => 'hasOne', 'load' => 'lazy')
 );
 
 /**

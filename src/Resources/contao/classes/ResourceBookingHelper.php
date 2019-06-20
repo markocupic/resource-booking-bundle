@@ -12,6 +12,7 @@ namespace Markocupic\ResourceBookingBundle;
 
 use Contao\Date;
 use Contao\Config;
+use Contao\Controller;
 use Contao\MemberModel;
 use Contao\Message;
 use Contao\StringUtil;
@@ -37,6 +38,11 @@ class ResourceBookingHelper
     public static function fetchData($objModule)
     {
         $arrData = array();
+
+        // Handle autologout
+        $arrData['opt']['autologout'] = $objModule->resourceBooking_autologout;
+        $arrData['opt']['autologoutDelay'] = $objModule->resourceBooking_autologoutDelay;
+        $arrData['opt']['autologoutRedirect'] = Controller::replaceInsertTags(sprintf('{{link_url::%s}}', $objModule->resourceBooking_autologoutRedirect));
 
         // Messages
         if ($objModule->objSelectedResourceType === null && !Message::hasMessages())
