@@ -155,7 +155,27 @@ class ResourceBookingHelper
                 {
                     $cells = array();
                     $objRow = new \stdClass();
-                    $objRow->cssRowClass = "time-slot-" . $objTimeslots->id;
+
+                    $cssID = "time-slot-id-" . $objTimeslots->id;
+                    $cssClass = "time-slot-" . $objTimeslots->id;
+
+                    // Get the CSS ID
+                    $arrCssID = StringUtil::deserialize($objTimeslots->cssID, true);
+
+                    // Override the CSS ID
+                    if (!empty($arrCssID[0]))
+                    {
+                        $cssID = $arrCssID[0];
+                    }
+
+                    // Merge the CSS classes
+                    if (!empty($arrCssID[1]))
+                    {
+                        $cssClass = trim($cssClass . ' ' . $arrCssID[1]);
+                    }
+
+                    $objRow->cssRowId = $cssID;
+                    $objRow->cssRowClass = $cssClass;
 
                     for ($colCount = 0; $colCount < 7; $colCount++)
                     {

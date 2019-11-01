@@ -108,7 +108,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = array
     // Palettes
     'palettes' => array
     (
-        'default' => '{title_legend},title,description;{time_legend},startTime,endTime',
+        'default' => '{title_legend},title,description;{time_legend},startTime,endTime;{expert_legend:hide},cssID',
     ),
 
     // Fields
@@ -193,6 +193,13 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = array
                 array('tl_resource_booking_time_slot', 'setCorrectEndTime')
             ),
             'sql'           => "int(10) NULL"
+        ),
+        'cssID'       => array
+        (
+            'exclude'   => true,
+            'inputType' => 'text',
+            'eval'      => array('multiple' => true, 'size' => 2, 'tl_class' => 'w50 clr'),
+            'sql'       => "varchar(255) NOT NULL default ''"
         ),
     )
 );
