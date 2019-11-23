@@ -32,6 +32,12 @@ $loggedInUserIsHolderBg: rgba(255, 164, 152, 0.63);
     .btn-booking {
       color: #666;
     }
+    .btn-booking svg.fa-window-close {
+      display: none;
+    }
+    .btn-cancel-booking svg.fa-shopping-cart {
+      display: none;
+    }
   }
   // Wrap long words
   table.resource-booking-table-main {
