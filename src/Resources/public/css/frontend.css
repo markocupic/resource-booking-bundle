@@ -1,7 +1,7 @@
-﻿.mod_resourceBookingWeekCalendar #resourceBookingApp .vue-application {
+﻿.mod_resourceBookingWeekCalendar .resource-booking-app .vue-application {
     visibility: hidden;
 }
-.mod_resourceBookingWeekCalendar #resourceBookingApp.is-ready .vue-application {
+.mod_resourceBookingWeekCalendar .resource-booking-app.is-ready .vue-application {
     visibility: visible;
 }
 .mod_resourceBookingWeekCalendar table.resource-booking-table-main *, .mod_resourceBookingWeekCalendar table.resource-booking-table-modal * {

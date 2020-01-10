@@ -3,10 +3,10 @@ $bookableBg: rgba(182, 228, 182, 0.38);
 $loggedInUserIsHolderBg: rgba(255, 164, 152, 0.63);
 
 .mod_resourceBookingWeekCalendar {
-  #resourceBookingApp .vue-application {
+  .resource-booking-app .vue-application {
     visibility: hidden;
   }
-  #resourceBookingApp.is-ready .vue-application {
+  .resource-booking-app.is-ready .vue-application {
     visibility: visible;
   }
   table.resource-booking-table-main, table.resource-booking-table-modal {
