@@ -156,8 +156,8 @@ class ResourceBookingHelper
                     $cells = array();
                     $objRow = new \stdClass();
 
-                    $cssID = "time-slot-id-" . $objTimeslots->id;
-                    $cssClass = "time-slot-" . $objTimeslots->id;
+                    $cssID = sprintf('timeSlotModId_%s_%s', $objModule->id, $objTimeslots->id);
+                    $cssClass = 'time-slot-' . $objTimeslots->id;
 
                     // Get the CSS ID
                     $arrCssID = StringUtil::deserialize($objTimeslots->cssID, true);
@@ -203,7 +203,7 @@ class ResourceBookingHelper
                         $objTs->isEditable = true;
                         // slotId-startTime-endTime-mondayTimestampSelectedWeek
                         $objTs->bookingCheckboxValue = sprintf('%s-%s-%s-%s', $objTimeslots->id, $startTimestamp, $endTimestamp, $objModule->activeWeekTstamp);
-                        $objTs->bookingCheckboxId = sprintf('bookingCheckbox_%s_%s', $rowCount, $colCount);
+                        $objTs->bookingCheckboxId = sprintf('bookingCheckbox_modId_%s_%s_%s', $objModule->id, $rowCount, $colCount);
                         if ($objTs->isBooked)
                         {
                             $objTs->isEditable = false;
