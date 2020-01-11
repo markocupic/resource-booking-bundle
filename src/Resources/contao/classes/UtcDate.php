@@ -41,6 +41,6 @@ class UtcDate
     {
         $utc = new \DateTimeZone('UTC');
         $dt = new \DateTime($strDate, $utc);
-        return $dt->format('U');
+        return (int)$dt->format('U');
     }
 }
