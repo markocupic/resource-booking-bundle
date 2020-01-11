@@ -9,38 +9,38 @@
  */
 
 // Days
-$GLOBALS['TL_LANG']['DAYS_SHORT'][0] = 'Mo';
-$GLOBALS['TL_LANG']['DAYS_SHORT'][1] = 'Di';
-$GLOBALS['TL_LANG']['DAYS_SHORT'][2] = 'Mi';
-$GLOBALS['TL_LANG']['DAYS_SHORT'][3] = 'Do';
-$GLOBALS['TL_LANG']['DAYS_SHORT'][4] = 'Fr';
-$GLOBALS['TL_LANG']['DAYS_SHORT'][5] = 'Sa';
-$GLOBALS['TL_LANG']['DAYS_SHORT'][6] = 'So';
+$GLOBALS['TL_LANG']['DAYS_SHORT'][0] = 'Mon';
+$GLOBALS['TL_LANG']['DAYS_SHORT'][1] = 'Tue';
+$GLOBALS['TL_LANG']['DAYS_SHORT'][2] = 'Wed';
+$GLOBALS['TL_LANG']['DAYS_SHORT'][3] = 'Thu';
+$GLOBALS['TL_LANG']['DAYS_SHORT'][4] = 'Fri';
+$GLOBALS['TL_LANG']['DAYS_SHORT'][5] = 'Sat';
+$GLOBALS['TL_LANG']['DAYS_SHORT'][6] = 'Sun';
 
-$GLOBALS['TL_LANG']['DAYS_LONG'][0] = 'Montag';
-$GLOBALS['TL_LANG']['DAYS_LONG'][1] = 'Dienstag';
-$GLOBALS['TL_LANG']['DAYS_LONG'][2] = 'Mittwoch';
+$GLOBALS['TL_LANG']['DAYS_LONG'][0] = 'Monday';
+$GLOBALS['TL_LANG']['DAYS_LONG'][1] = 'Tuesday';
+$GLOBALS['TL_LANG']['DAYS_LONG'][2] = 'Wednesday';
 $GLOBALS['TL_LANG']['DAYS_LONG'][3] = 'Donnerstag';
-$GLOBALS['TL_LANG']['DAYS_LONG'][4] = 'Freitag';
-$GLOBALS['TL_LANG']['DAYS_LONG'][5] = 'Samstag';
-$GLOBALS['TL_LANG']['DAYS_LONG'][6] = 'Sonntag';
+$GLOBALS['TL_LANG']['DAYS_LONG'][4] = 'Thursday';
+$GLOBALS['TL_LANG']['DAYS_LONG'][5] = 'Saturday';
+$GLOBALS['TL_LANG']['DAYS_LONG'][6] = 'Sunday';
 
 // Forms
 $GLOBALS['TL_LANG']['MSC']['weekSelectOptionText'] = 'KW %s/%s: %s - %s';
-$GLOBALS['TL_LANG']['MSC']['bookingFor'] = 'Buchung für';
+$GLOBALS['TL_LANG']['MSC']['bookingFor'] = 'Booking for';
 
 // Messages & Errors
-$GLOBALS['TL_LANG']['MSG']['pleaseInsertValidBookingTime'] = 'Bitte geben Sie eine gültige Zeit in der Form hh:mm ein.';
-$GLOBALS['TL_LANG']['MSG']['generalBookingError'] = 'Beim Versuch die Ressource zu buchen ist ein Fehler aufgetreten.';
-$GLOBALS['TL_LANG']['MSG']['selectBookingDatesPlease'] = 'Bitte wählen Sie ein oder mehrere Buchungszeitfenster aus.';
-$GLOBALS['TL_LANG']['MSG']['noResourceSelected'] = 'Es wurde keine Ressource ausgewählt';
-$GLOBALS['TL_LANG']['MSG']['resourceAlreadyBooked'] = 'Die Ressource ist bereits ausgebucht.';
-$GLOBALS['TL_LANG']['MSG']['notAllowedToCancelBooking'] = 'Sie besitzen nicht die nötigen Rechte, um diese Buchung zu stornieren.';
-$GLOBALS['TL_LANG']['MSG']['selectResourceTypePlease'] = 'Bitte wählen Sie einen Ressourcen-Typ aus.';
-$GLOBALS['TL_LANG']['MSG']['selectResourcePlease'] = 'Bitte wählen Sie eine Ressource aus.';
-$GLOBALS['TL_LANG']['MSG']['selectValidResourcePlease'] = 'Bitte wählen Sie eine gültige Ressource aus.';
-$GLOBALS['TL_LANG']['MSG']['successfullyBookedXItems'] = 'Für %s konnte(n) erfolgreich %s Buchung(en) angelegt werden.';
-$GLOBALS['TL_LANG']['MSG']['successfullyCanceledBooking'] = 'Ihre Buchung wurde erfolgreich storniert.';
+$GLOBALS['TL_LANG']['MSG']['pleaseInsertValidBookingTime'] = 'Please insert a valid time (format hh:mm).';
+$GLOBALS['TL_LANG']['MSG']['generalBookingError'] = 'Error, while trying to book a resource.';
+$GLOBALS['TL_LANG']['MSG']['selectBookingDatesPlease'] = 'Please select one or more booking time slots.';
+$GLOBALS['TL_LANG']['MSG']['noResourceSelected'] = 'Please select a ressource.';
+$GLOBALS['TL_LANG']['MSG']['resourceAlreadyBooked'] = 'Resource already booked.';
+$GLOBALS['TL_LANG']['MSG']['notAllowedToCancelBooking'] = 'You are not allowed to cancel this booking.';
+$GLOBALS['TL_LANG']['MSG']['selectResourceTypePlease'] = 'Please select a resource type.';
+$GLOBALS['TL_LANG']['MSG']['selectResourcePlease'] = 'Please select a resource.';
+$GLOBALS['TL_LANG']['MSG']['selectValidResourcePlease'] = 'Please select a valid resource.';
+$GLOBALS['TL_LANG']['MSG']['successfullyBookedXItems'] = 'Successfully booked for %s %s items.';
+$GLOBALS['TL_LANG']['MSG']['successfullyCanceledBooking'] = 'Booking has been successfully canceled.';
 
 // Frontend template
 $GLOBALS['TL_LANG']['RBB']['1WeekBack'] = '1 Woche zurück';

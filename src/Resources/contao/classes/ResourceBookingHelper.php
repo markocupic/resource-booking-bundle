@@ -49,11 +49,12 @@ class ResourceBookingHelper
         // Messages
         if ($objModule->objSelectedResourceType === null && !Message::hasMessages())
         {
-            Message::addInfo('Bitte wählen Sie einen Resourcentyp aus.');
+            Message::addInfo($GLOBALS['TL_LANG']['MSG']['selectResourceTypePlease']);
         }
+        
         if ($objModule->objSelectedResource === null && !Message::hasMessages())
         {
-            Message::addInfo('Bitte wählen Sie eine Resource aus.');
+            Message::addInfo($GLOBALS['TL_LANG']['MSG']['selectResourcePlease'] );
         }
 
         // Filter form: get resource types dropdown
