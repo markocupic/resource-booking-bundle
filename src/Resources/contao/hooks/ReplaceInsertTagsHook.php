@@ -20,10 +20,10 @@ class ReplaceInsertTagsHook
 {
 
     /**
-     * @param $strTag
+     * @param string $strTag
      * @return bool
      */
-    public function replaceInsertTags($strTag)
+    public function replaceInsertTags(string $strTag)
     {
         Controller::loadLanguageFile('default');
         if (strpos($strTag, 'rbb_lang::') !== false)

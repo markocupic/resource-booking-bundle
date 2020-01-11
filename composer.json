@@ -25,7 +25,10 @@
   "require": {
     "php": ">=7.1",
     "contao/core-bundle": "^4.5",
-    "codefog/contao-haste": "^4.23"
+    "codefog/contao-haste": "^4.23",
+    "markocupic/contao-component-bootstrap": "^4.3",
+    "markocupic/contao-component-fontawesome-free": "^5.11",
+    "markocupic/contao-component-popper-js": "^1.0"
   },
   "autoload": {
     "psr-4": {

@@ -8,6 +8,9 @@
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
+/**
+ * Table tl_resource_booking_time_slot_type
+ */
 $GLOBALS['TL_DCA']['tl_resource_booking_time_slot_type'] = array
 (
 
@@ -159,7 +162,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot_type'] = array
 );
 
 /**
- * Class tl_resource_booking_time_slot_type
+ * Provide miscellaneous methods that are used by the data configuration array.
  */
 class tl_resource_booking_time_slot_type extends Contao\Backend
 {
@@ -182,10 +185,9 @@ class tl_resource_booking_time_slot_type extends Contao\Backend
      * @param string $title
      * @param string $icon
      * @param string $attributes
-     *
      * @return string
      */
-    public function editHeader($row, $href, $label, $title, $icon, $attributes)
+    public function editHeader(array $row, string $href, string $label, string $title, string $icon, string $attributes): string
     {
         return '<a href="' . $this->addToUrl($href . '&amp;id=' . $row['id']) . '" title="' . Contao\StringUtil::specialchars($title) . '"' . $attributes . '>' . Contao\Image::getHtml($icon, $label) . '</a> ';
     }

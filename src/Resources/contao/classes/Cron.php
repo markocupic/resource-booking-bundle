@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Resource Booking Module for Contao CMS
  * Copyright (c) 2008-2019 Marko Cupic
@@ -26,9 +28,9 @@ class Cron
      * Delete old entries
      * Cronjob
      */
-    public function deleteOldBookingsFromDb()
+    public function deleteOldBookingsFromDb(): void
     {
-        if (($intWeeks = Config::get('rbb_intBackWeeks')) < 0)
+        if (($intWeeks = (int)Config::get('rbb_intBackWeeks')) < 0)
         {
             $intWeeks = abs($intWeeks);
             $dateMonThisWeek = Date::parse('d-m-Y', strtotime('monday this week'));

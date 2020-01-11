@@ -148,7 +148,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = array(
 );
 
 /**
- * Class tl_resource_booking_resource
+ * Provide miscellaneous methods that are used by the data configuration array.
  */
 class tl_resource_booking_resource extends Backend
 {
@@ -166,7 +166,7 @@ class tl_resource_booking_resource extends Backend
      * @param $row
      * @return string
      */
-    public function childRecordCallback($row)
+    public function childRecordCallback(array $row): string
     {
         return sprintf('<div class="tl_content_left">' . $row['title'] . '</div>');
     }

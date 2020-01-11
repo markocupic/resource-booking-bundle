@@ -15,9 +15,15 @@ $GLOBALS['TL_DCA']['tl_module']['palettes']['resourceBookingWeekCalendar'] = '{t
 $GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'resourceBooking_hideDays';
 $GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'resourceBooking_autologout';
 
+/**
+ * Add subpalettes to tl_module
+ */
 $GLOBALS['TL_DCA']['tl_module']['subpalettes']['resourceBooking_hideDays'] = 'resourceBooking_hideDaysSelection';
 $GLOBALS['TL_DCA']['tl_module']['subpalettes']['resourceBooking_autologout'] = 'resourceBooking_autologoutRedirect,resourceBooking_autologoutDelay';
 
+/**
+ * Add fields to tl_module
+ */
 $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_resourceTypes'] = array
 (
     'label'            => &$GLOBALS['TL_LANG']['tl_module']['resourceBooking_resourceTypes'],
@@ -95,7 +101,7 @@ class tl_module_resource_booking extends Contao\Backend
     /**
      * @return array
      */
-    public function getResourceTypes()
+    public function getResourceTypes(): array
     {
         $opt = array();
         $objDb = Contao\Database::getInstance()->prepare('SELECT * FROM tl_resource_booking_resource_type')->execute();
@@ -109,7 +115,7 @@ class tl_module_resource_booking extends Contao\Backend
     /**
      * @return array
      */
-    public function getWeekdays()
+    public function getWeekdays(): array
     {
         return range(0, 6);
     }

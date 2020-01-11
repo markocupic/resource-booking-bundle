@@ -5,6 +5,7 @@
 <?php $GLOBALS['TL_JAVASCRIPT'][] = MOD_RESOURCE_BOOKING_ASSET_PATH . '/vue/vue.min.js|static'; ?>
 <?php $GLOBALS['TL_CSS'][] = MOD_RESOURCE_BOOKING_ASSET_PATH . '/css/frontend.css|static'; ?>
 <?php $GLOBALS['TL_JAVASCRIPT'][] = MOD_RESOURCE_BOOKING_ASSET_PATH . '/jquery.idle/jquery.idle.min.min.js'; ?>
+<?php $GLOBALS['TL_JAVASCRIPT'][] = MOD_RESOURCE_BOOKING_ASSET_PATH . '/resource-booking-app-vue.min.js|static'; ?>
 
 <?php $this->extend('block_unsearchable'); ?>
 
@@ -97,11 +98,11 @@
 
         <!-- booking modal -->
         <div class="modal resource-booking-modal" tabindex="-1" role="dialog">
-            <div class="modal-dialog" role="document">
+            <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" v-if="bookingModal.action == 'showBookingForm'">{{ activeResource.title }} {{rbb_lang::book}}</h5>
-                        <h5 class="modal-title" v-if="bookingModal.action == 'showCancelBookingForm'">{{ activeResource.title }} {{rbb_lang::cancel}}</h5>
+                        <h3 class="modal-title" v-if="bookingModal.action == 'showBookingForm'">{{ activeResource.title }} {{rbb_lang::book}}</h3>
+                        <h3 class="modal-title" v-if="bookingModal.action == 'showCancelBookingForm'">{{ activeResource.title }} {{rbb_lang::cancel}}</h3>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
@@ -221,10 +222,10 @@
 
         <!-- logout modal -->
         <div class="modal auto-logout-modal" tabindex="-1" role="dialog">
-            <div class="modal-dialog" role="document">
+            <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">{{rbb_lang::autoLogout}}</h5>
+                        <h3 class="modal-title">{{rbb_lang::autoLogout}}</h3>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
@@ -241,7 +242,6 @@
 
     </div>
 </div>
-<script src="<?= MOD_RESOURCE_BOOKING_ASSET_PATH ?>/resource-booking-app-vue.min.js"></script>
 <script>
     new resourceBookingApp('#resourceBookingApp_<?= $this->id ?>', {
         'requestToken': '{{REQUEST_TOKEN}}',

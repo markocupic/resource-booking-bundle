@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Resource Booking Module for Contao CMS
  * Copyright (c) 2008-2019 Marko Cupic
@@ -20,6 +22,7 @@ use Contao\System;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Contao\CoreBundle\Monolog\ContaoContext;
 use Psr\Log\LogLevel;
+use Markocupic\ResourceBookingBundle\ModuleWeekcalendar;
 use Contao\CoreBundle\Exception\RedirectResponseException;
 
 /**
@@ -32,7 +35,7 @@ class AjaxHandler
      * @param $objModule
      * @return JsonResponse
      */
-    public function fetchDataRequest($objModule)
+    public function fetchDataRequest(ModuleWeekcalendar $objModule): JsonResponse
     {
         $arrJson = array();
         $arrJson['data'] = ResourceBookingHelper::fetchData($objModule);
@@ -45,7 +48,7 @@ class AjaxHandler
      * @param $objModule
      * @return JsonResponse
      */
-    public function sendApplyFilterRequest($objModule)
+    public function sendApplyFilterRequest(ModuleWeekcalendar $objModule): JsonResponse
     {
         $arrJson = array();
         $arrJson['data'] = ResourceBookingHelper::fetchData($objModule);
@@ -58,7 +61,7 @@ class AjaxHandler
     /**
      * @param $objModule
      */
-    public function sendJumpWeekRequest($objModule)
+    public function sendJumpWeekRequest(ModuleWeekcalendar $objModule): void
     {
         $this->sendApplyFilterRequest($objModule);
     }
@@ -66,7 +69,7 @@ class AjaxHandler
     /**
      * @return JsonResponse
      */
-    public function sendBookingRequest($objModule)
+    public function sendBookingRequest(ModuleWeekcalendar $objModule): JsonResponse
     {
         $arrJson = array();
         $arrJson['status'] = 'error';
@@ -74,7 +77,8 @@ class AjaxHandler
         $arrBookings = array();
         $intResourceId = Input::post('resourceId');
         $objResource = ResourceBookingResourceModel::findPublishedByPk($intResourceId);
-        $arrBookingDateSelection = Input::post('bookingDateSelection');
+        $arrBookingDateSelection = !empty(Input::post('bookingDateSelection')) ? Input::post('bookingDateSelection') : array();
+
         $bookingRepeatStopWeekTstamp = Input::post('bookingRepeatStopWeekTstamp');
         $counter = 0;
 
@@ -95,7 +99,7 @@ class AjaxHandler
             $objUser = FrontendUser::getInstance();
 
             // Prepare $arrBookings with the helper method
-            $arrBookings = ResourceBookingHelper::prepareBookingSelection($objModule, $objUser, $objResource, $arrBookingDateSelection, $bookingRepeatStopWeekTstamp);
+            $arrBookings = ResourceBookingHelper::prepareBookingSelection($objModule, $objUser, $objResource, $arrBookingDateSelection, (int)$bookingRepeatStopWeekTstamp);
 
             foreach ($arrBookings as $arrBooking)
             {
@@ -154,7 +158,7 @@ class AjaxHandler
     /**
      * @return JsonResponse
      */
-    public function sendBookingFormValidationRequest($objModule)
+    public function sendBookingFormValidationRequest(ModuleWeekcalendar $objModule): JsonResponse
     {
         $arrJson = array();
         $arrJson['status'] = 'error';
@@ -170,7 +174,7 @@ class AjaxHandler
         $arrBookings = array();
         $intResourceId = Input::post('resourceId');
         $objResource = ResourceBookingResourceModel::findPublishedByPk($intResourceId);
-        $arrBookingDateSelection = Input::post('bookingDateSelection');
+        $arrBookingDateSelection = !empty(Input::post('bookingDateSelection')) ? Input::post('bookingDateSelection') : array();
         $bookingRepeatStopWeekTstamp = Input::post('bookingRepeatStopWeekTstamp');
 
         if (!FE_USER_LOGGED_IN || $objResource === null || !$bookingRepeatStopWeekTstamp > 0)
@@ -184,7 +188,7 @@ class AjaxHandler
             $objUser = FrontendUser::getInstance();
 
             // Prepare $arrBookings with the helper method
-            $arrBookings = ResourceBookingHelper::prepareBookingSelection($objModule, $objUser, $objResource, $arrBookingDateSelection, $bookingRepeatStopWeekTstamp);
+            $arrBookings = ResourceBookingHelper::prepareBookingSelection($objModule, $objUser, $objResource, $arrBookingDateSelection, (int)$bookingRepeatStopWeekTstamp);
 
             foreach ($arrBookings as $arrBooking)
             {
@@ -222,7 +226,7 @@ class AjaxHandler
     /**
      * @return JsonResponse
      */
-    public function sendCancelBookingRequest()
+    public function sendCancelBookingRequest(): JsonResponse
     {
         $arrJson = array();
         $arrJson['status'] = 'error';
@@ -267,7 +271,7 @@ class AjaxHandler
     /**
      * @return JsonResponse
      */
-    public function sendIsOnlineRequest()
+    public function sendIsOnlineRequest(): JsonResponse
     {
         $arrJson = array();
         $arrJson['status'] = 'success';
