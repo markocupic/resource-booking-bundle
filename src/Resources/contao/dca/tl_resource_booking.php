@@ -9,7 +9,7 @@
  */
 
 /**
- * Table tl_calendar_events
+ * Table tl_resource_booking
  */
 $GLOBALS['TL_DCA']['tl_resource_booking'] = array(
 
@@ -148,8 +148,6 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = array(
 
 /**
  * Provide miscellaneous methods that are used by the data configuration array.
- *
- * @author Leo Feyer <https://github.com/leofeyer>
  */
 class tl_resource_booking extends Backend
 {

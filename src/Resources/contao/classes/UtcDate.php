@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Resource Booking Module for Contao CMS
  * Copyright (c) 2008-2019 Marko Cupic
@@ -24,13 +26,8 @@ class UtcDate
      * @param $tstamp
      * @return string
      */
-    public static function parse($strFormat, $tstamp)
+    public static function parse(string $strFormat, int $tstamp): string
     {
-        if ($tstamp == '')
-        {
-            $tstamp = time();
-        }
-
         date_default_timezone_set('UTC');
         $strValue = Date::parse($strFormat, $tstamp);
         date_default_timezone_set($GLOBALS['TL_CONFIG']['timeZone']);
@@ -39,10 +36,10 @@ class UtcDate
     }
 
     /**
-     * @param $strDate
-     * @return false|int
+     * @param string $strDate
+     * @return int
      */
-    public static function strtotime($strDate)
+    public static function strtotime(string $strDate): int
     {
         date_default_timezone_set('UTC');
         $timestamp = strtotime($strDate);

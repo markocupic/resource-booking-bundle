@@ -11,10 +11,19 @@
 /**
  * Add palettes to tl_module
  */
-$GLOBALS['TL_DCA']['tl_module']['palettes']['resourceBookingWeekCalendar'] = '{title_legend},name,headline,type;{config_legend},resourceBooking_resourceTypes,resourceBooking_hideDays;{template_legend:hide},customTpl;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['resourceBookingWeekCalendar'] = '{title_legend},name,headline,type;{config_legend},resourceBooking_resourceTypes,resourceBooking_hideDays,resourceBooking_autologout;{template_legend:hide},customTpl;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 $GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'resourceBooking_hideDays';
-$GLOBALS['TL_DCA']['tl_module']['subpalettes']['resourceBooking_hideDays'] = 'resourceBooking_hideDaysSelection';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'resourceBooking_autologout';
 
+/**
+ * Add subpalettes to tl_module
+ */
+$GLOBALS['TL_DCA']['tl_module']['subpalettes']['resourceBooking_hideDays'] = 'resourceBooking_hideDaysSelection';
+$GLOBALS['TL_DCA']['tl_module']['subpalettes']['resourceBooking_autologout'] = 'resourceBooking_autologoutRedirect,resourceBooking_autologoutDelay';
+
+/**
+ * Add fields to tl_module
+ */
 $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_resourceTypes'] = array
 (
     'label'            => &$GLOBALS['TL_LANG']['tl_module']['resourceBooking_resourceTypes'],
@@ -45,6 +54,35 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_hideDaysSelection'] =
     'sql'       => "blob NULL"
 );
 
+$GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_autologout'] = array
+(
+    'label'     => &$GLOBALS['TL_LANG']['tl_module']['resourceBooking_autologout'],
+    'exclude'   => true,
+    'inputType' => 'checkbox',
+    'eval'      => array('submitOnChange' => true, 'tl_class' => 'clr'),
+    'sql'       => "char(1) NOT NULL default ''"
+);
+
+$GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_autologoutDelay'] = array
+(
+    'label'     => &$GLOBALS['TL_LANG']['tl_module']['resourceBooking_autologoutDelay'],
+    'exclude'   => true,
+    'inputType' => 'text',
+    'eval'      => array('maxlength' => 5, 'rgxp' => 'natural', 'tl_class' => 'w50'),
+    'sql'       => "smallint(5) unsigned NOT NULL default '0'"
+);
+
+$GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_autologoutRedirect'] = array
+(
+    'label'      => &$GLOBALS['TL_LANG']['tl_module']['resourceBooking_autologoutRedirect'],
+    'exclude'    => true,
+    'inputType'  => 'pageTree',
+    'foreignKey' => 'tl_page.title',
+    'eval'       => array('fieldType' => 'radio', 'tl_class' => 'clr'),
+    'sql'        => "int(10) unsigned NOT NULL default '0'",
+    'relation'   => array('type' => 'hasOne', 'load' => 'lazy')
+);
+
 /**
  * Class tl_module_resource_booking
  */
@@ -63,7 +101,7 @@ class tl_module_resource_booking extends Contao\Backend
     /**
      * @return array
      */
-    public function getResourceTypes()
+    public function getResourceTypes(): array
     {
         $opt = array();
         $objDb = Contao\Database::getInstance()->prepare('SELECT * FROM tl_resource_booking_resource_type')->execute();
@@ -77,7 +115,7 @@ class tl_module_resource_booking extends Contao\Backend
     /**
      * @return array
      */
-    public function getWeekdays()
+    public function getWeekdays(): array
     {
         return range(0, 6);
     }

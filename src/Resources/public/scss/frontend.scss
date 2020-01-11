@@ -1,12 +1,12 @@
 $notBookableBg: rgba(255, 200, 196, 0.66);
 $bookableBg: rgba(182, 228, 182, 0.38);
-$loggedInUserIsHolderBg: rgba(255, 164, 152, 0.63);
+$loggedInUserIsHolderBg: rgba(3, 169, 244, 0.32);
 
 .mod_resourceBookingWeekCalendar {
-  #resourceBookingApp .vue-application {
+  .resource-booking-app .vue-application {
     visibility: hidden;
   }
-  #resourceBookingApp.is-ready .vue-application {
+  .resource-booking-app.is-ready .vue-application {
     visibility: visible;
   }
   table.resource-booking-table-main, table.resource-booking-table-modal {
@@ -31,6 +31,12 @@ $loggedInUserIsHolderBg: rgba(255, 164, 152, 0.63);
     }
     .btn-booking {
       color: #666;
+    }
+    .btn-booking svg.fa-window-close {
+      display: none;
+    }
+    .btn-cancel-booking svg.fa-shopping-cart {
+      display: none;
     }
   }
   // Wrap long words
@@ -68,7 +74,8 @@ $loggedInUserIsHolderBg: rgba(255, 164, 152, 0.63);
       border-color: transparent !important;
     }
   }
-  table#bookingPreview {
+
+  .booking-preview.table > tbody {
     tr td {
       padding-left: 4px;
       padding-right: 4px;

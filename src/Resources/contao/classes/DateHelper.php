@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Resource Booking Module for Contao CMS
  * Copyright (c) 2008-2019 Marko Cupic
@@ -22,10 +24,10 @@ class DateHelper
 
     /**
      * @param int $intDays
-     * @param null $time
+     * @param int|null $time
      * @return false|int
      */
-    public static function addDaysToTime($intDays = 0, $time = null)
+    public static function addDaysToTime(int $intDays = 0, int $time = null): int
     {
         if ($time === null)
         {
@@ -49,7 +51,7 @@ class DateHelper
      * @param null $time
      * @return false|int
      */
-    public static function addWeeksToTime($intWeeks = 0, $time = null)
+    public static function addWeeksToTime(int $intWeeks = 0, int $time = null)
     {
         if ($time === null)
         {
@@ -71,7 +73,7 @@ class DateHelper
     /**
      * @return false|int
      */
-    public static function getMondayOfCurrentWeek()
+    public static function getMondayOfCurrentWeek(): int
     {
         return strtotime('monday this week');
     }
@@ -80,19 +82,20 @@ class DateHelper
      * @param $dateString
      * @return bool
      */
-    public static function isValidBookingTime($dateString)
+    public static function isValidBookingTime(string $dateString): bool
     {
         $format = 'H:i';
         $dateObj = \DateTime::createFromFormat($format, $dateString);
-        return $dateObj && $dateObj->format($format) == $dateString;
+
+        return $dateObj !== false && $dateObj->format($format) === $dateString;
     }
 
     /**
      * Check if date is in range
-     * @param $tstamp
+     * @param int $tstamp
      * @return bool
      */
-    public static function isValidDate($tstamp)
+    public static function isValidDate(int $tstamp): bool
     {
         $intBackWeeks = Config::get('rbb_intBackWeeks');
         $intAheadWeeks = Config::get('rbb_intAheadWeeks');

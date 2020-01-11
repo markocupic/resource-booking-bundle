@@ -21,12 +21,12 @@ class RegexpHook
 {
 
     /**
-     * @param $strRegexp
-     * @param $varValue
+     * @param string $strRegexp
+     * @param string $varValue
      * @param Widget $objWidget
      * @return bool
      */
-    public function customRegexp($strRegexp, $varValue, Widget $objWidget)
+    public function customRegexp(string $strRegexp, string $varValue, Widget $objWidget): bool
     {
         if ($strRegexp === 'resourceBookingTime')
         {

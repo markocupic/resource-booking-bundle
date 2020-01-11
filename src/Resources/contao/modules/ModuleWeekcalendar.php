@@ -35,59 +35,44 @@ class ModuleWeekcalendar extends Module
     protected $strTemplate = 'mod_resource_booking_weekcalendar';
 
     /**
-     * @var
+     * @var FrontendUser
      */
     public $objUser;
 
     /**
-     * @var
-     */
-    public $objResourceTypes;
-
-    /**
-     * @var
+     * @var ResourceBookingResourceTypeModel
      */
     public $objSelectedResourceType;
 
     /**
-     * @var
-     */
-    public $objResources;
-
-    /**
-     * @var
+     * @var ResourceBookingResourceModel
      */
     public $objSelectedResource;
 
     /**
-     * @var
+     * @var int
      */
     public $activeWeekTstamp;
 
     /**
-     * @var
+     * @var int
      */
     public $intBackWeeks;
 
     /**
-     * @var
+     * @var int
      */
     public $intAheadWeeks;
 
     /**
-     * @var
+     * @var int
      */
     public $tstampFirstPossibleWeek;
 
     /**
-     * @var
+     * @var int
      */
     public $tstampLastPossibleWeek;
-
-    /**
-     * @var
-     */
-    public $hasError;
 
     /**
      * Display a wildcard in the back end
@@ -96,8 +81,6 @@ class ModuleWeekcalendar extends Module
      */
     public function generate()
     {
-        session_start();
-
         if (TL_MODE == 'BE')
         {
             $objTemplate = new BackendTemplate('be_wildcard');
@@ -110,9 +93,9 @@ class ModuleWeekcalendar extends Module
             return $objTemplate->parse();
         }
 
-        // Remove query params from url if user is not logged in
+        // Remove query params from url if user has not logged in
         // and...
-        // Return empty string if user is not logged in/**/
+        // Return empty string if user has not logged in/**/
         if (!FE_USER_LOGGED_IN)
         {
             if (Input::get('date') || Input::get('resType') || Input::get('res'))
@@ -131,53 +114,62 @@ class ModuleWeekcalendar extends Module
             $_SESSION['rbb'] = array();
         }
 
-        $strResType = (isset($_SESSION['rbb']['resType']) && $_SESSION['rbb']['resType'] > 0) ? $_SESSION['rbb']['resType'] : '';
-        $strRes = (isset($_SESSION['rbb']['res']) && $_SESSION['rbb']['res'] > 0) ? $_SESSION['rbb']['res'] : '';
-        $strDate = (isset($_SESSION['rbb']['date']) && $_SESSION['rbb']['date'] > 0) ? $_SESSION['rbb']['date'] : '';
-        $strResType = Input::post('resType') != '' ? Input::post('resType') : $strResType;
+        // Catch resource type from session
+        $intResType = (isset($_SESSION['rbb']['resType']) && $_SESSION['rbb']['resType'] > 0) ? $_SESSION['rbb']['resType'] : null;
 
-        $strResType = isset($_POST['resType']) ? Input::post('resType') : $strResType;
-        if (!$strResType > 0)
+        // Catch resource from session
+        $intRes = (isset($_SESSION['rbb']['res']) && $_SESSION['rbb']['res'] > 0) ? $_SESSION['rbb']['res'] : null;
+
+        // Catch date from session
+        $intTstampDate = (isset($_SESSION['rbb']['date'])) ? $_SESSION['rbb']['date'] : DateHelper::getMondayOfCurrentWeek();
+
+        $intResType = isset($_POST['resType']) ? (int)Input::post('resType') : $intResType;
+        if (empty($intResType))
         {
-            $strResType = 0;
+            // Set $intResType to 0,
+            // if there is no valid resType found neither in the session nor in the post
+            $intResType = 0;
         }
-        $strRes = isset($_POST['res']) ? Input::post('res') : $strRes;
-        if (!$strRes > 0)
+
+        $intRes = isset($_POST['res']) ? (int)Input::post('res') : $intRes;
+        if (empty($intRes))
         {
-            $strRes = 0;
+            // Set $intRes to 0,
+            // if there is no valid res found neither in the session nor in the post
+            $intRes = 0;
         }
 
-        $this->objSelectedResourceType = ResourceBookingResourceTypeModel::findPublishedByPk($strResType);
-        $this->objSelectedResource = ResourceBookingResourceModel::findPublishedByPkAndPid($strRes,$strResType);
+        $this->objSelectedResourceType = ResourceBookingResourceTypeModel::findPublishedByPk($intResType);
+        $this->objSelectedResource = ResourceBookingResourceModel::findPublishedByPkAndPid($intRes, $intResType);
 
-        // Date settings
         // Get intBackWeeks && intBackWeeks
-        $this->intBackWeeks = Config::get('rbb_intBackWeeks');
-        $this->intAheadWeeks = Config::get('rbb_intAheadWeeks');
+        $this->intBackWeeks = (int)Config::get('rbb_intBackWeeks');
+        $this->intAheadWeeks = (int)Config::get('rbb_intAheadWeeks');
 
-        // Get first ans last possible week tstamp
+        // Get first and last possible week tstamp
         $this->tstampFirstPossibleWeek = DateHelper::addWeeksToTime($this->intBackWeeks, DateHelper::getMondayOfCurrentWeek());
         $this->tstampLastPossibleWeek = DateHelper::addWeeksToTime($this->intAheadWeeks, DateHelper::getMondayOfCurrentWeek());
 
-        $strDate = isset($_POST['date']) ? Input::post('date') : $strDate;
-        $strDate = DateHelper::isValidDate($strDate) ? $strDate : '';
-        if (!$strDate > 0)
+        // Get active week timestamp
+        $intTstampDate = isset($_POST['date']) ? (int)Input::post('date') : $intTstampDate;
+        $intTstampDate = DateHelper::isValidDate($intTstampDate) ? $intTstampDate : DateHelper::getMondayOfCurrentWeek();
+
+        if ($intTstampDate < $this->tstampFirstPossibleWeek)
         {
-            $strDate = DateHelper::getMondayOfCurrentWeek();
-        }
-        if ($strDate < $this->tstampFirstPossibleWeek)
-        {
-            $strDate = $this->tstampFirstPossibleWeek;
-        }
-        if ($strDate > $this->tstampLastPossibleWeek)
-        {
-            $strDate = $this->tstampLastPossibleWeek;
+            $intTstampDate = $this->tstampFirstPossibleWeek;
         }
 
-        $this->activeWeekTstamp = $strDate;
-        $_SESSION['rbb']['resType'] = (integer)$strResType;
-        $_SESSION['rbb']['res'] = (integer)$strRes;
-        $_SESSION['rbb']['date'] = (integer)$strDate;
+        if ($intTstampDate > $this->tstampLastPossibleWeek)
+        {
+            $intTstampDate = $this->tstampLastPossibleWeek;
+        }
+
+        $this->activeWeekTstamp = $intTstampDate;
+
+        // Store data into the session
+        $_SESSION['rbb']['resType'] = (int)$intResType;
+        $_SESSION['rbb']['res'] = (int)$intRes;
+        $_SESSION['rbb']['date'] = (int)$intTstampDate;
 
         // Handle ajax requests
         if (Environment::get('isAjaxRequest') && Input::post('action') != '')

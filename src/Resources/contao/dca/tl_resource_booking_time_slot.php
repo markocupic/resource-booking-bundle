@@ -8,6 +8,9 @@
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
+/**
+ * Table tl_resource_booking_time_slot
+ */
 $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = array
 (
 
@@ -108,7 +111,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = array
     // Palettes
     'palettes' => array
     (
-        'default' => '{title_legend},title,description;{time_legend},startTime,endTime',
+        'default' => '{title_legend},title,description;{time_legend},startTime,endTime;{expert_legend:hide},cssID',
     ),
 
     // Fields
@@ -194,13 +197,18 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = array
             ),
             'sql'           => "int(10) NULL"
         ),
+        'cssID'       => array
+        (
+            'exclude'   => true,
+            'inputType' => 'text',
+            'eval'      => array('multiple' => true, 'size' => 2, 'tl_class' => 'w50 clr'),
+            'sql'       => "varchar(255) NOT NULL default ''"
+        ),
     )
 );
 
 /**
  * Provide miscellaneous methods that are used by the data configuration array.
- *
- * @author Leo Feyer <https://github.com/leofeyer>
  */
 class tl_resource_booking_time_slot extends Contao\Backend
 {
@@ -215,58 +223,70 @@ class tl_resource_booking_time_slot extends Contao\Backend
     }
 
     /**
-     * @param $row
+     * @param array $row
      * @return string
      */
-    public function childRecordCallback($row)
+    public function childRecordCallback(array $row): string
     {
         return sprintf('<div class="tl_content_left"><span style="color:#999;padding-left:3px">' . $row['title'] . '</span> %s-%s</div>', Markocupic\ResourceBookingBundle\UtcDate::parse('H:i', $row['startTime']), Markocupic\ResourceBookingBundle\UtcDate::parse('H:i', $row['endTime']));
     }
 
     /**
-     * @param $timestamp
+     * Load callback for ...
+     * tl_resource_booking_time_slot.startTime and
+     * tl_resource_booking_time_slot.endTime
+     *
+     * @param int $timestamp
      * @return string
      */
-    public function loadTime($timestamp)
+    public function loadTime(int $timestamp): string
     {
-        $strValue = '';
-        if ($timestamp != '')
+        $strTime = '';
+        if (!empty($timestamp))
         {
-            $strValue = Markocupic\ResourceBookingBundle\UtcDate::parse('H:i', $timestamp);
+            $strTime = Markocupic\ResourceBookingBundle\UtcDate::parse('H:i', $timestamp);
         }
 
-        return $strValue;
+        return $strTime;
     }
 
     /**
-     * @param $varValue
+     * Save callback for ...
+     * tl_resource_booking_time_slot.startTime and
+     * tl_resource_booking_time_slot.endTime
+     *
+     * Converts formated time f.ex 09:01 into a utc timestamp
+     * @param string $strTime
      * @param \Contao\DataContainer $dc
-     * @return false|int
+     * @return int
      */
-    public function setCorrectTime($varValue, Contao\DataContainer $dc)
+    public function setCorrectTime(string $strTime, Contao\DataContainer $dc): int
     {
-        if (strlen($varValue) === 5)
+        if (preg_match("/^(2[0-3]|[01][0-9]):[0-5][0-9]$/", $strTime))
         {
-            $varValue = Markocupic\ResourceBookingBundle\UtcDate::strtotime('1970-01-01 ' . $varValue);
+            $timestamp = Markocupic\ResourceBookingBundle\UtcDate::strtotime('1970-01-01 ' . $strTime);
         }
         else
         {
-            $varValue = 0;
+            $timestamp = 0;
         }
 
-        return $varValue;
+        return $timestamp;
     }
 
     /**
+     * Save callback for ...
+     * tl_resource_booking_time_slot.endTime
+     *
      * Adjust endTime if it is smaller then the startTime
-     * @param $varValue
+     * @param int $timestamp
      * @param \Contao\DataContainer $dc
-     * @return false|int
+     * @return int
      */
-    public function setCorrectEndTime($varValue, Contao\DataContainer $dc)
+    public function setCorrectEndTime(int $timestamp, Contao\DataContainer $dc): int
     {
         // Adjust endTime if it is smaller then the startTime
-        if (Contao\Input::post('startTime') != '')
+        if (!empty(Contao\Input::post('startTime')))
         {
             $strStartTime = Contao\Input::post('startTime');
         }
@@ -275,27 +295,27 @@ class tl_resource_booking_time_slot extends Contao\Backend
             $strStartTime = $dc->activeRecord->startTime;
         }
 
-        if ($strStartTime != '')
+        if (!empty($strStartTime))
         {
             $startTime = \Markocupic\ResourceBookingBundle\UtcDate::strtotime('01-01-1970 ' . $strStartTime);
             if ($startTime !== false)
             {
-                if ($varValue <= $startTime)
+                if ($timestamp <= $startTime)
                 {
-                    $varValue = $startTime + 60;
+                    $timestamp = $startTime + 60;
                 }
             }
             else
             {
-                $varValue = 0;
+                $timestamp = 0;
             }
         }
         else
         {
-            $varValue = 0;
+            $timestamp = 0;
         }
 
-        return $varValue;
+        return $timestamp;
     }
 
     /**
@@ -308,6 +328,7 @@ class tl_resource_booking_time_slot extends Contao\Backend
         {
             return;
         }
+
         // Delete child bookings
         $this->Database->prepare('DELETE FROM tl_resource_booking WHERE timeSlotId=?')->execute($dc->id);
     }
