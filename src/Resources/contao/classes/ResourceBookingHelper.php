@@ -51,7 +51,7 @@ class ResourceBookingHelper
         {
             Message::addInfo($GLOBALS['TL_LANG']['MSG']['selectResourceTypePlease']);
         }
-        
+
         if ($objModule->objSelectedResource === null && !Message::hasMessages())
         {
             Message::addInfo($GLOBALS['TL_LANG']['MSG']['selectResourcePlease'] );
@@ -262,10 +262,10 @@ class ResourceBookingHelper
                 $startTimestamp = (int)$objTimeslots->startTime;
                 $endTimestamp = (int)$objTimeslots->endTime;
                 $objTs = new \stdClass();
-                $objTs->startTimeString = UtcDate::parse('H:i', $startTimestamp);
+                $objTs->startTimeString = UtcTime::parse('H:i', $startTimestamp);
                 $objTs->startTimestamp = (int)$startTimestamp;
-                $objTs->endTimeString = UtcDate::parse('H:i', $endTimestamp);
-                $objTs->timeSpanString = UtcDate::parse('H:i', $startTimestamp) . ' - ' . UtcDate::parse('H:i', $endTimestamp);
+                $objTs->endTimeString = UtcTime::parse('H:i', $endTimestamp);
+                $objTs->timeSpanString = UtcTime::parse('H:i', $startTimestamp) . ' - ' . UtcTime::parse('H:i', $endTimestamp);
                 $objTs->endTimestamp = (int)$endTimestamp;
                 $timeSlots[] = $objTs;
             }

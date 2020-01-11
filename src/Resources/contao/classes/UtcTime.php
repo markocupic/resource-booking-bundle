@@ -15,10 +15,10 @@ namespace Markocupic\ResourceBookingBundle;
 use Contao\Date;
 
 /**
- * Class UtcDate
+ * Class UtcTime
  * @package Markocupic\ResourceBookingBundle
  */
-class UtcDate
+class UtcTime
 {
 
     /**

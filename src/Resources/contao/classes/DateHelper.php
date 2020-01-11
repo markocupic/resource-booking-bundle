@@ -100,15 +100,15 @@ class DateHelper
         $intBackWeeks = Config::get('rbb_intBackWeeks');
         $intAheadWeeks = Config::get('rbb_intAheadWeeks');
 
-        // Get first ans last possible week tstamp
-        $tstampFirstPossibleWeek = DateHelper::addWeeksToTime($intBackWeeks, DateHelper::getMondayOfCurrentWeek());
-        $tstampLastPossibleWeek = DateHelper::addWeeksToTime($intAheadWeeks, DateHelper::getMondayOfCurrentWeek());
+        // Get the timestamp of the first and last possible weeks
+        $tstampFirstPossibleWeek = static::addWeeksToTime($intBackWeeks, static::getMondayOfCurrentWeek());
+        $tstampLastPossibleWeek = static::addWeeksToTime($intAheadWeeks, static::getMondayOfCurrentWeek());
 
         if ($tstamp < $tstampFirstPossibleWeek || $tstamp > $tstampLastPossibleWeek)
         {
             return false;
         }
-        // Get numeric value of the weekday 0 for sunday, 1 for monday, etc.
+        // Get numeric value of the weekday:  0 for sunday, 1 for monday, etc.
         if (Date::parse('w', $tstamp) !== '1')
         {
             return false;
