@@ -58,43 +58,46 @@
                 </div>
             </div>
         </form>
+        <!-- End filter board -->
 
         <!-- Error & info messages -->
         <div v-if="messages">
             <div v-if="messages.info" class="alert alert-warning">{{ messages.info }}</div>
             <div v-if="messages.error" class="alert alert-error">{{ messages.error }}</div>
         </div>
+        <!-- End error & info messages -->
 
         <!-- booking table -->
         <div v-if="rows" class="table-responsive-lg">
             <table v-if="rows.length > 0" class="resource-booking-table-main table">
                 <thead>
-                <tr>
-                    <th width="12.5%">{{rbb_lang::time}}</th>
-                    <th width="12.5%" v-for="(weekday, index) in weekdays" v-bind:data-day-index="weekday.index">{{ weekday.title }}{{br}}{{ weekday.date }}</th>
-                </tr>
-
+                    <tr>
+                        <th width="12.5%">{{rbb_lang::time}}</th>
+                        <th width="12.5%" v-for="(weekday, index) in weekdays" v-bind:data-day-index="weekday.index">{{ weekday.title }}{{br}}{{ weekday.date }}</th>
+                    </tr>
                 </thead>
+
                 <tbody>
-                <tr v-for="(row, rowIndex) in rows" v-bind:data-row-index="rowIndex" v-bind:id="row.rowData.cssRowId" v-bind:class="row.rowData.cssRowClass">
-                    <td>{{ timeSlots[rowIndex].timeSpanString }}</td>
-                    <td class="time-slot-cell" v-for="(eventBox, colIndex) in row.cellData" v-bind:data-day-index="eventBox.index" v-bind:data-is-holder="eventBox.isHolder ? 'true' : 'false'" v-bind:data-isbooked="eventBox.isBooked">
-                        <div v-if="eventBox.isBooked">
-                            <span class="holder-box">{{ eventBox.bookedByFullname }}</span>{{br}}<span class="description-box">{{ eventBox.bookingDescription }}</span>
-                        </div>
-                        <button class="btn btn-link btn-booking" v-if="eventBox.isEditable && !eventBox.isBooked" v-on:click="openBookingModal(eventBox,'showBookingForm')" title="buchen">
-                            <i class="icon-booking fas fa-shopping-cart"></i>
-                            <i class="icon-cancel-booking fas fa-window-close"></i>
-                        </button>
-                        <button class="btn btn-link btn-cancel-booking" v-if="eventBox.isEditable && eventBox.isBooked" v-on:click="openBookingModal(eventBox, 'showCancelBookingForm')" title="stornieren">
-                            <i class="icon-booking fas fa-shopping-cart"></i>
-                            <i class="icon-cancel-booking fas fa-window-close"></i>
-                        </button>
-                    </td>
-                </tr>
+                    <tr v-for="(row, rowIndex) in rows" v-bind:data-row-index="rowIndex" v-bind:id="row.rowData.cssRowId" v-bind:class="row.rowData.cssRowClass">
+                        <td>{{ timeSlots[rowIndex].timeSpanString }}</td>
+                        <td class="time-slot-cell" v-for="(eventBox, colIndex) in row.cellData" v-bind:data-day-index="eventBox.index" v-bind:data-is-holder="eventBox.isHolder ? 'true' : 'false'" v-bind:data-isbooked="eventBox.isBooked">
+                            <div v-if="eventBox.isBooked">
+                                <span class="holder-box">{{ eventBox.bookedByFullname }}</span>{{br}}<span class="description-box">{{ eventBox.bookingDescription }}</span>
+                            </div>
+                            <button class="btn btn-link btn-booking" v-if="eventBox.isEditable && !eventBox.isBooked" v-on:click="openBookingModal(eventBox,'showBookingForm')" title="buchen">
+                                <i class="icon-booking fas fa-shopping-cart"></i>
+                                <i class="icon-cancel-booking fas fa-window-close"></i>
+                            </button>
+                            <button class="btn btn-link btn-cancel-booking" v-if="eventBox.isEditable && eventBox.isBooked" v-on:click="openBookingModal(eventBox, 'showCancelBookingForm')" title="stornieren">
+                                <i class="icon-booking fas fa-shopping-cart"></i>
+                                <i class="icon-cancel-booking fas fa-window-close"></i>
+                            </button>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
+        <!-- End booking table -->
 
         <!-- booking modal -->
         <div class="modal resource-booking-modal" tabindex="-1" role="dialog">
@@ -125,16 +128,17 @@
                             </tr>
                             </tbody>
                         </table>
+                        <!-- End info table -->
 
                         <!-- Alerts -->
                         <div v-if="bookingModal.alertSuccess != ''">
                             <div class="alert alert-success">
                                 {{ bookingModal.alertSuccess }}
                             </div>
-                            <p>
-                                <small>{{rbb_lang::modalWindowIsClosingAutomatically}}</small>
-                            </p>
+                            <p><small>{{rbb_lang::modalWindowIsClosingAutomatically}}</small></p>
                         </div>
+                        <!-- End alerts -->
+
                         <div v-if="bookingModal.alertError != ''" class="alert alert-danger">{{ bookingModal.alertError }}</div>
                         <div v-if="!bookingModal.showConfirmationMsg && bookingModal.action == 'showBookingForm'">
                             <div class="modal-message-box">
@@ -169,24 +173,24 @@
                             <form>
                                 <table v-if="rows.length > 0" class="resource-booking-table-modal table">
                                     <thead>
-                                    <tr>
-                                        <th width="12.5%">{{rbb_lang::time}}</th>
-                                        <th width="12.5%" v-for="(weekday, index) in weekdays" v-bind:data-day-index="weekday.index">{{ weekday.titleShort }}</th>
-                                    </tr>
+                                        <tr>
+                                            <th width="12.5%">{{rbb_lang::time}}</th>
+                                            <th width="12.5%" v-for="(weekday, index) in weekdays" v-bind:data-day-index="weekday.index">{{ weekday.titleShort }}</th>
+                                        </tr>
                                     </thead>
 
                                     <tbody>
-                                    <tr v-for="(row, rowIndex) in rows" v-bind:data-row-index="rowIndex" v-bind:class="row.rowData.cssRowClass">
-                                        <td>{{ timeSlots[rowIndex].timeSpanString }}</td>
-                                        <td class="time-slot-cell" v-for="(eventBox, colIndex) in row.cellData" v-bind:data-day-index="eventBox.index" v-bind:data-isbooked="eventBox.isBooked">
-                                            <div v-if="!eventBox.isBooked">
-                                                <div class="custom-control custom-checkbox">
-                                                    <input type="checkbox" v-on:change="sendBookingFormValidationRequest()" v-model="bookingModal.selectedTimeSlots" v-bind:value="eventBox.bookingCheckboxValue" class="custom-control-input" v-bind:id="eventBox.bookingCheckboxId">
-                                                    <label class="custom-control-label" v-bind:for="eventBox.bookingCheckboxId"></label>
+                                        <tr v-for="(row, rowIndex) in rows" v-bind:data-row-index="rowIndex" v-bind:class="row.rowData.cssRowClass">
+                                            <td>{{ timeSlots[rowIndex].timeSpanString }}</td>
+                                            <td class="time-slot-cell" v-for="(eventBox, colIndex) in row.cellData" v-bind:data-day-index="eventBox.index" v-bind:data-isbooked="eventBox.isBooked">
+                                                <div v-if="!eventBox.isBooked">
+                                                    <div class="custom-control custom-checkbox">
+                                                        <input type="checkbox" v-on:change="sendBookingFormValidationRequest()" v-model="bookingModal.selectedTimeSlots" v-bind:value="eventBox.bookingCheckboxValue" class="custom-control-input" v-bind:id="eventBox.bookingCheckboxId">
+                                                        <label class="custom-control-label" v-bind:for="eventBox.bookingCheckboxId"></label>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </td>
-                                    </tr>
+                                            </td>
+                                        </tr>
                                     </tbody>
                                 </table>
 
@@ -219,6 +223,7 @@
                 </div>
             </div>
         </div>
+        <!-- End booking modal -->
 
         <!-- logout modal -->
         <div class="modal auto-logout-modal" tabindex="-1" role="dialog">
@@ -239,9 +244,12 @@
                 </div>
             </div>
         </div>
+        <!-- End logout modal -->
 
     </div>
 </div>
+
+
 <script>
     new resourceBookingApp('#resourceBookingApp_<?= $this->id ?>', {
         'requestToken': '{{REQUEST_TOKEN}}',
