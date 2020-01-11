@@ -22,29 +22,25 @@ class UtcDate
 {
 
     /**
+     * Return a formated time/date string based on the UTC timezone
      * @param $strFormat
      * @param $tstamp
      * @return string
      */
     public static function parse(string $strFormat, int $tstamp): string
     {
-        date_default_timezone_set('UTC');
-        $strValue = Date::parse($strFormat, $tstamp);
-        date_default_timezone_set($GLOBALS['TL_CONFIG']['timeZone']);
-
-        return $strValue;
+        return gmdate($strFormat, $tstamp);
     }
 
     /**
+     * Return a timestamp based on the UTC timezone
      * @param string $strDate
      * @return int
      */
     public static function strtotime(string $strDate): int
     {
-        date_default_timezone_set('UTC');
-        $timestamp = strtotime($strDate);
-        date_default_timezone_set($GLOBALS['TL_CONFIG']['timeZone']);
-
-        return $timestamp;
+        $utc = new \DateTimeZone('UTC');
+        $dt = new \DateTime($strDate, $utc);
+        return $dt->format('U');
     }
 }
