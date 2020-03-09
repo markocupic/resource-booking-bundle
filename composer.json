@@ -28,7 +28,8 @@
     "codefog/contao-haste": "^4.23",
     "markocupic/contao-component-bootstrap": "^4.3",
     "markocupic/contao-component-fontawesome-free": "^5.11",
-    "markocupic/contao-component-popper-js": "^1.0"
+    "markocupic/contao-component-popper-js": "^1.0",
+    "markocupic/contao-component-vue-js": "^2.6" 
   },
   "autoload": {
     "psr-4": {

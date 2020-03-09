@@ -25,10 +25,10 @@
 .mod_resourceBookingWeekCalendar table.resource-booking-table-main .btn-booking, .mod_resourceBookingWeekCalendar table.resource-booking-table-modal .btn-booking {
     color: #666;
 }
-.mod_resourceBookingWeekCalendar table.resource-booking-table-main .btn-booking svg.fa-window-close, .mod_resourceBookingWeekCalendar table.resource-booking-table-modal .btn-booking svg.fa-window-close {
+.mod_resourceBookingWeekCalendar table.resource-booking-table-main .btn-booking .fa-window-close, .mod_resourceBookingWeekCalendar table.resource-booking-table-modal .btn-booking .fa-window-close {
     display: none;
 }
-.mod_resourceBookingWeekCalendar table.resource-booking-table-main .btn-cancel-booking svg.fa-shopping-cart, .mod_resourceBookingWeekCalendar table.resource-booking-table-modal .btn-cancel-booking svg.fa-shopping-cart {
+.mod_resourceBookingWeekCalendar table.resource-booking-table-main .btn-cancel-booking .fa-shopping-cart, .mod_resourceBookingWeekCalendar table.resource-booking-table-modal .btn-cancel-booking .fa-shopping-cart {
     display: none;
 }
 .mod_resourceBookingWeekCalendar table.resource-booking-table-main td, .mod_resourceBookingWeekCalendar table.resource-booking-table-main th {
