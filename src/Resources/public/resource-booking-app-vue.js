@@ -372,7 +372,7 @@ class resourceBookingApp {
 
                     let self = this;
                     event.preventDefault();
-                    $('.' + ClassName.MODAL_BACKDROP).remove();
+                    $(Selector.MODAL_BACKDROP).remove();
 
                     // Inject backdrop to DOM
                     let backdrop = document.createElement("div");
