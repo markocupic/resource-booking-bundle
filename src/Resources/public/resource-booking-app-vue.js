@@ -9,6 +9,26 @@
 
 class resourceBookingApp {
     constructor(vueElement, params) {
+
+        /**
+         * Constants
+         */
+        const Selector = {
+            RESOURCE_BOOKING_MODAL: '.resource-booking-modal',
+            RESOURCE_BOOKING_MODAL_INPUT_BOOKING_DESCRIPTION: '.resource-booking-modal .input-booking-description',
+            AUTO_LOGOUT_MODAL: '.auto-logout-modal',
+            BOOKING_REPEAT_STOP_WEEK_TSTAMP: '.booking-repeat-stop-week-tstamp',
+            BOOKING_REPEAT_STOP_WEEK_TSTAMP_OPTION: '.booking-repeat-stop-week-tstamp option',
+            BOOKING_PREVIEW: '.booking-preview',
+            MODAL_BACKDROP: '.modal-backdrop',
+        }
+
+        const ClassName = {
+
+            MODAL_BACKDROP: 'modal-backdrop',
+            SHOW: 'show',
+        }
+
         new Vue({
             el: vueElement,
             data: {
@@ -42,7 +62,7 @@ class resourceBookingApp {
                 var ua = window.navigator.userAgent;
                 var msie = ua.indexOf('MSIE ');
                 if (msie > 0) {
-                   alert('This extension is not compatible with your browser. Please use a current browser (like Opera, Firefox, Safari or Google Chrome), that is not out of date.')
+                    alert('This extension is not compatible with your browser. Please use a current browser (like Opera, Firefox, Safari or Google Chrome), that is not out of date.')
                 }
 
                 // Post requests require a request token
@@ -74,16 +94,16 @@ class resourceBookingApp {
                         self.sendLogoutRequest();
                         window.setTimeout(function () {
                             // Close booking modal if it is still open
-                            $(self.$el).find('.resource-booking-modal').first().modal('hide');
+                            $(self.$el).find(Selector.RESOURCE_BOOKING_MODAL).first().modal('hide');
                             window.setTimeout(function () {
-                                $(self.$el).find('.auto-logout-modal').first().on('hidden.bs.modal', function () {
+                                $(self.$el).find('.' + Selector.AUTO_LOGOUT_MODAL).first().on('hidden.bs.modal', function () {
                                     if (self.opt.autologout) {
                                         location.href = self.opt.autologoutRedirect;
                                     } else {
                                         location.href = '';
                                     }
                                 });
-                                $(self.$el).find('.auto-logout-modal').first().modal('show');
+                                $(self.$el).find(Selector.AUTO_LOGOUT_MODAL).first().modal('show');
                             }, 100);
                         }, 400);
                     }
@@ -147,8 +167,8 @@ class resourceBookingApp {
                     data.append('action', 'sendBookingRequest');
                     data.append('REQUEST_TOKEN', self.requestToken);
                     data.append('resourceId', self.bookingModal.activeTimeSlot.resourceId);
-                    data.append('description',  $(self.$el).find('.resource-booking-modal [name="bookingDescription"]').first().val());
-                    data.append('bookingRepeatStopWeekTstamp', $(self.$el).find('.booking-repeat-stop-week-tstamp').first().val());
+                    data.append('description', $(self.$el).find(Selector.RESOURCE_BOOKING_MODAL_INPUT_BOOKING_DESCRIPTION).first().val());
+                    data.append('bookingRepeatStopWeekTstamp', $(self.$el).find(Selector.BOOKING_REPEAT_STOP_WEEK_TSTAMP).first().val());
 
                     let i;
                     for (i = 0; i < self.bookingModal.selectedTimeSlots.length; i++) {
@@ -170,7 +190,7 @@ class resourceBookingApp {
                             if (response.status === 'success') {
                                 self.bookingModal.alertSuccess = response.alertSuccess;
                                 window.setTimeout(function () {
-                                    $(self.$el).find('.resource-booking-modal').first().modal('hide');
+                                    $(self.$el).find(Selector.RESOURCE_BOOKING_MODAL).first().modal('hide');
                                 }, 2500);
                             } else {
                                 self.bookingModal.alertError = response.alertError;
@@ -198,7 +218,7 @@ class resourceBookingApp {
                     data.append('action', 'sendBookingFormValidationRequest');
                     data.append('REQUEST_TOKEN', self.requestToken);
                     data.append('resourceId', self.bookingModal.activeTimeSlot.resourceId);
-                    data.append('bookingRepeatStopWeekTstamp', $(self.$el).find('.booking-repeat-stop-week-tstamp').first().val());
+                    data.append('bookingRepeatStopWeekTstamp', $(self.$el).find(Selector.BOOKING_REPEAT_STOP_WEEK_TSTAMP).first().val());
 
                     let i;
                     for (i = 0; i < self.bookingModal.selectedTimeSlots.length; i++) {
@@ -255,7 +275,7 @@ class resourceBookingApp {
                             if (response.status === 'success') {
                                 self.bookingModal.alertSuccess = response.alertSuccess;
                                 window.setTimeout(function () {
-                                    $(self.$el).find('.resource-booking-modal').first().modal('hide');
+                                    $(self.$el).find(Selector.RESOURCE_BOOKING_MODAL).first().modal('hide');
                                 }, 2500);
                             } else {
                                 self.bookingModal.alertError = response.alertError;
@@ -352,9 +372,12 @@ class resourceBookingApp {
 
                     let self = this;
                     event.preventDefault();
-                    $('.modal-backdrop').remove();
+                    $('.' + ClassName.MODAL_BACKDROP).remove();
 
-                    let backdrop = '<div class="modal-backdrop show"></div>';
+                    // Inject backdrop to DOM
+                    let backdrop = document.createElement("div");
+                    backdrop.classList.add(ClassName.MODAL_BACKDROP);
+                    backdrop.classList.add(ClassName.SHOW);
                     $("body").append(backdrop);
 
                     let data = new FormData();
@@ -385,14 +408,14 @@ class resourceBookingApp {
                             self.isOnline = true;
                             // Always
                             window.setTimeout(function () {
-                                $('.modal-backdrop').remove();
+                                $(Selector.MODAL_BACKDROP).remove();
                             }, 200);
                         })
                         .catch(function (response) {
                             self.isOnline = false;
                             // Always
                             window.setTimeout(function () {
-                                $('.modal-backdrop').remove();
+                                $(Selector.MODAL_BACKDROP).remove();
                             }, 200);
                         });
                 },
@@ -430,17 +453,17 @@ class resourceBookingApp {
                     self.bookingFormValidation = [];
 
                     // Hide booking preview
-                    $(self.$el).find('.booking-preview').first().collapse('hide');
+                    $(self.$el).find(Selector.BOOKING_PREVIEW).first().collapse('hide');
                     window.setTimeout(function () {
                         self.sendBookingFormValidationRequest();
                     }, 500);
 
-                    $(self.$el).find('.resource-booking-modal').first().on('show.bs.modal', function () {
-                        $(self.$el).find('.resource-booking-modal [name="bookingDescription"]').first().val('');
-                        $(self.$el).find('.booking-repeat-stop-week-tstamp option').prop('selected', false);
+                    $(self.$el).find(Selector.RESOURCE_BOOKING_MODAL).first().on('show.bs.modal', function () {
+                        $(self.$el).find(Selector.RESOURCE_BOOKING_MODAL_INPUT_BOOKING_DESCRIPTION).first().val('');
+                        $(self.$el).find(Selector.BOOKING_REPEAT_STOP_WEEK_TSTAMP_OPTION).prop('selected', false);
                     });
 
-                    $(self.$el).find('.resource-booking-modal').first().modal('show');
+                    $(self.$el).find(Selector.RESOURCE_BOOKING_MODAL).first().modal('show');
                 }
             }
         });

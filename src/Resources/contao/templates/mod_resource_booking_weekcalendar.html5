@@ -196,7 +196,7 @@
 
                                 <div class="form-group">
                                     <label class="d-none" for="bookingDescription_<?= $this->id ?>">{{rbb_lang::abstract}}</label>
-                                    <input type="text" class="form-control" id="bookingDescription_<?= $this->id ?>" name="bookingDescription" aria-describedby="bookingDescriptionHelp" placeholder="Kurzbeschreibung eingeben">
+                                    <input type="text" class="form-control input-booking-description" id="bookingDescription_<?= $this->id ?>" name="bookingDescription" aria-describedby="bookingDescriptionHelp" placeholder="Kurzbeschreibung eingeben">
                                     <small class="booking-description-help" class="form-text text-muted">{{rbb_lang::enterAbstract}}</small>
                                 </div>
 
