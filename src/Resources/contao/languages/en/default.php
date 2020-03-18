@@ -9,13 +9,13 @@
  */
 
 // Days
-$GLOBALS['TL_LANG']['DAYS_SHORT'][0] = 'Mon';
-$GLOBALS['TL_LANG']['DAYS_SHORT'][1] = 'Tue';
-$GLOBALS['TL_LANG']['DAYS_SHORT'][2] = 'Wed';
-$GLOBALS['TL_LANG']['DAYS_SHORT'][3] = 'Thu';
-$GLOBALS['TL_LANG']['DAYS_SHORT'][4] = 'Fri';
-$GLOBALS['TL_LANG']['DAYS_SHORT'][5] = 'Sat';
-$GLOBALS['TL_LANG']['DAYS_SHORT'][6] = 'Sun';
+$GLOBALS['TL_LANG']['DAYS_SHORTED'][0] = 'Mon';
+$GLOBALS['TL_LANG']['DAYS_SHORTED'][1] = 'Tue';
+$GLOBALS['TL_LANG']['DAYS_SHORTED'][2] = 'Wed';
+$GLOBALS['TL_LANG']['DAYS_SHORTED'][3] = 'Thu';
+$GLOBALS['TL_LANG']['DAYS_SHORTED'][4] = 'Fri';
+$GLOBALS['TL_LANG']['DAYS_SHORTED'][5] = 'Sat';
+$GLOBALS['TL_LANG']['DAYS_SHORTED'][6] = 'Sun';
 
 $GLOBALS['TL_LANG']['DAYS_LONG'][0] = 'Monday';
 $GLOBALS['TL_LANG']['DAYS_LONG'][1] = 'Tuesday';

@@ -127,7 +127,7 @@ class ResourceBookingHelper
             $arrWeek[] = array(
                 'index'      => $i,
                 'title'      => $GLOBALS['TL_LANG']['DAYS_LONG'][$i] != '' ? $GLOBALS['TL_LANG']['DAYS_LONG'][$i] : $arrWeekdays[$i],
-                'titleShort' => $GLOBALS['TL_LANG']['DAYS_SHORT'][$i] != '' ? $GLOBALS['TL_LANG']['DAYS_SHORT'][$i] : $arrWeekdays[$i],
+                'titleShort' => $GLOBALS['TL_LANG']['DAYS_SHORTED'][$i] != '' ? $GLOBALS['TL_LANG']['DAYS_SHORTED'][$i] : $arrWeekdays[$i],
                 'date'       => Date::parse('d.m.Y', strtotime(Date::parse('Y-m-d', $objModule->activeWeekTstamp) . " +" . $i . " day"))
             );
         }
