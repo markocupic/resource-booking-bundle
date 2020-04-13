@@ -13,17 +13,17 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle;
 
 use Contao\Config;
+use Contao\CoreBundle\Exception\RedirectResponseException;
+use Contao\CoreBundle\Monolog\ContaoContext;
 use Contao\Date;
 use Contao\FrontendUser;
+use Contao\Input;
 use Contao\ResourceBookingModel;
 use Contao\ResourceBookingResourceModel;
-use Contao\Input;
 use Contao\System;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Contao\CoreBundle\Monolog\ContaoContext;
+use Markocupic\ResourceBookingBundle\Runtime\Runtime;
 use Psr\Log\LogLevel;
-use Markocupic\ResourceBookingBundle\Controller\FrontendModule\ResourceBookingWeekcalendarController;
-use Contao\CoreBundle\Exception\RedirectResponseException;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 /**
  * Class AjaxHandler
@@ -32,52 +32,50 @@ use Contao\CoreBundle\Exception\RedirectResponseException;
 class AjaxHandler
 {
     /**
-     * @param $objModule
-     * @return JsonResponse
+     * @param Runtime $objRuntime
+     * @return array
      */
-    public function fetchDataRequest(ResourceBookingWeekcalendarController $objModule): JsonResponse
+    public function fetchDataRequest(Runtime $objRuntime): array
     {
-        $arrJson = array();
-        $arrJson['data'] = ResourceBookingHelper::fetchData($objModule);
+        $arrJson = [];
+        $arrJson['data'] = ResourceBookingHelper::fetchData($objRuntime);
         $arrJson['status'] = 'success';
-        $response = new JsonResponse($arrJson);
-        return $response->send();
+        return $arrJson;
     }
 
     /**
-     * @param $objModule
-     * @return JsonResponse
+     * @param Runtime $objRuntime
+     * @return array
      */
-    public function sendApplyFilterRequest(ResourceBookingWeekcalendarController $objModule): JsonResponse
+    public function sendApplyFilterRequest(Runtime $objRuntime): array
     {
-        $arrJson = array();
-        $arrJson['data'] = ResourceBookingHelper::fetchData($objModule);
+        $arrJson = [];
+        $arrJson['data'] = ResourceBookingHelper::fetchData($objRuntime);
         $arrJson['status'] = 'success';
-        $response = new JsonResponse($arrJson);
-
-        return $response->send();
+        return $arrJson;
     }
 
     /**
-     * @param $objModule
+     * @param Runtime $objRuntime
      */
-    public function sendJumpWeekRequest(ResourceBookingWeekcalendarController $objModule): void
+    public function sendJumpWeekRequest(Runtime $objRuntime): array
     {
-        $this->sendApplyFilterRequest($objModule);
+        return $this->sendApplyFilterRequest($objRuntime);
     }
 
     /**
-     * @return JsonResponse
+     * @param Runtime $objRuntime
+     * @return array
      */
-    public function sendBookingRequest(ResourceBookingWeekcalendarController $objModule): JsonResponse
+    public function sendBookingRequest(Runtime $objRuntime): array
     {
-        $arrJson = array();
+        $arrJson = [];
         $arrJson['status'] = 'error';
         $errors = 0;
-        $arrBookings = array();
+        $arrBookings = [];
         $intResourceId = Input::post('resourceId');
         $objResource = ResourceBookingResourceModel::findPublishedByPk($intResourceId);
-        $arrBookingDateSelection = !empty(Input::post('bookingDateSelection')) ? Input::post('bookingDateSelection') : array();
+        $arrBookingDateSelection = !empty(Input::post('bookingDateSelection')) ? Input::post('bookingDateSelection') : [];
 
         $bookingRepeatStopWeekTstamp = Input::post('bookingRepeatStopWeekTstamp');
         $counter = 0;
@@ -99,7 +97,7 @@ class AjaxHandler
             $objUser = FrontendUser::getInstance();
 
             // Prepare $arrBookings with the helper method
-            $arrBookings = ResourceBookingHelper::prepareBookingSelection($objModule, $objUser, $objResource, $arrBookingDateSelection, (int)$bookingRepeatStopWeekTstamp);
+            $arrBookings = ResourceBookingHelper::prepareBookingSelection($objRuntime, $objUser, $objResource, $arrBookingDateSelection, (int) $bookingRepeatStopWeekTstamp);
 
             foreach ($arrBookings as $arrBooking)
             {
@@ -133,7 +131,7 @@ class AjaxHandler
                         // Log
                         $logger = System::getContainer()->get('monolog.logger.contao');
                         $strLog = sprintf('New resource with ID %s has been booked.', $objBooking->id);
-                        $logger->log(LogLevel::INFO, $strLog, array('contao' => new ContaoContext(__METHOD__, 'INFO')));
+                        $logger->log(LogLevel::INFO, $strLog, ['contao' => new ContaoContext(__METHOD__, 'INFO')]);
                     }
                     $counter++;
                 }
@@ -151,30 +149,30 @@ class AjaxHandler
         // Return $arrBookings
         $arrJson['bookingSelection'] = $arrBookings;
 
-        $response = new JsonResponse($arrJson);
-        return $response->send();
+        return $arrJson;
     }
 
     /**
-     * @return JsonResponse
+     * @param Runtime $objRuntime
+     * @return array
      */
-    public function sendBookingFormValidationRequest(ResourceBookingWeekcalendarController $objModule): JsonResponse
+    public function sendBookingFormValidationRequest(Runtime $objRuntime): array
     {
-        $arrJson = array();
+        $arrJson = [];
         $arrJson['status'] = 'error';
-        $arrJson['bookingFormValidation'] = array(
+        $arrJson['bookingFormValidation'] = [
             'noDatesSelected'         => false,
             'resourceIsAlreadyBooked' => false,
             'passedValidation'        => false,
-        );
+        ];
 
         $errors = 0;
         $counter = 0;
         $blnBookingsPossible = true;
-        $arrBookings = array();
+        $arrBookings = [];
         $intResourceId = Input::post('resourceId');
         $objResource = ResourceBookingResourceModel::findPublishedByPk($intResourceId);
-        $arrBookingDateSelection = !empty(Input::post('bookingDateSelection')) ? Input::post('bookingDateSelection') : array();
+        $arrBookingDateSelection = !empty(Input::post('bookingDateSelection')) ? Input::post('bookingDateSelection') : [];
         $bookingRepeatStopWeekTstamp = Input::post('bookingRepeatStopWeekTstamp');
 
         if (!FE_USER_LOGGED_IN || $objResource === null || !$bookingRepeatStopWeekTstamp > 0)
@@ -188,7 +186,7 @@ class AjaxHandler
             $objUser = FrontendUser::getInstance();
 
             // Prepare $arrBookings with the helper method
-            $arrBookings = ResourceBookingHelper::prepareBookingSelection($objModule, $objUser, $objResource, $arrBookingDateSelection, (int)$bookingRepeatStopWeekTstamp);
+            $arrBookings = ResourceBookingHelper::prepareBookingSelection($objRuntime, $objUser, $objResource, $arrBookingDateSelection, (int) $bookingRepeatStopWeekTstamp);
 
             foreach ($arrBookings as $arrBooking)
             {
@@ -218,17 +216,16 @@ class AjaxHandler
         // Return $arrBookings
         $arrJson['bookingFormValidation']['bookingSelection'] = $arrBookings;
 
-        $arrReturn = array('data' => $arrJson['bookingFormValidation'], 'status' => 'success');
-        $response = new JsonResponse($arrReturn);
-        return $response->send();
+        return ['data' => $arrJson['bookingFormValidation'], 'status' => 'success'];
     }
 
     /**
-     * @return JsonResponse
+     * @param Runtime $objRuntime
+     * @return array
      */
-    public function sendCancelBookingRequest(): JsonResponse
+    public function sendCancelBookingRequest(Runtime $objRuntime): array
     {
-        $arrJson = array();
+        $arrJson = [];
         $arrJson['status'] = 'error';
         if (FE_USER_LOGGED_IN && Input::post('bookingId') > 0)
         {
@@ -247,7 +244,7 @@ class AjaxHandler
                         // Log
                         $logger = System::getContainer()->get('monolog.logger.contao');
                         $strLog = sprintf('Resource Booking with ID %s has been deleted.', $intId);
-                        $logger->log(LogLevel::INFO, $strLog, array('contao' => new ContaoContext(__METHOD__, 'INFO')));
+                        $logger->log(LogLevel::INFO, $strLog, ['contao' => new ContaoContext(__METHOD__, 'INFO')]);
                     }
 
                     $arrJson['status'] = 'success';
@@ -264,26 +261,25 @@ class AjaxHandler
             }
         }
 
-        $response = new JsonResponse($arrJson);
-        return $response->send();
+        return $arrJson;
     }
 
     /**
-     * @return JsonResponse
+     * @param Runtime $objRuntime
+     * @return array
      */
-    public function sendIsOnlineRequest(): JsonResponse
+    public function sendIsOnlineRequest(Runtime $objRuntime): array
     {
-        $arrJson = array();
+        $arrJson = [];
         $arrJson['status'] = 'success';
         $arrJson['isOnline'] = 'true';
-        $response = new JsonResponse($arrJson);
-        return $response->send();
+        return $arrJson;
     }
 
     /**
-     * Logout user
+     * @param Runtime $objRuntime
      */
-    public static function sendLogoutRequest()
+    public static function sendLogoutRequest(Runtime $objRuntime): void
     {
         // Unset session
         /** @var  \Symfony\Component\HttpFoundation\Session\SessionInterface $objSession */

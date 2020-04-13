@@ -14,7 +14,7 @@ namespace Contao;
  * Class ResourceBookingModel
  * @package Contao
  */
-class ResourceBookingModel extends \Model
+class ResourceBookingModel extends Model
 {
 
     /**

@@ -6,16 +6,33 @@ services:
     calls:
     - ['setName', ['%resource_booking_bundle.session.attribute_bag_name%']]
 
-
   # Contao frontend module "resourceBookingWeekcalendar"
   Markocupic\ResourceBookingBundle\Controller\FrontendModule\ResourceBookingWeekcalendarController:
     arguments:
     - '@security.helper'
-    - '@session'
-    - '%resource_booking_bundle.session.attribute_bag_name%'
+    - '@Markocupic\ResourceBookingBundle\Runtime\Runtime'
     calls:
     - ['setContainer', ['@Psr\Container\ContainerInterface']]
     tags:
     - { name: contao.frontend_module, category: resourceBooking, type: resourceBookingWeekcalendar }
     - { name: container.service_subscriber }
     public: true
+
+  # Ajax controller
+  Markocupic\ResourceBookingBundle\Controller\Ajax\AjaxController:
+    arguments:
+    - '@contao.framework'
+    - '@request_stack'
+    - '@Markocupic\ResourceBookingBundle\Runtime\Runtime'
+    public: true
+
+  # Initialize application
+  Markocupic\ResourceBookingBundle\Runtime\Runtime:
+    arguments:
+    - '@contao.framework'
+    - '@security.helper'
+    - '@session'
+    - '@request_stack'
+    - '%resource_booking_bundle.session.attribute_bag_name%'
+    public: true
+

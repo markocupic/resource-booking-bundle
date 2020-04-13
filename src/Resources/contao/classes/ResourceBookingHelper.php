@@ -12,19 +12,20 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle;
 
-use Contao\Date;
 use Contao\Config;
 use Contao\Controller;
+use Contao\Date;
+use Contao\FrontendUser;
+use Contao\Input;
 use Contao\MemberModel;
 use Contao\Message;
-use Contao\StringUtil;
 use Contao\ResourceBookingModel;
 use Contao\ResourceBookingResourceModel;
-use Contao\ResourceBookingTimeSlotModel;
 use Contao\ResourceBookingResourceTypeModel;
-use Contao\FrontendUser;
-use Markocupic\ResourceBookingBundle\Controller\FrontendModule\ResourceBookingWeekcalendarController;
-use Contao\Input;
+use Contao\ResourceBookingTimeSlotModel;
+use Contao\StringUtil;
+use Contao\System;
+use Markocupic\ResourceBookingBundle\Runtime\Runtime;
 
 /**
  * Class ResourceBookingHelper
@@ -34,32 +35,34 @@ class ResourceBookingHelper
 {
 
     /**
-     * @param ResourceBookingWeekcalendarController $objModule
+     * @param Runtime $objRuntime
      * @return array
      */
-    public static function fetchData(ResourceBookingWeekcalendarController $objModule): array
+    public static function fetchData(Runtime $objRuntime): array
     {
         $arrData = array();
 
+        System::loadLanguageFile('default', $objRuntime->sessionBag->get('language'));
+
         // Handle autologout
-        $arrData['opt']['autologout'] = $objModule->model->resourceBooking_autologout;
-        $arrData['opt']['autologoutDelay'] = $objModule->model->resourceBooking_autologoutDelay;
-        $arrData['opt']['autologoutRedirect'] = Controller::replaceInsertTags(sprintf('{{link_url::%s}}', $objModule->model->resourceBooking_autologoutRedirect));
+        $arrData['opt']['autologout'] = $objRuntime->moduleModel->resourceBooking_autologout;
+        $arrData['opt']['autologoutDelay'] = $objRuntime->moduleModel->resourceBooking_autologoutDelay;
+        $arrData['opt']['autologoutRedirect'] = Controller::replaceInsertTags(sprintf('{{link_url::%s}}', $objRuntime->moduleModel->resourceBooking_autologoutRedirect));
 
         // Messages
-        if ($objModule->objSelectedResourceType === null && !Message::hasMessages())
+        if ($objRuntime->objSelectedResourceType === null && !Message::hasMessages())
         {
             Message::addInfo($GLOBALS['TL_LANG']['MSG']['selectResourceTypePlease']);
         }
 
-        if ($objModule->objSelectedResource === null && !Message::hasMessages())
+        if ($objRuntime->objSelectedResource === null && !Message::hasMessages())
         {
             Message::addInfo($GLOBALS['TL_LANG']['MSG']['selectResourcePlease'] );
         }
 
         // Filter form: get resource types dropdown
         $rows = array();
-        $arrResTypesIds = StringUtil::deserialize($objModule->model->resourceBooking_resourceTypes, true);
+        $arrResTypesIds = StringUtil::deserialize($objRuntime->moduleModel->resourceBooking_resourceTypes, true);
         if (($objResourceTypes = ResourceBookingResourceTypeModel::findMultipleAndPublishedByIds($arrResTypesIds)) !== null)
         {
             while ($objResourceTypes->next())
@@ -72,7 +75,7 @@ class ResourceBookingHelper
 
         // Filter form: get resource dropdown
         $rows = array();
-        if (($objResources = ResourceBookingResourceModel::findPublishedByPid($objModule->objSelectedResourceType->id)) !== null)
+        if (($objResources = ResourceBookingResourceModel::findPublishedByPid($objRuntime->objSelectedResourceType->id)) !== null)
         {
             while ($objResources->next())
             {
@@ -83,13 +86,13 @@ class ResourceBookingHelper
         unset($rows);
 
         // Filter form get jump week array
-        $arrData['filterBoard']['jumpNextWeek'] = static::getJumpWeekDate(1, $objModule);
-        $arrData['filterBoard']['jumpPrevWeek'] = static::getJumpWeekDate(-1, $objModule);
+        $arrData['filterBoard']['jumpNextWeek'] = static::getJumpWeekDate(1, $objRuntime);
+        $arrData['filterBoard']['jumpPrevWeek'] = static::getJumpWeekDate(-1, $objRuntime);
 
         // Filter form: get date dropdown
-        $arrData['filterBoard']['weekSelection'] = ResourceBookingHelper::getWeekSelection($objModule->tstampFirstPossibleWeek, $objModule->tstampLastPossibleWeek, true);
+        $arrData['filterBoard']['weekSelection'] = ResourceBookingHelper::getWeekSelection($objRuntime->tstampFirstPossibleWeek, $objRuntime->tstampLastPossibleWeek, true);
 
-        $objUser = $objModule->objUser;
+        $objUser = $objRuntime->objUser;
 
         // Logged in user
         $arrData['loggedInUser'] = array(
@@ -101,18 +104,18 @@ class ResourceBookingHelper
         );
 
         // Selected week
-        $arrData['activeWeekTstamp'] = (int)$objModule->activeWeekTstamp;
+        $arrData['activeWeekTstamp'] = (int)$objRuntime->activeWeekTstamp;
         $arrData['activeWeek'] = array(
-            'tstampStart' => $objModule->activeWeekTstamp,
-            'tstampEnd'   => DateHelper::addDaysToTime(6, $objModule->activeWeekTstamp),
-            'dateStart'   => Date::parse(Config::get('dateFormat'), $objModule->activeWeekTstamp),
-            'dateEnd'     => Date::parse(Config::get('dateFormat'), DateHelper::addDaysToTime(6, $objModule->activeWeekTstamp)),
-            'weekNumber'  => Date::parse('W', $objModule->activeWeekTstamp),
-            'year'        => Date::parse('Y', $objModule->activeWeekTstamp),
+            'tstampStart' => $objRuntime->activeWeekTstamp,
+            'tstampEnd'   => DateHelper::addDaysToTime(6, $objRuntime->activeWeekTstamp),
+            'dateStart'   => Date::parse(Config::get('dateFormat'), $objRuntime->activeWeekTstamp),
+            'dateEnd'     => Date::parse(Config::get('dateFormat'), DateHelper::addDaysToTime(6, $objRuntime->activeWeekTstamp)),
+            'weekNumber'  => Date::parse('W', $objRuntime->activeWeekTstamp),
+            'year'        => Date::parse('Y', $objRuntime->activeWeekTstamp),
         );
 
         // Get booking RepeatsSelection
-        $arrData['bookingRepeatsSelection'] = ResourceBookingHelper::getWeekSelection($objModule->activeWeekTstamp, DateHelper::addDaysToTime(7 * $objModule->intAheadWeeks), false);
+        $arrData['bookingRepeatsSelection'] = ResourceBookingHelper::getWeekSelection($objRuntime->activeWeekTstamp, DateHelper::addDaysToTime(7 * $objRuntime->intAheadWeeks), false);
 
         // Send weekdays, dates and day
         $arrWeek = array();
@@ -120,7 +123,7 @@ class ResourceBookingHelper
         for ($i = 0; $i < 7; $i++)
         {
             // Skip days
-            if ($objModule->model->resourceBooking_hideDays && !in_array($i, StringUtil::deserialize($objModule->model->resourceBooking_hideDaysSelection, true)))
+            if ($objRuntime->moduleModel->resourceBooking_hideDays && !in_array($i, StringUtil::deserialize($objRuntime->moduleModel->resourceBooking_hideDaysSelection, true)))
             {
                 continue;
             }
@@ -128,27 +131,27 @@ class ResourceBookingHelper
                 'index'      => $i,
                 'title'      => $GLOBALS['TL_LANG']['DAYS_LONG'][$i] != '' ? $GLOBALS['TL_LANG']['DAYS_LONG'][$i] : $arrWeekdays[$i],
                 'titleShort' => $GLOBALS['TL_LANG']['DAYS_SHORTED'][$i] != '' ? $GLOBALS['TL_LANG']['DAYS_SHORTED'][$i] : $arrWeekdays[$i],
-                'date'       => Date::parse('d.m.Y', strtotime(Date::parse('Y-m-d', $objModule->activeWeekTstamp) . " +" . $i . " day"))
+                'date'       => Date::parse('d.m.Y', strtotime(Date::parse('Y-m-d', $objRuntime->activeWeekTstamp) . " +" . $i . " day"))
             );
         }
         // Weekdays
         $arrData['weekdays'] = $arrWeek;
 
         $arrData['activeResourceTypeId'] = 'undefined';
-        if ($objModule->objSelectedResourceType !== null)
+        if ($objRuntime->objSelectedResourceType !== null)
         {
-            $arrData['activeResourceType'] = $objModule->objSelectedResourceType->row();
-            $arrData['activeResourceTypeId'] = $objModule->objSelectedResourceType->id;
+            $arrData['activeResourceType'] = $objRuntime->objSelectedResourceType->row();
+            $arrData['activeResourceTypeId'] = $objRuntime->objSelectedResourceType->id;
         }
 
         // Get rows
         $arrData['activeResourceId'] = 'undefined';
-        if ($objModule->objSelectedResource !== null && $objModule->objSelectedResourceType !== null)
+        if ($objRuntime->objSelectedResource !== null && $objRuntime->objSelectedResourceType !== null)
         {
-            $arrData['activeResourceId'] = $objModule->objSelectedResource->id;
-            $arrData['activeResource'] = $objModule->objSelectedResource->row();
+            $arrData['activeResourceId'] = $objRuntime->objSelectedResource->id;
+            $arrData['activeResource'] = $objRuntime->objSelectedResource->row();
 
-            $objSelectedResource = $objModule->objSelectedResource;
+            $objSelectedResource = $objRuntime->objSelectedResource;
             $objTimeslots = ResourceBookingTimeSlotModel::findPublishedByPid($objSelectedResource->timeSlotType);
             $rows = array();
             $rowCount = 0;
@@ -159,7 +162,7 @@ class ResourceBookingHelper
                     $cells = array();
                     $objRow = new \stdClass();
 
-                    $cssID = sprintf('timeSlotModId_%s_%s', $objModule->model->id, $objTimeslots->id);
+                    $cssID = sprintf('timeSlotModId_%s_%s', $objRuntime->moduleModel->id, $objTimeslots->id);
                     $cssClass = 'time-slot-' . $objTimeslots->id;
 
                     // Get the CSS ID
@@ -183,13 +186,13 @@ class ResourceBookingHelper
                     for ($colCount = 0; $colCount < 7; $colCount++)
                     {
                         // Skip days
-                        if ($objModule->model->resourceBooking_hideDays && !in_array($colCount, StringUtil::deserialize($objModule->model->resourceBooking_hideDaysSelection, true)))
+                        if ($objRuntime->moduleModel->resourceBooking_hideDays && !in_array($colCount, StringUtil::deserialize($objRuntime->moduleModel->resourceBooking_hideDaysSelection, true)))
                         {
                             continue;
                         }
 
-                        $startTimestamp = strtotime(sprintf('+%s day', $colCount), $objModule->activeWeekTstamp) + $objTimeslots->startTime;
-                        $endTimestamp = strtotime(sprintf('+%s day', $colCount), $objModule->activeWeekTstamp) + $objTimeslots->endTime;
+                        $startTimestamp = strtotime(sprintf('+%s day', $colCount), $objRuntime->activeWeekTstamp) + $objTimeslots->startTime;
+                        $endTimestamp = strtotime(sprintf('+%s day', $colCount), $objRuntime->activeWeekTstamp) + $objTimeslots->endTime;
                         $objTs = new \stdClass();
                         $objTs->index = $colCount;
                         $objTs->weekday = $arrWeekdays[$colCount];
@@ -198,22 +201,22 @@ class ResourceBookingHelper
                         $objTs->endTimeString = Date::parse('H:i', $endTimestamp);
                         $objTs->endTimestamp = (int)$endTimestamp;
                         $objTs->timeSpanString = Date::parse('H:i', $startTimestamp) . ' - ' . Date::parse('H:i', $endTimestamp);
-                        $objTs->mondayTimestampSelectedWeek = (int)$objModule->activeWeekTstamp;
+                        $objTs->mondayTimestampSelectedWeek = (int)$objRuntime->activeWeekTstamp;
                         $objTs->isBooked = ResourceBookingHelper::isResourceBooked($objSelectedResource, $startTimestamp, $endTimestamp);
                         $objTs->isEditable = $objTs->isBooked ? false : true;
                         $objTs->timeSlotId = $objTimeslots->id;
                         $objTs->resourceId = $objSelectedResource->id;
                         $objTs->isEditable = true;
                         // slotId-startTime-endTime-mondayTimestampSelectedWeek
-                        $objTs->bookingCheckboxValue = sprintf('%s-%s-%s-%s', $objTimeslots->id, $startTimestamp, $endTimestamp, $objModule->activeWeekTstamp);
-                        $objTs->bookingCheckboxId = sprintf('bookingCheckbox_modId_%s_%s_%s', $objModule->model->id, $rowCount, $colCount);
+                        $objTs->bookingCheckboxValue = sprintf('%s-%s-%s-%s', $objTimeslots->id, $startTimestamp, $endTimestamp, $objRuntime->activeWeekTstamp);
+                        $objTs->bookingCheckboxId = sprintf('bookingCheckbox_modId_%s_%s_%s', $objRuntime->moduleModel->id, $rowCount, $colCount);
                         if ($objTs->isBooked)
                         {
                             $objTs->isEditable = false;
                             $objBooking = ResourceBookingModel::findOneByResourceIdStarttimeAndEndtime($objSelectedResource, $startTimestamp, $endTimestamp);
                             if ($objBooking !== null)
                             {
-                                if ($objBooking->member === $objModule->objUser->id)
+                                if ($objBooking->member === $objRuntime->objUser->id)
                                 {
                                     $objTs->isEditable = true;
                                     $objTs->isHolder = true;
@@ -292,14 +295,14 @@ class ResourceBookingHelper
     }
 
     /**
-     * @param ResourceBookingWeekcalendarController $objModule
+     * @param Runtime $objRuntime
      * @param FrontendUser $objUser
      * @param ResourceBookingResourceModel $objResource
      * @param array $arrBookingDateSelection
      * @param int $bookingRepeatStopWeekTstamp
      * @return array
      */
-    public static function prepareBookingSelection(ResourceBookingWeekcalendarController $objModule, FrontendUser $objUser, ResourceBookingResourceModel $objResource, array $arrBookingDateSelection, int $bookingRepeatStopWeekTstamp): array
+    public static function prepareBookingSelection(Runtime $objRuntime, FrontendUser $objUser, ResourceBookingResourceModel $objResource, array $arrBookingDateSelection, int $bookingRepeatStopWeekTstamp): array
     {
         $arrBookings = array();
 
@@ -462,10 +465,10 @@ class ResourceBookingHelper
 
     /**
      * @param int $intJumpWeek
-     * @param ResourceBookingWeekcalendarController $objModule
+     * @param Runtime $objRuntime
      * @return array
      */
-    public static function getJumpWeekDate(int $intJumpWeek, ResourceBookingWeekcalendarController $objModule): array
+    public static function getJumpWeekDate(int $intJumpWeek, Runtime $objRuntime): array
     {
         $arrReturn = array(
             'disabled' => false,
@@ -474,14 +477,14 @@ class ResourceBookingHelper
 
         $intJumpDays = 7 * $intJumpWeek;
         // Create 1 week back and 1 week ahead links
-        $jumpTime = DateHelper::addDaysToTime($intJumpDays, $objModule->activeWeekTstamp);
+        $jumpTime = DateHelper::addDaysToTime($intJumpDays, $objRuntime->activeWeekTstamp);
         if (!DateHelper::isValidDate($jumpTime))
         {
-            $jumpTime = $objModule->activeWeekTstamp;
+            $jumpTime = $objRuntime->activeWeekTstamp;
             $arrReturn['disabled'] = true;
         }
 
-        if (!$objModule->activeWeekTstamp > 0 || $objModule->objSelectedResourceType === null || $objModule->objSelectedResource === null)
+        if (!$objRuntime->activeWeekTstamp > 0 || $objRuntime->objSelectedResourceType === null || $objRuntime->objSelectedResource === null)
         {
             $arrReturn['disabled'] = true;
         }

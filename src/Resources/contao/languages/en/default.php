@@ -20,8 +20,8 @@ $GLOBALS['TL_LANG']['DAYS_SHORTED'][6] = 'Sun';
 $GLOBALS['TL_LANG']['DAYS_LONG'][0] = 'Monday';
 $GLOBALS['TL_LANG']['DAYS_LONG'][1] = 'Tuesday';
 $GLOBALS['TL_LANG']['DAYS_LONG'][2] = 'Wednesday';
-$GLOBALS['TL_LANG']['DAYS_LONG'][3] = 'Donnerstag';
-$GLOBALS['TL_LANG']['DAYS_LONG'][4] = 'Thursday';
+$GLOBALS['TL_LANG']['DAYS_LONG'][3] = 'Thursday';
+$GLOBALS['TL_LANG']['DAYS_LONG'][4] = 'Friday';
 $GLOBALS['TL_LANG']['DAYS_LONG'][5] = 'Saturday';
 $GLOBALS['TL_LANG']['DAYS_LONG'][6] = 'Sunday';
 
