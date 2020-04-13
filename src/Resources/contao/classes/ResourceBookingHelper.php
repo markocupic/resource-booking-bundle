@@ -42,8 +42,9 @@ class ResourceBookingHelper
     {
         $arrData = array();
 
+        // Load language file
         System::loadLanguageFile('default', $objRuntime->sessionBag->get('language'));
-
+        
         // Handle autologout
         $arrData['opt']['autologout'] = $objRuntime->moduleModel->resourceBooking_autologout;
         $arrData['opt']['autologoutDelay'] = $objRuntime->moduleModel->resourceBooking_autologoutDelay;
@@ -90,7 +91,7 @@ class ResourceBookingHelper
         $arrData['filterBoard']['jumpPrevWeek'] = static::getJumpWeekDate(-1, $objRuntime);
 
         // Filter form: get date dropdown
-        $arrData['filterBoard']['weekSelection'] = ResourceBookingHelper::getWeekSelection($objRuntime->tstampFirstPossibleWeek, $objRuntime->tstampLastPossibleWeek, true);
+        $arrData['filterBoard']['weekSelection'] = ResourceBookingHelper::getWeekSelection($objRuntime, $objRuntime->tstampFirstPossibleWeek, $objRuntime->tstampLastPossibleWeek, true);
 
         $objUser = $objRuntime->objUser;
 
@@ -115,7 +116,7 @@ class ResourceBookingHelper
         );
 
         // Get booking RepeatsSelection
-        $arrData['bookingRepeatsSelection'] = ResourceBookingHelper::getWeekSelection($objRuntime->activeWeekTstamp, DateHelper::addDaysToTime(7 * $objRuntime->intAheadWeeks), false);
+        $arrData['bookingRepeatsSelection'] = ResourceBookingHelper::getWeekSelection($objRuntime, $objRuntime->activeWeekTstamp, DateHelper::addDaysToTime(7 * $objRuntime->intAheadWeeks), false);
 
         // Send weekdays, dates and day
         $arrWeek = array();
@@ -418,13 +419,18 @@ class ResourceBookingHelper
     }
 
     /**
+     * @param Runtime $objRuntime
      * @param int $startTstamp
      * @param int $endTstamp
      * @param bool $injectEmptyLine
      * @return array
      */
-    public static function getWeekSelection(int $startTstamp, int $endTstamp, bool $injectEmptyLine = false): array
+    public static function getWeekSelection(Runtime $objRuntime, int $startTstamp, int $endTstamp, bool $injectEmptyLine = false): array
     {
+
+        // Load language file
+        System::loadLanguageFile('default', $objRuntime->sessionBag->get('language'));
+
         $arrWeeks = array();
 
         $currentTstamp = $startTstamp;

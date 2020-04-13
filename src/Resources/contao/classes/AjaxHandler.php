@@ -69,6 +69,9 @@ class AjaxHandler
      */
     public function sendBookingRequest(Runtime $objRuntime): array
     {
+        // Load language file
+        System::loadLanguageFile('default', $objRuntime->sessionBag->get('language'));
+
         $arrJson = [];
         $arrJson['status'] = 'error';
         $errors = 0;
@@ -158,6 +161,9 @@ class AjaxHandler
      */
     public function sendBookingFormValidationRequest(Runtime $objRuntime): array
     {
+        // Load language file
+        System::loadLanguageFile('default', $objRuntime->sessionBag->get('language'));
+
         $arrJson = [];
         $arrJson['status'] = 'error';
         $arrJson['bookingFormValidation'] = [
@@ -225,6 +231,10 @@ class AjaxHandler
      */
     public function sendCancelBookingRequest(Runtime $objRuntime): array
     {
+
+        // Load language file
+        System::loadLanguageFile('default', $objRuntime->sessionBag->get('language'));
+
         $arrJson = [];
         $arrJson['status'] = 'error';
         if (FE_USER_LOGGED_IN && Input::post('bookingId') > 0)
@@ -282,11 +292,7 @@ class AjaxHandler
     public static function sendLogoutRequest(Runtime $objRuntime): void
     {
         // Unset session
-        /** @var  \Symfony\Component\HttpFoundation\Session\SessionInterface $objSession */
-        $objSession = System::getContainer()->get('session');
-        $bagName = System::getContainer()->getParameter('resource_booking_bundle.session.attribute_bag_name');
-        /** @var \Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag $session */
-        $session = $objSession->getBag($bagName);
+        $session = $objRuntime->sessionBag->get('language');
         $session->clear();
 
         // Unset cookie
