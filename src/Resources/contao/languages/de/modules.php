@@ -15,4 +15,4 @@ $GLOBALS['TL_LANG']['MOD']['timeSlotType'] = array('Zeitpläne', 'Buchungs-Zeitp
 
 // Frontend modules
 $GLOBALS['TL_LANG']['FMD']['resourceBooking'] = 'Resourcen-Buchungs-Module';
-$GLOBALS['TL_LANG']['FMD']['resourceBookingWeekCalendar'] = array('Wochenkalender mit Resourcen-Buchung', 'Wochenkalender mit Resourcen-Buchung');
+$GLOBALS['TL_LANG']['FMD']['resourceBookingWeekcalendar'] = array('Wochenkalender mit Resourcen-Buchung', 'Wochenkalender mit Resourcen-Buchung');

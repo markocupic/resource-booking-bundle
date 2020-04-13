@@ -22,7 +22,7 @@ use Contao\System;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Contao\CoreBundle\Monolog\ContaoContext;
 use Psr\Log\LogLevel;
-use Markocupic\ResourceBookingBundle\ModuleWeekcalendar;
+use Markocupic\ResourceBookingBundle\Controller\FrontendModule\ResourceBookingWeekcalendarController;
 use Contao\CoreBundle\Exception\RedirectResponseException;
 
 /**
@@ -35,7 +35,7 @@ class AjaxHandler
      * @param $objModule
      * @return JsonResponse
      */
-    public function fetchDataRequest(ModuleWeekcalendar $objModule): JsonResponse
+    public function fetchDataRequest(ResourceBookingWeekcalendarController $objModule): JsonResponse
     {
         $arrJson = array();
         $arrJson['data'] = ResourceBookingHelper::fetchData($objModule);
@@ -48,7 +48,7 @@ class AjaxHandler
      * @param $objModule
      * @return JsonResponse
      */
-    public function sendApplyFilterRequest(ModuleWeekcalendar $objModule): JsonResponse
+    public function sendApplyFilterRequest(ResourceBookingWeekcalendarController $objModule): JsonResponse
     {
         $arrJson = array();
         $arrJson['data'] = ResourceBookingHelper::fetchData($objModule);
@@ -61,7 +61,7 @@ class AjaxHandler
     /**
      * @param $objModule
      */
-    public function sendJumpWeekRequest(ModuleWeekcalendar $objModule): void
+    public function sendJumpWeekRequest(ResourceBookingWeekcalendarController $objModule): void
     {
         $this->sendApplyFilterRequest($objModule);
     }
@@ -69,7 +69,7 @@ class AjaxHandler
     /**
      * @return JsonResponse
      */
-    public function sendBookingRequest(ModuleWeekcalendar $objModule): JsonResponse
+    public function sendBookingRequest(ResourceBookingWeekcalendarController $objModule): JsonResponse
     {
         $arrJson = array();
         $arrJson['status'] = 'error';
@@ -158,7 +158,7 @@ class AjaxHandler
     /**
      * @return JsonResponse
      */
-    public function sendBookingFormValidationRequest(ModuleWeekcalendar $objModule): JsonResponse
+    public function sendBookingFormValidationRequest(ResourceBookingWeekcalendarController $objModule): JsonResponse
     {
         $arrJson = array();
         $arrJson['status'] = 'error';
@@ -286,7 +286,12 @@ class AjaxHandler
     public static function sendLogoutRequest()
     {
         // Unset session
-        unset($_SESSION['rbb']);
+        /** @var  \Symfony\Component\HttpFoundation\Session\SessionInterface $objSession */
+        $objSession = System::getContainer()->get('session');
+        $bagName = System::getContainer()->getParameter('resource_booking_bundle.session.attribute_bag_name');
+        /** @var \Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag $session */
+        $session = $objSession->getBag($bagName);
+        $session->clear();
 
         // Unset cookie
         $cookie_name = 'PHPSESSID';

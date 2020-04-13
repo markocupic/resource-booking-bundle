@@ -2,7 +2,7 @@ $notBookableBg: rgba(255, 200, 196, 0.66);
 $bookableBg: rgba(182, 228, 182, 0.38);
 $loggedInUserIsHolderBg: rgba(3, 169, 244, 0.32);
 
-.mod_resourceBookingWeekCalendar {
+.mod_resourceBookingWeekcalendar {
   .resource-booking-app .vue-application {
     visibility: hidden;
   }
@@ -91,7 +91,7 @@ $loggedInUserIsHolderBg: rgba(3, 169, 244, 0.32);
   .timeSpanSelect option[selected] {
     background-color: #149efb;
   }
-} 
+}
 
 // Customizing
 // Etwas Abstand nach dem Mittag

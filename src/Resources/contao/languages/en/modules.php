@@ -15,4 +15,4 @@ $GLOBALS['TL_LANG']['MOD']['timeSlotType'] = array('Timetables', 'Manage timetab
 
 // Frontend modules
 $GLOBALS['TL_LANG']['FMD']['resourceBooking'] = 'Resource booking modules';
-$GLOBALS['TL_LANG']['FMD']['resourceBookingWeekCalendar'] = array('Resource booking module', 'Resource booking weekcalendar');
+$GLOBALS['TL_LANG']['FMD']['resourceBookingWeekcalendar'] = array('Resource booking module', 'Resource booking weekcalendar');

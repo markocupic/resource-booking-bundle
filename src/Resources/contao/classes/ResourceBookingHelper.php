@@ -23,7 +23,7 @@ use Contao\ResourceBookingResourceModel;
 use Contao\ResourceBookingTimeSlotModel;
 use Contao\ResourceBookingResourceTypeModel;
 use Contao\FrontendUser;
-use Markocupic\ResourceBookingBundle\ModuleWeekcalendar;
+use Markocupic\ResourceBookingBundle\Controller\FrontendModule\ResourceBookingWeekcalendarController;
 use Contao\Input;
 
 /**
@@ -34,17 +34,17 @@ class ResourceBookingHelper
 {
 
     /**
-     * @param \Markocupic\ResourceBookingBundle\ModuleWeekcalendar $objModule
+     * @param ResourceBookingWeekcalendarController $objModule
      * @return array
      */
-    public static function fetchData(ModuleWeekcalendar $objModule): array
+    public static function fetchData(ResourceBookingWeekcalendarController $objModule): array
     {
         $arrData = array();
 
         // Handle autologout
-        $arrData['opt']['autologout'] = $objModule->resourceBooking_autologout;
-        $arrData['opt']['autologoutDelay'] = $objModule->resourceBooking_autologoutDelay;
-        $arrData['opt']['autologoutRedirect'] = Controller::replaceInsertTags(sprintf('{{link_url::%s}}', $objModule->resourceBooking_autologoutRedirect));
+        $arrData['opt']['autologout'] = $objModule->model->resourceBooking_autologout;
+        $arrData['opt']['autologoutDelay'] = $objModule->model->resourceBooking_autologoutDelay;
+        $arrData['opt']['autologoutRedirect'] = Controller::replaceInsertTags(sprintf('{{link_url::%s}}', $objModule->model->resourceBooking_autologoutRedirect));
 
         // Messages
         if ($objModule->objSelectedResourceType === null && !Message::hasMessages())
@@ -59,7 +59,7 @@ class ResourceBookingHelper
 
         // Filter form: get resource types dropdown
         $rows = array();
-        $arrResTypesIds = StringUtil::deserialize($objModule->resourceBooking_resourceTypes, true);
+        $arrResTypesIds = StringUtil::deserialize($objModule->model->resourceBooking_resourceTypes, true);
         if (($objResourceTypes = ResourceBookingResourceTypeModel::findMultipleAndPublishedByIds($arrResTypesIds)) !== null)
         {
             while ($objResourceTypes->next())
@@ -120,7 +120,7 @@ class ResourceBookingHelper
         for ($i = 0; $i < 7; $i++)
         {
             // Skip days
-            if ($objModule->resourceBooking_hideDays && !in_array($i, StringUtil::deserialize($objModule->resourceBooking_hideDaysSelection, true)))
+            if ($objModule->model->resourceBooking_hideDays && !in_array($i, StringUtil::deserialize($objModule->model->resourceBooking_hideDaysSelection, true)))
             {
                 continue;
             }
@@ -159,7 +159,7 @@ class ResourceBookingHelper
                     $cells = array();
                     $objRow = new \stdClass();
 
-                    $cssID = sprintf('timeSlotModId_%s_%s', $objModule->id, $objTimeslots->id);
+                    $cssID = sprintf('timeSlotModId_%s_%s', $objModule->model->id, $objTimeslots->id);
                     $cssClass = 'time-slot-' . $objTimeslots->id;
 
                     // Get the CSS ID
@@ -183,7 +183,7 @@ class ResourceBookingHelper
                     for ($colCount = 0; $colCount < 7; $colCount++)
                     {
                         // Skip days
-                        if ($objModule->resourceBooking_hideDays && !in_array($colCount, StringUtil::deserialize($objModule->resourceBooking_hideDaysSelection, true)))
+                        if ($objModule->model->resourceBooking_hideDays && !in_array($colCount, StringUtil::deserialize($objModule->model->resourceBooking_hideDaysSelection, true)))
                         {
                             continue;
                         }
@@ -206,7 +206,7 @@ class ResourceBookingHelper
                         $objTs->isEditable = true;
                         // slotId-startTime-endTime-mondayTimestampSelectedWeek
                         $objTs->bookingCheckboxValue = sprintf('%s-%s-%s-%s', $objTimeslots->id, $startTimestamp, $endTimestamp, $objModule->activeWeekTstamp);
-                        $objTs->bookingCheckboxId = sprintf('bookingCheckbox_modId_%s_%s_%s', $objModule->id, $rowCount, $colCount);
+                        $objTs->bookingCheckboxId = sprintf('bookingCheckbox_modId_%s_%s_%s', $objModule->model->id, $rowCount, $colCount);
                         if ($objTs->isBooked)
                         {
                             $objTs->isEditable = false;
@@ -292,14 +292,14 @@ class ResourceBookingHelper
     }
 
     /**
-     * @param \Markocupic\ResourceBookingBundle\ModuleWeekcalendar $objModule
+     * @param ResourceBookingWeekcalendarController $objModule
      * @param FrontendUser $objUser
      * @param ResourceBookingResourceModel $objResource
      * @param array $arrBookingDateSelection
      * @param int $bookingRepeatStopWeekTstamp
      * @return array
      */
-    public static function prepareBookingSelection(ModuleWeekcalendar $objModule, FrontendUser $objUser, ResourceBookingResourceModel $objResource, array $arrBookingDateSelection, int $bookingRepeatStopWeekTstamp): array
+    public static function prepareBookingSelection(ResourceBookingWeekcalendarController $objModule, FrontendUser $objUser, ResourceBookingResourceModel $objResource, array $arrBookingDateSelection, int $bookingRepeatStopWeekTstamp): array
     {
         $arrBookings = array();
 
@@ -461,12 +461,11 @@ class ResourceBookingHelper
     }
 
     /**
-     * Get the 1 Week back/ahead date
      * @param int $intJumpWeek
-     * @param \Markocupic\ResourceBookingBundle\ModuleWeekcalendar $objModule
+     * @param ResourceBookingWeekcalendarController $objModule
      * @return array
      */
-    public static function getJumpWeekDate(int $intJumpWeek, ModuleWeekcalendar $objModule): array
+    public static function getJumpWeekDate(int $intJumpWeek, ResourceBookingWeekcalendarController $objModule): array
     {
         $arrReturn = array(
             'disabled' => false,
