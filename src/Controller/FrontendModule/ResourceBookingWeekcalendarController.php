@@ -38,6 +38,9 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
     /** @var  Runtime */
     private $runtime;
 
+    /** @var string */
+    private $sessionId;
+
     /**
      * ResourceBookingWeekcalendarController constructor.
      * @param Security $security
@@ -60,17 +63,26 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
      */
     public function __invoke(Request $request, ModuleModel $model, string $section, array $classes = null, PageModel $page = null): Response
     {
+
         // Is frontend
         if ($page instanceof PageModel && $this->get('contao.routing.scope_matcher')->isFrontendRequest($request))
         {
-            // Initialize application
-            $this->runtime->initialize((int) $model->id, (int) $page->id);
-
             /** @var Controller $controllerAdapter */
             $controllerAdapter = $this->get('contao.framework')->getAdapter(Controller::class);
 
             /** @var Environment $environmentAdapter */
             $environmentAdapter = $this->get('contao.framework')->getAdapter(Environment::class);
+
+            if (!$request->query->has('sessionId'))
+            {
+                $url = \Haste\Util\Url::addQueryString('sessionId=' . sha1(microtime()).sha1(random_bytes(6)), $environmentAdapter->get('request'));
+                $controllerAdapter->redirect($url);
+            }
+
+            $this->sessionId = $request->query->get('sessionId');
+
+            // Initialize application
+            $this->runtime->initialize((int) $model->id, (int) $page->id);
 
             /** @var FrontendUser $user */
             $objUser = $this->security->getUser();
@@ -109,6 +121,8 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
      */
     protected function getResponse(Template $template, ModuleModel $model, Request $request): ?Response
     {
+        $template->sessionId = $this->sessionId;
+
         // Let vue.js do the rest ;-)
         return $template->getResponse();
     }

@@ -44,7 +44,7 @@ class ResourceBookingHelper
 
         // Load language file
         System::loadLanguageFile('default', $objRuntime->sessionBag->get('language'));
-        
+
         // Handle autologout
         $arrData['opt']['autologout'] = $objRuntime->moduleModel->resourceBooking_autologout;
         $arrData['opt']['autologoutDelay'] = $objRuntime->moduleModel->resourceBooking_autologoutDelay;

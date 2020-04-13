@@ -19,6 +19,7 @@ class resourceBookingApp {
                 isOnline: false,
                 loggedInUser: [],
                 requestToken: '',
+                sessionId: '',
                 weekdays: [],
                 timeSlots: [],
                 rows: [],
@@ -46,7 +47,10 @@ class resourceBookingApp {
                 }
 
                 // Post requests require a request token
-                params.requestToken = params.requestToken;
+                self.requestToken = params.requestToken;
+
+                // Session Id
+                self.sessionId = params.sessionId;
 
                 // Fetch data from server each 30s
                 self.fetchDataRequest();
@@ -111,7 +115,7 @@ class resourceBookingApp {
                     data.append('action', 'fetchDataRequest');
 
                     // Fetch
-                    fetch('_resource_booking_controller/ajax',
+                    fetch('_resource_booking_controller/ajax?sessionId=' + self.sessionId,
                         {
                             method: "POST",
                             body: data,
@@ -155,7 +159,7 @@ class resourceBookingApp {
                         data.append('bookingDateSelection[]', self.bookingModal.selectedTimeSlots[i]);
                     }
 
-                    fetch('_resource_booking_controller/ajax',
+                    fetch('_resource_booking_controller/ajax?sessionId=' + self.sessionId,
                         {
                             method: "POST",
                             body: data,
@@ -205,7 +209,7 @@ class resourceBookingApp {
                         data.append('bookingDateSelection[]', self.bookingModal.selectedTimeSlots[i]);
                     }
 
-                    fetch('_resource_booking_controller/ajax',
+                    fetch('_resource_booking_controller/ajax?sessionId=' + self.sessionId,
                         {
                             method: "POST",
                             body: data,
@@ -240,7 +244,7 @@ class resourceBookingApp {
                     data.append('REQUEST_TOKEN', self.requestToken);
                     data.append('bookingId', self.bookingModal.activeTimeSlot.bookingId);
 
-                    fetch('_resource_booking_controller/ajax',
+                    fetch('_resource_booking_controller/ajax?sessionId=' + self.sessionId,
                         {
                             method: "POST",
                             body: data,
@@ -283,7 +287,7 @@ class resourceBookingApp {
                     data.append('action', 'sendLogoutRequest');
                     data.append('REQUEST_TOKEN', self.requestToken);
 
-                    fetch('_resource_booking_controller/ajax',
+                    fetch('_resource_booking_controller/ajax?sessionId=' + self.sessionId,
                         {
                             method: "POST",
                             body: data,
@@ -319,7 +323,7 @@ class resourceBookingApp {
                     data.append('res', self.activeResourceId);
                     data.append('date', self.activeWeekTstamp);
 
-                    fetch('_resource_booking_controller/ajax',
+                    fetch('_resource_booking_controller/ajax?sessionId=' + self.sessionId,
                         {
                             method: "POST",
                             body: data,
@@ -365,7 +369,7 @@ class resourceBookingApp {
                     data.append('date', tstamp);
 
 
-                    fetch('_resource_booking_controller/ajax',
+                    fetch('_resource_booking_controller/ajax?sessionId=' + self.sessionId,
                         {
                             method: "POST",
                             body: data,

@@ -156,8 +156,19 @@ class Runtime
         $session->set('pageModelId', $objPageModel->id);
         $this->pageModel = $objPageModel;
 
+        if (Environment::get('isAjaxRequest'))
+        {
+            if($session->get('sessionId') !== $request->query->get('sessionId'))
+            {
+                throw new \Exception('Invalid session id detected.');
+            }
+        }
+
         if (!Environment::get('isAjaxRequest'))
         {
+            // Set sessionId
+            $session->set('sessionId', $request->query->get('sessionId'));
+
             // Set language
             if (!empty($objPageModel->language))
             {

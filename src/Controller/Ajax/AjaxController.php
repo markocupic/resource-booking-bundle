@@ -73,7 +73,7 @@ class AjaxController extends AbstractController
         $request = $this->requestStack->getCurrentRequest();
 
         // Handle ajax requests
-        if ($environmentAdapter->get('isAjaxRequest') && $request->request->has('action') && !empty($request->request->get('action')))
+        if ($environmentAdapter->get('isAjaxRequest') && $request->query->has('sessionId') && $request->request->has('action') && !empty($request->request->get('action')))
         {
             // Initialize application
             $this->runtime->initialize();
