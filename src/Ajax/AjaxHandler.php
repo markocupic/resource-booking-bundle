@@ -10,7 +10,7 @@ declare(strict_types=1);
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
-namespace Markocupic\ResourceBookingBundle;
+namespace Markocupic\ResourceBookingBundle\Ajax;
 
 use Contao\Config;
 use Contao\CoreBundle\Exception\RedirectResponseException;
@@ -21,9 +21,11 @@ use Contao\Input;
 use Contao\ResourceBookingModel;
 use Contao\ResourceBookingResourceModel;
 use Contao\System;
-use Markocupic\ResourceBookingBundle\Runtime\Runtime;
 use Psr\Log\LogLevel;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Contao\CoreBundle\Framework\ContaoFramework;
+use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Component\Security\Core\Security;
 
 /**
  * Class AjaxHandler
@@ -31,46 +33,75 @@ use Symfony\Component\HttpFoundation\JsonResponse;
  */
 class AjaxHandler
 {
+
+    /** @var ContaoFramework */
+    private $framework;
+
+    /** @var Security */
+    private $ajaxHelper;
+
+    /** @var SessionInterface */
+    private $session;
+
+    /** @var RequestStack */
+    private $requestStack;
+
+    /** @var \Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag */
+    private $sessionBag;
+
     /**
-     * @param Runtime $objRuntime
+     * AjaxHandler constructor.
+     * @param ContaoFramework $framework
+     * @param AjaxHelper $ajaxHelper
+     * @param SessionInterface $session
+     * @param RequestStack $requestStack
+     * @param string $bagName
+     */
+    public function __construct(ContaoFramework $framework, AjaxHelper $ajaxHelper, SessionInterface $session, RequestStack $requestStack, string $bagName)
+    {
+        $this->framework = $framework;
+        $this->ajaxHelper = $ajaxHelper;
+        $this->session = $session;
+        $this->requestStack = $requestStack;
+        $this->sessionBag = $session->getBag($bagName);
+    }
+
+    /**
      * @return array
      */
-    public function fetchDataRequest(Runtime $objRuntime): array
+    public function fetchDataRequest(): array
     {
         $arrJson = [];
-        $arrJson['data'] = ResourceBookingHelper::fetchData($objRuntime);
+        $arrJson['data'] = $this->ajaxHelper->fetchData();
         $arrJson['status'] = 'success';
         return $arrJson;
     }
 
     /**
-     * @param Runtime $objRuntime
      * @return array
      */
-    public function sendApplyFilterRequest(Runtime $objRuntime): array
+    public function sendApplyFilterRequest(): array
     {
         $arrJson = [];
-        $arrJson['data'] = ResourceBookingHelper::fetchData($objRuntime);
+        $arrJson['data'] = $this->ajaxHelper->fetchData();
         $arrJson['status'] = 'success';
         return $arrJson;
     }
 
     /**
-     * @param Runtime $objRuntime
      */
-    public function sendJumpWeekRequest(Runtime $objRuntime): array
+    public function sendJumpWeekRequest(): array
     {
-        return $this->sendApplyFilterRequest($objRuntime);
+        return $this->sendApplyFilterRequest();
     }
 
     /**
-     * @param Runtime $objRuntime
      * @return array
      */
-    public function sendBookingRequest(Runtime $objRuntime): array
+    public function sendBookingRequest(): array
     {
         // Load language file
-        System::loadLanguageFile('default', $objRuntime->sessionBag->get('language'));
+        System::loadLanguageFile('default', $this->sessionBag->get('language'));
 
         $arrJson = [];
         $arrJson['status'] = 'error';
@@ -100,7 +131,7 @@ class AjaxHandler
             $objUser = FrontendUser::getInstance();
 
             // Prepare $arrBookings with the helper method
-            $arrBookings = ResourceBookingHelper::prepareBookingSelection($objRuntime, $objUser, $objResource, $arrBookingDateSelection, (int) $bookingRepeatStopWeekTstamp);
+            $arrBookings = $this->ajaxHelper->prepareBookingSelection($objUser, $objResource, $arrBookingDateSelection, (int) $bookingRepeatStopWeekTstamp);
 
             foreach ($arrBookings as $arrBooking)
             {
@@ -156,13 +187,12 @@ class AjaxHandler
     }
 
     /**
-     * @param Runtime $objRuntime
      * @return array
      */
-    public function sendBookingFormValidationRequest(Runtime $objRuntime): array
+    public function sendBookingFormValidationRequest(): array
     {
         // Load language file
-        System::loadLanguageFile('default', $objRuntime->sessionBag->get('language'));
+        System::loadLanguageFile('default', $this->sessionBag->get('language'));
 
         $arrJson = [];
         $arrJson['status'] = 'error';
@@ -192,7 +222,8 @@ class AjaxHandler
             $objUser = FrontendUser::getInstance();
 
             // Prepare $arrBookings with the helper method
-            $arrBookings = ResourceBookingHelper::prepareBookingSelection($objRuntime, $objUser, $objResource, $arrBookingDateSelection, (int) $bookingRepeatStopWeekTstamp);
+            $ajaxHelper = System::getContainer()->get('Markocupic\ResourceBookingBundle\Ajax\AjaxHelper');
+            $arrBookings = $ajaxHelper->prepareBookingSelection($objUser, $objResource, $arrBookingDateSelection, (int) $bookingRepeatStopWeekTstamp);
 
             foreach ($arrBookings as $arrBooking)
             {
@@ -226,14 +257,12 @@ class AjaxHandler
     }
 
     /**
-     * @param Runtime $objRuntime
      * @return array
      */
-    public function sendCancelBookingRequest(Runtime $objRuntime): array
+    public function sendCancelBookingRequest(): array
     {
-
         // Load language file
-        System::loadLanguageFile('default', $objRuntime->sessionBag->get('language'));
+        System::loadLanguageFile('default', $this->sessionBag->get('language'));
 
         $arrJson = [];
         $arrJson['status'] = 'error';
@@ -275,10 +304,9 @@ class AjaxHandler
     }
 
     /**
-     * @param Runtime $objRuntime
      * @return array
      */
-    public function sendIsOnlineRequest(Runtime $objRuntime): array
+    public function sendIsOnlineRequest(): array
     {
         $arrJson = [];
         $arrJson['status'] = 'success';
@@ -287,13 +315,11 @@ class AjaxHandler
     }
 
     /**
-     * @param Runtime $objRuntime
      */
-    public static function sendLogoutRequest(Runtime $objRuntime): void
+    public function sendLogoutRequest(): void
     {
         // Unset session
-        $session = $objRuntime->sessionBag->get('language');
-        $session->clear();
+        $this->sessionBag->clear();
 
         // Unset cookie
         $cookie_name = 'PHPSESSID';
@@ -305,3 +331,4 @@ class AjaxHandler
     }
 
 }
+

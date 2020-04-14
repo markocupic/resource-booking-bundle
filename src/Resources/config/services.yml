@@ -11,7 +11,7 @@ services:
     arguments:
     - '@contao.framework'
     - '@security.helper'
-    - '@Markocupic\ResourceBookingBundle\Runtime\Runtime'
+    - '@Markocupic\ResourceBookingBundle\Session\InitializeSession'
     calls:
     - ['setContainer', ['@Psr\Container\ContainerInterface']]
     tags:
@@ -23,11 +23,21 @@ services:
     arguments:
     - '@contao.framework'
     - '@request_stack'
-    - '@Markocupic\ResourceBookingBundle\Runtime\Runtime'
+    - '@Markocupic\ResourceBookingBundle\Session\InitializeSession'
+    - '@Markocupic\ResourceBookingBundle\Ajax\AjaxHandler'
     public: true
 
   # Initialize application
-  Markocupic\ResourceBookingBundle\Runtime\Runtime:
+  Markocupic\ResourceBookingBundle\Session\InitializeSession:
+    arguments:
+    - '@contao.framework'
+    - '@security.helper'
+    - '@session'
+    - '@request_stack'
+    - '%resource_booking_bundle.session.attribute_bag_name%'
+
+  # Ajax helper
+  Markocupic\ResourceBookingBundle\Ajax\AjaxHelper:
     arguments:
     - '@contao.framework'
     - '@security.helper'
@@ -36,3 +46,12 @@ services:
     - '%resource_booking_bundle.session.attribute_bag_name%'
     public: true
 
+  # Ajax handler
+  Markocupic\ResourceBookingBundle\Ajax\AjaxHandler:
+    arguments:
+    - '@contao.framework'
+    - '@Markocupic\ResourceBookingBundle\Ajax\AjaxHelper'
+    - '@session'
+    - '@request_stack'
+    - '%resource_booking_bundle.session.attribute_bag_name%'
+    public: true

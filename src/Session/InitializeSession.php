@@ -10,10 +10,9 @@ declare(strict_types=1);
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
-namespace Markocupic\ResourceBookingBundle\Runtime;
+namespace Markocupic\ResourceBookingBundle\Session;
 
 use Contao\Config;
-use Contao\Controller;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Environment;
 use Contao\FrontendUser;
@@ -28,10 +27,10 @@ use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Security\Core\Security;
 
 /**
- * Class Runtime
- * @package Markocupic\ResourceBookingBundle\Runtime
+ * Class InitializeSession
+ * @package Markocupic\ResourceBookingBundle\Session
  */
-class Runtime
+class InitializeSession
 {
     /** @var ContaoFramework */
     private $framework;
@@ -49,43 +48,11 @@ class Runtime
     private $bagName;
 
     /** @var \Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag */
-    public $sessionBag;
-
-    /** @var ModuleModel */
-    public $moduleModel;
-
-    /** @var PageModel */
-    public $pageModel;
-
-    /** @var FrontendUser */
-    public $objUser;
-
-    /** @var string */
-    public $language;
-
-    /** @var ResourceBookingResourceTypeModel */
-    public $objSelectedResourceType;
-
-    /** @var ResourceBookingResourceModel */
-    public $objSelectedResource;
-
-    /** @var int */
-    public $intBackWeeks;
-
-    /** @var int */
-    public $intAheadWeeks;
-
-    /** @var int */
-    public $activeWeekTstamp;
-
-    /** @var int */
-    public $tstampFirstPossibleWeek;
-
-    /** @var int */
-    public $tstampLastPossibleWeek;
+    private $sessionBag;
 
     /**
-     * Runtime constructor.
+     * InitializeSession constructor.
+     * @param ContaoFramework $framework
      * @param Security $security
      * @param SessionInterface $session
      * @param RequestStack $requestStack
@@ -98,6 +65,7 @@ class Runtime
         $this->session = $session;
         $this->requestStack = $requestStack;
         $this->bagName = $bagName;
+        $this->sessionBag = $session->getBag($bagName);
     }
 
     /**
@@ -125,27 +93,21 @@ class Runtime
         /** @var Request $request */
         $request = $this->requestStack->getCurrentRequest();
 
-        /** @var \Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag $session */
-        $session = $this->session->getBag($this->bagName);
-
-        // Store sessionBag
-        $this->sessionBag = $session;
-
         // Add session id to the session & validate session id when is ajax request
         if (!$environmentAdapter->get('isAjaxRequest'))
         {
-            $session->set('sessionId', $request->query->get('sessionId'));
+            $this->sessionBag->set('sessionId', $request->query->get('sessionId'));
         }
         else
         {
-            if ($session->get('sessionId') !== $request->query->get('sessionId'))
+            if ($this->sessionBag->get('sessionId') !== $request->query->get('sessionId'))
             {
                 throw new \Exception('Invalid session id detected.');
             }
         }
 
         // Get $moduleModelId from parameter or session
-        $moduleModelId = $moduleModelId !== null ? $moduleModelId : ($session->has('moduleModelId') ? $session->get('moduleModelId') : null);
+        $moduleModelId = $moduleModelId !== null ? $moduleModelId : ($this->sessionBag->has('moduleModelId') ? $this->sessionBag->get('moduleModelId') : null);
 
         $objModuleModel = ModuleModel::findByPk($moduleModelId);
         if ($objModuleModel === null)
@@ -153,11 +115,10 @@ class Runtime
             throw new \Exception('Module id not set.');
         }
 
-        $session->set('moduleModelId', $objModuleModel->id);
-        $this->moduleModel = $objModuleModel;
+        $this->sessionBag->set('moduleModelId', $objModuleModel->id);
 
         // Get $pageModelId from parameter or session
-        $pageModelId = $pageModelId !== null ? $pageModelId : ($session->has('pageModelId') ? $session->get('pageModelId') : null);
+        $pageModelId = $pageModelId !== null ? $pageModelId : ($this->sessionBag->has('pageModelId') ? $this->sessionBag->get('pageModelId') : null);
 
         $objPageModel = PageModel::findByPk($pageModelId);
         if ($objPageModel === null)
@@ -165,7 +126,7 @@ class Runtime
             throw new \Exception('Page model not set.');
         }
 
-        $session->set('pageModelId', $objPageModel->id);
+        $this->sessionBag->set('pageModelId', $objPageModel->id);
         $this->pageModel = $objPageModel;
 
         if (!$environmentAdapter->get('isAjaxRequest'))
@@ -187,7 +148,7 @@ class Runtime
             {
                 $language = 'en';
             }
-            $session->set('language', $language);
+            $this->sessionBag->set('language', $language);
         }
 
         /** @var FrontendUser $user */
@@ -197,72 +158,66 @@ class Runtime
             // Return empty string if user has not logged in as a frontend user
             throw new \Exception('Application is permited to frontend users only.');
         }
-        else
-        {
-            $this->objUser = $objUser;
-        }
 
         // Catch resource type from session
-        $intResType = ($session->has('resType') && $session->get('resType') > 0) ? $session->get('resType') : null;
+        $intResType = ($this->sessionBag->has('resType') && $this->sessionBag->get('resType') > 0) ? $this->sessionBag->get('resType') : null;
 
         // Catch resource from session
-        $intRes = ($session->has('res') && $session->get('res') > 0) ? $session->get('res') : null;
+        $intRes = ($this->sessionBag->has('res') && $this->sessionBag->get('res') > 0) ? $this->sessionBag->get('res') : null;
 
         // Catch date from session
-        $intTstampDate = ($session->has('date')) ? $session->get('date') : $dateHelperAdapter->getMondayOfCurrentWeek();
+        $intTstampDate = ($this->sessionBag->has('date')) ? $this->sessionBag->get('date') : $dateHelperAdapter->getMondayOfCurrentWeek();
 
-        // Get resource type from post
+        // Get resource from post
         $intResType = $request->request->has('resType') ? (int) $request->request->get('resType') : $intResType;
-        if (empty($intResType))
+        if (null === $resourceBookingResourceTypeModelAdapter->findByPk($intResType))
         {
             // Set $intResType to 0,
-            // if we found no valid resource type neither in the session nor in the post
+            // if we found no valid resource neither in the session nor in the post
             $intResType = 0;
         }
 
         // Get resource from post
         $intRes = $request->request->has('res') ? (int) $request->request->get('res') : $intRes;
-        if (empty($intRes))
+        if (null === $resourceBookingResourceModelAdapter->findByPk($intRes))
         {
             // Set $intRes to 0,
             // if we found no valid resource neither in the session nor in the post
             $intRes = 0;
         }
 
-        // Get the selected resource type model
-        $this->objSelectedResourceType = $resourceBookingResourceTypeModelAdapter->findPublishedByPk($intResType);
-
-        // Get the selected resource model
-        $this->objSelectedResource = $resourceBookingResourceModelAdapter->findPublishedByPkAndPid($intRes, $intResType);
-
         // Get intBackWeeks && intBackWeeks
-        $this->intBackWeeks = (int) $configAdapter->get('rbb_intBackWeeks');
-        $this->intAheadWeeks = (int) $configAdapter->get('rbb_intAheadWeeks');
+        $intBackWeeks = (int) $configAdapter->get('rbb_intBackWeeks');
+        $this->sessionBag->set('intBackWeeks', $intBackWeeks);
+        $intAheadWeeks = (int) $configAdapter->get('rbb_intAheadWeeks');
+        $this->sessionBag->set('intAheadWeeks', $intAheadWeeks);
 
         // Get first and last possible week tstamp
-        $this->tstampFirstPossibleWeek = $dateHelperAdapter->addWeeksToTime($this->intBackWeeks, $dateHelperAdapter->getMondayOfCurrentWeek());
-        $this->tstampLastPossibleWeek = $dateHelperAdapter->addWeeksToTime($this->intAheadWeeks, $dateHelperAdapter->getMondayOfCurrentWeek());
+        $tstampFirstPossibleWeek = $dateHelperAdapter->addWeeksToTime($intBackWeeks, $dateHelperAdapter->getMondayOfCurrentWeek());
+        $this->sessionBag->set('tstampFirstPossibleWeek', $dateHelperAdapter->addWeeksToTime($intBackWeeks, $dateHelperAdapter->getMondayOfCurrentWeek()));
+        $tstampLastPossibleWeek = $dateHelperAdapter->addWeeksToTime($intAheadWeeks, $dateHelperAdapter->getMondayOfCurrentWeek());
+        $this->sessionBag->set('tstampLastPossibleWeek', $dateHelperAdapter->addWeeksToTime($intAheadWeeks, $dateHelperAdapter->getMondayOfCurrentWeek()));
 
         // Get active week timestamp
         $intTstampDate = $request->request->has('date') ? (int) $request->request->get('date') : $intTstampDate;
         $intTstampDate = $dateHelperAdapter->isValidDate($intTstampDate) ? $intTstampDate : $dateHelperAdapter->getMondayOfCurrentWeek();
 
-        if ($intTstampDate < $this->tstampFirstPossibleWeek)
+        if ($intTstampDate < $tstampFirstPossibleWeek)
         {
-            $intTstampDate = $this->tstampFirstPossibleWeek;
+            $intTstampDate = $tstampFirstPossibleWeek;
         }
 
-        if ($intTstampDate > $this->tstampLastPossibleWeek)
+        if ($intTstampDate > $tstampLastPossibleWeek)
         {
-            $intTstampDate = $this->tstampLastPossibleWeek;
+            $intTstampDate = $tstampLastPossibleWeek;
         }
 
-        $this->activeWeekTstamp = $intTstampDate;
+        $this->sessionBag->set('activeWeekTstamp', (int) $intTstampDate);
 
         // Store data into the session
-        $session->set('resType', (int) $intResType);
-        $session->set('res', (int) $intRes);
-        $session->set('date', (int) $intTstampDate);
+        $this->sessionBag->set('resType', (int) $intResType);
+        $this->sessionBag->set('res', (int) $intRes);
+        $this->sessionBag->set('date', (int) $intTstampDate);
     }
 
 }

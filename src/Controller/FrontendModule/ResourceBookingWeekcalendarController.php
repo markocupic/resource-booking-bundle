@@ -20,7 +20,7 @@ use Contao\FrontendUser;
 use Contao\ModuleModel;
 use Contao\PageModel;
 use Contao\Template;
-use Markocupic\ResourceBookingBundle\Runtime\Runtime;
+use Markocupic\ResourceBookingBundle\Session\InitializeSession;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Security;
@@ -38,20 +38,20 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
     /** @var Security */
     private $security;
 
-    /** @var Runtime */
-    private $runtime;
+    /** @var InitializeSession */
+    private $initializeSession;
 
     /**
      * ResourceBookingWeekcalendarController constructor.
      * @param ContaoFramework $framework
      * @param Security $security
-     * @param Runtime $runtime
+     * @param InitializeSession $initializeSession
      */
-    public function __construct(ContaoFramework $framework, Security $security, Runtime $runtime)
+    public function __construct(ContaoFramework $framework, Security $security, InitializeSession $initializeSession)
     {
         $this->framework = $framework;
         $this->security = $security;
-        $this->runtime = $runtime;
+        $this->initializeSession = $initializeSession;
     }
 
     /**
@@ -104,7 +104,7 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
             }
 
             // Initialize application
-            $this->runtime->initialize((int) $model->id, (int) $page->id);
+            $this->initializeSession->initialize((int) $model->id, (int) $page->id);
         }
 
         // Call the parent method

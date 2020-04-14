@@ -72,7 +72,6 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
         $sessKey = $_GET['sessionId'] != '' ? sprintf('___%s___', $_GET['sessionId']) : '';
         $arrSession = parent::get($sessKey, []);
         return isset($arrSession[$key]) ? $arrSession[$key] : null;
-        die('.' . $this->count());
     }
 
     /**

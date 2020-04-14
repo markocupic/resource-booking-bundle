@@ -5,7 +5,7 @@
 <?php $GLOBALS['TL_JAVASCRIPT'][] = 'assets/contao-component-vue-js/vue/dist/vue.min.js|static'; ?>
 <?php $GLOBALS['TL_CSS'][] = MOD_RESOURCE_BOOKING_ASSET_PATH . '/css/frontend.css|static'; ?>
 <?php $GLOBALS['TL_JAVASCRIPT'][] = MOD_RESOURCE_BOOKING_ASSET_PATH . '/jquery.idle/jquery.idle.min.min.js'; ?>
-<?php $GLOBALS['TL_JAVASCRIPT'][] = MOD_RESOURCE_BOOKING_ASSET_PATH . '/resource-booking-app-vue.min.js|static'; ?>
+<?php $GLOBALS['TL_JAVASCRIPT'][] = MOD_RESOURCE_BOOKING_ASSET_PATH . '/resource-booking-app-vue.js'; ?>
 
 <?php $this->extend('block_unsearchable'); ?>
 

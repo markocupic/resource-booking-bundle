@@ -10,7 +10,7 @@ declare(strict_types=1);
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
-namespace Markocupic\ResourceBookingBundle;
+namespace Markocupic\ResourceBookingBundle\Ajax;
 
 use Contao\Config;
 use Contao\Controller;
@@ -27,26 +27,29 @@ use Contao\ResourceBookingResourceTypeModel;
 use Contao\ResourceBookingTimeSlotModel;
 use Contao\StringUtil;
 use Contao\System;
+use Markocupic\ResourceBookingBundle\DateHelper;
+use Markocupic\ResourceBookingBundle\UtcTime;
+use Symfony\Component\Security\Core\Security;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 /**
- * Class ResourceBookingHelper
+ * Class AjaxHelper
  * @package Markocupic\ResourceBookingBundle
  */
-class ResourceBookingHelper
+class AjaxHelper
 {
 
     /** @var ContaoFramework */
     private $framework;
 
+    /** @var Security  */
     private $security;
 
     /** @var SessionInterface */
     private $session;
 
-    /** @var string */
-    private $bagName;
-
+    /** @var \Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag */
     public $sessionBag;
 
     /** @var  ResourceBookingResourceTypeModel */
@@ -61,44 +64,49 @@ class ResourceBookingHelper
     /** @var FrontendUser */
     public $objUser;
 
-    public function __construct()
+    /**
+     * AjaxHelper constructor.
+     * @param ContaoFramework $framework
+     * @param Security $security
+     * @param SessionInterface $session
+     * @param RequestStack $requestStack
+     * @param string $bagName
+     */
+    public function __construct(ContaoFramework $framework, Security $security, SessionInterface $session, RequestStack $requestStack, string $bagName)
     {
-        $framework = System::getContainer()->get('contao.framework');
-        $security = System::getContainer()->get('security.helper');
-        $session = System::getContainer()->get('session');
-        $requestStack = System::getContainer()->get('request_stack');
-        $bagName = System::getContainer()->getParameter('resource_booking_bundle.session.attribute_bag_name');
-
         $this->framework = $framework;
         $this->security = $security;
         $this->session = $session;
         $this->requestStack = $requestStack;
-        $this->bagName = $bagName;
+        $this->sessionBag = $session->getBag($bagName);
+    }
 
-        $sessionBag = $session->getBag($bagName);
-        $this->sessionBag = $sessionBag;
-
+    /**
+     * @throws \Exception
+     */
+    public function initialize()
+    {
         // Set resource type
-        $resourceBookingResourceTypeModelAdapter = $framework->getAdapter(ResourceBookingResourceTypeModel::class);
-        $objSelectedResourceType = $resourceBookingResourceTypeModelAdapter->findByPk($sessionBag->get('resType'));
+        $resourceBookingResourceTypeModelAdapter = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class);
+        $objSelectedResourceType = $resourceBookingResourceTypeModelAdapter->findByPk($this->sessionBag->get('resType'));
         if ($objSelectedResourceType === null)
         {
-            throw new \Exception('Selected resource type not found.');
+            //throw new \Exception('Selected resource type not found.');
         }
         $this->objSelectedResourceType = $objSelectedResourceType;
 
         // Set resource
-        $resourceBookingResourceModelAdapter = $framework->getAdapter(ResourceBookingResourceModel::class);
-        $objSelectedResource = $resourceBookingResourceModelAdapter->findByPk($sessionBag->get('res'));
+        $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
+        $objSelectedResource = $resourceBookingResourceModelAdapter->findByPk($this->sessionBag->get('res'));
         if ($objSelectedResource === null)
         {
-            throw new \Exception('Selected resource not found.');
+            //throw new \Exception('Selected resource not found.');
         }
         $this->objSelectedResource = $objSelectedResource;
 
         // Set module model
-        $moduleModelAdapter = $framework->getAdapter(ModuleModel::class);
-        $moduleModel = $moduleModelAdapter->findByPk($sessionBag->get('moduleModelId'));
+        $moduleModelAdapter = $this->framework->getAdapter(ModuleModel::class);
+        $moduleModel = $moduleModelAdapter->findByPk($this->sessionBag->get('moduleModelId'));
         if ($moduleModel === null)
         {
             throw new \Exception('Module model not found.');
@@ -106,7 +114,7 @@ class ResourceBookingHelper
         $this->moduleModel = $moduleModel;
 
         /** @var FrontendUser $user */
-        $objUser = $security->getUser();
+        $objUser = $this->security->getUser();
         if (!$objUser instanceof FrontendUser)
         {
             throw new \Exception('Logged in user not found.');
@@ -119,6 +127,8 @@ class ResourceBookingHelper
      */
     public function fetchData(): array
     {
+        $this->initialize();
+
         $arrData = [];
 
         // Load language file
@@ -126,7 +136,7 @@ class ResourceBookingHelper
 
         // Handle autologout
         $arrData['opt']['autologout'] = $this->moduleModel->resourceBooking_autologout;
-        $arrData['opt']['autologoutDelay'] = $this->objSelectedResourceType->resourceBooking_autologoutDelay;
+        $arrData['opt']['autologoutDelay'] = $this->moduleModel->resourceBooking_autologoutDelay;
         $arrData['opt']['autologoutRedirect'] = Controller::replaceInsertTags(sprintf('{{link_url::%s}}', $this->moduleModel->resourceBooking_autologoutRedirect));
 
         // Messages
@@ -170,7 +180,7 @@ class ResourceBookingHelper
         $arrData['filterBoard']['jumpPrevWeek'] = $this->getJumpWeekDate(-1);
 
         // Filter form: get date dropdown
-        $arrData['filterBoard']['weekSelection'] = $this->getWeekSelection($this->sessionBag->get('tstampFirstPossibleWeek'), $this->sessionBag->get('tstampLastPossibleWeek'), true);
+        $arrData['filterBoard']['weekSelection'] = $this->getWeekSelection((int) $this->sessionBag->get('tstampFirstPossibleWeek'), (int) $this->sessionBag->get('tstampLastPossibleWeek'), true);
 
         $objUser = $this->objUser;
 
@@ -195,7 +205,7 @@ class ResourceBookingHelper
         ];
 
         // Get booking RepeatsSelection
-        $arrData['bookingRepeatsSelection'] = $this->getWeekSelection($this->sessionBag->get('activeWeekTstamp'), DateHelper::addDaysToTime(7 * $this->sessionBag->get('intAheadWeeks')), false);
+        $arrData['bookingRepeatsSelection'] = $this->getWeekSelection((int) $this->sessionBag->get('activeWeekTstamp'), DateHelper::addDaysToTime(7 * $this->sessionBag->get('intAheadWeeks')), false);
 
         // Send weekdays, dates and day
         $arrWeek = [];
@@ -282,7 +292,7 @@ class ResourceBookingHelper
                         $objTs->endTimestamp = (int) $endTimestamp;
                         $objTs->timeSpanString = Date::parse('H:i', $startTimestamp) . ' - ' . Date::parse('H:i', $endTimestamp);
                         $objTs->mondayTimestampSelectedWeek = (int) $this->sessionBag->get('activeWeekTstamp');
-                        $objTs->isBooked = ResourceBookingHelper::isResourceBooked($objSelectedResource, $startTimestamp, $endTimestamp);
+                        $objTs->isBooked = $this->isResourceBooked($objSelectedResource, $startTimestamp, $endTimestamp);
                         $objTs->isEditable = $objTs->isBooked ? false : true;
                         $objTs->timeSlotId = $objTimeslots->id;
                         $objTs->resourceId = $objSelectedResource->id;
@@ -383,6 +393,8 @@ class ResourceBookingHelper
      */
     public function prepareBookingSelection(FrontendUser $objUser, ResourceBookingResourceModel $objResource, array $arrBookingDateSelection, int $bookingRepeatStopWeekTstamp): array
     {
+        $this->initialize();
+
         $arrBookings = [];
 
         $objUser = FrontendUser::getInstance();
@@ -447,7 +459,7 @@ class ResourceBookingHelper
 
             $arrBookings[$index]['datim'] = sprintf('%s, %s: %s - %s', Date::parse('D', $arrData['startTime']), Date::parse(Config::get('dateFormat'), $arrData['startTime']), Date::parse('H:i', $arrData['startTime']), Date::parse('H:i', $arrData['endTime']));
 
-            if (!ResourceBookingHelper::isResourceBooked($objResource, $arrData['startTime'], $arrData['endTime']))
+            if (!$this->isResourceBooked($objResource, $arrData['startTime'], $arrData['endTime']))
             {
                 if (($objTimeslot = ResourceBookingTimeSlotModel::findByPk($arrData['timeSlotId'])) !== null)
                 {
@@ -541,7 +553,6 @@ class ResourceBookingHelper
 
             $currentTstamp = DateHelper::addDaysToTime(7, $currentTstamp);
         }
-
         return $arrWeeks;
     }
 
@@ -551,6 +562,8 @@ class ResourceBookingHelper
      */
     public function getJumpWeekDate(int $intJumpWeek): array
     {
+        $this->initialize();
+
         $arrReturn = [
             'disabled' => false,
             'tstamp'   => null

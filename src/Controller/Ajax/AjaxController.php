@@ -14,8 +14,8 @@ namespace Markocupic\ResourceBookingBundle\Controller\Ajax;
 
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Environment;
-use Markocupic\ResourceBookingBundle\AjaxHandler;
-use Markocupic\ResourceBookingBundle\Runtime\Runtime;
+use Markocupic\ResourceBookingBundle\Ajax\AjaxHandler;
+use Markocupic\ResourceBookingBundle\Session\InitializeSession;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -39,23 +39,29 @@ class AjaxController extends AbstractController
     private $requestStack;
 
     /**
-     * @var Runtime
+     * @var InitializeSession
      */
-    private $runtime;
+    private $initializeSession;
+
+    /**
+     * @var AjaxHandler
+     */
+    private $ajaxHandler;
 
     /**
      * AjaxController constructor.
      * @param ContaoFramework $framework
      * @param RequestStack $requestStack
-     * @param Runtime $runtime
+     * @param InitializeSession $initializeSession
+     * @param AjaxHandler $ajaxHandler
      */
-    public function __construct(ContaoFramework $framework, RequestStack $requestStack, Runtime $runtime)
+    public function __construct(ContaoFramework $framework, RequestStack $requestStack, InitializeSession $initializeSession, AjaxHandler $ajaxHandler)
     {
         $this->framework = $framework;
         $this->requestStack = $requestStack;
-        $this->runtime = $runtime;
+        $this->initializeSession = $initializeSession;
+        $this->ajaxHandler = $ajaxHandler;
     }
-
 
     /**
      * xhttp endpoint
@@ -76,15 +82,14 @@ class AjaxController extends AbstractController
         if ($environmentAdapter->get('isAjaxRequest') && $request->query->has('sessionId') && $request->request->has('action') && !empty($request->request->get('action')))
         {
             // Initialize application
-            $this->runtime->initialize();
+            $this->initializeSession->initialize();
 
             // Get action from post request
             $action = $request->request->get('action');
 
-            $objXhr = new AjaxHandler();
-            if (is_callable([$objXhr, $action]))
+            if (is_callable([\Markocupic\ResourceBookingBundle\Ajax\AjaxHandler::class, $action]))
             {
-                $arrReturn = $objXhr->{$action}($this->runtime);
+                $arrReturn = $this->ajaxHandler->{$action}();
                 return new JsonResponse($arrReturn);
             }
             $arrReturn = [
