@@ -22,6 +22,7 @@ use Contao\PageModel;
 use Contao\ResourceBookingResourceModel;
 use Contao\ResourceBookingResourceTypeModel;
 use Markocupic\ResourceBookingBundle\DateHelper;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Security\Core\Security;
@@ -106,9 +107,6 @@ class Runtime
      */
     public function initialize(int $moduleModelId = null, int $pageModelId = null)
     {
-        /** @var Controller $controllerAdapter */
-        $controllerAdapter = $this->framework->getAdapter(Controller::class);
-
         /** @var Environment $environmentAdapter */
         $environmentAdapter = $this->framework->getAdapter(Environment::class);
 
@@ -124,6 +122,7 @@ class Runtime
         /** @var ResourceBookingResourceModel $resourceBookingResourceModelAdapter */
         $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
 
+        /** @var Request $request */
         $request = $this->requestStack->getCurrentRequest();
 
         /** @var \Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag $session */
@@ -132,13 +131,26 @@ class Runtime
         // Store sessionBag
         $this->sessionBag = $session;
 
+        // Add session id to the session & validate session id when is ajax request
+        if (!$environmentAdapter->get('isAjaxRequest'))
+        {
+            $session->set('sessionId', $request->query->get('sessionId'));
+        }
+        else
+        {
+            if ($session->get('sessionId') !== $request->query->get('sessionId'))
+            {
+                throw new \Exception('Invalid session id detected.');
+            }
+        }
+
         // Get $moduleModelId from parameter or session
         $moduleModelId = $moduleModelId !== null ? $moduleModelId : ($session->has('moduleModelId') ? $session->get('moduleModelId') : null);
 
         $objModuleModel = ModuleModel::findByPk($moduleModelId);
         if ($objModuleModel === null)
         {
-            throw new \Exception('Module id not found in the session.');
+            throw new \Exception('Module id not set.');
         }
 
         $session->set('moduleModelId', $objModuleModel->id);
@@ -150,25 +162,14 @@ class Runtime
         $objPageModel = PageModel::findByPk($pageModelId);
         if ($objPageModel === null)
         {
-            throw new \Exception('Page model not found in the session.');
+            throw new \Exception('Page model not set.');
         }
 
         $session->set('pageModelId', $objPageModel->id);
         $this->pageModel = $objPageModel;
 
-        if (Environment::get('isAjaxRequest'))
+        if (!$environmentAdapter->get('isAjaxRequest'))
         {
-            if($session->get('sessionId') !== $request->query->get('sessionId'))
-            {
-                throw new \Exception('Invalid session id detected.');
-            }
-        }
-
-        if (!Environment::get('isAjaxRequest'))
-        {
-            // Set sessionId
-            $session->set('sessionId', $request->query->get('sessionId'));
-
             // Set language
             if (!empty($objPageModel->language))
             {
@@ -193,13 +194,8 @@ class Runtime
         $objUser = $this->security->getUser();
         if (!$objUser instanceof FrontendUser)
         {
-            if ($request->query->has('date') || $request->query->has('resType') || $request->query->has('res'))
-            {
-                $url = \Haste\Util\Url::removeQueryString(['date', 'resType', 'res'], $environmentAdapter->get('request'));
-                $controllerAdapter->redirect($url);
-            }
             // Return empty string if user has not logged in as a frontend user
-            throw new \Exception('Logged in frontend user not found.');
+            throw new \Exception('Application is permited to frontend users only.');
         }
         else
         {

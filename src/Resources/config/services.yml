@@ -9,13 +9,13 @@ services:
   # Contao frontend module "resourceBookingWeekcalendar"
   Markocupic\ResourceBookingBundle\Controller\FrontendModule\ResourceBookingWeekcalendarController:
     arguments:
+    - '@contao.framework'
     - '@security.helper'
     - '@Markocupic\ResourceBookingBundle\Runtime\Runtime'
     calls:
     - ['setContainer', ['@Psr\Container\ContainerInterface']]
     tags:
     - { name: contao.frontend_module, category: resourceBooking, type: resourceBookingWeekcalendar }
-    - { name: container.service_subscriber }
     public: true
 
   # Ajax controller

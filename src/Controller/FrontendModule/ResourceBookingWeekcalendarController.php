@@ -32,22 +32,24 @@ use Contao\CoreBundle\ServiceAnnotation\FrontendModule;
  */
 class ResourceBookingWeekcalendarController extends AbstractFrontendModuleController
 {
+    /** @var ContaoFramework */
+    private $framework;
+
     /** @var Security */
     private $security;
 
-    /** @var  Runtime */
+    /** @var Runtime */
     private $runtime;
-
-    /** @var string */
-    private $sessionId;
 
     /**
      * ResourceBookingWeekcalendarController constructor.
+     * @param ContaoFramework $framework
      * @param Security $security
      * @param Runtime $runtime
      */
-    public function __construct(Security $security, Runtime $runtime)
+    public function __construct(ContaoFramework $framework, Security $security, Runtime $runtime)
     {
+        $this->framework = $framework;
         $this->security = $security;
         $this->runtime = $runtime;
     }
@@ -63,26 +65,14 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
      */
     public function __invoke(Request $request, ModuleModel $model, string $section, array $classes = null, PageModel $page = null): Response
     {
-
         // Is frontend
         if ($page instanceof PageModel && $this->get('contao.routing.scope_matcher')->isFrontendRequest($request))
         {
             /** @var Controller $controllerAdapter */
-            $controllerAdapter = $this->get('contao.framework')->getAdapter(Controller::class);
+            $controllerAdapter = $this->framework->getAdapter(Controller::class);
 
             /** @var Environment $environmentAdapter */
-            $environmentAdapter = $this->get('contao.framework')->getAdapter(Environment::class);
-
-            if (!$request->query->has('sessionId'))
-            {
-                $url = \Haste\Util\Url::addQueryString('sessionId=' . sha1(microtime()).sha1(random_bytes(6)), $environmentAdapter->get('request'));
-                $controllerAdapter->redirect($url);
-            }
-
-            $this->sessionId = $request->query->get('sessionId');
-
-            // Initialize application
-            $this->runtime->initialize((int) $model->id, (int) $page->id);
+            $environmentAdapter = $this->framework->getAdapter(Environment::class);
 
             /** @var FrontendUser $user */
             $objUser = $this->security->getUser();
@@ -96,21 +86,29 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
                 // Return empty string if user has not logged in as a frontend user
                 return new Response('', Response::HTTP_NO_CONTENT);
             }
+
+            // Add session id to url
+            if (!$request->query->has('sessionId'))
+            {
+                $url = $environmentAdapter->get('request');
+
+                $params = [
+                    sprintf(
+                        'sessionId=%s',
+                        sha1(microtime()) . sha1(random_bytes(6))
+                    ),
+                ];
+                $url = \Haste\Util\Url::addQueryString(implode('&', $params), $url);
+                // redirect
+                $controllerAdapter->redirect($url);
+            }
+
+            // Initialize application
+            $this->runtime->initialize((int) $model->id, (int) $page->id);
         }
 
         // Call the parent method
         return parent::__invoke($request, $model, $section, $classes);
-    }
-
-    /**
-     * @return array
-     */
-    public static function getSubscribedServices(): array
-    {
-        $services = parent::getSubscribedServices();
-        $services['contao.framework'] = ContaoFramework::class;
-
-        return $services;
     }
 
     /**
@@ -121,7 +119,7 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
      */
     protected function getResponse(Template $template, ModuleModel $model, Request $request): ?Response
     {
-        $template->sessionId = $this->sessionId;
+        $template->sessionId = $request->query->get('sessionId');
 
         // Let vue.js do the rest ;-)
         return $template->getResponse();
