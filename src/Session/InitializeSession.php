@@ -14,10 +14,12 @@ namespace Markocupic\ResourceBookingBundle\Session;
 
 use Contao\Config;
 use Contao\CoreBundle\Framework\ContaoFramework;
-use Contao\Environment;
 use Contao\FrontendUser;
 use Contao\ModuleModel;
 use Contao\PageModel;
+use Contao\ResourceBookingResourceModel;
+use Contao\ResourceBookingResourceTypeModel;
+use Contao\StringUtil;
 use Markocupic\ResourceBookingBundle\DateHelper;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -76,14 +78,20 @@ class InitializeSession
      */
     public function initialize(bool $isAjaxRequest, ?int $moduleModelId, ?int $pageModelId)
     {
-        /** @var Environment $environmentAdapter */
-        $environmentAdapter = $this->framework->getAdapter(Environment::class);
+        /** @var ResourceBookingResourceTypeModel $environmentAdapter */
+        $resourceBookingResourceTypeModelAdapter = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class);
+
+        /** @var ResourceBookingResourceModel $resourceBookingResourceModelAdapter */
+        $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
 
         /** @var DateHelper $dateHelperAdapter */
         $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
 
         /** @var Config $configAdapter */
         $configAdapter = $this->framework->getAdapter(Config::class);
+
+        /** @var StringUtil $stringUtilAdapter */
+        $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
 
         /** @var Request $request */
         $request = $this->requestStack->getCurrentRequest();
@@ -96,7 +104,7 @@ class InitializeSession
             throw new AccessDeniedException('Application is permitted to logged in frontend users only.');
         }
 
-        // Add session id to the session & validate session id against cookie an frontend users password
+        // Validate session id against cookie an frontend user password
         $blnForbidden = true;
         if (!$isAjaxRequest)
         {
@@ -105,6 +113,7 @@ class InitializeSession
                 sha1($request->cookies->get('_contao_resource_booking_token') . $objUser->password) === $request->query->get('sessionId')
             )
             {
+                //Add session id to the session bag
                 $this->sessionBag->set('sessionId', $request->query->get('sessionId'));
                 $blnForbidden = false;
             }
@@ -145,9 +154,9 @@ class InitializeSession
         $this->sessionBag->set('pageModelId', $objPageModel->id);
         $this->pageModel = $objPageModel;
 
+        // Set language
         if (!$isAjaxRequest)
         {
-            // Set language
             if (!empty($objPageModel->language))
             {
                 $language = $objPageModel->language;
@@ -165,6 +174,43 @@ class InitializeSession
                 $language = 'en';
             }
             $this->sessionBag->set('language', $language);
+        }
+
+        // Check if access to active resource type is allowed
+        if (($resTypeId = $this->sessionBag->get('resType', 0)) > 0)
+        {
+            $blnForbidden = false;
+            if ($resourceBookingResourceTypeModelAdapter->findPublishedByPk($resTypeId) === null)
+            {
+                $blnForbidden = true;
+            }
+            // Get ids from module settings
+            $arrResTypeIds = $stringUtilAdapter->deserialize($objModuleModel->resourceBooking_resourceTypes, true);
+
+            if (!in_array($resTypeId, $arrResTypeIds))
+            {
+                $blnForbidden = true;
+            }
+
+            if ($blnForbidden)
+            {
+                throw new UnauthorizedHttpException(sprintf('Unauthorized access to resource type with ID %s.', $resTypeId));
+            }
+        }
+
+        // Check if access to active resource is allowed
+        if (($resId = $this->sessionBag->get('res', 0)) > 0)
+        {
+            $blnForbidden = false;
+            if ($resourceBookingResourceModelAdapter->findPublishedByPkAndPid($resId, $resTypeId) === null)
+            {
+                $blnForbidden = true;
+            }
+
+            if ($blnForbidden)
+            {
+                throw new UnauthorizedHttpException(sprintf('Unauthorized access to resource with ID %s.', $resId));
+            }
         }
 
         // Get intBackWeeks && intBackWeeks

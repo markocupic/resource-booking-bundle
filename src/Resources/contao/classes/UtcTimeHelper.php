@@ -12,13 +12,11 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle;
 
-use Contao\Date;
-
 /**
- * Class UtcTime
+ * Class UtcTimeHelper
  * @package Markocupic\ResourceBookingBundle
  */
-class UtcTime
+class UtcTimeHelper
 {
 
     /**
@@ -41,6 +39,6 @@ class UtcTime
     {
         $utc = new \DateTimeZone('UTC');
         $dt = new \DateTime($strDate, $utc);
-        return (int)$dt->format('U');
+        return (int) $dt->format('U');
     }
 }

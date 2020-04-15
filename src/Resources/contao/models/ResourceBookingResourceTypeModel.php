@@ -25,19 +25,19 @@ class ResourceBookingResourceTypeModel extends Model
 
     /**
      * @param $intId
-     * @return mixed
+     * @return ResourceBookingResourceTypeModel
      */
     public static function findPublishedByPk($intId)
     {
-        $arrColumn = array('id=?', 'published=?');
-        $arrValues = array($intId, '1');
+        $arrColumn = ['id=?', 'published=?'];
+        $arrValues = [$intId, '1'];
 
         return self::findOneBy($arrColumn, $arrValues);
     }
 
     /**
      * @param $arrIds
-     * @return mixed
+     * @return Model\Collection|null
      */
     public static function findMultipleAndPublishedByIds($arrIds)
     {

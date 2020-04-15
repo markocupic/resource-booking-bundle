@@ -228,7 +228,7 @@ class tl_resource_booking_time_slot extends Contao\Backend
      */
     public function childRecordCallback(array $row): string
     {
-        return sprintf('<div class="tl_content_left"><span style="color:#999;padding-left:3px">' . $row['title'] . '</span> %s-%s</div>', Markocupic\ResourceBookingBundle\UtcTime::parse('H:i', $row['startTime']), Markocupic\ResourceBookingBundle\UtcTime::parse('H:i', $row['endTime']));
+        return sprintf('<div class="tl_content_left"><span style="color:#999;padding-left:3px">' . $row['title'] . '</span> %s-%s</div>', Markocupic\ResourceBookingBundle\UtcTimeHelper::parse('H:i', $row['startTime']), Markocupic\ResourceBookingBundle\UtcTimeHelper::parse('H:i', $row['endTime']));
     }
 
     /**
@@ -244,7 +244,7 @@ class tl_resource_booking_time_slot extends Contao\Backend
         $strTime = '';
         if (!empty($timestamp))
         {
-            $strTime = Markocupic\ResourceBookingBundle\UtcTime::parse('H:i', $timestamp);
+            $strTime = Markocupic\ResourceBookingBundle\UtcTimeHelper::parse('H:i', $timestamp);
         }
 
         return $strTime;
@@ -264,7 +264,7 @@ class tl_resource_booking_time_slot extends Contao\Backend
     {
         if (preg_match("/^(2[0-3]|[01][0-9]):[0-5][0-9]$/", $strTime))
         {
-            $timestamp = Markocupic\ResourceBookingBundle\UtcTime::strtotime('1970-01-01 ' . $strTime);
+            $timestamp = Markocupic\ResourceBookingBundle\UtcTimeHelper::strtotime('1970-01-01 ' . $strTime);
         }
         else
         {
@@ -297,7 +297,7 @@ class tl_resource_booking_time_slot extends Contao\Backend
 
         if (!empty($strStartTime))
         {
-            $startTime = \Markocupic\ResourceBookingBundle\UtcTime::strtotime('01-01-1970 ' . $strStartTime);
+            $startTime = \Markocupic\ResourceBookingBundle\UtcTimeHelper::strtotime('01-01-1970 ' . $strStartTime);
             if ($startTime !== false)
             {
                 if ($timestamp <= $startTime)

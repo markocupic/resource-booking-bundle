@@ -97,8 +97,8 @@ class DateHelper
      */
     public static function isValidDate(int $tstamp): bool
     {
-        $intBackWeeks = Config::get('rbb_intBackWeeks');
-        $intAheadWeeks = Config::get('rbb_intAheadWeeks');
+        $intBackWeeks = (int) Config::get('rbb_intBackWeeks');
+        $intAheadWeeks = (int) Config::get('rbb_intAheadWeeks');
 
         // Get the timestamp of the first and last possible weeks
         $tstampFirstPossibleWeek = static::addWeeksToTime($intBackWeeks, static::getMondayOfCurrentWeek());

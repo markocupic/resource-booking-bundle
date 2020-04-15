@@ -28,7 +28,7 @@ use Contao\ResourceBookingTimeSlotModel;
 use Contao\StringUtil;
 use Contao\System;
 use Markocupic\ResourceBookingBundle\DateHelper;
-use Markocupic\ResourceBookingBundle\UtcTime;
+use Markocupic\ResourceBookingBundle\UtcTimeHelper;
 use Symfony\Component\Security\Core\Security;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
@@ -88,21 +88,11 @@ class AjaxHelper
     {
         // Set resource type
         $resourceBookingResourceTypeModelAdapter = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class);
-        $objSelectedResourceType = $resourceBookingResourceTypeModelAdapter->findByPk($this->sessionBag->get('resType'));
-        if ($objSelectedResourceType === null)
-        {
-            //throw new \Exception('Selected resource type not found.');
-        }
-        $this->objSelectedResourceType = $objSelectedResourceType;
+        $this->objSelectedResourceType = $resourceBookingResourceTypeModelAdapter->findByPk($this->sessionBag->get('resType'));
 
         // Set resource
         $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
-        $objSelectedResource = $resourceBookingResourceModelAdapter->findByPk($this->sessionBag->get('res'));
-        if ($objSelectedResource === null)
-        {
-            //throw new \Exception('Selected resource not found.');
-        }
-        $this->objSelectedResource = $objSelectedResource;
+        $this->objSelectedResource = $resourceBookingResourceModelAdapter->findByPk($this->sessionBag->get('res'));
 
         // Set module model
         $moduleModelAdapter = $this->framework->getAdapter(ModuleModel::class);
@@ -355,10 +345,10 @@ class AjaxHelper
                 $startTimestamp = (int) $objTimeslots->startTime;
                 $endTimestamp = (int) $objTimeslots->endTime;
                 $objTs = new \stdClass();
-                $objTs->startTimeString = UtcTime::parse('H:i', $startTimestamp);
+                $objTs->startTimeString = UtcTimeHelper::parse('H:i', $startTimestamp);
                 $objTs->startTimestamp = (int) $startTimestamp;
-                $objTs->endTimeString = UtcTime::parse('H:i', $endTimestamp);
-                $objTs->timeSpanString = UtcTime::parse('H:i', $startTimestamp) . ' - ' . UtcTime::parse('H:i', $endTimestamp);
+                $objTs->endTimeString = UtcTimeHelper::parse('H:i', $endTimestamp);
+                $objTs->timeSpanString = UtcTimeHelper::parse('H:i', $startTimestamp) . ' - ' . UtcTimeHelper::parse('H:i', $endTimestamp);
                 $objTs->endTimestamp = (int) $endTimestamp;
                 $timeSlots[] = $objTs;
             }

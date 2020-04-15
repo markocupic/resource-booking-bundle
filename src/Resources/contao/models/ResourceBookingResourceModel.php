@@ -55,7 +55,8 @@ class ResourceBookingResourceModel extends Model
 
     /**
      * @param $intId
-     * @return ResourceBookingResourceModel
+     * @return ResourceBookingResourceModel|null
+     * @throws \Exception
      */
     public static function findPublishedByPk($intId)
     {
@@ -81,7 +82,8 @@ class ResourceBookingResourceModel extends Model
     /**
      * @param $intId
      * @param $intPid
-     * @return mixed
+     * @return ResourceBookingResourceModel|null
+     * @throws \Exception
      */
     public static function findPublishedByPkAndPid($intId, $intPid)
     {
@@ -107,7 +109,7 @@ class ResourceBookingResourceModel extends Model
 
     /**
      * @param $arrIds
-     * @return mixed
+     * @return Model\Collection|null
      */
     public static function findMultipleAndPublishedByIds($arrIds)
     {

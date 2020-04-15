@@ -38,4 +38,4 @@ $GLOBALS['TL_HOOKS']['addCustomRegexp'][] = ['Markocupic\ResourceBookingBundle\R
 $GLOBALS['TL_HOOKS']['replaceInsertTags'][] = ['Markocupic\ResourceBookingBundle\ReplaceInsertTagsHook', 'replaceInsertTags'];
 
 // Cron jobs
-$GLOBALS['TL_CRON']['daily']['rbb_deleteOldBookings'] = ['Markocupic\ResourceBookingBundle\Cron', 'deleteOldBookingsFromDb'];
+$GLOBALS['TL_CRON']['daily']['rbb_deleteOldBookings'] = ['Markocupic\ResourceBookingBundle\Cron\Cron', 'deleteOldBookingsFromDb'];

@@ -29,7 +29,7 @@ class ResourceBookingTimeSlotModel extends Model
      */
     public static function findPublishedByPid($intPid)
     {
-        $arrIds = array();
+        $arrIds = [];
 
         $objDb = static::findByPid($intPid);
         if ($objDb !== null)
@@ -51,9 +51,9 @@ class ResourceBookingTimeSlotModel extends Model
             }
         }
 
-        $arrOptions = array(
+        $arrOptions = [
             'order' => 'tl_resource_booking_time_slot.sorting ASC',
-        );
+        ];
 
         return static::findMultipleByIds($arrIds, $arrOptions);
     }
