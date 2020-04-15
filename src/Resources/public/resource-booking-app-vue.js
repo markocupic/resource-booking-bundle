@@ -17,6 +17,7 @@ class resourceBookingApp {
                 filterBoard: null,
                 userLoggedOut: false,
                 isOnline: false,
+                userIsLoggedIn: false,
                 loggedInUser: [],
                 requestToken: '',
                 sessionId: '',
@@ -34,6 +35,7 @@ class resourceBookingApp {
                 bookingModal: {},
                 intervals: [],
                 messages: null,
+                isBusy: false,
             },
 
             created: function created() {
@@ -312,6 +314,9 @@ class resourceBookingApp {
                 sendApplyFilterRequest: function sendApplyFilterRequest() {
 
                     let self = this;
+
+                    self.toggleBackdrop(true);
+
                     let data = new FormData();
                     data.append('REQUEST_TOKEN', self.requestToken);
                     data.append('resType', self.activeResourceTypeId);
@@ -336,9 +341,11 @@ class resourceBookingApp {
                                 }
                             }
                             self.isOnline = true;
+                            self.toggleBackdrop(false);
                         })
                         .catch(function (response) {
                             self.isOnline = false;
+                            self.toggleBackdrop(false);
                         });
                 },
 
@@ -351,48 +358,9 @@ class resourceBookingApp {
 
                     let self = this;
                     event.preventDefault();
-                    $('.modal-backdrop').remove();
 
-                    let backdrop = '<div class="modal-backdrop show"></div>';
-                    $("body").append(backdrop);
-
-                    let data = new FormData();
-                    data.append('REQUEST_TOKEN', self.requestToken);
-                    data.append('resType', self.activeResourceTypeId);
-                    data.append('res', self.activeResourceId);
-                    data.append('date', tstamp);
-
-
-                    let action = 'sendJumpWeekRequest';
-                    fetch('_resource_booking/ajax/' + action + '?sessionId=' + self.sessionId, {
-                        method: "POST",
-                        body: data,
-                        headers: {
-                            'x-requested-with': 'XMLHttpRequest'
-                        },
-                    })
-                        .then(function (res) {
-                            return res.json();
-                        })
-                        .then(function (response) {
-                            if (response.status === 'success') {
-                                for (let key in response.data) {
-                                    self[key] = response.data[key];
-                                }
-                            }
-                            self.isOnline = true;
-                            // Always
-                            window.setTimeout(function () {
-                                $('.modal-backdrop').remove();
-                            }, 200);
-                        })
-                        .catch(function (response) {
-                            self.isOnline = false;
-                            // Always
-                            window.setTimeout(function () {
-                                $('.modal-backdrop').remove();
-                            }, 200);
-                        });
+                    // Vue watcher will trigger self.sendApplyFilterRequest()
+                    self.activeWeekTstamp = tstamp;
                 },
 
                 /**
@@ -439,6 +407,22 @@ class resourceBookingApp {
                     });
 
                     $(self.$el).find('.resource-booking-modal').first().modal('show');
+                },
+
+                /**
+                 * Add or remove the backdrop
+                 * @param blnAdd
+                 */
+                toggleBackdrop: function toggleBackdrop(blnAdd = true) {
+                    if (blnAdd) {
+                        $('.modal-backdrop').remove();
+                        let backdrop = '<div class="modal-backdrop show"></div>';
+                        $("body").append(backdrop);
+                    } else {
+                        window.setTimeout(function () {
+                            $('.modal-backdrop').remove();
+                        }, 200);
+                    }
                 }
             }
         });

@@ -50,19 +50,22 @@ class AjaxHelper
     private $session;
 
     /** @var \Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag */
-    public $sessionBag;
+    private $sessionBag;
+
+    /** @var RequestStack */
+    private $requestStack;
 
     /** @var  ResourceBookingResourceTypeModel */
-    public $objSelectedResourceType;
+    private $objSelectedResourceType;
 
     /** @var  ResourceBookingResourceModel */
-    public $objSelectedResource;
+    private $objSelectedResource;
 
     /** @var ModuleModel */
-    public $moduleModel;
+    private $moduleModel;
 
     /** @var FrontendUser */
-    public $objUser;
+    private $objUser;
 
     /**
      * AjaxHelper constructor.
@@ -77,8 +80,8 @@ class AjaxHelper
         $this->framework = $framework;
         $this->security = $security;
         $this->session = $session;
-        $this->requestStack = $requestStack;
         $this->sessionBag = $session->getBag($bagName);
+        $this->requestStack = $requestStack;
     }
 
     /**
@@ -86,58 +89,81 @@ class AjaxHelper
      */
     public function initialize()
     {
-        // Set resource type
+        /** @var  ResourceBookingResourceTypeModel $resourceBookingResourceTypeModelAdapter */
         $resourceBookingResourceTypeModelAdapter = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class);
+
+        /** @var  ResourceBookingResourceModel $resourceBookingResourceModelAdapter */
+        $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
+
+        /** @var ModuleModel $moduleModelAdapter */
+        $moduleModelAdapter = $this->framework->getAdapter(ModuleModel::class);
+
+        // Set resource type
         $this->objSelectedResourceType = $resourceBookingResourceTypeModelAdapter->findByPk($this->sessionBag->get('resType'));
 
         // Set resource
-        $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
         $this->objSelectedResource = $resourceBookingResourceModelAdapter->findByPk($this->sessionBag->get('res'));
 
         // Set module model
-        $moduleModelAdapter = $this->framework->getAdapter(ModuleModel::class);
-        $moduleModel = $moduleModelAdapter->findByPk($this->sessionBag->get('moduleModelId'));
-        if ($moduleModel === null)
+        $this->moduleModel = $moduleModelAdapter->findByPk($this->sessionBag->get('moduleModelId'));
+        if ($this->moduleModel === null)
         {
             throw new \Exception('Module model not found.');
         }
-        $this->moduleModel = $moduleModel;
 
-        /** @var FrontendUser $user */
-        $objUser = $this->security->getUser();
-        if (!$objUser instanceof FrontendUser)
+        $this->objUser = null;
+        if ($this->security->getUser() instanceof FrontendUser)
         {
-            throw new \Exception('Logged in user not found.');
+            /** @var FrontendUser $user */
+            $this->objUser = $this->security->getUser();
         }
-        $this->objUser = $objUser;
     }
 
     /**
      * @return array
+     * @throws \Exception
      */
     public function fetchData(): array
     {
         $this->initialize();
 
+        /** @var System $systemAdapter */
+        $systemAdapter = $this->framework->getAdapter(System::class);
+
+        /** @var Controller $controllerAdapter */
+        $controllerAdapter = $this->framework->getAdapter(Controller::class);
+
+        /** @var Message $messageAdapter */
+        $messageAdapter = $this->framework->getAdapter(Message::class);
+
+        /** @var DateHelper $dateHelperAdapter */
+        $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
+
+        /** @var Date $dateAdapter */
+        $dateAdapter = $this->framework->getAdapter(Date::class);
+
         $arrData = [];
 
         // Load language file
-        System::loadLanguageFile('default', $this->sessionBag->get('language'));
+        $systemAdapter->loadLanguageFile('default', $this->sessionBag->get('language'));
 
         // Handle autologout
-        $arrData['opt']['autologout'] = $this->moduleModel->resourceBooking_autologout;
-        $arrData['opt']['autologoutDelay'] = $this->moduleModel->resourceBooking_autologoutDelay;
-        $arrData['opt']['autologoutRedirect'] = Controller::replaceInsertTags(sprintf('{{link_url::%s}}', $this->moduleModel->resourceBooking_autologoutRedirect));
-
-        // Messages
-        if ($this->objSelectedResourceType === null && !Message::hasMessages())
+        if ($this->objUser)
         {
-            Message::addInfo($GLOBALS['TL_LANG']['MSG']['selectResourceTypePlease']);
+            $arrData['opt']['autologout'] = $this->moduleModel->resourceBooking_autologout;
+            $arrData['opt']['autologoutDelay'] = $this->moduleModel->resourceBooking_autologoutDelay;
+            $arrData['opt']['autologoutRedirect'] = $controllerAdapter->replaceInsertTags(sprintf('{{link_url::%s}}', $this->moduleModel->resourceBooking_autologoutRedirect));
         }
 
-        if ($this->objSelectedResource === null && !Message::hasMessages())
+        // Messages
+        if ($this->objSelectedResourceType === null && !$messageAdapter->hasMessages())
         {
-            Message::addInfo($GLOBALS['TL_LANG']['MSG']['selectResourcePlease']);
+            $messageAdapter->addInfo($GLOBALS['TL_LANG']['MSG']['selectResourceTypePlease']);
+        }
+
+        if ($this->objSelectedResource === null && !$messageAdapter->hasMessages())
+        {
+            $messageAdapter->addInfo($GLOBALS['TL_LANG']['MSG']['selectResourcePlease']);
         }
 
         // Filter form: get resource types dropdown
@@ -172,30 +198,33 @@ class AjaxHelper
         // Filter form: get date dropdown
         $arrData['filterBoard']['weekSelection'] = $this->getWeekSelection((int) $this->sessionBag->get('tstampFirstPossibleWeek'), (int) $this->sessionBag->get('tstampLastPossibleWeek'), true);
 
-        $objUser = $this->objUser;
-
         // Logged in user
-        $arrData['loggedInUser'] = [
-            'firstname' => $objUser->firstname,
-            'lastname'  => $objUser->lastname,
-            'gender'    => $GLOBALS['TL_LANG'][$objUser->gender] != '' ? $GLOBALS['TL_LANG'][$objUser->gender] : $objUser->gender,
-            'email'     => $objUser->email,
-            'id'        => $objUser->id,
-        ];
+        $arrData['userIsLoggedIn'] = false;
+        if ($this->objUser !== null)
+        {
+            $arrData['userIsLoggedIn'] = true;
+            $arrData['loggedInUser'] = [
+                'firstname' => $this->objUser->firstname,
+                'lastname'  => $this->objUser->lastname,
+                'gender'    => $GLOBALS['TL_LANG'][$this->objUser->gender] != '' ? $GLOBALS['TL_LANG'][$this->objUser->gender] : $this->objUser->gender,
+                'email'     => $this->objUser->email,
+                'id'        => $this->objUser->id,
+            ];
+        }
 
         // Selected week
         $arrData['activeWeekTstamp'] = (int) $this->sessionBag->get('activeWeekTstamp');
         $arrData['activeWeek'] = [
             'tstampStart' => $this->sessionBag->get('activeWeekTstamp'),
-            'tstampEnd'   => DateHelper::addDaysToTime(6, $this->sessionBag->get('activeWeekTstamp')),
-            'dateStart'   => Date::parse(Config::get('dateFormat'), $this->sessionBag->get('activeWeekTstamp')),
-            'dateEnd'     => Date::parse(Config::get('dateFormat'), DateHelper::addDaysToTime(6, $this->sessionBag->get('activeWeekTstamp'))),
-            'weekNumber'  => Date::parse('W', $this->sessionBag->get('activeWeekTstamp')),
-            'year'        => Date::parse('Y', $this->sessionBag->get('activeWeekTstamp')),
+            'tstampEnd'   => $dateHelperAdapter->addDaysToTime(6, $this->sessionBag->get('activeWeekTstamp')),
+            'dateStart'   => $dateAdapter->parse(Config::get('dateFormat'), $this->sessionBag->get('activeWeekTstamp')),
+            'dateEnd'     => $dateAdapter->parse(Config::get('dateFormat'), $dateHelperAdapter->addDaysToTime(6, $this->sessionBag->get('activeWeekTstamp'))),
+            'weekNumber'  => $dateAdapter->parse('W', $this->sessionBag->get('activeWeekTstamp')),
+            'year'        => $dateAdapter->parse('Y', $this->sessionBag->get('activeWeekTstamp')),
         ];
 
         // Get booking RepeatsSelection
-        $arrData['bookingRepeatsSelection'] = $this->getWeekSelection((int) $this->sessionBag->get('activeWeekTstamp'), DateHelper::addDaysToTime(7 * $this->sessionBag->get('intAheadWeeks')), false);
+        $arrData['bookingRepeatsSelection'] = $this->getWeekSelection((int) $this->sessionBag->get('activeWeekTstamp'), $dateHelperAdapter->addDaysToTime(7 * $this->sessionBag->get('intAheadWeeks')), false);
 
         // Send weekdays, dates and day
         $arrWeek = [];
@@ -211,7 +240,7 @@ class AjaxHelper
                 'index'      => $i,
                 'title'      => $GLOBALS['TL_LANG']['DAYS_LONG'][$i] != '' ? $GLOBALS['TL_LANG']['DAYS_LONG'][$i] : $arrWeekdays[$i],
                 'titleShort' => $GLOBALS['TL_LANG']['DAYS_SHORTED'][$i] != '' ? $GLOBALS['TL_LANG']['DAYS_SHORTED'][$i] : $arrWeekdays[$i],
-                'date'       => Date::parse('d.m.Y', strtotime(Date::parse('Y-m-d', $this->sessionBag->get('activeWeekTstamp')) . " +" . $i . " day"))
+                'date'       => $dateAdapter->parse('d.m.Y', strtotime($dateAdapter->parse('Y-m-d', $this->sessionBag->get('activeWeekTstamp')) . " +" . $i . " day"))
             ];
         }
         // Weekdays
@@ -226,14 +255,13 @@ class AjaxHelper
 
         // Get rows
         $arrData['activeResourceId'] = 'undefined';
+        $rows = [];
         if ($this->objSelectedResource !== null && $this->objSelectedResourceType !== null)
         {
             $arrData['activeResourceId'] = $this->objSelectedResource->id;
             $arrData['activeResource'] = $this->objSelectedResource->row();
 
-            $objSelectedResource = $this->objSelectedResource;
-            $objTimeslots = ResourceBookingTimeSlotModel::findPublishedByPid($objSelectedResource->timeSlotType);
-            $rows = [];
+            $objTimeslots = ResourceBookingTimeSlotModel::findPublishedByPid($this->objSelectedResource->timeSlotType);
             $rowCount = 0;
             if ($objTimeslots !== null)
             {
@@ -276,16 +304,16 @@ class AjaxHelper
                         $objTs = new \stdClass();
                         $objTs->index = $colCount;
                         $objTs->weekday = $arrWeekdays[$colCount];
-                        $objTs->startTimeString = Date::parse('H:i', $startTimestamp);
+                        $objTs->startTimeString = $dateAdapter->parse('H:i', $startTimestamp);
                         $objTs->startTimestamp = (int) $startTimestamp;
-                        $objTs->endTimeString = Date::parse('H:i', $endTimestamp);
+                        $objTs->endTimeString = $dateAdapter->parse('H:i', $endTimestamp);
                         $objTs->endTimestamp = (int) $endTimestamp;
-                        $objTs->timeSpanString = Date::parse('H:i', $startTimestamp) . ' - ' . Date::parse('H:i', $endTimestamp);
+                        $objTs->timeSpanString = $dateAdapter->parse('H:i', $startTimestamp) . ' - ' . $dateAdapter->parse('H:i', $endTimestamp);
                         $objTs->mondayTimestampSelectedWeek = (int) $this->sessionBag->get('activeWeekTstamp');
-                        $objTs->isBooked = $this->isResourceBooked($objSelectedResource, $startTimestamp, $endTimestamp);
+                        $objTs->isBooked = $this->isResourceBooked($this->objSelectedResource, $startTimestamp, $endTimestamp);
                         $objTs->isEditable = $objTs->isBooked ? false : true;
                         $objTs->timeSlotId = $objTimeslots->id;
-                        $objTs->resourceId = $objSelectedResource->id;
+                        $objTs->resourceId = $this->objSelectedResource->id;
                         $objTs->isEditable = true;
                         // slotId-startTime-endTime-mondayTimestampSelectedWeek
                         $objTs->bookingCheckboxValue = sprintf('%s-%s-%s-%s', $objTimeslots->id, $startTimestamp, $endTimestamp, $this->sessionBag->get('activeWeekTstamp'));
@@ -293,7 +321,7 @@ class AjaxHelper
                         if ($objTs->isBooked)
                         {
                             $objTs->isEditable = false;
-                            $objBooking = ResourceBookingModel::findOneByResourceIdStarttimeAndEndtime($objSelectedResource, $startTimestamp, $endTimestamp);
+                            $objBooking = ResourceBookingModel::findOneByResourceIdStarttimeAndEndtime($this->objSelectedResource, $startTimestamp, $endTimestamp);
                             if ($objBooking !== null)
                             {
                                 if ($objBooking->member === $this->objUser->id)
@@ -336,7 +364,7 @@ class AjaxHelper
         $arrData['rows'] = $rows;
 
         // Get time slots
-        $objTimeslots = ResourceBookingTimeSlotModel::findPublishedByPid($objSelectedResource->timeSlotType);
+        $objTimeslots = ResourceBookingTimeSlotModel::findPublishedByPid($this->objSelectedResource->timeSlotType);
         $timeSlots = [];
         if ($objTimeslots !== null)
         {
@@ -357,15 +385,15 @@ class AjaxHelper
 
         // Get messages
         $arrData['messages'] = [];
-        if (Message::hasMessages())
+        if ($messageAdapter->hasMessages())
         {
-            if (Message::hasInfo())
+            if ($messageAdapter->hasInfo())
             {
-                $arrData['messages']['info'] = Message::generateUnwrapped('FE', true);
+                $arrData['messages']['info'] = $messageAdapter->generateUnwrapped('FE', true);
             }
-            if (Message::hasError())
+            if ($messageAdapter->hasError())
             {
-                $arrData['messages']['error'] = Message::generateUnwrapped('FE', true);
+                $arrData['messages']['error'] = $messageAdapter->generateUnwrapped('FE', true);
             }
         }
 
@@ -380,10 +408,20 @@ class AjaxHelper
      * @param array $arrBookingDateSelection
      * @param int $bookingRepeatStopWeekTstamp
      * @return array
+     * @throws \Exception
      */
     public function prepareBookingSelection(FrontendUser $objUser, ResourceBookingResourceModel $objResource, array $arrBookingDateSelection, int $bookingRepeatStopWeekTstamp): array
     {
         $this->initialize();
+
+        /** @var StringUtil $stringUtilAdapter */
+        $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
+
+        /** @var DateHelper $dateHelperAdapter */
+        $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
+
+        /** @var Date $dateAdapter */
+        $dateAdapter = $this->framework->getAdapter(Date::class);
 
         $arrBookings = [];
 
@@ -419,9 +457,9 @@ class AjaxHelper
                 while ($doRepeat === true)
                 {
                     $arrRepeat = $arrBooking;
-                    $arrRepeat['startTime'] = DateHelper::addDaysToTime(7, $arrRepeat['startTime']);
-                    $arrRepeat['endTime'] = DateHelper::addDaysToTime(7, $arrRepeat['endTime']);
-                    $arrRepeat['mondayTimestampSelectedWeek'] = DateHelper::addDaysToTime(7, $arrRepeat['mondayTimestampSelectedWeek']);
+                    $arrRepeat['startTime'] = $dateHelperAdapter->addDaysToTime(7, $arrRepeat['startTime']);
+                    $arrRepeat['endTime'] = $dateHelperAdapter->addDaysToTime(7, $arrRepeat['endTime']);
+                    $arrRepeat['mondayTimestampSelectedWeek'] = $dateHelperAdapter->addDaysToTime(7, $arrRepeat['mondayTimestampSelectedWeek']);
                     $arrBookings[] = $arrRepeat;
                     // Stop repeating
                     if ($arrRepeat['mondayTimestampSelectedWeek'] >= $bookingRepeatStopWeekTstamp)
@@ -445,9 +483,9 @@ class AjaxHelper
         foreach ($arrBookings as $index => $arrData)
         {
             // Set date
-            $arrBookings[$index]['date'] = Date::parse(Config::get('dateFormat'), $arrData['startTime']);
+            $arrBookings[$index]['date'] = $dateAdapter->parse(Config::get('dateFormat'), $arrData['startTime']);
 
-            $arrBookings[$index]['datim'] = sprintf('%s, %s: %s - %s', Date::parse('D', $arrData['startTime']), Date::parse(Config::get('dateFormat'), $arrData['startTime']), Date::parse('H:i', $arrData['startTime']), Date::parse('H:i', $arrData['endTime']));
+            $arrBookings[$index]['datim'] = sprintf('%s, %s: %s - %s', $dateAdapter->parse('D', $arrData['startTime']), $dateAdapter->parse(Config::get('dateFormat'), $arrData['startTime']), $dateAdapter->parse('H:i', $arrData['startTime']), $dateAdapter->parse('H:i', $arrData['endTime']));
 
             if (!$this->isResourceBooked($objResource, $arrData['startTime'], $arrData['endTime']))
             {
@@ -474,7 +512,7 @@ class AjaxHelper
                     $objMember = MemberModel::findByPk($objRes->member);
                     if ($objMember !== null)
                     {
-                        $arrBookings[$index]['holder'] = StringUtil::substr($objMember->firstname, 1, '') . '. ' . $objMember->lastname;
+                        $arrBookings[$index]['holder'] = $stringUtilAdapter->substr($objMember->firstname, 1, '') . '. ' . $objMember->lastname;
                     }
                 }
             }
@@ -506,8 +544,17 @@ class AjaxHelper
      */
     public function getWeekSelection(int $startTstamp, int $endTstamp, bool $injectEmptyLine = false): array
     {
+        /** @var System $systemAdapter */
+        $systemAdapter = $this->framework->getAdapter(System::class);
+
+        /** @var DateHelper $dateHelperAdapter */
+        $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
+
+        /** @var Date $dateAdapter */
+        $dateAdapter = $this->framework->getAdapter(Date::class);
+
         // Load language file
-        System::loadLanguageFile('default', $this->sessionBag->get('language'));
+        $systemAdapter->loadLanguageFile('default', $this->sessionBag->get('language'));
 
         $arrWeeks = [];
 
@@ -515,7 +562,7 @@ class AjaxHelper
         while ($currentTstamp <= $endTstamp)
         {
             // add empty
-            if ($injectEmptyLine && DateHelper::getMondayOfCurrentWeek() == $currentTstamp)
+            if ($injectEmptyLine && $dateHelperAdapter->getMondayOfCurrentWeek() == $currentTstamp)
             {
                 $arrWeeks[] = [
                     'tstamp'     => '',
@@ -524,11 +571,11 @@ class AjaxHelper
                 ];
             }
             $tstampMonday = $currentTstamp;
-            $dateMonday = Date::parse('d.m.Y', $currentTstamp);
+            $dateMonday = $dateAdapter->parse('d.m.Y', $currentTstamp);
             $tstampSunday = strtotime($dateMonday . ' + 6 days');
-            $dateSunday = Date::parse('d.m.Y', $tstampSunday);
-            $calWeek = Date::parse('W', $tstampMonday);
-            $yearMonday = Date::parse('Y', $tstampMonday);
+            $dateSunday = $dateAdapter->parse('d.m.Y', $tstampSunday);
+            $calWeek = $dateAdapter->parse('W', $tstampMonday);
+            $yearMonday = $dateAdapter->parse('Y', $tstampMonday);
             $arrWeeks[] = [
                 'tstamp'       => (int) $currentTstamp,
                 'tstampMonday' => (int) $tstampMonday,
@@ -541,7 +588,7 @@ class AjaxHelper
                 'optionText'   => sprintf($GLOBALS['TL_LANG']['MSC']['weekSelectOptionText'], $calWeek, $yearMonday, $dateMonday, $dateSunday)
             ];
 
-            $currentTstamp = DateHelper::addDaysToTime(7, $currentTstamp);
+            $currentTstamp = $dateHelperAdapter->addDaysToTime(7, $currentTstamp);
         }
         return $arrWeeks;
     }
@@ -549,10 +596,14 @@ class AjaxHelper
     /**
      * @param int $intJumpWeek
      * @return array
+     * @throws \Exception
      */
     public function getJumpWeekDate(int $intJumpWeek): array
     {
         $this->initialize();
+
+        /** @var DateHelper $dateHelperAdapter */
+        $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
 
         $arrReturn = [
             'disabled' => false,
@@ -561,8 +612,8 @@ class AjaxHelper
 
         $intJumpDays = 7 * $intJumpWeek;
         // Create 1 week back and 1 week ahead links
-        $jumpTime = DateHelper::addDaysToTime($intJumpDays, $this->sessionBag->get('activeWeekTstamp'));
-        if (!DateHelper::isValidDate($jumpTime))
+        $jumpTime = $dateHelperAdapter->addDaysToTime($intJumpDays, $this->sessionBag->get('activeWeekTstamp'));
+        if (!$dateHelperAdapter->isValidDate($jumpTime))
         {
             $jumpTime = $this->sessionBag->get('activeWeekTstamp');
             $arrReturn['disabled'] = true;
@@ -583,7 +634,9 @@ class AjaxHelper
      */
     public function getActiveResourceTypeModel(): ?ResourceBookingResourceTypeModel
     {
+        /** @var  ResourceBookingResourceTypeModel $resourceBookingResourceTypeModelAdapter */
         $resourceBookingResourceTypeModelAdapter = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class);
+
         return $resourceBookingResourceTypeModelAdapter->findByPk($this->sessionBag->get('resType'));
     }
 
@@ -592,7 +645,9 @@ class AjaxHelper
      */
     public function getActiveResourceModel(): ?ResourceBookingResourceModel
     {
+        /** @var  ResourceBookingResourceModel $resourceBookingResourceModelAdapter */
         $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
+
         return $resourceBookingResourceModelAdapter->findByPk($this->sessionBag->get('res'));
     }
 

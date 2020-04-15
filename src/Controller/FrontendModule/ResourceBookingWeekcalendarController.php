@@ -84,17 +84,11 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
             /** @var Environment $environmentAdapter */
             $environmentAdapter = $this->framework->getAdapter(Environment::class);
 
-            /** @var FrontendUser $user */
-            $objUser = $this->security->getUser();
-            if (!$objUser instanceof FrontendUser)
+            $objUser = null;
+            if ($this->security->getUser() instanceof FrontendUser)
             {
-                if ($request->query->has('date') || $request->query->has('resType') || $request->query->has('res'))
-                {
-                    $url = \Haste\Util\Url::removeQueryString(['date', 'resType', 'res'], $environmentAdapter->get('request'));
-                    $controllerAdapter->redirect($url);
-                }
-                // Return empty string if user has not logged in as a frontend user
-                return new Response('', Response::HTTP_NO_CONTENT);
+                /** @var FrontendUser $user */
+                $objUser = $this->security->getUser();
             }
 
             // Add session id to url
@@ -106,7 +100,8 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
                 $response = new Response();
                 $response->headers->setCookie($cookie);
                 $response->send();
-                $sessId = sha1($token . $objUser->password);
+                $pw = $objUser ? $objUser->getPassword() : '';
+                $sessId = sha1($token . $pw);
                 $params = [
                     sprintf(
                         'sessionId=%s',

@@ -5,7 +5,7 @@
 <?php $GLOBALS['TL_JAVASCRIPT'][] = 'assets/contao-component-vue-js/vue/dist/vue.min.js|static'; ?>
 <?php $GLOBALS['TL_CSS'][] = MOD_RESOURCE_BOOKING_ASSET_PATH . '/css/frontend.css|static'; ?>
 <?php $GLOBALS['TL_JAVASCRIPT'][] = MOD_RESOURCE_BOOKING_ASSET_PATH . '/jquery.idle/jquery.idle.min.min.js'; ?>
-<?php $GLOBALS['TL_JAVASCRIPT'][] = MOD_RESOURCE_BOOKING_ASSET_PATH . '/resource-booking-app-vue.min.js'; ?>
+<?php $GLOBALS['TL_JAVASCRIPT'][] = MOD_RESOURCE_BOOKING_ASSET_PATH . '/resource-booking-app-vue.js'; ?>
 
 <?php $this->extend('block_unsearchable'); ?>
 
@@ -80,16 +80,16 @@
                 <tbody>
                     <tr v-for="(row, rowIndex) in rows" v-bind:data-row-index="rowIndex" v-bind:id="row.rowData.cssRowId" v-bind:class="row.rowData.cssRowClass">
                         <td>{{ timeSlots[rowIndex].timeSpanString }}</td>
-                        <td class="time-slot-cell" v-for="(eventBox, colIndex) in row.cellData" v-bind:data-day-index="eventBox.index" v-bind:data-is-holder="eventBox.isHolder ? 'true' : 'false'" v-bind:data-isbooked="eventBox.isBooked">
+                        <td class="time-slot-cell" v-for="(eventBox, colIndex) in row.cellData" v-bind:data-day-index="eventBox.index" v-bind:data-is-holder="eventBox.isHolder ? 'true' : 'false'" v-bind:data-isBookable="!eventBox.isBooked && eventBox.isEditable" v-bind:data-isbooked="eventBox.isBooked">
                             <div v-if="eventBox.isBooked">
                                 <span class="holder-box">{{ eventBox.bookedByFullname }}</span>{{br}}<span class="description-box">{{ eventBox.bookingDescription }}</span>
                             </div>
-                            <button class="btn btn-link btn-booking" v-if="eventBox.isEditable && !eventBox.isBooked" v-on:click="openBookingModal(eventBox,'showBookingForm')" title="buchen">
-                                <i class="icon-booking fas fa-shopping-cart"></i>
+                            <button class="btn btn-link btn-booking" v-if="userIsLoggedIn && eventBox.isEditable && !eventBox.isBooked" v-on:click="openBookingModal(eventBox,'showBookingForm')" title="buchen">
+                                <i class="icon-booking fas fa-check-circle"></i>
                                 <i class="icon-cancel-booking fas fa-window-close"></i>
                             </button>
-                            <button class="btn btn-link btn-cancel-booking" v-if="eventBox.isEditable && eventBox.isBooked" v-on:click="openBookingModal(eventBox, 'showCancelBookingForm')" title="stornieren">
-                                <i class="icon-booking fas fa-shopping-cart"></i>
+                            <button class="btn btn-link btn-cancel-booking" v-if="userIsLoggedIn && eventBox.isEditable && eventBox.isBooked" v-on:click="openBookingModal(eventBox, 'showCancelBookingForm')" title="stornieren">
+                                <i class="icon-booking far fa-check-circle"></i>
                                 <i class="icon-cancel-booking fas fa-window-close"></i>
                             </button>
                         </td>
@@ -100,7 +100,7 @@
         <!-- End booking table -->
 
         <!-- booking modal -->
-        <div class="modal resource-booking-modal" tabindex="-1" role="dialog">
+        <div class="modal resource-booking-modal" v-if="userIsLoggedIn" tabindex="-1" role="dialog">
             <div class="modal-dialog modal-lg" role="document">
                 <div class="modal-content">
                     <div class="modal-header">

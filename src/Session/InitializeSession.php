@@ -18,14 +18,16 @@ use Contao\FrontendUser;
 use Contao\ModuleModel;
 use Contao\PageModel;
 use Contao\ResourceBookingResourceModel;
+use Contao\Controller;
 use Contao\ResourceBookingResourceTypeModel;
 use Contao\StringUtil;
+use Contao\Environment;
+use Haste\Util\Url;
 use Markocupic\ResourceBookingBundle\DateHelper;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
-use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Component\Security\Core\Security;
 
 /**
@@ -87,30 +89,39 @@ class InitializeSession
         /** @var DateHelper $dateHelperAdapter */
         $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
 
+        /** @var Environment $environmentAdapter */
+        $environmentAdapter = $this->framework->getAdapter(Environment::class);
+
         /** @var Config $configAdapter */
         $configAdapter = $this->framework->getAdapter(Config::class);
 
         /** @var StringUtil $stringUtilAdapter */
         $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
 
+        /** @var Url $urlAdapter */
+        $urlAdapter = $this->framework->getAdapter(Url::class);
+
+        /** @var \Controller $controllerAdapter */
+        $controllerAdapter = $this->framework->getAdapter(Controller::class);
+
         /** @var Request $request */
         $request = $this->requestStack->getCurrentRequest();
 
         /** @var FrontendUser $user */
-        $objUser = $this->security->getUser();
-        if (!$objUser instanceof FrontendUser)
+        $objUser = null;
+        if ($this->security->getUser() instanceof FrontendUser)
         {
-            // Return empty string if user has not logged in as a frontend user
-            throw new AccessDeniedException('Application is permitted to logged in frontend users only.');
+            $objUser = $this->security->getUser();
         }
 
-        // Validate session id against cookie an frontend user password
+        // Validate session id against cookie an frontend user password (if user has logged in)
         $blnForbidden = true;
+        $pw = $objUser ? $objUser->getPassword() : '';
         if (!$isAjaxRequest)
         {
             if (
                 strlen($request->query->get('sessionId')) &&
-                sha1($request->cookies->get('_contao_resource_booking_token') . $objUser->password) === $request->query->get('sessionId')
+                sha1($request->cookies->get('_contao_resource_booking_token') . $pw) === $request->query->get('sessionId')
             )
             {
                 //Add session id to the session bag
@@ -120,7 +131,7 @@ class InitializeSession
         }
         else
         {
-            if ($this->sessionBag->get('sessionId') === $request->query->get('sessionId') && sha1($request->cookies->get('_contao_resource_booking_token') . $objUser->password) === $request->query->get('sessionId'))
+            if ($this->sessionBag->get('sessionId') === $request->query->get('sessionId') && sha1($request->cookies->get('_contao_resource_booking_token') . $pw) === $request->query->get('sessionId'))
             {
                 $blnForbidden = false;
             }
@@ -174,6 +185,29 @@ class InitializeSession
                 $language = 'en';
             }
             $this->sessionBag->set('language', $language);
+        }
+
+        // Set resType by url param
+        if ($request->query->has('resType'))
+        {
+            $this->sessionBag->set('resType', $request->query->get('resType', 0));
+            $blnRedirect = true;
+        }
+
+        // Set res by url param
+        if ($request->query->has('res'))
+        {
+            // @ Todo Automatisch resType ermitteln und checken ob res im erlaubten resType liegt (Modul Einstellung)
+            $this->sessionBag->set('res', $request->query->get('res', 0));
+            $blnRedirect = true;
+        }
+
+        if ($blnRedirect)
+        {
+            //@ Todo Datum Implementation
+            //$url = $urlAdapter->removeQueryString(['date', 'resType', 'res'], $environmentAdapter->get('request'));
+            $url = $urlAdapter->removeQueryString(['resType', 'res'], $environmentAdapter->get('request'));
+            $controllerAdapter->redirect($url);
         }
 
         // Check if access to active resource type is allowed
