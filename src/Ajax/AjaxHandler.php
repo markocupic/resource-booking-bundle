@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 /**
  * Resource Booking Module for Contao CMS
- * Copyright (c) 2008-2019 Marko Cupic
+ * Copyright (c) 2008-2020 Marko Cupic
  * @package resource-booking-bundle
  * @author Marko Cupic m.cupic@gmx.ch, 2019
  * @link https://github.com/markocupic/resource-booking-bundle
@@ -20,7 +20,9 @@ use Contao\FrontendUser;
 use Contao\Input;
 use Contao\ResourceBookingModel;
 use Contao\ResourceBookingResourceModel;
+use Contao\ResourceBookingResourceTypeModel;
 use Contao\System;
+use Markocupic\ResourceBookingBundle\DateHelper;
 use Psr\Log\LogLevel;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -82,6 +84,51 @@ class AjaxHandler
      */
     public function sendApplyFilterRequest(): array
     {
+        $request = $this->requestStack->getCurrentRequest();
+
+        // Get resource type from post request
+        $intResType = (int) $request->request->get('resType', 0);
+
+        /** @var  ResourceBookingResourceTypeModel $resourceBookingResourceTypeModelAdapter */
+        $resourceBookingResourceTypeModelAdapter = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class);
+        if ($resourceBookingResourceTypeModelAdapter->findByPk($intResType) !== null)
+        {
+            $this->sessionBag->set('resType', $intResType);
+        }
+
+        // Get resource from post request
+        $intRes = (int) $request->request->get('res', 0);
+
+        /** @var ResourceBookingResourceModel $resourceBookingResourceModelAdapter */
+        $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
+        if ($resourceBookingResourceModelAdapter->findByPk($intRes) !== null)
+        {
+            $this->sessionBag->set('res', $intRes);
+        }
+
+        /** @var DateHelper $dateHelperAdapter */
+        $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
+
+        // Get active week timestamp from post request
+        $intTstampDate = (int) $request->request->get('date', 0);
+        $intTstampDate = $dateHelperAdapter->isValidDate($intTstampDate) ? $intTstampDate : $dateHelperAdapter->getMondayOfCurrentWeek();
+
+        // Validate $intTstampDate
+        $tstampFirstPossibleWeek = $this->sessionBag->get('tstampFirstPossibleWeek');
+        if ($intTstampDate < $tstampFirstPossibleWeek)
+        {
+            $intTstampDate = $tstampFirstPossibleWeek;
+        }
+
+        $tstampLastPossibleWeek = $this->sessionBag->get('tstampLastPossibleWeek');
+        if ($intTstampDate > $tstampLastPossibleWeek)
+        {
+            $intTstampDate = $tstampLastPossibleWeek;
+        }
+
+        $this->sessionBag->set('activeWeekTstamp', (int) $intTstampDate);
+
+        // Fetch data and send it to the browser
         $arrJson = [];
         $arrJson['data'] = $this->ajaxHelper->fetchData();
         $arrJson['status'] = 'success';
@@ -89,6 +136,7 @@ class AjaxHandler
     }
 
     /**
+     * @return array
      */
     public function sendJumpWeekRequest(): array
     {
@@ -314,21 +362,7 @@ class AjaxHandler
         return $arrJson;
     }
 
-    /**
-     */
-    public function sendLogoutRequest(): void
-    {
-        // Unset session
-        $this->sessionBag->clear();
 
-        // Unset cookie
-        $cookie_name = 'PHPSESSID';
-        unset($_COOKIE[$cookie_name]);
-        // Empty value and expiration one hour before
-        $res = setcookie($cookie_name, '', time() - 3600);
-        // Logout user
-        throw new RedirectResponseException(System::getContainer()->get('security.logout_url_generator')->getLogoutUrl());
-    }
 
 }
 

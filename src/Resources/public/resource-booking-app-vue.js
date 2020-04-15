@@ -1,6 +1,6 @@
 /**
  * Resource Booking Module for Contao CMS
- * Copyright (c) 2008-2019 Marko Cupic
+ * Copyright (c) 2008-2020 Marko Cupic
  * @package resource-booking-bundle
  * @author Marko Cupic m.cupic@gmx.ch, 2019
  * @link https://github.com/markocupic/resource-booking-bundle
@@ -43,7 +43,7 @@ class resourceBookingApp {
                 var ua = window.navigator.userAgent;
                 var msie = ua.indexOf('MSIE ');
                 if (msie > 0) {
-                   alert('This extension is not compatible with your browser. Please use a current browser (like Opera, Firefox, Safari or Google Chrome), that is not out of date.')
+                    alert('This extension is not compatible with your browser. Please use a current browser (like Opera, Firefox, Safari or Google Chrome), that is not out of date.')
                 }
 
                 // Post requests require a request token
@@ -112,17 +112,16 @@ class resourceBookingApp {
 
                     let data = new FormData();
                     data.append('REQUEST_TOKEN', self.requestToken);
-                    data.append('action', 'fetchDataRequest');
 
                     // Fetch
-                    fetch('_resource_booking_controller/ajax?sessionId=' + self.sessionId,
-                        {
-                            method: "POST",
-                            body: data,
-                            headers: {
-                                'x-requested-with': 'XMLHttpRequest'
-                            },
-                        })
+                    let action = 'fetchDataRequest';
+                    fetch('_resource_booking/ajax/' + action + '?sessionId=' + self.sessionId, {
+                        method: "POST",
+                        body: data,
+                        headers: {
+                            'x-requested-with': 'XMLHttpRequest'
+                        },
+                    })
                         .then(function (res) {
                             return res.json();
                         })
@@ -148,10 +147,9 @@ class resourceBookingApp {
                     let self = this;
 
                     let data = new FormData();
-                    data.append('action', 'sendBookingRequest');
                     data.append('REQUEST_TOKEN', self.requestToken);
                     data.append('resourceId', self.bookingModal.activeTimeSlot.resourceId);
-                    data.append('description',  $(self.$el).find('.resource-booking-modal [name="bookingDescription"]').first().val());
+                    data.append('description', $(self.$el).find('.resource-booking-modal [name="bookingDescription"]').first().val());
                     data.append('bookingRepeatStopWeekTstamp', $(self.$el).find('.booking-repeat-stop-week-tstamp').first().val());
 
                     let i;
@@ -159,7 +157,8 @@ class resourceBookingApp {
                         data.append('bookingDateSelection[]', self.bookingModal.selectedTimeSlots[i]);
                     }
 
-                    fetch('_resource_booking_controller/ajax?sessionId=' + self.sessionId,
+                    let action = 'sendBookingRequest';
+                    fetch('_resource_booking/ajax/' + action + '?sessionId=' + self.sessionId,
                         {
                             method: "POST",
                             body: data,
@@ -199,7 +198,6 @@ class resourceBookingApp {
                     let self = this;
 
                     let data = new FormData();
-                    data.append('action', 'sendBookingFormValidationRequest');
                     data.append('REQUEST_TOKEN', self.requestToken);
                     data.append('resourceId', self.bookingModal.activeTimeSlot.resourceId);
                     data.append('bookingRepeatStopWeekTstamp', $(self.$el).find('.booking-repeat-stop-week-tstamp').first().val());
@@ -208,8 +206,8 @@ class resourceBookingApp {
                     for (i = 0; i < self.bookingModal.selectedTimeSlots.length; i++) {
                         data.append('bookingDateSelection[]', self.bookingModal.selectedTimeSlots[i]);
                     }
-
-                    fetch('_resource_booking_controller/ajax?sessionId=' + self.sessionId,
+                    let action = 'sendBookingFormValidationRequest';
+                    fetch('_resource_booking/ajax/' + action + '?sessionId=' + self.sessionId,
                         {
                             method: "POST",
                             body: data,
@@ -240,18 +238,17 @@ class resourceBookingApp {
                     let self = this;
 
                     let data = new FormData();
-                    data.append('action', 'sendCancelBookingRequest');
                     data.append('REQUEST_TOKEN', self.requestToken);
                     data.append('bookingId', self.bookingModal.activeTimeSlot.bookingId);
 
-                    fetch('_resource_booking_controller/ajax?sessionId=' + self.sessionId,
-                        {
-                            method: "POST",
-                            body: data,
-                            headers: {
-                                'x-requested-with': 'XMLHttpRequest'
-                            },
-                        })
+                    let action = 'sendCancelBookingRequest';
+                    fetch('_resource_booking/ajax/' + action + '?sessionId=' + self.sessionId, {
+                        method: "POST",
+                        body: data,
+                        headers: {
+                            'x-requested-with': 'XMLHttpRequest'
+                        },
+                    })
                         .then(function (res) {
                             return res.json();
                         })
@@ -284,10 +281,9 @@ class resourceBookingApp {
                     let self = this;
 
                     let data = new FormData();
-                    data.append('action', 'sendLogoutRequest');
                     data.append('REQUEST_TOKEN', self.requestToken);
 
-                    fetch('_resource_booking_controller/ajax?sessionId=' + self.sessionId,
+                    fetch('_resource_booking/ajax/logout?sessionId=' + self.sessionId,
                         {
                             method: "POST",
                             body: data,
@@ -317,20 +313,19 @@ class resourceBookingApp {
 
                     let self = this;
                     let data = new FormData();
-                    data.append('action', 'sendApplyFilterRequest');
                     data.append('REQUEST_TOKEN', self.requestToken);
                     data.append('resType', self.activeResourceTypeId);
                     data.append('res', self.activeResourceId);
                     data.append('date', self.activeWeekTstamp);
 
-                    fetch('_resource_booking_controller/ajax?sessionId=' + self.sessionId,
-                        {
-                            method: "POST",
-                            body: data,
-                            headers: {
-                                'x-requested-with': 'XMLHttpRequest'
-                            },
-                        })
+                    let action = 'sendApplyFilterRequest';
+                    fetch('_resource_booking/ajax/' + action + '?sessionId=' + self.sessionId, {
+                        method: "POST",
+                        body: data,
+                        headers: {
+                            'x-requested-with': 'XMLHttpRequest'
+                        },
+                    })
                         .then(function (res) {
                             return res.json();
                         })
@@ -362,21 +357,20 @@ class resourceBookingApp {
                     $("body").append(backdrop);
 
                     let data = new FormData();
-                    data.append('action', 'sendJumpWeekRequest');
                     data.append('REQUEST_TOKEN', self.requestToken);
                     data.append('resType', self.activeResourceTypeId);
                     data.append('res', self.activeResourceId);
                     data.append('date', tstamp);
 
 
-                    fetch('_resource_booking_controller/ajax?sessionId=' + self.sessionId,
-                        {
-                            method: "POST",
-                            body: data,
-                            headers: {
-                                'x-requested-with': 'XMLHttpRequest'
-                            },
-                        })
+                    let action = 'sendJumpWeekRequest';
+                    fetch('_resource_booking/ajax/' + action + '?sessionId=' + self.sessionId, {
+                        method: "POST",
+                        body: data,
+                        headers: {
+                            'x-requested-with': 'XMLHttpRequest'
+                        },
+                    })
                         .then(function (res) {
                             return res.json();
                         })

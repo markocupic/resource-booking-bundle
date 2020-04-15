@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 /**
  * Resource Booking Module for Contao CMS
- * Copyright (c) 2008-2019 Marko Cupic
+ * Copyright (c) 2008-2020 Marko Cupic
  * @package resource-booking-bundle
  * @author Marko Cupic m.cupic@gmx.ch, 2019
  * @link https://github.com/markocupic/resource-booking-bundle
@@ -21,8 +21,10 @@ use Contao\ModuleModel;
 use Contao\PageModel;
 use Contao\Template;
 use Markocupic\ResourceBookingBundle\Session\InitializeSession;
+use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Security\Core\Security;
 use Contao\CoreBundle\ServiceAnnotation\FrontendModule;
 
@@ -41,17 +43,25 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
     /** @var InitializeSession */
     private $initializeSession;
 
+    /** @var SessionInterface */
+    private $session;
+
+    /** @var string */
+    private $bagName;
+
     /**
      * ResourceBookingWeekcalendarController constructor.
      * @param ContaoFramework $framework
      * @param Security $security
      * @param InitializeSession $initializeSession
      */
-    public function __construct(ContaoFramework $framework, Security $security, InitializeSession $initializeSession)
+    public function __construct(ContaoFramework $framework, Security $security, InitializeSession $initializeSession, SessionInterface $session, string $bagName)
     {
         $this->framework = $framework;
         $this->security = $security;
         $this->initializeSession = $initializeSession;
+        $this->session = $session;
+        $this->bagName = $bagName;
     }
 
     /**
@@ -91,20 +101,26 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
             if (!$request->query->has('sessionId'))
             {
                 $url = $environmentAdapter->get('request');
-
+                $token = rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '=');
+                $cookie = new Cookie('_contao_resource_booking_token', $token, time() + 24 * 3600);
+                $response = new Response();
+                $response->headers->setCookie($cookie);
+                $response->send();
+                $sessId = sha1($token . $objUser->password);
                 $params = [
                     sprintf(
                         'sessionId=%s',
-                        sha1(microtime()) . sha1(random_bytes(6))
+                        $sessId
                     ),
                 ];
                 $url = \Haste\Util\Url::addQueryString(implode('&', $params), $url);
+
                 // redirect
                 $controllerAdapter->redirect($url);
             }
 
             // Initialize application
-            $this->initializeSession->initialize((int) $model->id, (int) $page->id);
+            $this->initializeSession->initialize(false, (int) $model->id, (int) $page->id);
         }
 
         // Call the parent method

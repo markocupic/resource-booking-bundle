@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 /**
  * Resource Booking Module for Contao CMS
- * Copyright (c) 2008-2019 Marko Cupic
+ * Copyright (c) 2008-2020 Marko Cupic
  * @package resource-booking-bundle
  * @author Marko Cupic m.cupic@gmx.ch, 2019
  * @link https://github.com/markocupic/resource-booking-bundle
@@ -43,7 +43,7 @@ class AjaxHelper
     /** @var ContaoFramework */
     private $framework;
 
-    /** @var Security  */
+    /** @var Security */
     private $security;
 
     /** @var SessionInterface */
@@ -586,6 +586,24 @@ class AjaxHelper
         $arrReturn['tstamp'] = (int) $jumpTime;
 
         return $arrReturn;
+    }
+
+    /**
+     * @return ResourceBookingResourceTypeModel|null
+     */
+    public function getActiveResourceTypeModel(): ?ResourceBookingResourceTypeModel
+    {
+        $resourceBookingResourceTypeModelAdapter = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class);
+        return $resourceBookingResourceTypeModelAdapter->findByPk($this->sessionBag->get('resType'));
+    }
+
+    /**
+     * @return ResourceBookingResourceModel|null
+     */
+    public function getActiveResourceModel(): ?ResourceBookingResourceModel
+    {
+        $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
+        return $resourceBookingResourceModelAdapter->findByPk($this->sessionBag->get('res'));
     }
 
 }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 /**
  * Resource Booking Module for Contao CMS
- * Copyright (c) 2008-2019 Marko Cupic
+ * Copyright (c) 2008-2020 Marko Cupic
  * @package resource-booking-bundle
  * @author Marko Cupic m.cupic@gmx.ch, 2019
  * @link https://github.com/markocupic/resource-booking-bundle
@@ -18,12 +18,12 @@ use Contao\Environment;
 use Contao\FrontendUser;
 use Contao\ModuleModel;
 use Contao\PageModel;
-use Contao\ResourceBookingResourceModel;
-use Contao\ResourceBookingResourceTypeModel;
 use Markocupic\ResourceBookingBundle\DateHelper;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 use Symfony\Component\Security\Core\Security;
 
 /**
@@ -69,11 +69,12 @@ class InitializeSession
     }
 
     /**
+     * @param bool $isAjaxRequest
      * @param int|null $moduleModelId
      * @param int|null $pageModelId
      * @throws \Exception
      */
-    public function initialize(int $moduleModelId = null, int $pageModelId = null)
+    public function initialize(bool $isAjaxRequest, ?int $moduleModelId, ?int $pageModelId)
     {
         /** @var Environment $environmentAdapter */
         $environmentAdapter = $this->framework->getAdapter(Environment::class);
@@ -84,26 +85,41 @@ class InitializeSession
         /** @var Config $configAdapter */
         $configAdapter = $this->framework->getAdapter(Config::class);
 
-        /** @var ResourceBookingResourceTypeModel $resourceBookingResourceTypeModelAdapter */
-        $resourceBookingResourceTypeModelAdapter = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class);
-
-        /** @var ResourceBookingResourceModel $resourceBookingResourceModelAdapter */
-        $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
-
         /** @var Request $request */
         $request = $this->requestStack->getCurrentRequest();
 
-        // Add session id to the session & validate session id when is ajax request
-        if (!$environmentAdapter->get('isAjaxRequest'))
+        /** @var FrontendUser $user */
+        $objUser = $this->security->getUser();
+        if (!$objUser instanceof FrontendUser)
         {
-            $this->sessionBag->set('sessionId', $request->query->get('sessionId'));
+            // Return empty string if user has not logged in as a frontend user
+            throw new AccessDeniedException('Application is permitted to logged in frontend users only.');
+        }
+
+        // Add session id to the session & validate session id against cookie an frontend users password
+        $blnForbidden = true;
+        if (!$isAjaxRequest)
+        {
+            if (
+                strlen($request->query->get('sessionId')) &&
+                sha1($request->cookies->get('_contao_resource_booking_token') . $objUser->password) === $request->query->get('sessionId')
+            )
+            {
+                $this->sessionBag->set('sessionId', $request->query->get('sessionId'));
+                $blnForbidden = false;
+            }
         }
         else
         {
-            if ($this->sessionBag->get('sessionId') !== $request->query->get('sessionId'))
+            if ($this->sessionBag->get('sessionId') === $request->query->get('sessionId') && sha1($request->cookies->get('_contao_resource_booking_token') . $objUser->password) === $request->query->get('sessionId'))
             {
-                throw new \Exception('Invalid session id detected.');
+                $blnForbidden = false;
             }
+        }
+
+        if ($blnForbidden === true)
+        {
+            throw new UnauthorizedHttpException('Invalid session detected. Please check your cookie settings.');
         }
 
         // Get $moduleModelId from parameter or session
@@ -129,7 +145,7 @@ class InitializeSession
         $this->sessionBag->set('pageModelId', $objPageModel->id);
         $this->pageModel = $objPageModel;
 
-        if (!$environmentAdapter->get('isAjaxRequest'))
+        if (!$isAjaxRequest)
         {
             // Set language
             if (!empty($objPageModel->language))
@@ -151,41 +167,6 @@ class InitializeSession
             $this->sessionBag->set('language', $language);
         }
 
-        /** @var FrontendUser $user */
-        $objUser = $this->security->getUser();
-        if (!$objUser instanceof FrontendUser)
-        {
-            // Return empty string if user has not logged in as a frontend user
-            throw new \Exception('Application is permited to frontend users only.');
-        }
-
-        // Catch resource type from session
-        $intResType = ($this->sessionBag->has('resType') && $this->sessionBag->get('resType') > 0) ? $this->sessionBag->get('resType') : null;
-
-        // Catch resource from session
-        $intRes = ($this->sessionBag->has('res') && $this->sessionBag->get('res') > 0) ? $this->sessionBag->get('res') : null;
-
-        // Catch date from session
-        $intTstampDate = ($this->sessionBag->has('date')) ? $this->sessionBag->get('date') : $dateHelperAdapter->getMondayOfCurrentWeek();
-
-        // Get resource from post
-        $intResType = $request->request->has('resType') ? (int) $request->request->get('resType') : $intResType;
-        if (null === $resourceBookingResourceTypeModelAdapter->findByPk($intResType))
-        {
-            // Set $intResType to 0,
-            // if we found no valid resource neither in the session nor in the post
-            $intResType = 0;
-        }
-
-        // Get resource from post
-        $intRes = $request->request->has('res') ? (int) $request->request->get('res') : $intRes;
-        if (null === $resourceBookingResourceModelAdapter->findByPk($intRes))
-        {
-            // Set $intRes to 0,
-            // if we found no valid resource neither in the session nor in the post
-            $intRes = 0;
-        }
-
         // Get intBackWeeks && intBackWeeks
         $intBackWeeks = (int) $configAdapter->get('rbb_intBackWeeks');
         $this->sessionBag->set('intBackWeeks', $intBackWeeks);
@@ -193,31 +174,8 @@ class InitializeSession
         $this->sessionBag->set('intAheadWeeks', $intAheadWeeks);
 
         // Get first and last possible week tstamp
-        $tstampFirstPossibleWeek = $dateHelperAdapter->addWeeksToTime($intBackWeeks, $dateHelperAdapter->getMondayOfCurrentWeek());
         $this->sessionBag->set('tstampFirstPossibleWeek', $dateHelperAdapter->addWeeksToTime($intBackWeeks, $dateHelperAdapter->getMondayOfCurrentWeek()));
-        $tstampLastPossibleWeek = $dateHelperAdapter->addWeeksToTime($intAheadWeeks, $dateHelperAdapter->getMondayOfCurrentWeek());
         $this->sessionBag->set('tstampLastPossibleWeek', $dateHelperAdapter->addWeeksToTime($intAheadWeeks, $dateHelperAdapter->getMondayOfCurrentWeek()));
-
-        // Get active week timestamp
-        $intTstampDate = $request->request->has('date') ? (int) $request->request->get('date') : $intTstampDate;
-        $intTstampDate = $dateHelperAdapter->isValidDate($intTstampDate) ? $intTstampDate : $dateHelperAdapter->getMondayOfCurrentWeek();
-
-        if ($intTstampDate < $tstampFirstPossibleWeek)
-        {
-            $intTstampDate = $tstampFirstPossibleWeek;
-        }
-
-        if ($intTstampDate > $tstampLastPossibleWeek)
-        {
-            $intTstampDate = $tstampLastPossibleWeek;
-        }
-
-        $this->sessionBag->set('activeWeekTstamp', (int) $intTstampDate);
-
-        // Store data into the session
-        $this->sessionBag->set('resType', (int) $intResType);
-        $this->sessionBag->set('res', (int) $intRes);
-        $this->sessionBag->set('date', (int) $intTstampDate);
     }
 
 }

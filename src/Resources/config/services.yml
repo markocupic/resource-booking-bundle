@@ -12,6 +12,8 @@ services:
     - '@contao.framework'
     - '@security.helper'
     - '@Markocupic\ResourceBookingBundle\Session\InitializeSession'
+    - '@session'
+    - '%resource_booking_bundle.session.attribute_bag_name%'
     calls:
     - ['setContainer', ['@Psr\Container\ContainerInterface']]
     tags:
@@ -23,6 +25,8 @@ services:
     arguments:
     - '@contao.framework'
     - '@request_stack'
+    - '@session'
+    - '%resource_booking_bundle.session.attribute_bag_name%'
     - '@Markocupic\ResourceBookingBundle\Session\InitializeSession'
     - '@Markocupic\ResourceBookingBundle\Ajax\AjaxHandler'
     public: true
