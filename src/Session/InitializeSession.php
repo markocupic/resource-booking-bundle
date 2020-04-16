@@ -197,8 +197,16 @@ class InitializeSession
         // Set res by url param
         if ($request->query->has('res'))
         {
-            // @ Todo Automatisch resType ermitteln und checken ob res im erlaubten resType liegt (Modul Einstellung)
-            $this->sessionBag->set('res', $request->query->get('res', 0));
+            // @ Todo Ermitteln ob res im erlaubten resType liegt (Modul Einstellung)
+            $objRes = $resourceBookingResourceModelAdapter->findByPk($request->query->get('res', 0));
+            if ($objRes !== null)
+            {
+                if (($objResType = $resourceBookingResourceTypeModelAdapter->findPublishedByPk($objRes->pid)) !== null)
+                {
+                    $this->sessionBag->set('res', (int) $request->query->get('res', 0));
+                    $this->sessionBag->set('resType', (int) $objResType->id);
+                }
+            }
             $blnRedirect = true;
         }
 
@@ -246,6 +254,10 @@ class InitializeSession
                 throw new UnauthorizedHttpException(sprintf('Unauthorized access to resource with ID %s.', $resId));
             }
         }
+
+        // Set active week timestamp
+        $tstampCurrentWeek = (int) $this->sessionBag->get('activeWeekTstamp', $dateHelperAdapter->getMondayOfCurrentWeek());
+        $this->sessionBag->set('activeWeekTstamp', $tstampCurrentWeek);
 
         // Get intBackWeeks && intBackWeeks
         $intBackWeeks = (int) $configAdapter->get('rbb_intBackWeeks');

@@ -17,6 +17,7 @@ use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Environment;
 use Contao\FrontendUser;
+use Contao\Input;
 use Contao\ModuleModel;
 use Contao\PageModel;
 use Contao\Template;
@@ -75,6 +76,7 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
      */
     public function __invoke(Request $request, ModuleModel $model, string $section, array $classes = null, PageModel $page = null): Response
     {
+
         // Is frontend
         if ($page instanceof PageModel && $this->get('contao.routing.scope_matcher')->isFrontendRequest($request))
         {
