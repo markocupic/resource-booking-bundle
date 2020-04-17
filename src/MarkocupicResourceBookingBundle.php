@@ -21,7 +21,7 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
 class MarkocupicResourceBookingBundle extends Bundle
 {
     /**
-     * {@inheritdoc}
+     * @param ContainerBuilder $container
      */
     public function build(ContainerBuilder $container): void
     {

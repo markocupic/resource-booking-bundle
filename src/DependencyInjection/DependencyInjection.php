@@ -17,9 +17,18 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 use Symfony\Component\Config\FileLocator;
 
+/**
+ * Class MarkocupicResourceBookingExtension
+ * @package Markocupic\ResourceBookingBundle\DependencyInjection
+ */
 class MarkocupicResourceBookingExtension extends Extension
 {
 
+    /**
+     * @param array $configs
+     * @param ContainerBuilder $container
+     * @throws \Exception
+     */
     public function load(array $configs, ContainerBuilder $container)
     {
         $loader = new YamlFileLoader(
