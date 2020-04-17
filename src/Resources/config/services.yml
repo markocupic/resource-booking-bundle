@@ -1,54 +1,4 @@
 services:
-  # Register session bag
-  Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag:
-    arguments:
-    - '%resource_booking_bundle.session.attribute_bag_key%'
-    calls:
-    - ['setName', ['%resource_booking_bundle.session.attribute_bag_name%']]
-
-  # Contao frontend module "resourceBookingWeekcalendar"
-  Markocupic\ResourceBookingBundle\Controller\FrontendModule\ResourceBookingWeekcalendarController:
-    arguments:
-    - '@contao.framework'
-    - '@security.helper'
-    - '@Markocupic\ResourceBookingBundle\Session\InitializeSession'
-    - '@session'
-    - '%resource_booking_bundle.session.attribute_bag_name%'
-    calls:
-    - ['setContainer', ['@Psr\Container\ContainerInterface']]
-    tags:
-    - { name: contao.frontend_module, category: resourceBooking, type: resourceBookingWeekcalendar }
-    public: true
-
-  # Ajax controller
-  Markocupic\ResourceBookingBundle\Controller\Ajax\AjaxController:
-    arguments:
-    - '@contao.framework'
-    - '@request_stack'
-    - '@session'
-    - '%resource_booking_bundle.session.attribute_bag_name%'
-    - '@Markocupic\ResourceBookingBundle\Session\InitializeSession'
-    - '@Markocupic\ResourceBookingBundle\Ajax\AjaxHandler'
-    public: true
-
-  # Initialize application
-  Markocupic\ResourceBookingBundle\Session\InitializeSession:
-    arguments:
-    - '@contao.framework'
-    - '@security.helper'
-    - '@session'
-    - '@request_stack'
-    - '%resource_booking_bundle.session.attribute_bag_name%'
-
-  # Ajax helper
-  Markocupic\ResourceBookingBundle\Ajax\AjaxHelper:
-    arguments:
-    - '@contao.framework'
-    - '@security.helper'
-    - '@session'
-    - '@request_stack'
-    - '%resource_booking_bundle.session.attribute_bag_name%'
-    public: true
 
   # Ajax handler
   Markocupic\ResourceBookingBundle\Ajax\AjaxHandler:
@@ -60,8 +10,70 @@ services:
     - '%resource_booking_bundle.session.attribute_bag_name%'
     public: true
 
+  # Ajax helper
+  Markocupic\ResourceBookingBundle\Ajax\AjaxHelper:
+    arguments:
+    - '@contao.framework'
+    - '@security.helper'
+    - '@session'
+    - '@request_stack'
+    - '%resource_booking_bundle.session.attribute_bag_name%'
+    public: true
+
+  # Initialize application
+  Markocupic\ResourceBookingBundle\AppInitialization\Initialize:
+    arguments:
+    - '@contao.framework'
+    - '@session'
+    - '@request_stack'
+    - '@Markocupic\ResourceBookingBundle\Csrf\CsrfTokenManager'
+    - '%resource_booking_bundle.session.attribute_bag_name%'
+
+  # Ajax controller
+  Markocupic\ResourceBookingBundle\Controller\Ajax\AjaxController:
+    arguments:
+    - '@session'
+    - '%resource_booking_bundle.session.attribute_bag_name%'
+    - '@Markocupic\ResourceBookingBundle\AppInitialization\Initialize'
+    - '@Markocupic\ResourceBookingBundle\Ajax\AjaxHandler'
+    - '@Markocupic\ResourceBookingBundle\Csrf\CsrfTokenManager'
+    public: true
+
+  # Contao frontend module "resourceBookingWeekcalendar"
+  Markocupic\ResourceBookingBundle\Controller\FrontendModule\ResourceBookingWeekcalendarController:
+    arguments:
+    - '@contao.framework'
+    - '@Markocupic\ResourceBookingBundle\AppInitialization\Initialize'
+    - '@contao.csrf.token_storage'
+    - '@Markocupic\ResourceBookingBundle\Csrf\CsrfTokenManager'
+    calls:
+    - ['setContainer', ['@Psr\Container\ContainerInterface']]
+    tags:
+    - { name: contao.frontend_module, category: resourceBooking, type: resourceBookingWeekcalendar }
+    public: true
+
   # Cron: Delete daily no more used bookings
   Markocupic\ResourceBookingBundle\Cron\Cron:
     arguments:
     - '@contao.framework'
     public: true
+
+  # CsrfTokenManager helper
+  Markocupic\ResourceBookingBundle\Csrf\CsrfTokenManager:
+    arguments:
+    - '@request_stack'
+    - '@contao.csrf.token_manager'
+    - '%contao.csrf_cookie_prefix%'
+    - '%contao.csrf_token_name%'
+    public: true
+
+  # Register session bag
+  Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag:
+    arguments:
+    - '@Markocupic\ResourceBookingBundle\Csrf\CsrfTokenManager'
+    - '%resource_booking_bundle.session.attribute_bag_key%'
+    calls:
+    - ['setName', ['%resource_booking_bundle.session.attribute_bag_name%']]
+
+
+

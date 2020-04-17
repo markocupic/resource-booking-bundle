@@ -6,47 +6,46 @@ declare(strict_types=1);
  * Resource Booking Module for Contao CMS
  * Copyright (c) 2008-2020 Marko Cupic
  * @package resource-booking-bundle
- * @author Marko Cupic m.cupic@gmx.ch, 2019
+ * @author Marko Cupic m.cupic@gmx.ch, 2020
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
-namespace Markocupic\ResourceBookingBundle\Session;
+namespace Markocupic\ResourceBookingBundle\AppInitialization;
 
 use Contao\Config;
+use Contao\Controller;
 use Contao\CoreBundle\Framework\ContaoFramework;
-use Contao\FrontendUser;
+use Contao\Environment;
 use Contao\ModuleModel;
 use Contao\PageModel;
 use Contao\ResourceBookingResourceModel;
-use Contao\Controller;
 use Contao\ResourceBookingResourceTypeModel;
 use Contao\StringUtil;
-use Contao\Environment;
 use Haste\Util\Url;
+use Markocupic\ResourceBookingBundle\Csrf\CsrfTokenManager;
 use Markocupic\ResourceBookingBundle\DateHelper;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
-use Symfony\Component\Security\Core\Security;
 
 /**
- * Class InitializeSession
- * @package Markocupic\ResourceBookingBundle\Session
+ * Class Initialize
+ * @package Markocupic\ResourceBookingBundle\AppInitialization
  */
-class InitializeSession
+class Initialize
 {
     /** @var ContaoFramework */
     private $framework;
-
-    /** @var Security */
-    private $security;
 
     /** @var SessionInterface */
     private $session;
 
     /** @var RequestStack */
     private $requestStack;
+
+    /** @var CsrfTokenManager */
+    private $csrfTokenManager;
 
     /** @var string */
     private $bagName;
@@ -55,19 +54,19 @@ class InitializeSession
     private $sessionBag;
 
     /**
-     * InitializeSession constructor.
+     * Initialize constructor.
      * @param ContaoFramework $framework
-     * @param Security $security
      * @param SessionInterface $session
      * @param RequestStack $requestStack
+     * @param CsrfTokenManager $csrfTokenManager
      * @param string $bagName
      */
-    public function __construct(ContaoFramework $framework, Security $security, SessionInterface $session, RequestStack $requestStack, string $bagName)
+    public function __construct(ContaoFramework $framework, SessionInterface $session, RequestStack $requestStack, CsrfTokenManager $csrfTokenManager, string $bagName)
     {
         $this->framework = $framework;
-        $this->security = $security;
         $this->session = $session;
         $this->requestStack = $requestStack;
+        $this->csrfTokenManager = $csrfTokenManager;
         $this->bagName = $bagName;
         $this->sessionBag = $session->getBag($bagName);
     }
@@ -101,45 +100,27 @@ class InitializeSession
         /** @var Url $urlAdapter */
         $urlAdapter = $this->framework->getAdapter(Url::class);
 
-        /** @var \Controller $controllerAdapter */
+        /** @var Controller $controllerAdapter */
         $controllerAdapter = $this->framework->getAdapter(Controller::class);
 
         /** @var Request $request */
         $request = $this->requestStack->getCurrentRequest();
 
-        /** @var FrontendUser $user */
-        $objUser = null;
-        if ($this->security->getUser() instanceof FrontendUser)
-        {
-            $objUser = $this->security->getUser();
-        }
-
-        // Validate session id against cookie an frontend user password (if user has logged in)
         $blnForbidden = true;
-        $pw = $objUser ? $objUser->getPassword() : '';
-        if (!$isAjaxRequest)
+
+        if (null !== ($strToken = $this->csrfTokenManager->getValidCsrfToken()))
         {
-            if (
-                strlen($request->query->get('sessionId')) &&
-                sha1($request->cookies->get('_contao_resource_booking_token') . $pw) === $request->query->get('sessionId')
-            )
+            if (!$isAjaxRequest)
             {
                 //Add session id to the session bag
-                $this->sessionBag->set('sessionId', $request->query->get('sessionId'));
-                $blnForbidden = false;
+                $this->sessionBag->set('csrfToken', sha1($strToken));
             }
-        }
-        else
-        {
-            if ($this->sessionBag->get('sessionId') === $request->query->get('sessionId') && sha1($request->cookies->get('_contao_resource_booking_token') . $pw) === $request->query->get('sessionId'))
-            {
-                $blnForbidden = false;
-            }
+            $blnForbidden = false;
         }
 
         if ($blnForbidden === true)
         {
-            throw new UnauthorizedHttpException('Invalid session detected. Please check your cookie settings.');
+            throw new UnauthorizedHttpException('Invalid session detected or cookie has expired. Please check your cookie settings.');
         }
 
         // Get $moduleModelId from parameter or session
@@ -188,6 +169,7 @@ class InitializeSession
         }
 
         // Set resType by url param
+        $blnRedirect = false;
         if ($request->query->has('resType'))
         {
             $this->sessionBag->set('resType', $request->query->get('resType', 0));

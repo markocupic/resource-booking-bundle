@@ -6,7 +6,7 @@ declare(strict_types=1);
  * Resource Booking Module for Contao CMS
  * Copyright (c) 2008-2020 Marko Cupic
  * @package resource-booking-bundle
- * @author Marko Cupic m.cupic@gmx.ch, 2019
+ * @author Marko Cupic m.cupic@gmx.ch, 2020
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
@@ -15,18 +15,14 @@ namespace Markocupic\ResourceBookingBundle\Controller\FrontendModule;
 use Contao\Controller;
 use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController;
 use Contao\CoreBundle\Framework\ContaoFramework;
-use Contao\Environment;
-use Contao\FrontendUser;
-use Contao\Input;
 use Contao\ModuleModel;
 use Contao\PageModel;
 use Contao\Template;
-use Markocupic\ResourceBookingBundle\Session\InitializeSession;
-use Symfony\Component\HttpFoundation\Cookie;
+use Contao\CoreBundle\Csrf\MemoryTokenStorage;
+use Markocupic\ResourceBookingBundle\AppInitialization\Initialize;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\Session\SessionInterface;
-use Symfony\Component\Security\Core\Security;
+use Markocupic\ResourceBookingBundle\Csrf\CsrfTokenManager;
 use Contao\CoreBundle\ServiceAnnotation\FrontendModule;
 
 /**
@@ -38,31 +34,28 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
     /** @var ContaoFramework */
     private $framework;
 
-    /** @var Security */
-    private $security;
+    /** @var Initialize */
+    private $appInitializer;
 
-    /** @var InitializeSession */
-    private $initializeSession;
+   /** @var MemoryTokenStorage  */
+    private $tokenStorage;
 
-    /** @var SessionInterface */
-    private $session;
-
-    /** @var string */
-    private $bagName;
+    /** @var CsrfTokenManager */
+    private $CsrfTokenManager;
 
     /**
      * ResourceBookingWeekcalendarController constructor.
      * @param ContaoFramework $framework
-     * @param Security $security
-     * @param InitializeSession $initializeSession
+     * @param Initialize $appInitializer
+     * @param MemoryTokenStorage $tokenStorage
+     * @param CsrfTokenManager $csrfCookie
      */
-    public function __construct(ContaoFramework $framework, Security $security, InitializeSession $initializeSession, SessionInterface $session, string $bagName)
+    public function __construct(ContaoFramework $framework, Initialize $appInitializer, MemoryTokenStorage $tokenStorage, CsrfTokenManager $CsrfTokenManager)
     {
         $this->framework = $framework;
-        $this->security = $security;
-        $this->initializeSession = $initializeSession;
-        $this->session = $session;
-        $this->bagName = $bagName;
+        $this->appInitializer = $appInitializer;
+        $this->tokenStorage = $tokenStorage;
+        $this->CsrfTokenManager = $CsrfTokenManager;
     }
 
     /**
@@ -76,48 +69,28 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
      */
     public function __invoke(Request $request, ModuleModel $model, string $section, array $classes = null, PageModel $page = null): Response
     {
-
         // Is frontend
         if ($page instanceof PageModel && $this->get('contao.routing.scope_matcher')->isFrontendRequest($request))
         {
             /** @var Controller $controllerAdapter */
             $controllerAdapter = $this->framework->getAdapter(Controller::class);
 
-            /** @var Environment $environmentAdapter */
-            $environmentAdapter = $this->framework->getAdapter(Environment::class);
+            $container = \Contao\System::getContainer();
 
-            $objUser = null;
-            if ($this->security->getUser() instanceof FrontendUser)
+            if (!$this->CsrfTokenManager->hasValidCsrfToken())
             {
-                /** @var FrontendUser $user */
-                $objUser = $this->security->getUser();
-            }
-
-            // Add session id to url
-            if (!$request->query->has('sessionId'))
-            {
-                $url = $environmentAdapter->get('request');
-                $token = rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '=');
-                $cookie = new Cookie('_contao_resource_booking_token', $token, time() + 24 * 3600);
-                $response = new Response();
-                $response->headers->setCookie($cookie);
-                $response->send();
-                $pw = $objUser ? $objUser->getPassword() : '';
-                $sessId = sha1($token . $pw);
-                $params = [
-                    sprintf(
-                        'sessionId=%s',
-                        $sessId
-                    ),
-                ];
-                $url = \Haste\Util\Url::addQueryString(implode('&', $params), $url);
+                // Generate csrf token that we will use as the session bag key
+                $container
+                    ->get('contao.csrf.token_manager')
+                    ->getToken($container->getParameter('contao.csrf_token_name'))
+                    ->getValue();
 
                 // redirect
-                $controllerAdapter->redirect($url);
+                $controllerAdapter->reload();
             }
 
             // Initialize application
-            $this->initializeSession->initialize(false, (int) $model->id, (int) $page->id);
+            $this->appInitializer->initialize(false, (int) $model->id, (int) $page->id);
         }
 
         // Call the parent method
@@ -132,8 +105,6 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
      */
     protected function getResponse(Template $template, ModuleModel $model, Request $request): ?Response
     {
-        $template->sessionId = $request->query->get('sessionId');
-
         // Let vue.js do the rest ;-)
         return $template->getResponse();
     }

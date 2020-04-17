@@ -253,7 +253,6 @@
 <script>
     new resourceBookingApp('#resourceBookingApp_<?= $this->id ?>', {
         'requestToken': '{{REQUEST_TOKEN}}',
-        'sessionId': '<?= $this->sessionId ?>',
     });
 </script>
 

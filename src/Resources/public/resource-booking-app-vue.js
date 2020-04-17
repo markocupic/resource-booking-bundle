@@ -2,7 +2,7 @@
  * Resource Booking Module for Contao CMS
  * Copyright (c) 2008-2020 Marko Cupic
  * @package resource-booking-bundle
- * @author Marko Cupic m.cupic@gmx.ch, 2019
+ * @author Marko Cupic m.cupic@gmx.ch, 2020
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 "use strict";
@@ -20,7 +20,6 @@ class resourceBookingApp {
                 userIsLoggedIn: false,
                 loggedInUser: [],
                 requestToken: '',
-                sessionId: '',
                 weekdays: [],
                 timeSlots: [],
                 rows: [],
@@ -50,9 +49,6 @@ class resourceBookingApp {
 
                 // Post requests require a request token
                 self.requestToken = params.requestToken;
-
-                // Session Id
-                self.sessionId = params.sessionId;
 
                 // Fetch data from server each 30s
                 self.fetchDataRequest();
@@ -117,7 +113,7 @@ class resourceBookingApp {
 
                     // Fetch
                     let action = 'fetchDataRequest';
-                    fetch('_resource_booking/ajax/' + action + '?sessionId=' + self.sessionId, {
+                    fetch('_resource_booking/ajax/' + action , {
                         method: "POST",
                         body: data,
                         headers: {
@@ -160,7 +156,7 @@ class resourceBookingApp {
                     }
 
                     let action = 'sendBookingRequest';
-                    fetch('_resource_booking/ajax/' + action + '?sessionId=' + self.sessionId,
+                    fetch('_resource_booking/ajax/' + action ,
                         {
                             method: "POST",
                             body: data,
@@ -209,7 +205,7 @@ class resourceBookingApp {
                         data.append('bookingDateSelection[]', self.bookingModal.selectedTimeSlots[i]);
                     }
                     let action = 'sendBookingFormValidationRequest';
-                    fetch('_resource_booking/ajax/' + action + '?sessionId=' + self.sessionId,
+                    fetch('_resource_booking/ajax/' + action ,
                         {
                             method: "POST",
                             body: data,
@@ -244,7 +240,7 @@ class resourceBookingApp {
                     data.append('bookingId', self.bookingModal.activeTimeSlot.bookingId);
 
                     let action = 'sendCancelBookingRequest';
-                    fetch('_resource_booking/ajax/' + action + '?sessionId=' + self.sessionId, {
+                    fetch('_resource_booking/ajax/' + action , {
                         method: "POST",
                         body: data,
                         headers: {
@@ -283,9 +279,8 @@ class resourceBookingApp {
                     let self = this;
 
                     let data = new FormData();
-                    data.append('REQUEST_TOKEN', self.requestToken);
 
-                    fetch('_resource_booking/ajax/logout?sessionId=' + self.sessionId,
+                    fetch('_resource_booking/ajax/logout',
                         {
                             method: "POST",
                             body: data,
@@ -324,7 +319,7 @@ class resourceBookingApp {
                     data.append('date', self.activeWeekTstamp);
 
                     let action = 'sendApplyFilterRequest';
-                    fetch('_resource_booking/ajax/' + action + '?sessionId=' + self.sessionId, {
+                    fetch('_resource_booking/ajax/' + action , {
                         method: "POST",
                         body: data,
                         headers: {
@@ -369,6 +364,7 @@ class resourceBookingApp {
                 initializeIdleDetector: function initializeIdleDetector() {
                     let self = this;
                     if (self.opt.autologout && parseInt(self.opt.autologoutDelay) > 0) {
+
                         $(document).idle({
                             onIdle: function onIdle() {
                                 self.sendLogoutRequest();

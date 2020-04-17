@@ -6,21 +6,40 @@ declare(strict_types=1);
  * Resource Booking Module for Contao CMS
  * Copyright (c) 2008-2020 Marko Cupic
  * @package resource-booking-bundle
- * @author Marko Cupic m.cupic@gmx.ch, 2019
+ * @author Marko Cupic m.cupic@gmx.ch, 2020
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
 namespace Markocupic\ResourceBookingBundle\Session\Attribute;
 
+use Markocupic\ResourceBookingBundle\Csrf\CsrfTokenManager;
 use Symfony\Component\HttpFoundation\Session\Attribute\AttributeBag;
 
 /**
- * Provides an array access adapter for a session attribute bag.
+ * Class ArrayAttributeBag
+ * @package Markocupic\ResourceBookingBundle\Session\Attribute
  */
 class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
 {
+
+    /** @var CsrfTokenManager */
+    private $csrfTokenManager;
+
     /**
-     * {@inheritdoc}
+     * ArrayAttributeBag constructor.
+     * @param CsrfTokenManager $csrfTokenManager
+     * @param string $storageKey
+     */
+    public function __construct(CsrfTokenManager $csrfTokenManager, string $storageKey = '_sf2_attributes')
+    {
+        $this->csrfTokenManager = $csrfTokenManager;
+        parent::__construct($storageKey);
+    }
+
+    /**
+     * @param mixed $key
+     * @return bool
+     * @throws \Exception
      */
     public function offsetExists($key): bool
     {
@@ -28,7 +47,8 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
     }
 
     /**
-     * {@inheritdoc}
+     * @param mixed $key
+     * @return mixed
      */
     public function &offsetGet($key)
     {
@@ -36,7 +56,9 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
     }
 
     /**
-     * {@inheritdoc}
+     * @param mixed $key
+     * @param mixed $value
+     * @throws \Exception
      */
     public function offsetSet($key, $value): void
     {
@@ -44,7 +66,8 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
     }
 
     /**
-     * {@inheritdoc}
+     * @param mixed $key
+     * @throws \Exception
      */
     public function offsetUnset($key): void
     {
@@ -54,10 +77,11 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
     /**
      * @param $key
      * @return bool
+     * @throws \Exception
      */
     public function has($key)
     {
-        $sessKey = $_GET['sessionId'] != '' ? sprintf('___%s___', $_GET['sessionId']) : '';
+        $sessKey = $this->getSessionBagSubkey();
         $arrSession = parent::get($sessKey, []);
         return isset($arrSession[$key]) ? true : false;
     }
@@ -66,10 +90,11 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
      * @param $key
      * @param null $mixed
      * @return mixed|null
+     * @throws \Exception
      */
     public function get($key, $mixed = null)
     {
-        $sessKey = $_GET['sessionId'] != '' ? sprintf('___%s___', $_GET['sessionId']) : '';
+        $sessKey = $this->getSessionBagSubkey();
         $arrSession = parent::get($sessKey, []);
         return isset($arrSession[$key]) ? $arrSession[$key] : null;
     }
@@ -77,10 +102,11 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
     /**
      * @param $key
      * @param $value
+     * @throws \Exception
      */
     public function set($key, $value)
     {
-        $sessKey = $_GET['sessionId'] != '' ? sprintf('___%s___', $_GET['sessionId']) : '';
+        $sessKey = $this->getSessionBagSubkey();
         $arrSession = parent::get($sessKey, []);
         $arrSession[$key] = $value;
 
@@ -89,10 +115,11 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
 
     /**
      * @param array $arrAttributes
+     * @throws \Exception
      */
     public function replace(array $arrAttributes)
     {
-        $sessKey = $_GET['sessionId'] != '' ? sprintf('___%s___', $_GET['sessionId']) : '';
+        $sessKey = $this->getSessionBagSubkey();
         $arrSession = parent::get($sessKey, []);
         $arrNew = array_merge($arrSession, $arrAttributes);
         parent::set($sessKey, $arrNew);
@@ -101,10 +128,11 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
     /**
      * @param $key
      * @return mixed|null|void
+     * @throws \Exception
      */
     public function remove($key)
     {
-        $sessKey = $_GET['sessionId'] != '' ? sprintf('___%s___', $_GET['sessionId']) : '';
+        $sessKey = $this->getSessionBagSubkey();
         $arrSession = parent::get($sessKey, []);
         if (isset($arrSession[$key]))
         {
@@ -115,10 +143,11 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
 
     /**
      * @return array|mixed|void
+     * @throws \Exception
      */
     public function clear()
     {
-        $sessKey = $_GET['sessionId'] != '' ? sprintf('___%s___', $_GET['sessionId']) : '';
+        $sessKey = $this->getSessionBagSubkey();
         $arrSessionAll = parent::all();
 
         if (isset($arrSessionAll[$sessKey]))
@@ -133,17 +162,35 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
 
     /**
      * @return int
+     * @throws \Exception
      */
     public function count()
     {
-        $sessKey = $_GET['sessionId'] != '' ? sprintf('___%s___', $_GET['sessionId']) : '';
+        $sessKey = $this->getSessionBagSubkey();
         $arrSessionAll = parent::all();
 
         if (isset($arrSessionAll[$sessKey]) && is_array($arrSessionAll))
         {
-           return count($arrSessionAll[$sessKey]);
+            return count($arrSessionAll[$sessKey]);
         }
         return 0;
+    }
+
+    /**
+     * @return mixed
+     * @throws \Exception
+     */
+    private function getSessionBagSubkey()
+    {
+        // Add session id to url
+        if (null !== ($strToken = $this->csrfTokenManager->getValidCsrfToken()))
+        {
+            return sha1($strToken);
+        }
+        else
+        {
+            throw new \Exception('contao.csrf_token not found.');
+        }
     }
 
 }
