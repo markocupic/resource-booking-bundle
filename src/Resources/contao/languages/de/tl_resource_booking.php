@@ -25,5 +25,6 @@ $GLOBALS['TL_LANG']['tl_resource_booking']['title'] = array('Titel');
 $GLOBALS['TL_LANG']['tl_resource_booking']['description'] = array('Beschreibung');
 $GLOBALS['TL_LANG']['tl_resource_booking']['startTime'] = array('Startzeit');
 $GLOBALS['TL_LANG']['tl_resource_booking']['endTime'] = array('Endzeit');
+$GLOBALS['TL_LANG']['tl_resource_booking']['bookingUuid'] = array('Buchungs-Id');
 
 

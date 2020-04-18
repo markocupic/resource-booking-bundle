@@ -15,14 +15,17 @@ namespace Markocupic\ResourceBookingBundle\Ajax;
 use Contao\Config;
 use Contao\CoreBundle\Exception\RedirectResponseException;
 use Contao\CoreBundle\Monolog\ContaoContext;
+use Contao\Database;
 use Contao\Date;
 use Contao\FrontendUser;
 use Contao\Input;
 use Contao\ResourceBookingModel;
 use Contao\ResourceBookingResourceModel;
 use Contao\ResourceBookingResourceTypeModel;
+use Contao\StringUtil;
 use Contao\System;
 use Markocupic\ResourceBookingBundle\DateHelper;
+use Model\Collection;
 use Psr\Log\LogLevel;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -148,8 +151,11 @@ class AjaxHandler
      */
     public function sendBookingRequest(): array
     {
+        /** @var System $systemAdapter */
+        $systemAdapter = $this->framework->getAdapter(System::class);
+
         // Load language file
-        System::loadLanguageFile('default', $this->sessionBag->get('language'));
+        $systemAdapter->loadLanguageFile('default', $this->sessionBag->get('language'));
 
         $arrJson = [];
         $arrJson['status'] = 'error';
@@ -178,6 +184,9 @@ class AjaxHandler
         {
             $objUser = FrontendUser::getInstance();
 
+            // Set a unique booking id
+            $bookingUuid = StringUtil::binToUuid(Database::getInstance()->getUuid());
+
             // Prepare $arrBookings with the helper method
             $arrBookings = $this->ajaxHelper->prepareBookingSelection($objUser, $objResource, $arrBookingDateSelection, (int) $bookingRepeatStopWeekTstamp);
 
@@ -197,12 +206,19 @@ class AjaxHandler
             {
                 foreach ($arrBookings as $i => $arrBooking)
                 {
-                    if ($arrBooking['resourceAlreadyBookedByLoggedInUser'] === false)
+                    // Set title
+                    $arrBooking['title'] = sprintf('%s : %s %s %s [%s - %s]', $objResource->title, $GLOBALS['TL_LANG']['MSC']['bookingFor'], $objUser->firstname, $objUser->lastname, Date::parse(Config::get('datimFormat'), $arrBooking['startTime']), Date::parse(Config::get('datimFormat'), $arrBooking['endTime']));
+                    if ($arrBooking['resourceAlreadyBookedByLoggedInUser'] === true && null !== $arrBooking['id'])
                     {
-                        // Set title
-                        $arrBooking['title'] = sprintf('%s : %s %s %s [%s - %s]', $objResource->title, $GLOBALS['TL_LANG']['MSC']['bookingFor'], $objUser->firstname, $objUser->lastname, Date::parse(Config::get('datimFormat'), $arrBooking['startTime']), Date::parse(Config::get('datimFormat'), $arrBooking['endTime']));
-
+                        $objBooking = ResourceBookingModel::findByPk($arrBooking['id']);
+                    }
+                    else
+                    {
                         $objBooking = new ResourceBookingModel();
+                    }
+                    if ($objBooking !== null)
+                    {
+                        $arrBooking['bookingUuid'] = $bookingUuid;
                         foreach ($arrBooking as $k => $v)
                         {
                             $objBooking->{$k} = $v;
@@ -211,18 +227,33 @@ class AjaxHandler
                         $arrBookings[$i]['newEntry'] = true;
 
                         // Log
-                        $logger = System::getContainer()->get('monolog.logger.contao');
+                        $logger = $systemAdapter->getContainer()->get('monolog.logger.contao');
                         $strLog = sprintf('New resource with ID %s has been booked.', $objBooking->id);
                         $logger->log(LogLevel::INFO, $strLog, ['contao' => new ContaoContext(__METHOD__, 'INFO')]);
                     }
+
                     $counter++;
                 }
+
                 if ($counter === 0)
                 {
                     $arrJson['alertError'] = $GLOBALS['TL_LANG']['MSG']['noItemsBooked'];
                 }
                 else
                 {
+                    $objBookingCollection = ResourceBookingModel::findByBookingUuid($bookingUuid);
+                    if ($objBookingCollection !== null)
+                    {
+                        // HOOK: add custom logic
+                        if (isset($GLOBALS['TL_HOOKS']['resourceBookingPostBooking']) && \is_array($GLOBALS['TL_HOOKS']['resourceBookingPostBooking']))
+                        {
+                            foreach ($GLOBALS['TL_HOOKS']['resourceBookingPostBooking'] as $callback)
+                            {
+                                $systemAdapter->importStatic($callback[0])->{$callback[1]}($objBookingCollection, $this->requestStack->getCurrentRequest(), $objUser, $this);
+                            }
+                        }
+                    }
+
                     $arrJson['status'] = 'success';
                     $arrJson['alertSuccess'] = sprintf($GLOBALS['TL_LANG']['MSG']['successfullyBookedXItems'], $objResource->title, $counter);
                 }
@@ -239,8 +270,11 @@ class AjaxHandler
      */
     public function sendBookingFormValidationRequest(): array
     {
+        /** @var System $systemAdapter */
+        $systemAdapter = $this->framework->getAdapter(System::class);
+
         // Load language file
-        System::loadLanguageFile('default', $this->sessionBag->get('language'));
+        $systemAdapter->loadLanguageFile('default', $this->sessionBag->get('language'));
 
         $arrJson = [];
         $arrJson['status'] = 'error';
@@ -270,7 +304,7 @@ class AjaxHandler
             $objUser = FrontendUser::getInstance();
 
             // Prepare $arrBookings with the helper method
-            $ajaxHelper = System::getContainer()->get('Markocupic\ResourceBookingBundle\Ajax\AjaxHelper');
+            $ajaxHelper = $systemAdapter->getContainer()->get('Markocupic\ResourceBookingBundle\Ajax\AjaxHelper');
             $arrBookings = $ajaxHelper->prepareBookingSelection($objUser, $objResource, $arrBookingDateSelection, (int) $bookingRepeatStopWeekTstamp);
 
             foreach ($arrBookings as $arrBooking)
@@ -309,8 +343,11 @@ class AjaxHandler
      */
     public function sendCancelBookingRequest(): array
     {
+        /** @var System $systemAdapter */
+        $systemAdapter = $this->framework->getAdapter(System::class);
+
         // Load language file
-        System::loadLanguageFile('default', $this->sessionBag->get('language'));
+        $systemAdapter->loadLanguageFile('default', $this->sessionBag->get('language'));
 
         $arrJson = [];
         $arrJson['status'] = 'error';
@@ -329,7 +366,7 @@ class AjaxHandler
                     if ($intAffected)
                     {
                         // Log
-                        $logger = System::getContainer()->get('monolog.logger.contao');
+                        $logger = $systemAdapter->getContainer()->get('monolog.logger.contao');
                         $strLog = sprintf('Resource Booking with ID %s has been deleted.', $intId);
                         $logger->log(LogLevel::INFO, $strLog, ['contao' => new ContaoContext(__METHOD__, 'INFO')]);
                     }
@@ -361,8 +398,6 @@ class AjaxHandler
         $arrJson['isOnline'] = 'true';
         return $arrJson;
     }
-
-
 
 }
 

@@ -15,6 +15,7 @@ namespace Markocupic\ResourceBookingBundle\Ajax;
 use Contao\Config;
 use Contao\Controller;
 use Contao\CoreBundle\Framework\ContaoFramework;
+use Contao\Database;
 use Contao\Date;
 use Contao\FrontendUser;
 use Contao\Input;
@@ -431,7 +432,9 @@ class AjaxHelper
         {
             // slotId-startTime-endTime-mondayTimestampSelectedWeek
             $arrTimeSlot = explode('-', $strTimeSlot);
+            // Defaults
             $arrBooking = [
+                'id'                                  => null,
                 'timeSlotId'                          => $arrTimeSlot[0],
                 'startTime'                           => (int) $arrTimeSlot[1],
                 'endTime'                             => (int) $arrTimeSlot[2],
@@ -439,6 +442,7 @@ class AjaxHelper
                 'datim'                               => '',
                 'mondayTimestampSelectedWeek'         => (int) $arrTimeSlot[3],
                 'pid'                                 => Input::post('resourceId'),
+                'bookingUuid'                         => '',
                 'description'                         => Input::post('description'),
                 'member'                              => $objUser->id,
                 'tstamp'                              => time(),
@@ -484,9 +488,9 @@ class AjaxHelper
         {
             // Set date
             $arrBookings[$index]['date'] = $dateAdapter->parse(Config::get('dateFormat'), $arrData['startTime']);
-
             $arrBookings[$index]['datim'] = sprintf('%s, %s: %s - %s', $dateAdapter->parse('D', $arrData['startTime']), $dateAdapter->parse(Config::get('dateFormat'), $arrData['startTime']), $dateAdapter->parse('H:i', $arrData['startTime']), $dateAdapter->parse('H:i', $arrData['endTime']));
 
+            // Resource is unoccupied
             if (!$this->isResourceBooked($objResource, $arrData['startTime'], $arrData['endTime']))
             {
                 if (($objTimeslot = ResourceBookingTimeSlotModel::findByPk($arrData['timeSlotId'])) !== null)
@@ -495,14 +499,17 @@ class AjaxHelper
                     $arrBookings[$index]['resourceBlocked'] = false;
                 }
             }
-            elseif (null !== ResourceBookingModel::findOneByResourceIdStarttimeEndtimeAndMember($objResource, $arrData['startTime'], $arrData['endTime'], $arrData['member']))
+            // Resource has already been booked by the current/logged in user in a previous session
+            elseif (null !== ($objBooking = ResourceBookingModel::findOneByResourceIdStarttimeEndtimeAndMember($objResource, $arrData['startTime'], $arrData['endTime'], $arrData['member'])))
             {
+                $arrBookings[$index]['id'] = $objBooking->id;
                 $arrBookings[$index]['resourceAlreadyBooked'] = true;
                 $arrBookings[$index]['resourceAlreadyBookedByLoggedInUser'] = true;
                 $arrBookings[$index]['resourceBlocked'] = false;
             }
             else
             {
+                // This case normally should not happen
                 $arrBookings[$index]['holder'] = '';
 
                 $objRes = ResourceBookingModel::findOneByResourceIdStarttimeAndEndtime($objResource, $arrData['startTime'], $arrData['endTime']);

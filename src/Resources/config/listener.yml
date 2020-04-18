@@ -1,0 +1,4 @@
+services:
+  Markocupic\ResourceBookingBundle\Listener\ContaoHooks\ResourceBookingPostBooking:
+    tags:
+    - { name: contao.hook, hook: resourceBookingPostBooking, method: onPostBooking, priority: 0 }
