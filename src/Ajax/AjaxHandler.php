@@ -220,7 +220,7 @@ class AjaxHandler
             $this->ajaxResponse->setErrorMessage($GLOBALS['TL_LANG']['MSG']['selectBookingDatesPlease']);
         }
 
-        if ($errors === 0)
+        if (!$errors)
         {
             // Set a unique booking id
             $bookingUuid = $stringUtilAdapter->binToUuid($databaseAdapter->getInstance()->getUuid());
@@ -236,7 +236,7 @@ class AjaxHandler
                 }
             }
 
-            if ($errors > 0)
+            if ($errors)
             {
                 $this->ajaxResponse->setErrorMessage($GLOBALS['TL_LANG']['MSG']['resourceAlreadyBooked']);
             }

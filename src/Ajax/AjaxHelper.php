@@ -15,7 +15,6 @@ namespace Markocupic\ResourceBookingBundle\Ajax;
 use Contao\Config;
 use Contao\Controller;
 use Contao\CoreBundle\Framework\ContaoFramework;
-use Contao\Database;
 use Contao\Date;
 use Contao\FrontendUser;
 use Contao\Input;
@@ -30,9 +29,9 @@ use Contao\StringUtil;
 use Contao\System;
 use Markocupic\ResourceBookingBundle\DateHelper;
 use Markocupic\ResourceBookingBundle\UtcTimeHelper;
-use Symfony\Component\Security\Core\Security;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Component\Security\Core\Security;
 
 /**
  * Class AjaxHelper
