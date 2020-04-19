@@ -25,13 +25,16 @@ Mit verschiedenen Hooks kann das Modul erweitert werden.
 Der *ResourceBookingPostBookingHook* wird nach dem Buchungsrequest getriggert. 
 
 Hook in der listener.yml registrieren
+
 ```
 services:
   Markocupic\ResourceBookingBundle\Listener\ContaoHooks\ResourceBookingPostBooking:
     tags:
     - { name: contao.hook, hook: resourceBookingPostBooking, method: onPostBooking, priority: 0 }
 ```
+
 oder klassisch in der config.php:
+
 ```php
 // Hooks
 $GLOBALS['TL_HOOKS']['resourceBookingPostBooking'][] = [
@@ -39,7 +42,9 @@ $GLOBALS['TL_HOOKS']['resourceBookingPostBooking'][] = [
     'onPostBooking'
     ];
 ```
+
 Die eigentliche Klasse:
+
 ```php
 <?php
 
@@ -97,6 +102,97 @@ class ResourceBookingPostBooking
                     utf8_decode((string) $strMessage)
                 );
             }
+        }
+    }
+}
+```
+
+### ResourceBookingAjaxResponse
+Der *ResourceBookingAjaxResponse* wird vor dem Absenden der Response bei AJax Anfragen getriggert. 
+
+Hook in der listener.yml registrieren
+
+```
+services:
+  Markocupic\ResourceBookingBundle\Listener\ContaoHooks\ResourceBookingAjaxResponse:
+    tags:
+    - { name: contao.hook, hook: resourceBookingAjaxResponse, method: onBeforeSend, priority: 0 }
+```
+
+oder klassisch in der config.php:
+
+```php
+// Hooks
+$GLOBALS['TL_HOOKS']['resourceBookingAjaxResponse'][] = [
+    'Markocupic\ResourceBookingBundle\Listener\ContaoHooks\ResourceBookingAjaxResponse',
+    'onBeforeSend'
+    ];
+```
+
+Die eigentliche Klasse:
+
+```php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Resource Booking Module for Contao CMS
+ * Copyright (c) 2008-2020 Marko Cupic
+ * @package resource-booking-bundle
+ * @author Marko Cupic m.cupic@gmx.ch, 2020
+ * @link https://github.com/markocupic/resource-booking-bundle
+ */
+
+namespace Markocupic\ResourceBookingBundle\Listener\ContaoHooks;
+
+use Markocupic\ResourceBookingBundle\Ajax\AjaxResponse;
+use Markocupic\ResourceBookingBundle\Controller\Ajax\AjaxController;
+
+
+/**
+ * Class ResourceBookingAjaxResponse
+ * @package Markocupic\ResourceBookingBundle\Listener\ContaoHooks
+ */
+class ResourceBookingAjaxResponse
+{
+    /**
+     * Manipulate the response object
+     * ! the xhrResponse is passed by reference
+     * @param string $action
+     * @param AjaxResponse $xhrResponse
+     * @param AjaxController $objController
+     */
+    public function onBeforeSend(string $action, AjaxResponse &$xhrResponse, AjaxController $objController): void
+    {
+        if($action === 'fetchDataRequest')
+        {
+            // Do some stuff
+        }
+
+        if($action === 'applyFilterRequest')
+        {
+            // Do some stuff
+        }
+
+        if($action === 'jumpWeekRequest')
+        {
+            // Do some stuff
+        }
+
+        if($action === 'bookingRequest')
+        {
+            // Do some stuff
+        }
+
+        if($action === 'bookingFormValidationRequest')
+        {
+            // Do some stuff
+        }
+
+        if($action === 'cancelBookingRequest')
+        {
+            // Do some stuff
         }
     }
 }

@@ -2,3 +2,7 @@ services:
   Markocupic\ResourceBookingBundle\Listener\ContaoHooks\ResourceBookingPostBooking:
     tags:
     - { name: contao.hook, hook: resourceBookingPostBooking, method: onPostBooking, priority: 0 }
+
+  Markocupic\ResourceBookingBundle\Listener\ContaoHooks\ResourceBookingAjaxResponse:
+    tags:
+    - { name: contao.hook, hook: resourceBookingAjaxResponse, method: onBeforeSend, priority: 0 }

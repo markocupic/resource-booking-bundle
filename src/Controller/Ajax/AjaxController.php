@@ -13,8 +13,10 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\Controller\Ajax;
 
 use Contao\CoreBundle\Exception\RedirectResponseException;
+use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\System;
 use Markocupic\ResourceBookingBundle\Ajax\AjaxHandler;
+use Markocupic\ResourceBookingBundle\Ajax\AjaxResponse;
 use Markocupic\ResourceBookingBundle\AppInitialization\Initialize;
 use Markocupic\ResourceBookingBundle\Csrf\CsrfTokenManager;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -28,6 +30,9 @@ use Symfony\Component\Routing\Annotation\Route;
  */
 class AjaxController extends AbstractController
 {
+
+    /** @var ContaoFramework */
+    private $framework;
 
     /** @var SessionInterface */
     private $session;
@@ -52,8 +57,9 @@ class AjaxController extends AbstractController
      * @param AjaxHandler $ajaxHandler
      * @param CsrfTokenManager $csrfTokenManager
      */
-    public function __construct(SessionInterface $session, string $bagName, Initialize $appInitializer, AjaxHandler $ajaxHandler, CsrfTokenManager $csrfTokenManager)
+    public function __construct(ContaoFramework $framework, SessionInterface $session, string $bagName, Initialize $appInitializer, AjaxHandler $ajaxHandler, CsrfTokenManager $csrfTokenManager)
     {
+        $this->framework = $framework;
         $this->session = $session;
         $this->bagName = $bagName;
         $this->appInitializer = $appInitializer;
@@ -86,6 +92,9 @@ class AjaxController extends AbstractController
      */
     public function defaultAjaxAction($action): JsonResponse
     {
+        /** @var System $systemAdapter */
+        $systemAdapter = $this->framework->getAdapter(System::class);
+
         // Handle ajax requests
         if ($this->csrfTokenManager->hasValidCsrfToken())
         {
@@ -94,23 +103,34 @@ class AjaxController extends AbstractController
 
             if (is_callable([AjaxHandler::class, $action]))
             {
-                $arrReturn = $this->ajaxHandler->{$action}();
-                return new JsonResponse($arrReturn);
-            }
-            $arrReturn = [
-                'status'     => 'error',
-                'alertError' => sprintf('Action "%s" not found.', $action),
-            ];
+                /** @var AjaxResponse $xhrResponse */
+                $xhrResponse = $this->ajaxHandler->{$action}();
 
-            return new JsonResponse($arrReturn);
+                // HOOK: add custom logic
+                if (isset($GLOBALS['TL_HOOKS']['resourceBookingAjaxResponse']) && \is_array($GLOBALS['TL_HOOKS']['resourceBookingAjaxResponse']))
+                {
+                    foreach ($GLOBALS['TL_HOOKS']['resourceBookingAjaxResponse'] as $callback)
+                    {
+                        /** @var AjaxResponse $xhrResponse */
+                        $systemAdapter->importStatic($callback[0])->{$callback[1]}($action, $xhrResponse, $this);
+                    }
+                }
+
+                return new JsonResponse($xhrResponse->getAll());
+            }
+
+            $xhrResponse = new AjaxResponse();
+            $xhrResponse->setStatus(AjaxResponse::STATUS_ERROR);
+            $xhrResponse->setErrorMessage(sprintf('Action "%s" not found.', $action));
+
+            return new JsonResponse($xhrResponse->getAll());
         }
 
-        $arrReturn = [
-            'status'     => 'Error',
-            'alertError' => 'No contao.csrf_token_name detected.',
-        ];
+        $xhrResponse = new AjaxResponse();
+        $xhrResponse->setStatus(AjaxResponse::STATUS_ERROR);
+        $xhrResponse->setErrorMessage('No contao.csrf_token_name detected.');
 
-        return new JsonResponse($arrReturn);
+        return new JsonResponse($xhrResponse->getAll());
     }
 
 }

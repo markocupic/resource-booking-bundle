@@ -105,6 +105,20 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
      */
     protected function getResponse(Template $template, ModuleModel $model, Request $request): ?Response
     {
+
+        /**
+        $action = 'bsadd';
+        $objJson = new \Markocupic\ResourceBookingBundle\Ajax\AjaxResponse();
+        $objJson->setStatus(\Markocupic\ResourceBookingBundle\Ajax\AjaxResponse::STATUS_ERROR);
+        $objJson->setErrorMessage(sprintf('Action "%s" not found.', $action));
+        $data = [
+            'k1' => 'bla',
+            'k2' => ['a' => '323213'],
+        ];
+        $objJson->setDataFromArray($data);
+
+        die(print_r($objJson->getAll(),true));
+*/
         // Let vue.js do the rest ;-)
         return $template->getResponse();
     }

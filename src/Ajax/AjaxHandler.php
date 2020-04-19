@@ -13,21 +13,18 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\Ajax;
 
 use Contao\Config;
-use Contao\CoreBundle\Exception\RedirectResponseException;
+use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Monolog\ContaoContext;
 use Contao\Database;
 use Contao\Date;
 use Contao\FrontendUser;
-use Contao\Input;
 use Contao\ResourceBookingModel;
 use Contao\ResourceBookingResourceModel;
 use Contao\ResourceBookingResourceTypeModel;
 use Contao\StringUtil;
 use Contao\System;
 use Markocupic\ResourceBookingBundle\DateHelper;
-use Model\Collection;
 use Psr\Log\LogLevel;
-use Contao\CoreBundle\Framework\ContaoFramework;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Security\Core\Security;
@@ -51,8 +48,17 @@ class AjaxHandler
     /** @var RequestStack */
     private $requestStack;
 
+    /** @var AjaxResponse */
+    private $ajaxResponse;
+
     /** @var \Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag */
     private $sessionBag;
+
+    /** @var Security */
+    private $security;
+
+    /** @var FrontendUser */
+    private $objUser;
 
     /**
      * AjaxHandler constructor.
@@ -60,40 +66,58 @@ class AjaxHandler
      * @param AjaxHelper $ajaxHelper
      * @param SessionInterface $session
      * @param RequestStack $requestStack
+     * @param AjaxResponse $ajaxResponse
      * @param string $bagName
+     * @param Security $security
      */
-    public function __construct(ContaoFramework $framework, AjaxHelper $ajaxHelper, SessionInterface $session, RequestStack $requestStack, string $bagName)
+    public function __construct(ContaoFramework $framework, AjaxHelper $ajaxHelper, SessionInterface $session, RequestStack $requestStack, AjaxResponse $ajaxResponse, string $bagName, Security $security)
     {
         $this->framework = $framework;
         $this->ajaxHelper = $ajaxHelper;
         $this->session = $session;
         $this->requestStack = $requestStack;
+        $this->ajaxResponse = $ajaxResponse;
         $this->sessionBag = $session->getBag($bagName);
+        $this->security = $security;
+        $this->objUser = null;
+        if ($this->security->getUser() instanceof FrontendUser)
+        {
+            /** @var FrontendUser $user */
+            $this->objUser = $this->security->getUser();
+        }
     }
 
     /**
-     * @return array
+     * @return AjaxResponse
+     * @throws \Exception
      */
-    public function fetchDataRequest(): array
+    public function fetchDataRequest(): AjaxResponse
     {
-        $arrJson = [];
-        $arrJson['data'] = $this->ajaxHelper->fetchData();
-        $arrJson['status'] = 'success';
-        return $arrJson;
+        $this->ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
+        $this->ajaxResponse->setDataFromArray($this->ajaxHelper->fetchData());
+        return $this->ajaxResponse;
     }
 
     /**
-     * @return array
+     * @return AjaxResponse
+     * @throws \Exception
      */
-    public function sendApplyFilterRequest(): array
+    public function applyFilterRequest(): AjaxResponse
     {
+        /** @var  ResourceBookingResourceTypeModel $resourceBookingResourceTypeModelAdapter */
+        $resourceBookingResourceTypeModelAdapter = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class);
+
+        /** @var ResourceBookingResourceModel $resourceBookingResourceModelAdapter */
+        $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
+
+        /** @var DateHelper $dateHelperAdapter */
+        $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
+
         $request = $this->requestStack->getCurrentRequest();
 
         // Get resource type from post request
         $intResType = (int) $request->request->get('resType', 0);
 
-        /** @var  ResourceBookingResourceTypeModel $resourceBookingResourceTypeModelAdapter */
-        $resourceBookingResourceTypeModelAdapter = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class);
         if ($resourceBookingResourceTypeModelAdapter->findByPk($intResType) !== null)
         {
             $this->sessionBag->set('resType', $intResType);
@@ -102,15 +126,10 @@ class AjaxHandler
         // Get resource from post request
         $intRes = (int) $request->request->get('res', 0);
 
-        /** @var ResourceBookingResourceModel $resourceBookingResourceModelAdapter */
-        $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
         if ($resourceBookingResourceModelAdapter->findByPk($intRes) !== null)
         {
             $this->sessionBag->set('res', $intRes);
         }
-
-        /** @var DateHelper $dateHelperAdapter */
-        $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
 
         // Get active week timestamp from post request
         $intTstampDate = (int) $request->request->get('date', 0);
@@ -132,63 +151,82 @@ class AjaxHandler
         $this->sessionBag->set('activeWeekTstamp', (int) $intTstampDate);
 
         // Fetch data and send it to the browser
-        $arrJson = [];
-        $arrJson['data'] = $this->ajaxHelper->fetchData();
-        $arrJson['status'] = 'success';
-        return $arrJson;
+        $this->ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
+        $this->ajaxResponse->setDataFromArray($this->ajaxHelper->fetchData());
+        return $this->ajaxResponse;
     }
 
     /**
-     * @return array
+     * @return AjaxResponse
+     * @throws \Exception
      */
-    public function sendJumpWeekRequest(): array
+    public function jumpWeekRequest(): AjaxResponse
     {
-        return $this->sendApplyFilterRequest();
+        return $this->applyFilterRequest();
     }
 
     /**
-     * @return array
+     * @return AjaxResponse
+     * @throws \Exception
      */
-    public function sendBookingRequest(): array
+    public function bookingRequest(): AjaxResponse
     {
         /** @var System $systemAdapter */
         $systemAdapter = $this->framework->getAdapter(System::class);
 
+        /** @var ResourceBookingResourceModel $resourceBookingResourceModelAdapter */
+        $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
+
+        /** @var Date $dateAdapter */
+        $dateAdapter = $this->framework->getAdapter(Date::class);
+
+        /** @var Config $configAdapter */
+        $configAdapter = $this->framework->getAdapter(Config::class);
+
+        /** @var StringUtil $stringUtilAdapter */
+        $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
+
+        /** @var Database $databaseAdapter */
+        $databaseAdapter = $this->framework->getAdapter(Database::class);
+
+        /** @var ResourceBookingModel $resourceBookingModelAdapter */
+        $resourceBookingModelAdapter = $this->framework->getAdapter(ResourceBookingModel::class);
+
         // Load language file
         $systemAdapter->loadLanguageFile('default', $this->sessionBag->get('language'));
 
-        $arrJson = [];
-        $arrJson['status'] = 'error';
+        $request = $this->requestStack->getCurrentRequest();
+
+        $this->ajaxResponse->setStatus(AjaxResponse::STATUS_ERROR);
+
         $errors = 0;
         $arrBookings = [];
-        $intResourceId = Input::post('resourceId');
-        $objResource = ResourceBookingResourceModel::findPublishedByPk($intResourceId);
-        $arrBookingDateSelection = !empty(Input::post('bookingDateSelection')) ? Input::post('bookingDateSelection') : [];
+        $intResourceId = $request->request->get('resourceId');
+        $objResource = $resourceBookingResourceModelAdapter->findPublishedByPk($intResourceId);
+        $arrBookingDateSelection = !empty($request->request->get('bookingDateSelection')) ? $request->request->get('bookingDateSelection') : [];
 
-        $bookingRepeatStopWeekTstamp = Input::post('bookingRepeatStopWeekTstamp');
+        $bookingRepeatStopWeekTstamp = $request->request->get('bookingRepeatStopWeekTstamp');
         $counter = 0;
 
-        if (!FE_USER_LOGGED_IN || $objResource === null || !$bookingRepeatStopWeekTstamp > 0 || !is_array($arrBookingDateSelection))
+        if ($this->objUser === null || $objResource === null || !$bookingRepeatStopWeekTstamp > 0 || !is_array($arrBookingDateSelection))
         {
             $errors++;
-            $arrJson['alertError'] = $GLOBALS['TL_LANG']['MSG']['generalBookingError'];
+            $this->ajaxResponse->setErrorMessage($GLOBALS['TL_LANG']['MSG']['generalBookingError']);
         }
 
         if (empty($arrBookingDateSelection))
         {
             $errors++;
-            $arrJson['alertError'] = $GLOBALS['TL_LANG']['MSG']['selectBookingDatesPlease'];
+            $this->ajaxResponse->setErrorMessage($GLOBALS['TL_LANG']['MSG']['selectBookingDatesPlease']);
         }
 
         if ($errors === 0)
         {
-            $objUser = FrontendUser::getInstance();
-
             // Set a unique booking id
-            $bookingUuid = StringUtil::binToUuid(Database::getInstance()->getUuid());
+            $bookingUuid = $stringUtilAdapter->binToUuid($databaseAdapter->getInstance()->getUuid());
 
             // Prepare $arrBookings with the helper method
-            $arrBookings = $this->ajaxHelper->prepareBookingSelection($objUser, $objResource, $arrBookingDateSelection, (int) $bookingRepeatStopWeekTstamp);
+            $arrBookings = $this->ajaxHelper->prepareBookingSelection($this->objUser, $objResource, $arrBookingDateSelection, (int) $bookingRepeatStopWeekTstamp);
 
             foreach ($arrBookings as $arrBooking)
             {
@@ -200,17 +238,17 @@ class AjaxHandler
 
             if ($errors > 0)
             {
-                $arrJson['alertError'] = $GLOBALS['TL_LANG']['MSG']['resourceAlreadyBooked'];
+                $this->ajaxResponse->setErrorMessage($GLOBALS['TL_LANG']['MSG']['resourceAlreadyBooked']);
             }
             else
             {
                 foreach ($arrBookings as $i => $arrBooking)
                 {
                     // Set title
-                    $arrBooking['title'] = sprintf('%s : %s %s %s [%s - %s]', $objResource->title, $GLOBALS['TL_LANG']['MSC']['bookingFor'], $objUser->firstname, $objUser->lastname, Date::parse(Config::get('datimFormat'), $arrBooking['startTime']), Date::parse(Config::get('datimFormat'), $arrBooking['endTime']));
+                    $arrBooking['title'] = sprintf('%s : %s %s %s [%s - %s]', $objResource->title, $GLOBALS['TL_LANG']['MSC']['bookingFor'], $this->objUser->firstname, $this->objUser->lastname, $dateAdapter->parse($configAdapter->get('datimFormat'), $arrBooking['startTime']), $dateAdapter->parse(Config::get('datimFormat'), $arrBooking['endTime']));
                     if ($arrBooking['resourceAlreadyBookedByLoggedInUser'] === true && null !== $arrBooking['id'])
                     {
-                        $objBooking = ResourceBookingModel::findByPk($arrBooking['id']);
+                        $objBooking = $resourceBookingModelAdapter->findByPk($arrBooking['id']);
                     }
                     else
                     {
@@ -237,11 +275,11 @@ class AjaxHandler
 
                 if ($counter === 0)
                 {
-                    $arrJson['alertError'] = $GLOBALS['TL_LANG']['MSG']['noItemsBooked'];
+                    $this->ajaxResponse->setErrorMessage($GLOBALS['TL_LANG']['MSG']['noItemsBooked']);
                 }
                 else
                 {
-                    $objBookingCollection = ResourceBookingModel::findByBookingUuid($bookingUuid);
+                    $objBookingCollection = $resourceBookingModelAdapter->findByBookingUuid($bookingUuid);
                     if ($objBookingCollection !== null)
                     {
                         // HOOK: add custom logic
@@ -249,36 +287,41 @@ class AjaxHandler
                         {
                             foreach ($GLOBALS['TL_HOOKS']['resourceBookingPostBooking'] as $callback)
                             {
-                                $systemAdapter->importStatic($callback[0])->{$callback[1]}($objBookingCollection, $this->requestStack->getCurrentRequest(), $objUser, $this);
+                                $systemAdapter->importStatic($callback[0])->{$callback[1]}($objBookingCollection, $this->requestStack->getCurrentRequest(), $this->objUser, $this);
                             }
                         }
                     }
 
-                    $arrJson['status'] = 'success';
-                    $arrJson['alertSuccess'] = sprintf($GLOBALS['TL_LANG']['MSG']['successfullyBookedXItems'], $objResource->title, $counter);
+                    $this->ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
+                    $this->ajaxResponse->setSuccessMessage(sprintf($GLOBALS['TL_LANG']['MSG']['successfullyBookedXItems'], $objResource->title, $counter));
                 }
             }
         }
-        // Return $arrBookings
-        $arrJson['bookingSelection'] = $arrBookings;
 
-        return $arrJson;
+        // Add booking selection to response
+        $this->ajaxResponse->setData('bookingSelection', $arrBookings);
+        return $this->ajaxResponse;
     }
 
     /**
-     * @return array
+     * @return AjaxResponse
+     * @throws \Exception
      */
-    public function sendBookingFormValidationRequest(): array
+    public function bookingFormValidationRequest(): AjaxResponse
     {
         /** @var System $systemAdapter */
         $systemAdapter = $this->framework->getAdapter(System::class);
 
+        /** @var ResourceBookingResourceModel $resourceBookingResourceModelAdapter */
+        $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
+
+        $request = $this->requestStack->getCurrentRequest();
+
         // Load language file
         $systemAdapter->loadLanguageFile('default', $this->sessionBag->get('language'));
 
-        $arrJson = [];
-        $arrJson['status'] = 'error';
-        $arrJson['bookingFormValidation'] = [
+        $this->ajaxResponse->setStatus(AjaxResponse::STATUS_ERROR);
+        $aBookingFormValidation = [
             'noDatesSelected'         => false,
             'resourceIsAlreadyBooked' => false,
             'passedValidation'        => false,
@@ -288,15 +331,15 @@ class AjaxHandler
         $counter = 0;
         $blnBookingsPossible = true;
         $arrBookings = [];
-        $intResourceId = Input::post('resourceId');
-        $objResource = ResourceBookingResourceModel::findPublishedByPk($intResourceId);
-        $arrBookingDateSelection = !empty(Input::post('bookingDateSelection')) ? Input::post('bookingDateSelection') : [];
-        $bookingRepeatStopWeekTstamp = Input::post('bookingRepeatStopWeekTstamp');
+        $intResourceId = $request->request->get('resourceId');
+        $objResource = $resourceBookingResourceModelAdapter->findPublishedByPk($intResourceId);
+        $arrBookingDateSelection = !empty($request->request->get('bookingDateSelection')) ? $request->request->get('bookingDateSelection') : [];
+        $bookingRepeatStopWeekTstamp = $request->request->get('bookingRepeatStopWeekTstamp');
 
         if (!FE_USER_LOGGED_IN || $objResource === null || !$bookingRepeatStopWeekTstamp > 0)
         {
             $errors++;
-            $arrJson['alertError'] = $GLOBALS['TL_LANG']['MSG']['generalBookingError'];
+            $this->ajaxResponse->setErrorMessage($GLOBALS['TL_LANG']['MSG']['generalBookingError']);
         }
 
         if ($errors === 0)
@@ -318,47 +361,51 @@ class AjaxHandler
 
             if ($counter === 0)
             {
-                $arrJson['bookingFormValidation']['passedValidation'] = false;
-                $arrJson['bookingFormValidation']['noDatesSelected'] = true;
+                $aBookingFormValidation['passedValidation'] = false;
+                $aBookingFormValidation['noDatesSelected'] = true;
             }
             elseif (!$blnBookingsPossible)
             {
-                $arrJson['bookingFormValidation']['passedValidation'] = false;
-                $arrJson['bookingFormValidation']['resourceIsAlreadyBooked'] = true;
+                $aBookingFormValidation['passedValidation'] = false;
+                $aBookingFormValidation['resourceIsAlreadyBooked'] = true;
             }
             else // All ok!
             {
-                $arrJson['bookingFormValidation']['passedValidation'] = true;
+                $aBookingFormValidation['passedValidation'] = true;
             }
         }
 
         // Return $arrBookings
-        $arrJson['bookingFormValidation']['bookingSelection'] = $arrBookings;
+        $aBookingFormValidation['bookingSelection'] = $arrBookings;
+        $this->ajaxResponse->setData('bookingFormValidation', $aBookingFormValidation);
+        $this->ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
 
-        return ['data' => $arrJson['bookingFormValidation'], 'status' => 'success'];
+        return $this->ajaxResponse;
     }
 
     /**
-     * @return array
+     * @return AjaxResponse
+     * @throws \Exception
      */
-    public function sendCancelBookingRequest(): array
+    public function cancelBookingRequest(): AjaxResponse
     {
         /** @var System $systemAdapter */
         $systemAdapter = $this->framework->getAdapter(System::class);
 
+        $request = $this->requestStack->getCurrentRequest();
+
         // Load language file
         $systemAdapter->loadLanguageFile('default', $this->sessionBag->get('language'));
 
-        $arrJson = [];
-        $arrJson['status'] = 'error';
-        if (FE_USER_LOGGED_IN && Input::post('bookingId') > 0)
+        $this->ajaxResponse->setStatus(AjaxResponse::STATUS_ERROR);
+
+        if ($this->objUser !== null && $request->request->get('bookingId') > 0)
         {
-            $objUser = FrontendUser::getInstance();
-            $bookingId = Input::post('bookingId');
+            $bookingId = $request->request->get('bookingId');
             $objBooking = ResourceBookingModel::findByPk($bookingId);
             if ($objBooking !== null)
             {
-                if ($objBooking->member === $objUser->id)
+                if ($objBooking->member === $this->objUser->id)
                 {
                     $intId = $objBooking->id;
                     // Delete entry
@@ -371,32 +418,21 @@ class AjaxHandler
                         $logger->log(LogLevel::INFO, $strLog, ['contao' => new ContaoContext(__METHOD__, 'INFO')]);
                     }
 
-                    $arrJson['status'] = 'success';
-                    $arrJson['alertSuccess'] = $GLOBALS['TL_LANG']['MSG']['successfullyCanceledBooking'];
+                    $this->ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
+                    $this->ajaxResponse->setSuccessMessage($GLOBALS['TL_LANG']['MSG']['successfullyCanceledBooking']);
                 }
                 else
                 {
-                    $arrJson['alertError'] = $GLOBALS['TL_LANG']['MSG']['notAllowedToCancelBooking'];
+                    $this->ajaxResponse->setErrorMessage($GLOBALS['TL_LANG']['MSG']['notAllowedToCancelBooking']);
                 }
             }
             else
             {
-                $arrJson['alertError'] = $GLOBALS['TL_LANG']['MSG']['notAllowedToCancelBooking'];
+                $this->ajaxResponse->setErrorMessage($GLOBALS['TL_LANG']['MSG']['notAllowedToCancelBooking']);
             }
         }
 
-        return $arrJson;
-    }
-
-    /**
-     * @return array
-     */
-    public function sendIsOnlineRequest(): array
-    {
-        $arrJson = [];
-        $arrJson['status'] = 'success';
-        $arrJson['isOnline'] = 'true';
-        return $arrJson;
+        return $this->ajaxResponse;
     }
 
 }

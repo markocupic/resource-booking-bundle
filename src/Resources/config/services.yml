@@ -7,7 +7,9 @@ services:
     - '@Markocupic\ResourceBookingBundle\Ajax\AjaxHelper'
     - '@session'
     - '@request_stack'
+    - '@Markocupic\ResourceBookingBundle\Ajax\AjaxResponse'
     - '%resource_booking_bundle.session.attribute_bag_name%'
+    - '@security.helper'
     public: true
 
   # Ajax helper
@@ -18,6 +20,10 @@ services:
     - '@session'
     - '@request_stack'
     - '%resource_booking_bundle.session.attribute_bag_name%'
+    public: true
+
+  # Json response for ajax calls
+  Markocupic\ResourceBookingBundle\Ajax\AjaxResponse:
     public: true
 
   # Initialize application
@@ -32,6 +38,7 @@ services:
   # Ajax controller
   Markocupic\ResourceBookingBundle\Controller\Ajax\AjaxController:
     arguments:
+    - '@contao.framework'
     - '@session'
     - '%resource_booking_bundle.session.attribute_bag_name%'
     - '@Markocupic\ResourceBookingBundle\AppInitialization\Initialize'
