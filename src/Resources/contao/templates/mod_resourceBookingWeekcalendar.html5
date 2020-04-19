@@ -139,12 +139,20 @@
                         </div>
                         <!-- End alerts -->
 
-                        <div v-if="bookingModal.message && bookingModal.message.error" class="alert alert-danger">{{ bookingModal.message.error }}</div>
+                        <div v-if="bookingFormValidation.message && bookingFormValidation.message.error" class="alert alert-danger">
+                            {{ bookingFormValidation.message.error }}
+                        </div>
                         <div v-if="!bookingModal.showConfirmationMsg && bookingModal.action == 'showBookingForm'">
                             <div class="modal-message-box">
-                                <div v-if="bookingFormValidation.noDatesSelected" class="alert alert-warning" role="alert">{{rbb_lang::selectBookingTime}}</div>
-                                <div v-if="bookingFormValidation.passedValidation" class="alert alert-success" role="alert">{{ activeResource.title }} {{rbb_lang::isAvailable}}</div>
-                                <div v-if="bookingFormValidation.resourceIsAlreadyBooked" class="alert alert-danger" role="alert">{{ activeResource.title }} {{rbb_lang::isNoMoreAvailable}}</div>
+                                <div v-if="bookingFormValidation.noDatesSelected" class="alert alert-warning" role="alert">
+                                    {{rbb_lang::selectBookingTime}}
+                                </div>
+                                <div v-if="bookingFormValidation.passedValidation" class="alert alert-success" role="alert">
+                                    {{ activeResource.title }} {{rbb_lang::isAvailable}}
+                                </div>
+                                <div v-if="bookingFormValidation.resourceIsAlreadyBooked" class="alert alert-danger" role="alert">
+                                    {{ activeResource.title }} {{rbb_lang::isNoMoreAvailable}}
+                                </div>
                             </div>
 
                             <div v-if="bookingFormValidation.resourceIsAlreadyBooked">

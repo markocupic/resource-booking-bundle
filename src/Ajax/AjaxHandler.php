@@ -206,7 +206,7 @@ class AjaxHandler
         $arrBookingDateSelection = !empty($request->request->get('bookingDateSelection')) ? $request->request->get('bookingDateSelection') : [];
 
         $bookingRepeatStopWeekTstamp = $request->request->get('bookingRepeatStopWeekTstamp');
-        $counter = 0;
+        $selectedSlots = 0;
 
         if ($this->objUser === null || $objResource === null || !$bookingRepeatStopWeekTstamp > 0 || !is_array($arrBookingDateSelection))
         {
@@ -270,10 +270,10 @@ class AjaxHandler
                         $logger->log(LogLevel::INFO, $strLog, ['contao' => new ContaoContext(__METHOD__, 'INFO')]);
                     }
 
-                    $counter++;
+                    $selectedSlots++;
                 }
 
-                if ($counter === 0)
+                if (!$selectedSlots)
                 {
                     $this->ajaxResponse->setErrorMessage($GLOBALS['TL_LANG']['MSG']['noItemsBooked']);
                 }
@@ -293,7 +293,7 @@ class AjaxHandler
                     }
 
                     $this->ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
-                    $this->ajaxResponse->setSuccessMessage(sprintf($GLOBALS['TL_LANG']['MSG']['successfullyBookedXItems'], $objResource->title, $counter));
+                    $this->ajaxResponse->setSuccessMessage(sprintf($GLOBALS['TL_LANG']['MSG']['successfullyBookedXItems'], $objResource->title, $selectedSlots));
                 }
             }
         }
@@ -321,34 +321,29 @@ class AjaxHandler
         $systemAdapter->loadLanguageFile('default', $this->sessionBag->get('language'));
 
         $this->ajaxResponse->setStatus(AjaxResponse::STATUS_ERROR);
-        $aBookingFormValidation = [
-            'noDatesSelected'         => false,
-            'resourceIsAlreadyBooked' => false,
-            'passedValidation'        => false,
-        ];
+        $this->ajaxResponse->setData('noDatesSelected', false);
+        $this->ajaxResponse->setData('resourceIsAlreadyBooked', false);
+        $this->ajaxResponse->setData('passedValidation', false);
+        $this->ajaxResponse->setData('message', null);
 
         $errors = 0;
-        $counter = 0;
+        $selectedSlots = 0;
         $blnBookingsPossible = true;
         $arrBookings = [];
-        $intResourceId = $request->request->get('resourceId');
-        $objResource = $resourceBookingResourceModelAdapter->findPublishedByPk($intResourceId);
-        $arrBookingDateSelection = !empty($request->request->get('bookingDateSelection')) ? $request->request->get('bookingDateSelection') : [];
-        $bookingRepeatStopWeekTstamp = $request->request->get('bookingRepeatStopWeekTstamp');
+        $objResource = $resourceBookingResourceModelAdapter->findPublishedByPk($request->request->get('resourceId', 0));
+        $arrBookingDateSelection = !empty($request->request->get('bookingDateSelection')) && \is_array($request->request->get('bookingDateSelection')) ? $request->request->get('bookingDateSelection') : [];
+        $bookingRepeatStopWeekTstamp = (int) $request->request->get('bookingRepeatStopWeekTstamp', 0);
 
-        if (!FE_USER_LOGGED_IN || $objResource === null || !$bookingRepeatStopWeekTstamp > 0)
+        if ($this->objUser === null || $objResource === null || !$bookingRepeatStopWeekTstamp > 0)
         {
             $errors++;
             $this->ajaxResponse->setErrorMessage($GLOBALS['TL_LANG']['MSG']['generalBookingError']);
         }
 
-        if ($errors === 0)
+        if (!$errors)
         {
-            $objUser = FrontendUser::getInstance();
-
             // Prepare $arrBookings with the helper method
-            $ajaxHelper = $systemAdapter->getContainer()->get('Markocupic\ResourceBookingBundle\Ajax\AjaxHelper');
-            $arrBookings = $ajaxHelper->prepareBookingSelection($objUser, $objResource, $arrBookingDateSelection, (int) $bookingRepeatStopWeekTstamp);
+            $arrBookings = $this->ajaxHelper->prepareBookingSelection($this->objUser, $objResource, $arrBookingDateSelection, (int) $bookingRepeatStopWeekTstamp);
 
             foreach ($arrBookings as $arrBooking)
             {
@@ -356,28 +351,27 @@ class AjaxHandler
                 {
                     $blnBookingsPossible = false;
                 }
-                $counter++;
+                $selectedSlots++;
             }
 
-            if ($counter === 0)
+            if (!$selectedSlots)
             {
-                $aBookingFormValidation['passedValidation'] = false;
-                $aBookingFormValidation['noDatesSelected'] = true;
+                $this->ajaxResponse->setData('passedValidation', false);
+                $this->ajaxResponse->setData('noDatesSelected', true);
             }
             elseif (!$blnBookingsPossible)
             {
-                $aBookingFormValidation['passedValidation'] = false;
-                $aBookingFormValidation['resourceIsAlreadyBooked'] = true;
+                $this->ajaxResponse->setData('passedValidation', false);
+                $this->ajaxResponse->setData('resourceIsAlreadyBooked', true);
             }
             else // All ok!
             {
-                $aBookingFormValidation['passedValidation'] = true;
+                $this->ajaxResponse->setData('passedValidation', true);
             }
         }
 
         // Return $arrBookings
-        $aBookingFormValidation['bookingSelection'] = $arrBookings;
-        $this->ajaxResponse->setData('bookingFormValidation', $aBookingFormValidation);
+        $this->ajaxResponse->setData('bookingSelection', $arrBookings);
         $this->ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
 
         return $this->ajaxResponse;

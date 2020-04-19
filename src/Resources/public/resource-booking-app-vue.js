@@ -41,8 +41,8 @@ class resourceBookingApp {
                 let self = this;
 
                 // Detect unsupported browders
-                var ua = window.navigator.userAgent;
-                var msie = ua.indexOf('MSIE ');
+                let ua = window.navigator.userAgent;
+                let msie = ua.indexOf('MSIE ');
                 if (msie > 0) {
                     alert('This extension is not compatible with your browser. Please use a current browser (like Opera, Firefox, Safari or Google Chrome), that is not out of date.')
                 }
@@ -113,7 +113,7 @@ class resourceBookingApp {
 
                     // Fetch
                     let action = 'fetchDataRequest';
-                    fetch('_resource_booking/ajax/' + action , {
+                    fetch('_resource_booking/ajax/' + action, {
                         method: "POST",
                         body: data,
                         headers: {
@@ -156,7 +156,7 @@ class resourceBookingApp {
                     }
 
                     let action = 'bookingRequest';
-                    fetch('_resource_booking/ajax/' + action ,
+                    fetch('_resource_booking/ajax/' + action,
                         {
                             method: "POST",
                             body: data,
@@ -205,7 +205,7 @@ class resourceBookingApp {
                         data.append('bookingDateSelection[]', self.bookingModal.selectedTimeSlots[i]);
                     }
                     let action = 'bookingFormValidationRequest';
-                    fetch('_resource_booking/ajax/' + action ,
+                    fetch('_resource_booking/ajax/' + action,
                         {
                             method: "POST",
                             body: data,
@@ -218,7 +218,7 @@ class resourceBookingApp {
                         })
                         .then(function (response) {
                             if (response.status === 'success') {
-                                self.bookingFormValidation = response.data.bookingFormValidation;
+                                self.bookingFormValidation = response.data;
                                 self.isOnline = true;
                             } else {
                                 self.isOnline = false;
@@ -240,7 +240,7 @@ class resourceBookingApp {
                     data.append('bookingId', self.bookingModal.activeTimeSlot.bookingId);
 
                     let action = 'cancelBookingRequest';
-                    fetch('_resource_booking/ajax/' + action , {
+                    fetch('_resource_booking/ajax/' + action, {
                         method: "POST",
                         body: data,
                         headers: {
@@ -319,7 +319,7 @@ class resourceBookingApp {
                     data.append('date', self.activeWeekTstamp);
 
                     let action = 'applyFilterRequest';
-                    fetch('_resource_booking/ajax/' + action , {
+                    fetch('_resource_booking/ajax/' + action, {
                         method: "POST",
                         body: data,
                         headers: {
@@ -425,7 +425,7 @@ class resourceBookingApp {
             }
         });
     }
-};
+}
 
 
 
