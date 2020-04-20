@@ -22,25 +22,31 @@ class resourceBookingApp {
                 requestToken: '',
                 weekdays: [],
                 timeSlots: [],
+                // The cell data of a each row in the booking table
                 rows: [],
-                activeResourceTypeId: '',
-                activeResourceId: '',
-                activeWeekTstamp: 0,
+                // Contains the id
+                activeResourceTypeId: 'undefined',
+                // Contains the data in an array: id, title, etc.
                 activeResourceType: [],
+                // Contains the id
+                activeResourceId: 'undefined',
+                // Contains the data in an array: id, title, etc.
                 activeResource: [],
+                // Monday current week 00:00 UTC
+                activeWeekTstamp: 0,
+                // Contains data about the active week: tstampStart, tstampEnd, dateStart, dateEnd, weekNumber, year
                 activeWeek: [],
                 bookingRepeatsSelection: [],
                 bookingFormValidation: [],
                 bookingModal: {},
                 intervals: [],
                 messages: null,
-                isBusy: false,
             },
 
             created: function created() {
                 let self = this;
 
-                // Detect unsupported browders
+                // Detect unsupported browsers
                 let ua = window.navigator.userAgent;
                 let msie = ua.indexOf('MSIE ');
                 if (msie > 0) {
@@ -97,7 +103,9 @@ class resourceBookingApp {
                     this.applyFilterRequest();
                 },
                 activeWeekTstamp: function activeWeekTstamp(newObj, oldObj) {
-                    this.applyFilterRequest();
+                    if (this.activeResourceTypeId != 'undefined' && this.activeResourceId != 'undefined') {
+                        this.applyFilterRequest();
+                    }
                 }
             },
 
