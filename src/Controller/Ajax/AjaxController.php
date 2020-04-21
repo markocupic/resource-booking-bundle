@@ -22,7 +22,9 @@ use Markocupic\ResourceBookingBundle\Csrf\CsrfTokenManager;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\Annotation\Route;
+
 
 /**
  * Class AjaxController
@@ -70,16 +72,19 @@ class AjaxController extends AbstractController
     /**
      * xhttp logout route
      *
-     * @Route("/_resource_booking/ajax/logout", name="resource_booking_ajax_logout_endpoint", condition="request.isXmlHttpRequest()", defaults={"_scope" = "frontend"})
+     * @Route("/_resource_booking/ajax/logout", name="resource_booking_ajax_logout_endpoint", condition="request.isXmlHttpRequest()", defaults={"_scope" = "frontend", "_token_check" = true})
      */
     public function logoutAction()
     {
+        $this->framework->initialize(true);
+
         // Unset session
         $sessionBag = $this->session->getBag($this->bagName);
         $sessionBag->clear();
 
         // Logout user
-        throw new RedirectResponseException(System::getContainer()->get('security.logout_url_generator')->getLogoutUrl());
+        $logoutUrl = $this->generateUrl('contao_frontend_logout', [], UrlGeneratorInterface::ABSOLUTE_URL);
+        throw new RedirectResponseException($logoutUrl);
     }
 
     /**
@@ -88,7 +93,7 @@ class AjaxController extends AbstractController
      * @param $action
      * @return JsonResponse
      * @throws \Exception
-     * @Route("/_resource_booking/ajax/{action}", name="resource_booking_ajax_default_endpoint", condition="request.isXmlHttpRequest()", defaults={"_scope" = "frontend"})
+     * @Route("/_resource_booking/ajax/{action}", name="resource_booking_ajax_default_endpoint", condition="request.isXmlHttpRequest()", defaults={"_scope" = "frontend", "_token_check" = true})
      */
     public function defaultAjaxAction($action): JsonResponse
     {

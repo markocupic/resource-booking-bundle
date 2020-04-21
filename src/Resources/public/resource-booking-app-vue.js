@@ -12,9 +12,14 @@ class resourceBookingApp {
         new Vue({
             el: vueElement,
             data: {
+
+                // Module options
                 opt: [],
+                // inicates if application is initialized, switches to true, when fetchData request was fired first time
                 isReady: false,
+                // Contains data about available resource types, resources and weeks (week selector)
                 filterBoard: null,
+
                 userLoggedOut: false,
                 isOnline: false,
                 userIsLoggedIn: false,
@@ -37,8 +42,8 @@ class resourceBookingApp {
                 // Contains data about the active week: tstampStart, tstampEnd, dateStart, dateEnd, weekNumber, year
                 activeWeek: [],
                 bookingRepeatsSelection: [],
+                bookingModal: [],
                 bookingFormValidation: [],
-                bookingModal: {},
                 intervals: [],
                 messages: null,
             },
@@ -85,8 +90,8 @@ class resourceBookingApp {
                             $(self.$el).find('.resource-booking-modal').first().modal('hide');
                             window.setTimeout(function () {
                                 $(self.$el).find('.auto-logout-modal').first().on('hidden.bs.modal', function () {
-                                    if (self.opt.autologout) {
-                                        location.href = self.opt.autologoutRedirect;
+                                    if (self.opt.resourceBooking_autologout) {
+                                        location.href = self.opt.resourceBooking_autologoutRedirect;
                                     } else {
                                         location.href = '';
                                     }
@@ -136,6 +141,7 @@ class resourceBookingApp {
                                 for (let key in response['data']) {
                                     self[key] = response['data'][key];
                                 }
+
                                 self.isReady = true;
                             }
 
@@ -371,13 +377,13 @@ class resourceBookingApp {
                  */
                 initializeIdleDetector: function initializeIdleDetector() {
                     let self = this;
-                    if (self.opt.autologout && parseInt(self.opt.autologoutDelay) > 0) {
+                    if (self.opt.resourceBooking_autologout && parseInt(self.opt.resourceBooking_autologoutDelay) > 0) {
 
                         $(document).idle({
                             onIdle: function onIdle() {
                                 self.sendLogoutRequest();
                             },
-                            idle: parseInt(self.opt.autologoutDelay) * 1000
+                            idle: parseInt(self.opt.resourceBooking_autologoutDelay) * 1000
                         });
                     }
                 },

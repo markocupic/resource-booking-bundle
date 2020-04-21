@@ -27,6 +27,7 @@ use Contao\ResourceBookingResourceTypeModel;
 use Contao\ResourceBookingTimeSlotModel;
 use Contao\StringUtil;
 use Contao\System;
+use Contao\Validator;
 use Markocupic\ResourceBookingBundle\DateHelper;
 use Markocupic\ResourceBookingBundle\UtcTimeHelper;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -147,13 +148,23 @@ class AjaxHelper
         // Load language file
         $systemAdapter->loadLanguageFile('default', $this->sessionBag->get('language'));
 
+        // Get module data
+        $arrData['opt'] = $this->moduleModel->row();
+        $arrData['opt']['resourceBooking_autologoutRedirect_autologout'] = '';
+        $arrData['opt']['resourceBooking_autologoutRedirect'] = $controllerAdapter->replaceInsertTags(sprintf('{{link_url::%s}}', $this->moduleModel->resourceBooking_autologoutRedirect));
+
         // Handle autologout
-        if ($this->objUser)
+        if ($this->objUser && $this->moduleModel->resourceBooking_autologoutRedirect_autologout)
         {
-            $arrData['opt']['autologout'] = $this->moduleModel->resourceBooking_autologout;
-            $arrData['opt']['autologoutDelay'] = $this->moduleModel->resourceBooking_autologoutDelay;
-            $arrData['opt']['autologoutRedirect'] = $controllerAdapter->replaceInsertTags(sprintf('{{link_url::%s}}', $this->moduleModel->resourceBooking_autologoutRedirect));
+            $arrData['opt']['resourceBooking_autologoutRedirect_autologout'] = '1';
         }
+        $arrData['opt'] = array_map(function($v){
+            if(!empty($v) && Validator::isBinaryUuid($v))
+            {
+                $v = StringUtil::binToUuid($v);
+            }
+            return $v;
+        },$arrData['opt']);
 
         // Messages
         if ($this->objSelectedResourceType === null && !$messageAdapter->hasMessages())
