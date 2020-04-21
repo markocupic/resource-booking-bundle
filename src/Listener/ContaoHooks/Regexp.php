@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Resource Booking Module for Contao CMS
  * Copyright (c) 2008-2020 Marko Cupic
@@ -8,28 +10,30 @@
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
-namespace Markocupic\ResourceBookingBundle;
+namespace Markocupic\ResourceBookingBundle\Listener\ContaoHooks;
 
+use Contao\Controller;
 use Contao\Validator;
 use Contao\Widget;
+use Markocupic\ResourceBookingBundle\Date\DateHelper;
 
 /**
- * Class RegexpHook
- * @package Markocupic\ResourceBookingBundle
+ * Class Regexp
+ * @package Markocupic\ResourceBookingBundle\Listener\ContaoHooks
  */
-class RegexpHook
+class Regexp
 {
-
     /**
      * @param string $strRegexp
      * @param string $varValue
      * @param Widget $objWidget
      * @return bool
      */
-    public function customRegexp(string $strRegexp, string $varValue, Widget $objWidget): bool
+    public function onCustomRegexp(string $strRegexp, string $varValue, Widget $objWidget): bool
     {
         if ($strRegexp === 'resourceBookingTime')
         {
+            Controller::loadLanguageFile('default');
             if (!Validator::isTime($varValue))
             {
                 $objWidget->addError($GLOBALS['TL_LANG']['MSG']['pleaseInsertValidBookingTime']);

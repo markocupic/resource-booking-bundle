@@ -8,9 +8,7 @@
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
-/**
- * Back end modules
- */
+// Register back end modules
 $GLOBALS['BE_MOD']['resourceBookingTool'] = [
     'resource'     => [
         'tables' => ['tl_resource_booking_resource_type', 'tl_resource_booking_resource', 'tl_resource_booking'],
@@ -20,22 +18,20 @@ $GLOBALS['BE_MOD']['resourceBookingTool'] = [
     ]
 ];
 
-// Asset path
-define('MOD_RESOURCE_BOOKING_ASSET_PATH', 'bundles/markocupicresourcebooking');
+// Register contao models
+$GLOBALS['TL_MODELS']['tl_resource_booking'] = \Markocupic\ResourceBookingBundle\Model\ResourceBookingModel::class;
+$GLOBALS['TL_MODELS']['tl_resource_booking_resource'] = \Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel::class;
+$GLOBALS['TL_MODELS']['tl_resource_booking_resource_type'] = \Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceTypeModel::class;
+$GLOBALS['TL_MODELS']['tl_resource_booking_time_slot'] = \Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotModel::class;
+$GLOBALS['TL_MODELS']['tl_resource_booking_time_slot_type'] = \Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotTypeModel::class;
 
 // CSS
 if (TL_MODE === 'BE')
 {
-    $GLOBALS['TL_CSS'][] = MOD_RESOURCE_BOOKING_ASSET_PATH . '/css/backend.css|static';
+    $GLOBALS['TL_CSS'][] = \Markocupic\ResourceBookingBundle\Config\Config::MOD_RESOURCE_BOOKING_ASSET_PATH . '/css/backend.css|static';
 }
 
 // Set backWeeks and aheadWeeks
-Contao\Config::set('rbb_intBackWeeks', -27);
-Contao\Config::set('rbb_intAheadWeeks', 51);
+\Contao\Config::set('rbb_intBackWeeks', -27);
+\Contao\Config::set('rbb_intAheadWeeks', 51);
 
-// Hooks
-$GLOBALS['TL_HOOKS']['addCustomRegexp'][] = ['Markocupic\ResourceBookingBundle\RegexpHook', 'customRegexp'];
-$GLOBALS['TL_HOOKS']['replaceInsertTags'][] = ['Markocupic\ResourceBookingBundle\ReplaceInsertTagsHook', 'replaceInsertTags'];
-
-// Cron jobs
-$GLOBALS['TL_CRON']['daily']['rbb_deleteOldBookings'] = ['Markocupic\ResourceBookingBundle\Cron\Cron', 'deleteOldBookingsFromDb'];

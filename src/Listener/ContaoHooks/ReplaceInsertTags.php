@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Resource Booking Module for Contao CMS
  * Copyright (c) 2008-2020 Marko Cupic
@@ -8,22 +10,21 @@
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
-namespace Markocupic\ResourceBookingBundle;
+namespace Markocupic\ResourceBookingBundle\Listener\ContaoHooks;
 
 use Contao\Controller;
 
 /**
- * Class ReplaceInsertTagsHook
- * @package Markocupic\ResourceBookingBundle
+ * Class ReplaceInsertTags
+ * @package Markocupic\ResourceBookingBundle\Listener\ContaoHooks
  */
-class ReplaceInsertTagsHook
+class ReplaceInsertTags
 {
-
     /**
      * @param string $strTag
      * @return bool
      */
-    public function replaceInsertTags(string $strTag)
+    public function onReplaceInsertTags(string $strTag)
     {
         Controller::loadLanguageFile('default');
         if (strpos($strTag, 'rbb_lang::') !== false)

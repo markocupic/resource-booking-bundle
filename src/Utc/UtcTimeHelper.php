@@ -10,11 +10,11 @@ declare(strict_types=1);
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
-namespace Markocupic\ResourceBookingBundle;
+namespace Markocupic\ResourceBookingBundle\Utc;
 
 /**
  * Class UtcTimeHelper
- * @package Markocupic\ResourceBookingBundle
+ * @package Markocupic\ResourceBookingBundle\Utc
  */
 class UtcTimeHelper
 {

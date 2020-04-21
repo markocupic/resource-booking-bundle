@@ -58,7 +58,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = array(
             'bookings' => array(
                 'label' => &$GLOBALS['TL_LANG']['tl_resource_booking_resource']['bookingsmeta'],
                 'href'  => 'table=tl_resource_booking',
-                'icon'  => MOD_RESOURCE_BOOKING_ASSET_PATH . '/icons/calendar.svg',
+                'icon'  => \Markocupic\ResourceBookingBundle\Config\Config::MOD_RESOURCE_BOOKING_ASSET_PATH . '/icons/calendar.svg',
             ),
             'delete'   => array(
                 'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking_resource']['delete'],

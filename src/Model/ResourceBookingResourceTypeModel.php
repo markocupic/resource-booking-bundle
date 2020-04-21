@@ -8,11 +8,13 @@
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
-namespace Contao;
+namespace Markocupic\ResourceBookingBundle\Model;
+
+use Contao\Model;
 
 /**
  * Class ResourceBookingResourceTypeModel
- * @package Contao
+ * @package Markocupic\ResourceBookingBundle\Model
  */
 class ResourceBookingResourceTypeModel extends Model
 {

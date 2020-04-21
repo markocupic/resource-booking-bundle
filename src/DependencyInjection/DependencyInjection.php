@@ -39,7 +39,7 @@ class MarkocupicResourceBookingExtension extends Extension
         $loader->load('parameters.yml');
         $loader->load('services.yml');
         $loader->load('listener.yml');
+        $loader->load('cron.yml');
         $loader->load('migration.yml');
-
     }
 }

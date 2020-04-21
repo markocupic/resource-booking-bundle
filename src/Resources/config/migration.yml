@@ -1,3 +1,4 @@
+# migration.yml
 services:
   # Migration class: Add booking uuid
   Markocupic\ResourceBookingBundle\Migration\AddBookingUuid\AddBookingUuid:
