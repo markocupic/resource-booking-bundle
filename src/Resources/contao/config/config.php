@@ -12,6 +12,7 @@
 $GLOBALS['BE_MOD']['resourceBookingTool'] = [
     'resource'     => [
         'tables' => ['tl_resource_booking_resource_type', 'tl_resource_booking_resource', 'tl_resource_booking'],
+        'stylesheet' => [\Markocupic\ResourceBookingBundle\Config\Config::MOD_RESOURCE_BOOKING_ASSET_PATH . '/css/backend.css'],
     ],
     'timeSlotType' => [
         'tables' => ['tl_resource_booking_time_slot_type', 'tl_resource_booking_time_slot'],
@@ -24,12 +25,6 @@ $GLOBALS['TL_MODELS']['tl_resource_booking_resource'] = \Markocupic\ResourceBook
 $GLOBALS['TL_MODELS']['tl_resource_booking_resource_type'] = \Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceTypeModel::class;
 $GLOBALS['TL_MODELS']['tl_resource_booking_time_slot'] = \Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotModel::class;
 $GLOBALS['TL_MODELS']['tl_resource_booking_time_slot_type'] = \Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotTypeModel::class;
-
-// CSS
-if (TL_MODE === 'BE')
-{
-    $GLOBALS['TL_CSS'][] = \Markocupic\ResourceBookingBundle\Config\Config::MOD_RESOURCE_BOOKING_ASSET_PATH . '/css/backend.css|static';
-}
 
 // Set backWeeks and aheadWeeks
 \Contao\Config::set('rbb_intBackWeeks', -27);
