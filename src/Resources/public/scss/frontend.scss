@@ -1,8 +1,9 @@
 $notBookableBg: rgba(255, 200, 196, 0.66);
-$bookableBg: rgba(182, 228, 182, 0.38);
+$bookableBg: rgba(115, 207, 97, 0.42);
 $loggedInUserIsHolderBg: rgba(3, 169, 244, 0.32);
+$iconBookingColor: #fff;
 
-.mod_resourceBookingWeekCalendar {
+.mod_resourceBookingWeekcalendar {
   .resource-booking-app .vue-application {
     visibility: hidden;
   }
@@ -26,16 +27,22 @@ $loggedInUserIsHolderBg: rgba(3, 169, 244, 0.32);
     td.time-slot-cell[data-isbooked="true"] {
       background-color: $notBookableBg;
     }
-    .btn-cancel-booking {
+    td.time-slot-cell[data-isbookable="true"] {
+      background-color: $bookableBg;
+      text-align: center;
+      vertical-align: middle;
+    }
+    .btn-cancel-booking, .icon-cancel-booking {
       color: red;
     }
-    .btn-booking {
-      color: #666;
+    .btn-booking, .icon-booking {
+      font-size: 2rem;
+      color: $iconBookingColor;
     }
-    .btn-booking .fa-window-close {
+    .btn-booking .icon-cancel-booking {
       display: none;
     }
-    .btn-cancel-booking .fa-shopping-cart {
+    .btn-cancel-booking .icon-booking {
       display: none;
     }
   }
@@ -91,7 +98,7 @@ $loggedInUserIsHolderBg: rgba(3, 169, 244, 0.32);
   .timeSpanSelect option[selected] {
     background-color: #149efb;
   }
-} 
+}
 
 // Customizing
 // Etwas Abstand nach dem Mittag

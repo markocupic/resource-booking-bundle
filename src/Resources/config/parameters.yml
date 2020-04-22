@@ -1,0 +1,7 @@
+# parameters.yml
+parameters:
+  resource_booking_bundle.session.attribute_bag_name: resource_booking_bundle_attributes
+  resource_booking_bundle.session.attribute_bag_key: _resource_booking_bundle_attributes
+  resource_booking_bundle.session.flash_bag_key: _resource_booking_bundle_flash_bag
+  resource_booking_bundle.cookie.name: _contao_resource_booking_token
+

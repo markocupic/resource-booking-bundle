@@ -1,0 +1,4 @@
+# routing.yml
+resource_booking:
+  resource: "@MarkocupicResourceBookingBundle/Controller"
+  type: annotation

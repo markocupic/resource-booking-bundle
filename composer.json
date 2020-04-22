@@ -24,28 +24,17 @@
   },
   "require": {
     "php": ">=7.1",
-    "contao/core-bundle": "^4.5",
+    "contao/core-bundle": "^4.9",
     "codefog/contao-haste": "^4.23",
     "markocupic/contao-component-bootstrap": "^4.3",
-    "markocupic/contao-component-fontawesome-free": "^5.11",
+    "markocupic/contao-component-fontawesome-free": "^5.13",
     "markocupic/contao-component-popper-js": "^1.0",
-    "markocupic/contao-component-vue-js": "^2.6" 
+    "markocupic/contao-component-vue-js": "^2.6"
   },
   "autoload": {
     "psr-4": {
       "Markocupic\\ResourceBookingBundle\\": "src/"
-    },
-    "classmap": [
-      "src/Resources/contao"
-    ],
-    "exclude-from-classmap": [
-      "src/Resources/contao/assets",
-      "src/Resources/contao/config",
-      "src/Resources/contao/csv",
-      "src/Resources/contao/dca",
-      "src/Resources/contao/languages",
-      "src/Resources/contao/templates"
-    ]
+    }
   },
   "extra": {
     "contao-manager-plugin": "Markocupic\\ResourceBookingBundle\\ContaoManager\\Plugin"

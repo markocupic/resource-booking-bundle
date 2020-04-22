@@ -2,9 +2,9 @@
 
 /**
  * Resource Booking Module for Contao CMS
- * Copyright (c) 2008-2019 Marko Cupic
+ * Copyright (c) 2008-2020 Marko Cupic
  * @package resource-booking-bundle
- * @author Marko Cupic m.cupic@gmx.ch, 2019
+ * @author Marko Cupic m.cupic@gmx.ch, 2020
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
@@ -15,4 +15,4 @@ $GLOBALS['TL_LANG']['MOD']['timeSlotType'] = array('Zeitpläne', 'Buchungs-Zeitp
 
 // Frontend modules
 $GLOBALS['TL_LANG']['FMD']['resourceBooking'] = 'Resourcen-Buchungs-Module';
-$GLOBALS['TL_LANG']['FMD']['resourceBookingWeekCalendar'] = array('Wochenkalender mit Resourcen-Buchung', 'Wochenkalender mit Resourcen-Buchung');
+$GLOBALS['TL_LANG']['FMD']['resourceBookingWeekcalendar'] = array('Wochenkalender mit Resourcen-Buchung', 'Wochenkalender mit Resourcen-Buchung');

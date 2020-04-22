@@ -2,19 +2,21 @@
 
 /**
  * Resource Booking Module for Contao CMS
- * Copyright (c) 2008-2019 Marko Cupic
+ * Copyright (c) 2008-2020 Marko Cupic
  * @package resource-booking-bundle
- * @author Marko Cupic m.cupic@gmx.ch, 2019
+ * @author Marko Cupic m.cupic@gmx.ch, 2020
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
-namespace Contao;
+namespace Markocupic\ResourceBookingBundle\Model;
+
+use Contao\Model;
 
 /**
  * Class ResourceBookingTimeSlotModel
- * @package Contao
+ * @package Markocupic\ResourceBookingBundle\Model
  */
-class ResourceBookingTimeSlotModel extends \Model
+class ResourceBookingTimeSlotModel extends Model
 {
 
     /**
@@ -29,7 +31,7 @@ class ResourceBookingTimeSlotModel extends \Model
      */
     public static function findPublishedByPid($intPid)
     {
-        $arrIds = array();
+        $arrIds = [];
 
         $objDb = static::findByPid($intPid);
         if ($objDb !== null)
@@ -51,9 +53,9 @@ class ResourceBookingTimeSlotModel extends \Model
             }
         }
 
-        $arrOptions = array(
+        $arrOptions = [
             'order' => 'tl_resource_booking_time_slot.sorting ASC',
-        );
+        ];
 
         return static::findMultipleByIds($arrIds, $arrOptions);
     }

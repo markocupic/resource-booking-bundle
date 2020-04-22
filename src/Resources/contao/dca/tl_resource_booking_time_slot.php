@@ -2,87 +2,75 @@
 
 /**
  * Resource Booking Module for Contao CMS
- * Copyright (c) 2008-2019 Marko Cupic
+ * Copyright (c) 2008-2020 Marko Cupic
  * @package resource-booking-bundle
- * @author Marko Cupic m.cupic@gmx.ch, 2019
+ * @author Marko Cupic m.cupic@gmx.ch, 2020
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
 /**
  * Table tl_resource_booking_time_slot
  */
-$GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = array
-(
+$GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = [
 
     // Config
-    'config'   => array
-    (
+    'config'   => [
         'dataContainer'     => 'Table',
         'ptable'            => 'tl_resource_booking_time_slot_type',
         'enableVersioning'  => true,
-        'sql'               => array
-        (
-            'keys' => array
-            (
+        'sql'               => [
+            'keys' => [
                 'id'  => 'primary',
                 'pid' => 'index'
-            )
-        ),
-        'ondelete_callback' => array(array('tl_resource_booking_time_slot', 'removeChildRecords'))
-    ),
+            ]
+        ],
+        'ondelete_callback' => [['tl_resource_booking_time_slot', 'removeChildRecords']],
+        'onsubmit_callback' => [['tl_resource_booking_time_slot', 'adaptBookingsStartAndEndtime']],
+
+    ],
 
     // List
-    'list'     => array
-    (
-        'sorting'           => array
-        (
+    'list'     => [
+        'sorting'           => [
             'mode'                  => 4,
-            'fields'                => array('sorting'),
+            'fields'                => ['sorting'],
             'panelLayout'           => 'filter;search,limit',
-            'headerFields'          => array('title'),
-            'child_record_callback' => array('tl_resource_booking_time_slot', 'childRecordCallback')
-        ),
-        'global_operations' => array
-        (
-            'all' => array
-            (
+            'headerFields'          => ['title'],
+            'child_record_callback' => ['tl_resource_booking_time_slot', 'childRecordCallback']
+        ],
+        'global_operations' => [
+            'all' => [
                 'label'      => &$GLOBALS['TL_LANG']['MSC']['all'],
                 'href'       => 'act=select',
                 'class'      => 'header_edit_all',
                 'attributes' => 'onclick="Backend.getScrollOffset()" accesskey="e"'
-            )
-        ),
-        'operations'        => array
-        (
-            'edit'   => array
-            (
+            ]
+        ],
+        'operations'        => [
+            'edit'   => [
                 'label' => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['edit'],
                 'href'  => 'act=edit',
                 'icon'  => 'edit.svg'
-            ),
-            'copy'   => array
-            (
+            ],
+            'copy'   => [
                 'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['copy'],
                 'href'       => 'act=paste&amp;mode=copy',
                 'icon'       => 'copy.svg',
                 'attributes' => 'onclick="Backend.getScrollOffset()"'
-            ),
-            'cut'    => array
-            (
+            ],
+            'cut'    => [
                 'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['cut'],
                 'href'       => 'act=paste&amp;mode=cut',
                 'icon'       => 'cut.svg',
                 'attributes' => 'onclick="Backend.getScrollOffset()"'
-            ),
-            'delete' => array
-            (
+            ],
+            'delete' => [
                 'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['delete'],
                 'href'       => 'act=delete',
                 'icon'       => 'delete.svg',
                 'attributes' => 'onclick="if(!confirm(\'' . $GLOBALS['TL_LANG']['MSC']['deleteConfirm'] . '\'))return false;Backend.getScrollOffset()"'
-            ),
-            'toggle' => array
-            (
+            ],
+            'toggle' => [
                 'label'                => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['toggle'],
                 'attributes'           => 'onclick="Backend.getScrollOffset();return AjaxRequest.toggleVisibility(this,%s)"',
                 'haste_ajax_operation' => [
@@ -98,49 +86,45 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = array
                         ]
                     ]
                 ]
-            ),
-            'show'   => array
-            (
+            ],
+            'show'   => [
                 'label' => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['show'],
                 'href'  => 'act=show',
                 'icon'  => 'show.svg'
-            )
-        )
-    ),
+            ]
+        ]
+    ],
 
     // Palettes
-    'palettes' => array
-    (
+    'palettes' => [
         'default' => '{title_legend},title,description;{time_legend},startTime,endTime;{expert_legend:hide},cssID',
-    ),
+    ],
 
     // Fields
-    'fields'   => array
-    (
-        'id'          => array(
+    'fields'   => [
+        'id'          => [
             'sql' => "int(10) unsigned NOT NULL auto_increment",
-        ),
-        'pid'         => array(
+        ],
+        'pid'         => [
             'foreignKey' => 'tl_resource_booking_time_slot_type.title',
-            'relation'   => array('type' => 'belongsTo', 'load' => 'lazy'),
+            'relation'   => ['type' => 'belongsTo', 'load' => 'lazy'],
             'sql'        => "int(10) unsigned NOT NULL default '0'",
-        ),
-        'tstamp'      => array(
+        ],
+        'tstamp'      => [
             'sql' => "int(10) unsigned NOT NULL default '0'",
-        ),
-        'sorting'     => array
-        (
+        ],
+        'sorting'     => [
             'sql' => "int(10) unsigned NOT NULL default '0'"
-        ),
-        'title'       => array(
+        ],
+        'title'       => [
             'label'     => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['title'],
             'exclude'   => true,
             'search'    => true,
             'inputType' => 'text',
-            'eval'      => array('mandatory' => true, 'maxlength' => 255, 'tl_class' => 'clr'),
+            'eval'      => ['mandatory' => true, 'maxlength' => 255, 'tl_class' => 'clr'],
             'sql'       => "varchar(255) NOT NULL default ''"
-        ),
-        'published'   => array(
+        ],
+        'published'   => [
             'label'     => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['published'],
             'exclude'   => true,
             'search'    => true,
@@ -148,19 +132,18 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = array
             'filter'    => true,
             'flag'      => 2,
             'inputType' => 'checkbox',
-            'eval'      => array('doNotCopy' => true, 'tl_class' => 'clr'),
+            'eval'      => ['doNotCopy' => true, 'tl_class' => 'clr'],
             'sql'       => "char(1) NOT NULL default ''",
-        ),
-        'description' => array(
+        ],
+        'description' => [
             'label'     => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['description'],
             'exclude'   => true,
             'search'    => true,
             'inputType' => 'textarea',
-            'eval'      => array('tl_class' => 'clr'),
+            'eval'      => ['tl_class' => 'clr'],
             'sql'       => "mediumtext NULL"
-        ),
-        'startTime'   => array
-        (
+        ],
+        'startTime'   => [
             'label'         => &$GLOBALS['TL_LANG']['tl_calendar_events']['startTime'],
             'default'       => time(),
             'exclude'       => true,
@@ -168,44 +151,38 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = array
             'sorting'       => true,
             'flag'          => 8,
             'inputType'     => 'text',
-            'eval'          => array('rgxp' => 'resourceBookingTime', 'mandatory' => true, 'tl_class' => 'w50'),
-            'load_callback' => array
-            (
-                array('tl_resource_booking_time_slot', 'loadTime')
-            ),
-            'save_callback' => array
-            (
-                array('tl_resource_booking_time_slot', 'setCorrectTime')
-            ),
-            'sql'           => "int(10) NULL"
-        ),
-        'endTime'     => array
-        (
+            'eval'          => ['rgxp' => 'resourceBookingTime', 'mandatory' => true, 'tl_class' => 'w50'],
+            'load_callback' => [
+                ['tl_resource_booking_time_slot', 'loadTime']
+            ],
+            'save_callback' => [
+                ['tl_resource_booking_time_slot', 'setCorrectTime']
+            ],
+            'sql'           => "int(10) unsigned NOT NULL default '0'",
+        ],
+        'endTime'     => [
             'label'         => &$GLOBALS['TL_LANG']['tl_calendar_events']['endTime'],
             'default'       => time(),
             'exclude'       => true,
             'inputType'     => 'text',
-            'eval'          => array('rgxp' => 'resourceBookingTime', 'mandatory' => true, 'tl_class' => 'w50'),
-            'load_callback' => array
-            (
-                array('tl_resource_booking_time_slot', 'loadTime')
-            ),
-            'save_callback' => array
-            (
-                array('tl_resource_booking_time_slot', 'setCorrectTime'),
-                array('tl_resource_booking_time_slot', 'setCorrectEndTime')
-            ),
-            'sql'           => "int(10) NULL"
-        ),
-        'cssID'       => array
-        (
+            'eval'          => ['rgxp' => 'resourceBookingTime', 'mandatory' => true, 'tl_class' => 'w50'],
+            'load_callback' => [
+                ['tl_resource_booking_time_slot', 'loadTime']
+            ],
+            'save_callback' => [
+                ['tl_resource_booking_time_slot', 'setCorrectTime'],
+                ['tl_resource_booking_time_slot', 'setCorrectEndTime']
+            ],
+            'sql'           => "int(10) unsigned NOT NULL default '0'",
+        ],
+        'cssID'       => [
             'exclude'   => true,
             'inputType' => 'text',
-            'eval'      => array('multiple' => true, 'size' => 2, 'tl_class' => 'w50 clr'),
+            'eval'      => ['multiple' => true, 'size' => 2, 'tl_class' => 'w50 clr'],
             'sql'       => "varchar(255) NOT NULL default ''"
-        ),
-    )
-);
+        ],
+    ]
+];
 
 /**
  * Provide miscellaneous methods that are used by the data configuration array.
@@ -228,7 +205,7 @@ class tl_resource_booking_time_slot extends Contao\Backend
      */
     public function childRecordCallback(array $row): string
     {
-        return sprintf('<div class="tl_content_left"><span style="color:#999;padding-left:3px">' . $row['title'] . '</span> %s-%s</div>', Markocupic\ResourceBookingBundle\UtcTime::parse('H:i', $row['startTime']), Markocupic\ResourceBookingBundle\UtcTime::parse('H:i', $row['endTime']));
+        return sprintf('<div class="tl_content_left"><span style="color:#999;padding-left:3px">' . $row['title'] . '</span> %s-%s</div>', Markocupic\ResourceBookingBundle\Utc\UtcTimeHelper::parse('H:i', $row['startTime']), Markocupic\ResourceBookingBundle\Utc\UtcTimeHelper::parse('H:i', $row['endTime']));
     }
 
     /**
@@ -242,9 +219,9 @@ class tl_resource_booking_time_slot extends Contao\Backend
     public function loadTime(int $timestamp): string
     {
         $strTime = '';
-        if (!empty($timestamp))
+        if ($timestamp >= 0 && is_int($timestamp))
         {
-            $strTime = Markocupic\ResourceBookingBundle\UtcTime::parse('H:i', $timestamp);
+            $strTime = Markocupic\ResourceBookingBundle\Utc\UtcTimeHelper::parse('H:i', $timestamp);
         }
 
         return $strTime;
@@ -264,7 +241,7 @@ class tl_resource_booking_time_slot extends Contao\Backend
     {
         if (preg_match("/^(2[0-3]|[01][0-9]):[0-5][0-9]$/", $strTime))
         {
-            $timestamp = Markocupic\ResourceBookingBundle\UtcTime::strtotime('1970-01-01 ' . $strTime);
+            $timestamp = Markocupic\ResourceBookingBundle\Utc\UtcTimeHelper::strtotime('1970-01-01 ' . $strTime);
         }
         else
         {
@@ -297,7 +274,7 @@ class tl_resource_booking_time_slot extends Contao\Backend
 
         if (!empty($strStartTime))
         {
-            $startTime = \Markocupic\ResourceBookingBundle\UtcTime::strtotime('01-01-1970 ' . $strStartTime);
+            $startTime = Markocupic\ResourceBookingBundle\Utc\UtcTimeHelper::strtotime('01-01-1970 ' . $strStartTime);
             if ($startTime !== false)
             {
                 if ($timestamp <= $startTime)
@@ -329,8 +306,55 @@ class tl_resource_booking_time_slot extends Contao\Backend
             return;
         }
 
-        // Delete child bookings
-        $this->Database->prepare('DELETE FROM tl_resource_booking WHERE timeSlotId=?')->execute($dc->id);
+        $objBooking = $this->Database->prepare('SELECT id FROM tl_resource_booking WHERE timeSlotId=?')->execute($dc->id);
+        if ($objBooking->numRows)
+        {
+            $arrIdsDel = $objBooking->fetchEach('id');
+            // Delete child bookings
+            $this->Database->prepare('DELETE FROM tl_resource_booking WHERE timeSlotId=?')->execute($dc->id);
+            \Contao\Message::addInfo('Deleted bookings with ids ' . implode(',', $arrIdsDel));
+        }
+    }
+
+    /**
+     * ondelete_callback
+     * @param \Contao\DataContainer $dc
+     */
+    public function adaptBookingsStartAndEndtime($dc)
+    {
+        $intId = $dc->id;
+        if (!$intId)
+        {
+            return;
+        }
+
+        $objSlot = $this->Database->prepare('SELECT * FROM tl_resource_booking_time_slot WHERE id=?')->execute($intId);
+        if ($objSlot->numRows)
+        {
+            $arrAdapted = [];
+            $objBooking = $this->Database->prepare('SELECT * FROM tl_resource_booking WHERE timeSlotId=?')->execute($objSlot->id);
+            while ($objBooking->next())
+            {
+                $set = [];
+                $arrFields = ['startTime', 'endTime'];
+                foreach ($arrFields as $field)
+                {
+                    $strDateOld = \Contao\Date::parse('Y-m-d H:i', $objBooking->{$field});
+                    $arrDateOld = explode(' ', $strDateOld);
+                    $strTimeNew = Markocupic\ResourceBookingBundle\Utc\UtcTimeHelper::parse('H:i', $objSlot->{$field});
+                    $strDateNew = $arrDateOld[0] . ' ' . $strTimeNew;
+                    $set[$field] = strtotime($strDateNew);
+                }
+                $arrAdapted[] = $objBooking->id;
+                $this->Database->prepare('UPDATE tl_resource_booking %s WHERE id=?')
+                    ->set($set)
+                    ->execute($objBooking->id);
+            }
+            if (count($arrAdapted))
+            {
+                \Contao\Message::addInfo('Adapted start- and endtime for booking with ids ' . implode(',', $arrAdapted));
+            }
+        }
     }
 
 }

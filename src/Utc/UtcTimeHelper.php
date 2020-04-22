@@ -4,21 +4,19 @@ declare(strict_types=1);
 
 /**
  * Resource Booking Module for Contao CMS
- * Copyright (c) 2008-2019 Marko Cupic
+ * Copyright (c) 2008-2020 Marko Cupic
  * @package resource-booking-bundle
- * @author Marko Cupic m.cupic@gmx.ch, 2019
+ * @author Marko Cupic m.cupic@gmx.ch, 2020
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
-namespace Markocupic\ResourceBookingBundle;
-
-use Contao\Date;
+namespace Markocupic\ResourceBookingBundle\Utc;
 
 /**
- * Class UtcTime
- * @package Markocupic\ResourceBookingBundle
+ * Class UtcTimeHelper
+ * @package Markocupic\ResourceBookingBundle\Utc
  */
-class UtcTime
+class UtcTimeHelper
 {
 
     /**
@@ -41,6 +39,6 @@ class UtcTime
     {
         $utc = new \DateTimeZone('UTC');
         $dt = new \DateTime($strDate, $utc);
-        return (int)$dt->format('U');
+        return (int) $dt->format('U');
     }
 }

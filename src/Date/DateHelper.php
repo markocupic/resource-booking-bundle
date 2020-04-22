@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 /**
  * Resource Booking Module for Contao CMS
- * Copyright (c) 2008-2019 Marko Cupic
+ * Copyright (c) 2008-2020 Marko Cupic
  * @package resource-booking-bundle
- * @author Marko Cupic m.cupic@gmx.ch, 2019
+ * @author Marko Cupic m.cupic@gmx.ch, 2020
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
-namespace Markocupic\ResourceBookingBundle;
+namespace Markocupic\ResourceBookingBundle\Date;
 
 use Contao\Date;
 use Contao\Config;
 
 /**
  * Class DateHelper
- * @package Markocupic\ResourceBookingBundle
+ * @package Markocupic\ResourceBookingBundle\Date
  */
 class DateHelper
 {
@@ -97,8 +97,8 @@ class DateHelper
      */
     public static function isValidDate(int $tstamp): bool
     {
-        $intBackWeeks = Config::get('rbb_intBackWeeks');
-        $intAheadWeeks = Config::get('rbb_intAheadWeeks');
+        $intBackWeeks = (int) Config::get('rbb_intBackWeeks');
+        $intAheadWeeks = (int) Config::get('rbb_intAheadWeeks');
 
         // Get the timestamp of the first and last possible weeks
         $tstampFirstPossibleWeek = static::addWeeksToTime($intBackWeeks, static::getMondayOfCurrentWeek());

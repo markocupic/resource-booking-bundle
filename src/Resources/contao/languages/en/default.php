@@ -2,9 +2,9 @@
 
 /**
  * Resource Booking Module for Contao CMS
- * Copyright (c) 2008-2019 Marko Cupic
+ * Copyright (c) 2008-2020 Marko Cupic
  * @package resource-booking-bundle
- * @author Marko Cupic m.cupic@gmx.ch, 2019
+ * @author Marko Cupic m.cupic@gmx.ch, 2020
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
@@ -20,8 +20,8 @@ $GLOBALS['TL_LANG']['DAYS_SHORTED'][6] = 'Sun';
 $GLOBALS['TL_LANG']['DAYS_LONG'][0] = 'Monday';
 $GLOBALS['TL_LANG']['DAYS_LONG'][1] = 'Tuesday';
 $GLOBALS['TL_LANG']['DAYS_LONG'][2] = 'Wednesday';
-$GLOBALS['TL_LANG']['DAYS_LONG'][3] = 'Donnerstag';
-$GLOBALS['TL_LANG']['DAYS_LONG'][4] = 'Thursday';
+$GLOBALS['TL_LANG']['DAYS_LONG'][3] = 'Thursday';
+$GLOBALS['TL_LANG']['DAYS_LONG'][4] = 'Friday';
 $GLOBALS['TL_LANG']['DAYS_LONG'][5] = 'Saturday';
 $GLOBALS['TL_LANG']['DAYS_LONG'][6] = 'Sunday';
 
@@ -50,7 +50,7 @@ $GLOBALS['TL_LANG']['RBB']['logoutDueToSecurityReasons'] = 'Sie wurden aus Siche
 $GLOBALS['TL_LANG']['RBB']['close'] = 'Schliessen';
 $GLOBALS['TL_LANG']['RBB']['cancelBooking'] = 'Soll Ihre Buchung storniert werden?';
 $GLOBALS['TL_LANG']['RBB']['bookResourceRepetitions'] = 'Ressource buchen bis (Wiederholungen)';
-$GLOBALS['TL_LANG']['RBB']['enterAbstract'] = 'Kurzbeschreibung eingeben (max 40 Zeichen).';
+$GLOBALS['TL_LANG']['RBB']['enterAbstract'] = 'Kurzbeschreibung eingeben (max 50 Zeichen).';
 $GLOBALS['TL_LANG']['RBB']['abstract'] = 'Kurzbeschreibung';
 $GLOBALS['TL_LANG']['RBB']['time'] = 'Uhrzeit';
 $GLOBALS['TL_LANG']['RBB']['timeSpan'] = 'Zeitraum';

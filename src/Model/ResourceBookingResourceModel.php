@@ -2,19 +2,22 @@
 
 /**
  * Resource Booking Module for Contao CMS
- * Copyright (c) 2008-2019 Marko Cupic
+ * Copyright (c) 2008-2020 Marko Cupic
  * @package resource-booking-bundle
- * @author Marko Cupic m.cupic@gmx.ch, 2019
+ * @author Marko Cupic m.cupic@gmx.ch, 2020
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
-namespace Contao;
+namespace Markocupic\ResourceBookingBundle\Model;
+
+use Contao\Database;
+use Contao\Model;
 
 /**
  * Class ResourceBookingResourceModel
- * @package Contao
+ * @package Markocupic\ResourceBookingBundle\Model
  */
-class ResourceBookingResourceModel extends \Model
+class ResourceBookingResourceModel extends Model
 {
 
     /**
@@ -29,7 +32,7 @@ class ResourceBookingResourceModel extends \Model
      */
     public static function findPublishedByPid($intId)
     {
-        $arrIds = array();
+        $arrIds = [];
         $objDb = static::findByPid($intId);
         if ($objDb !== null)
         {
@@ -55,12 +58,13 @@ class ResourceBookingResourceModel extends \Model
 
     /**
      * @param $intId
-     * @return ResourceBookingResourceModel
+     * @return ResourceBookingResourceModel|null
+     * @throws \Exception
      */
     public static function findPublishedByPk($intId)
     {
-        $arrColumn = array('id=?', 'published=?');
-        $arrValues = array($intId, '1');
+        $arrColumn = ['id=?', 'published=?'];
+        $arrValues = [$intId, '1'];
         $objDb = self::findOneBy($arrColumn, $arrValues);
         if ($objDb !== null)
         {
@@ -81,12 +85,13 @@ class ResourceBookingResourceModel extends \Model
     /**
      * @param $intId
      * @param $intPid
-     * @return mixed
+     * @return ResourceBookingResourceModel|null
+     * @throws \Exception
      */
     public static function findPublishedByPkAndPid($intId, $intPid)
     {
-        $arrColumn = array('id=?', 'pid=?', 'published=?');
-        $arrValues = array($intId, $intPid, '1');
+        $arrColumn = ['id=?', 'pid=?', 'published=?'];
+        $arrValues = [$intId, $intPid, '1'];
 
         $objDb = self::findOneBy($arrColumn, $arrValues);
         if ($objDb !== null)
@@ -107,7 +112,7 @@ class ResourceBookingResourceModel extends \Model
 
     /**
      * @param $arrIds
-     * @return mixed
+     * @return Model\Collection|null
      */
     public static function findMultipleAndPublishedByIds($arrIds)
     {
@@ -132,6 +137,22 @@ class ResourceBookingResourceModel extends \Model
         }
 
         return static::findMultipleByIds($arrIdsNew);
+    }
+
+    /**
+     * @param array $arrPids
+     * @return Model\Collection|null
+     */
+    public static function findMultipleAndPublishedByPids(array $arrPids)
+    {
+        if (empty($arrPids))
+        {
+            return null;
+        }
+
+        $objDb = Database::getInstance()->prepare('SELECT id FROM tl_resource_booking_resource WHERE pid IN(' . implode(',', $arrPids) . ') AND published=?')->execute('1');
+        $arrIds = $objDb->fetchEach('id');
+        return static::findMultipleByIds($arrIds);
     }
 
 }

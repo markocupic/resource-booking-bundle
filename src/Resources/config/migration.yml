@@ -1,0 +1,9 @@
+# migration.yml
+services:
+  # Migration class: Add booking uuid
+  Markocupic\ResourceBookingBundle\Migration\AddBookingUuid\AddBookingUuid:
+    arguments:
+    - '@database_connection'
+    tags:
+    - { name: contao.migration, priority: 0 }
+    public: true

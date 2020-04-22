@@ -1,8 +1,8 @@
 /**
  * Resource Booking Module for Contao CMS
- * Copyright (c) 2008-2019 Marko Cupic
+ * Copyright (c) 2008-2020 Marko Cupic
  * @package resource-booking-bundle
- * @author Marko Cupic m.cupic@gmx.ch, 2019
+ * @author Marko Cupic m.cupic@gmx.ch, 2020
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 "use strict";
@@ -12,25 +12,38 @@ class resourceBookingApp {
         new Vue({
             el: vueElement,
             data: {
+
+                // Module options
                 opt: [],
+                // inicates if application is initialized, switches to true, when fetchData request was fired first time
                 isReady: false,
+                // Contains data about available resource types, resources and weeks (week selector)
                 filterBoard: null,
+
                 userLoggedOut: false,
                 isOnline: false,
+                userIsLoggedIn: false,
                 loggedInUser: [],
                 requestToken: '',
                 weekdays: [],
                 timeSlots: [],
+                // The cell data of a each row in the booking table
                 rows: [],
-                activeResourceTypeId: '',
-                activeResourceId: '',
-                activeWeekTstamp: 0,
+                // Contains the id
+                activeResourceTypeId: 'undefined',
+                // Contains the data in an array: id, title, etc.
                 activeResourceType: [],
+                // Contains the id
+                activeResourceId: 'undefined',
+                // Contains the data in an array: id, title, etc.
                 activeResource: [],
+                // Monday current week 00:00 UTC
+                activeWeekTstamp: 0,
+                // Contains data about the active week: tstampStart, tstampEnd, dateStart, dateEnd, weekNumber, year
                 activeWeek: [],
                 bookingRepeatsSelection: [],
+                bookingModal: [],
                 bookingFormValidation: [],
-                bookingModal: {},
                 intervals: [],
                 messages: null,
             },
@@ -38,15 +51,15 @@ class resourceBookingApp {
             created: function created() {
                 let self = this;
 
-                // Detect unsupported browders
-                var ua = window.navigator.userAgent;
-                var msie = ua.indexOf('MSIE ');
+                // Detect unsupported browsers
+                let ua = window.navigator.userAgent;
+                let msie = ua.indexOf('MSIE ');
                 if (msie > 0) {
-                   alert('This extension is not compatible with your browser. Please use a current browser (like Opera, Firefox, Safari or Google Chrome), that is not out of date.')
+                    alert('This extension is not compatible with your browser. Please use a current browser (like Opera, Firefox, Safari or Google Chrome), that is not out of date.')
                 }
 
                 // Post requests require a request token
-                params.requestToken = params.requestToken;
+                self.requestToken = params.requestToken;
 
                 // Fetch data from server each 30s
                 self.fetchDataRequest();
@@ -77,8 +90,8 @@ class resourceBookingApp {
                             $(self.$el).find('.resource-booking-modal').first().modal('hide');
                             window.setTimeout(function () {
                                 $(self.$el).find('.auto-logout-modal').first().on('hidden.bs.modal', function () {
-                                    if (self.opt.autologout) {
-                                        location.href = self.opt.autologoutRedirect;
+                                    if (self.opt.resourceBooking_autologout) {
+                                        location.href = self.opt.resourceBooking_autologoutRedirect;
                                     } else {
                                         location.href = '';
                                     }
@@ -89,13 +102,15 @@ class resourceBookingApp {
                     }
                 },
                 activeResourceTypeId: function activeResourceTypeId(newObj, oldObj) {
-                    this.sendApplyFilterRequest();
+                    this.applyFilterRequest();
                 },
                 activeResourceId: function activeResourceId(newObj, oldObj) {
-                    this.sendApplyFilterRequest();
+                    this.applyFilterRequest();
                 },
                 activeWeekTstamp: function activeWeekTstamp(newObj, oldObj) {
-                    this.sendApplyFilterRequest();
+                    if (this.activeResourceTypeId != 'undefined' && this.activeResourceId != 'undefined') {
+                        this.applyFilterRequest();
+                    }
                 }
             },
 
@@ -108,17 +123,16 @@ class resourceBookingApp {
 
                     let data = new FormData();
                     data.append('REQUEST_TOKEN', self.requestToken);
-                    data.append('action', 'fetchDataRequest');
 
                     // Fetch
-                    fetch(window.location.href,
-                        {
-                            method: "POST",
-                            body: data,
-                            headers: {
-                                'x-requested-with': 'XMLHttpRequest'
-                            },
-                        })
+                    let action = 'fetchDataRequest';
+                    fetch('_resource_booking/ajax/' + action, {
+                        method: "POST",
+                        body: data,
+                        headers: {
+                            'x-requested-with': 'XMLHttpRequest'
+                        },
+                    })
                         .then(function (res) {
                             return res.json();
                         })
@@ -127,6 +141,7 @@ class resourceBookingApp {
                                 for (let key in response['data']) {
                                     self[key] = response['data'][key];
                                 }
+
                                 self.isReady = true;
                             }
 
@@ -139,15 +154,14 @@ class resourceBookingApp {
                 /**
                  * Send booking request
                  */
-                sendBookingRequest: function sendBookingRequest() {
+                bookingRequest: function bookingRequest() {
 
                     let self = this;
 
                     let data = new FormData();
-                    data.append('action', 'sendBookingRequest');
                     data.append('REQUEST_TOKEN', self.requestToken);
                     data.append('resourceId', self.bookingModal.activeTimeSlot.resourceId);
-                    data.append('description',  $(self.$el).find('.resource-booking-modal [name="bookingDescription"]').first().val());
+                    data.append('description', $(self.$el).find('.resource-booking-modal [name="bookingDescription"]').first().val());
                     data.append('bookingRepeatStopWeekTstamp', $(self.$el).find('.booking-repeat-stop-week-tstamp').first().val());
 
                     let i;
@@ -155,7 +169,8 @@ class resourceBookingApp {
                         data.append('bookingDateSelection[]', self.bookingModal.selectedTimeSlots[i]);
                     }
 
-                    fetch(window.location.href,
+                    let action = 'bookingRequest';
+                    fetch('_resource_booking/ajax/' + action,
                         {
                             method: "POST",
                             body: data,
@@ -168,12 +183,12 @@ class resourceBookingApp {
                         })
                         .then(function (response) {
                             if (response.status === 'success') {
-                                self.bookingModal.alertSuccess = response.alertSuccess;
+                                self.bookingModal.message.success = response.message.success;
                                 window.setTimeout(function () {
                                     $(self.$el).find('.resource-booking-modal').first().modal('hide');
                                 }, 2500);
                             } else {
-                                self.bookingModal.alertError = response.alertError;
+                                self.bookingModal.message.error = response.message.error;
                             }
                             self.isOnline = true;
                             // Always
@@ -191,11 +206,10 @@ class resourceBookingApp {
                 /**
                  * Send resource availability request
                  */
-                sendBookingFormValidationRequest: function sendBookingFormValidationRequest() {
+                bookingFormValidationRequest: function bookingFormValidationRequest() {
                     let self = this;
 
                     let data = new FormData();
-                    data.append('action', 'sendBookingFormValidationRequest');
                     data.append('REQUEST_TOKEN', self.requestToken);
                     data.append('resourceId', self.bookingModal.activeTimeSlot.resourceId);
                     data.append('bookingRepeatStopWeekTstamp', $(self.$el).find('.booking-repeat-stop-week-tstamp').first().val());
@@ -204,8 +218,8 @@ class resourceBookingApp {
                     for (i = 0; i < self.bookingModal.selectedTimeSlots.length; i++) {
                         data.append('bookingDateSelection[]', self.bookingModal.selectedTimeSlots[i]);
                     }
-
-                    fetch(window.location.href,
+                    let action = 'bookingFormValidationRequest';
+                    fetch('_resource_booking/ajax/' + action,
                         {
                             method: "POST",
                             body: data,
@@ -232,33 +246,32 @@ class resourceBookingApp {
                 /**
                  * Send cancel booking request
                  */
-                sendCancelBookingRequest: function sendCancelBookingRequest() {
+                cancelBookingRequest: function cancelBookingRequest() {
                     let self = this;
 
                     let data = new FormData();
-                    data.append('action', 'sendCancelBookingRequest');
                     data.append('REQUEST_TOKEN', self.requestToken);
                     data.append('bookingId', self.bookingModal.activeTimeSlot.bookingId);
 
-                    fetch(window.location.href,
-                        {
-                            method: "POST",
-                            body: data,
-                            headers: {
-                                'x-requested-with': 'XMLHttpRequest'
-                            },
-                        })
+                    let action = 'cancelBookingRequest';
+                    fetch('_resource_booking/ajax/' + action, {
+                        method: "POST",
+                        body: data,
+                        headers: {
+                            'x-requested-with': 'XMLHttpRequest'
+                        },
+                    })
                         .then(function (res) {
                             return res.json();
                         })
                         .then(function (response) {
                             if (response.status === 'success') {
-                                self.bookingModal.alertSuccess = response.alertSuccess;
+                                self.bookingModal.message.success = response.message.success;
                                 window.setTimeout(function () {
                                     $(self.$el).find('.resource-booking-modal').first().modal('hide');
                                 }, 2500);
                             } else {
-                                self.bookingModal.alertError = response.alertError;
+                                self.bookingModal.message.error = response.message.error;
                             }
                             // Always
                             self.bookingModal.showConfirmationMsg = true;
@@ -280,10 +293,8 @@ class resourceBookingApp {
                     let self = this;
 
                     let data = new FormData();
-                    data.append('action', 'sendLogoutRequest');
-                    data.append('REQUEST_TOKEN', self.requestToken);
 
-                    fetch(window.location.href,
+                    fetch('_resource_booking/ajax/logout',
                         {
                             method: "POST",
                             body: data,
@@ -309,24 +320,26 @@ class resourceBookingApp {
                 /**
                  * Apply the filter changes
                  */
-                sendApplyFilterRequest: function sendApplyFilterRequest() {
+                applyFilterRequest: function applyFilterRequest() {
 
                     let self = this;
+
+                    self.toggleBackdrop(true);
+
                     let data = new FormData();
-                    data.append('action', 'sendApplyFilterRequest');
                     data.append('REQUEST_TOKEN', self.requestToken);
                     data.append('resType', self.activeResourceTypeId);
                     data.append('res', self.activeResourceId);
                     data.append('date', self.activeWeekTstamp);
 
-                    fetch(window.location.href,
-                        {
-                            method: "POST",
-                            body: data,
-                            headers: {
-                                'x-requested-with': 'XMLHttpRequest'
-                            },
-                        })
+                    let action = 'applyFilterRequest';
+                    fetch('_resource_booking/ajax/' + action, {
+                        method: "POST",
+                        body: data,
+                        headers: {
+                            'x-requested-with': 'XMLHttpRequest'
+                        },
+                    })
                         .then(function (res) {
                             return res.json();
                         })
@@ -337,9 +350,11 @@ class resourceBookingApp {
                                 }
                             }
                             self.isOnline = true;
+                            self.toggleBackdrop(false);
                         })
                         .catch(function (response) {
                             self.isOnline = false;
+                            self.toggleBackdrop(false);
                         });
                 },
 
@@ -348,53 +363,13 @@ class resourceBookingApp {
                  * @param tstamp
                  * @param event
                  */
-                sendJumpWeekRequest: function sendJumpWeekRequest(tstamp, event) {
+                jumpWeekRequest: function jumpWeekRequest(tstamp, event) {
 
                     let self = this;
                     event.preventDefault();
-                    $('.modal-backdrop').remove();
 
-                    let backdrop = '<div class="modal-backdrop show"></div>';
-                    $("body").append(backdrop);
-
-                    let data = new FormData();
-                    data.append('action', 'sendJumpWeekRequest');
-                    data.append('REQUEST_TOKEN', self.requestToken);
-                    data.append('resType', self.activeResourceTypeId);
-                    data.append('res', self.activeResourceId);
-                    data.append('date', tstamp);
-
-
-                    fetch(window.location.href,
-                        {
-                            method: "POST",
-                            body: data,
-                            headers: {
-                                'x-requested-with': 'XMLHttpRequest'
-                            },
-                        })
-                        .then(function (res) {
-                            return res.json();
-                        })
-                        .then(function (response) {
-                            if (response.status === 'success') {
-                                for (let key in response.data) {
-                                    self[key] = response.data[key];
-                                }
-                            }
-                            self.isOnline = true;
-                            // Always
-                            window.setTimeout(function () {
-                                $('.modal-backdrop').remove();
-                            }, 200);
-                        })
-                        .catch(function (response) {
-                            self.isOnline = false;
-                            // Always
-                            window.setTimeout(function () {
-                                $('.modal-backdrop').remove();
-                            }, 200);
-                        });
+                    // Vue watcher will trigger self.applyFilterRequest()
+                    self.activeWeekTstamp = tstamp;
                 },
 
                 /**
@@ -402,12 +377,13 @@ class resourceBookingApp {
                  */
                 initializeIdleDetector: function initializeIdleDetector() {
                     let self = this;
-                    if (self.opt.autologout && parseInt(self.opt.autologoutDelay) > 0) {
+                    if (self.opt.resourceBooking_autologout && parseInt(self.opt.resourceBooking_autologoutDelay) > 0) {
+
                         $(document).idle({
                             onIdle: function onIdle() {
                                 self.sendLogoutRequest();
                             },
-                            idle: parseInt(self.opt.autologoutDelay) * 1000
+                            idle: parseInt(self.opt.resourceBooking_autologoutDelay) * 1000
                         });
                     }
                 },
@@ -424,15 +400,17 @@ class resourceBookingApp {
                     self.bookingModal.action = action;
                     self.bookingModal.showConfirmationMsg = false;
                     self.bookingModal.activeTimeSlot = objActiveTimeSlot;
-                    self.bookingModal.alertSuccess = '';
-                    self.bookingModal.alertError = '';
+                    self.bookingModal.message = {
+                        success: null,
+                        error: null,
+                    };
                     self.bookingModal.selectedTimeSlots.push(objActiveTimeSlot.bookingCheckboxValue);
                     self.bookingFormValidation = [];
 
                     // Hide booking preview
                     $(self.$el).find('.booking-preview').first().collapse('hide');
                     window.setTimeout(function () {
-                        self.sendBookingFormValidationRequest();
+                        self.bookingFormValidationRequest();
                     }, 500);
 
                     $(self.$el).find('.resource-booking-modal').first().on('show.bs.modal', function () {
@@ -441,11 +419,27 @@ class resourceBookingApp {
                     });
 
                     $(self.$el).find('.resource-booking-modal').first().modal('show');
+                },
+
+                /**
+                 * Add or remove the backdrop
+                 * @param blnAdd
+                 */
+                toggleBackdrop: function toggleBackdrop(blnAdd = true) {
+                    if (blnAdd) {
+                        $('.modal-backdrop').remove();
+                        let backdrop = '<div class="modal-backdrop show"></div>';
+                        $("body").append(backdrop);
+                    } else {
+                        window.setTimeout(function () {
+                            $('.modal-backdrop').remove();
+                        }, 200);
+                    }
                 }
             }
         });
     }
-};
+}
 
 
 

@@ -2,19 +2,21 @@
 
 /**
  * Resource Booking Module for Contao CMS
- * Copyright (c) 2008-2019 Marko Cupic
+ * Copyright (c) 2008-2020 Marko Cupic
  * @package resource-booking-bundle
- * @author Marko Cupic m.cupic@gmx.ch, 2019
+ * @author Marko Cupic m.cupic@gmx.ch, 2020
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
-namespace Contao;
+namespace Markocupic\ResourceBookingBundle\Model;
+
+use Contao\Model;
 
 /**
  * Class ResourceBookingResourceTypeModel
- * @package Contao
+ * @package Markocupic\ResourceBookingBundle\Model
  */
-class ResourceBookingResourceTypeModel extends \Model
+class ResourceBookingResourceTypeModel extends Model
 {
 
     /**
@@ -25,19 +27,19 @@ class ResourceBookingResourceTypeModel extends \Model
 
     /**
      * @param $intId
-     * @return mixed
+     * @return ResourceBookingResourceTypeModel
      */
     public static function findPublishedByPk($intId)
     {
-        $arrColumn = array('id=?', 'published=?');
-        $arrValues = array($intId, '1');
+        $arrColumn = ['id=?', 'published=?'];
+        $arrValues = [$intId, '1'];
 
         return self::findOneBy($arrColumn, $arrValues);
     }
 
     /**
      * @param $arrIds
-     * @return mixed
+     * @return Model\Collection|null
      */
     public static function findMultipleAndPublishedByIds($arrIds)
     {
