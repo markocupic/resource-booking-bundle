@@ -51,6 +51,8 @@ class resourceBookingApp {
                 bookingFormValidation: [],
                 intervals: [],
                 messages: null,
+                // Indicates if user is idle
+                isIdle: false,
             },
 
             created: function created() {
@@ -69,8 +71,15 @@ class resourceBookingApp {
                 // Fetch data from server each 30s
                 self.fetchDataRequest();
                 self.intervals.fetchDataRequest = window.setInterval(function () {
-                    self.fetchDataRequest();
-                }, 30000);
+                    if(!self.isIdle){
+                        self.fetchDataRequest();
+                    }
+                }, 15000);
+
+                // Initialize idle detector
+                window.setTimeout(function () {
+                    self.initializeIdleDetector();
+                }, 10000);
             },
 
             // Watchers
@@ -385,6 +394,24 @@ class resourceBookingApp {
                     } else {
                         this.isReady = true;
                     }
+                },
+
+                /**
+                 * Initialize idle detector
+                 */
+                initializeIdleDetector: function initializeIdleDetector() {
+                    let self = this;
+                    $(document).idle({
+                        onIdle: function onIdle() {
+                            self.isIdle = true;
+                        },
+                        onActive: function () {
+                            self.isIdle = false;
+                            self.fetchDataRequest();
+                        },
+                        // 5min = 300s = 300000 ms
+                        idle: 300000,
+                    });
                 }
 
             }
