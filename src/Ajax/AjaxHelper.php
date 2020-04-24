@@ -281,26 +281,27 @@ class AjaxHelper
                     $cells = [];
                     $objRow = new \stdClass();
 
-                    $cssID = sprintf('timeSlotModId_%s_%s', $this->moduleModel->id, $objTimeslots->id);
-                    $cssClass = 'time-slot-' . $objTimeslots->id;
+                    $cssRowId = sprintf('timeSlotModId_%s_%s', $this->moduleModel->id, $objTimeslots->id);
+                    $cssRowClass = 'time-slot-' . $objTimeslots->id;
 
                     // Get the CSS ID
-                    $arrCssID = StringUtil::deserialize($objTimeslots->cssID, true);
+                    $arrCssCellID = StringUtil::deserialize($objTimeslots->cssID, true);
 
                     // Override the CSS ID
-                    if (!empty($arrCssID[0]))
+                    if (!empty($arrCssCellID[0]))
                     {
-                        $cssID = $arrCssID[0];
+                        $cssRowId = $arrCssCellID[0];
                     }
 
-                    // Merge the CSS classes
-                    if (!empty($arrCssID[1]))
-                    {
-                        $cssClass = trim($cssClass . ' ' . $arrCssID[1]);
-                    }
+                    $objRow->cssRowId = $cssRowId;
+                    $objRow->cssRowClass = $cssRowClass;
 
-                    $objRow->cssRowId = $cssID;
-                    $objRow->cssRowClass = $cssClass;
+                    // Add CSS class to cell
+                    $cssCellClass = null;
+                    if (!empty($arrCssCellID[1]))
+                    {
+                        $cssCellClass = $arrCssCellID[1];
+                    }
 
                     for ($colCount = 0; $colCount < 7; $colCount++)
                     {
@@ -325,6 +326,7 @@ class AjaxHelper
                         $objTs->isEditable = $objTs->isBooked ? false : true;
                         $objTs->timeSlotId = $objTimeslots->id;
                         $objTs->resourceId = $this->objSelectedResource->id;
+                        $objTs->cssClass = $cssCellClass;
                         $objTs->isEditable = true;
                         // slotId-startTime-endTime-mondayTimestampSelectedWeek
                         $objTs->bookingCheckboxValue = sprintf('%s-%s-%s-%s', $objTimeslots->id, $startTimestamp, $endTimestamp, $this->sessionBag->get('activeWeekTstamp'));
@@ -382,9 +384,19 @@ class AjaxHelper
         {
             while ($objTimeslots->next())
             {
+                // Get the CSS ID
+                $arrCssCellID = StringUtil::deserialize($objTimeslots->cssID, true);
+
+                // Override the CSS ID
+                $cssCellClass = null;
+                if (!empty($arrCssCellID[1]))
+                {
+                    $cssCellClass = $arrCssCellID[1];
+                }
                 $startTimestamp = (int) $objTimeslots->startTime;
                 $endTimestamp = (int) $objTimeslots->endTime;
                 $objTs = new \stdClass();
+                $objTs->cssClass = $cssCellClass;
                 $objTs->startTimeString = UtcTimeHelper::parse('H:i', $startTimestamp);
                 $objTs->startTimestamp = (int) $startTimestamp;
                 $objTs->endTimeString = UtcTimeHelper::parse('H:i', $endTimestamp);

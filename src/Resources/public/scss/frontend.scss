@@ -68,7 +68,6 @@ $iconBookingColor: #fff;
       min-width: 100px;
       max-width: 100px;
       word-break: break-all;
-
     }
     td.time-slot-cell[data-is-holder="true"] {
       background-color: $loggedInUserIsHolderBg;
@@ -116,20 +115,6 @@ $iconBookingColor: #fff;
   }
 }
 
-// Customizing
-// Etwas Abstand nach dem Mittag
-tr.time-slot-6 td {
-  border-top: 20px solid #fff !important;
-}
-
-// Etwas Abstand nach de Pausen
-tr.time-slot-4 td, tr.time-slot-8 td {
-  border-top: 8px solid #fff !important;
-}
-
-tr.time-slot-6 td {
-  border-top: 20px solid #fff !important;
-}
 
 
 

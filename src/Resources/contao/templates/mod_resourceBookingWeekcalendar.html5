@@ -5,7 +5,7 @@
 <?php $GLOBALS['TL_JAVASCRIPT'][] = 'assets/contao-component-vue-js/vue/dist/vue.min.js|static'; ?>
 <?php $GLOBALS['TL_CSS'][] = \Markocupic\ResourceBookingBundle\Config\Config::MOD_RESOURCE_BOOKING_ASSET_PATH . '/css/frontend.css|static'; ?>
 <?php $GLOBALS['TL_JAVASCRIPT'][] = \Markocupic\ResourceBookingBundle\Config\Config::MOD_RESOURCE_BOOKING_ASSET_PATH . '/jquery.idle/jquery.idle.min.min.js'; ?>
-<?php $GLOBALS['TL_JAVASCRIPT'][] = \Markocupic\ResourceBookingBundle\Config\Config::MOD_RESOURCE_BOOKING_ASSET_PATH . '/resource-booking-app-vue.min.js'; ?>
+<?php $GLOBALS['TL_JAVASCRIPT'][] = \Markocupic\ResourceBookingBundle\Config\Config::MOD_RESOURCE_BOOKING_ASSET_PATH . '/resource-booking-app-vue.js'; ?>
 
 <?php $this->extend('block_unsearchable'); ?>
 
@@ -88,8 +88,8 @@
 
                 <tbody>
                     <tr v-for="(row, rowIndex) in rows" v-bind:data-row-index="rowIndex" v-bind:id="row.rowData.cssRowId" v-bind:class="row.rowData.cssRowClass">
-                        <td>{{ timeSlots[rowIndex].timeSpanString }}</td>
-                        <td class="time-slot-cell" v-for="(eventBox, colIndex) in row.cellData" v-bind:data-day-index="eventBox.index" v-bind:data-is-holder="eventBox.isHolder ? 'true' : 'false'" v-bind:data-isBookable="!eventBox.isBooked && eventBox.isEditable" v-bind:data-isbooked="eventBox.isBooked">
+                        <td class="slot-time-indicator" v-bind:class="timeSlots[rowIndex].cssClass ? timeSlots[rowIndex].cssClass : ''">{{ timeSlots[rowIndex].timeSpanString }}</td>
+                        <td v-for="(eventBox, colIndex) in row.cellData" class="time-slot-cell" v-bind:class="eventBox.cssClass ? eventBox.cssClass : ''"  v-bind:data-day-index="eventBox.index" v-bind:data-is-holder="eventBox.isHolder ? 'true' : 'false'" v-bind:data-isBookable="!eventBox.isBooked && eventBox.isEditable" v-bind:data-isbooked="eventBox.isBooked">
                             <div v-if="eventBox.isBooked">
                                 <span class="holder-box">{{ eventBox.bookedByFullname }}</span>{{br}}<span class="description-box">{{ eventBox.bookingDescription }}</span>
                             </div>

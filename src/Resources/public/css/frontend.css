@@ -87,14 +87,3 @@
     background-color: #149efb;
 }
 
-tr.time-slot-6 td {
-    border-top: 20px solid #fff !important;
-}
-
-tr.time-slot-4 td, tr.time-slot-8 td {
-    border-top: 8px solid #fff !important;
-}
-
-tr.time-slot-6 td {
-    border-top: 20px solid #fff !important;
-}
