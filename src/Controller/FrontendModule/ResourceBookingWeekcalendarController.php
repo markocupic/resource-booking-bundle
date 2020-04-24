@@ -106,8 +106,7 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
             }
 
             // Initialize application
-            $isAjax = $environmentAdapter->get('isAjaxRequest');
-            $this->appInitializer->initialize((bool) $isAjax, (int) $model->id, (int) $page->id);
+            $this->appInitializer->initialize((int) $model->id, (int) $page->id);
 
             if ($environmentAdapter->get('isAjaxRequest'))
             {

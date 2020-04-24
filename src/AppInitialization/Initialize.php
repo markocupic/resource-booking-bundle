@@ -72,12 +72,11 @@ class Initialize
     }
 
     /**
-     * @param bool $isAjaxRequest
-     * @param int|null $moduleModelId
-     * @param int|null $pageModelId
+     * @param int $moduleModelId
+     * @param int $pageModelId
      * @throws \Exception
      */
-    public function initialize(bool $isAjaxRequest, ?int $moduleModelId, ?int $pageModelId)
+    public function initialize(int $moduleModelId, int $pageModelId)
     {
         /** @var ResourceBookingResourceTypeModel $environmentAdapter */
         $resourceBookingResourceTypeModelAdapter = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class);
@@ -110,11 +109,9 @@ class Initialize
 
         if (null !== ($strToken = $this->csrfTokenManager->getValidCsrfToken()))
         {
-            if (!$isAjaxRequest)
-            {
-                //Add session id to the session bag
-                $this->sessionBag->set('csrfToken', sha1($strToken));
-            }
+            //Add session id to the session bag
+            $this->sessionBag->set('csrfToken', sha1($strToken));
+
             $blnForbidden = false;
         }
 
@@ -147,26 +144,24 @@ class Initialize
         $this->pageModel = $objPageModel;
 
         // Set language
-        if (!$isAjaxRequest)
+
+        if (!empty($objPageModel->language))
         {
-            if (!empty($objPageModel->language))
-            {
-                $language = $objPageModel->language;
-            }
-            elseif (!empty($objPageModel->rootLanguage))
-            {
-                $language = $objPageModel->rootLanguage;
-            }
-            elseif (!empty($objPageModel->rootFallbackLanguage))
-            {
-                $language = $objPageModel->rootFallbackLanguage;
-            }
-            else
-            {
-                $language = 'en';
-            }
-            $this->sessionBag->set('language', $language);
+            $language = $objPageModel->language;
         }
+        elseif (!empty($objPageModel->rootLanguage))
+        {
+            $language = $objPageModel->rootLanguage;
+        }
+        elseif (!empty($objPageModel->rootFallbackLanguage))
+        {
+            $language = $objPageModel->rootFallbackLanguage;
+        }
+        else
+        {
+            $language = 'en';
+        }
+        $this->sessionBag->set('language', $language);
 
         // Set resType by url param
         $blnRedirect = false;
