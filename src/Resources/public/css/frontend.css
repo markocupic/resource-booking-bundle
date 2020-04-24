@@ -9,6 +9,7 @@
 }
 .mod_resourceBookingWeekcalendar .resource-booking-form .week-select option.current-week {
     font-weight: bold;
+    color: #000000;
 }
 .mod_resourceBookingWeekcalendar .resource-booking-form .week-select option.future-week {
     /** **/

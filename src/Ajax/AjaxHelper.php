@@ -359,8 +359,8 @@ class AjaxHelper
                             }
                         }
 
-                        // If week lies in the past, then do not allow editing
-                        if ($objTs->mondayTimestampSelectedWeek < strtotime('monday this week'))
+                        // Do not allow editing, if time slot lies in the past
+                        if ($objTs->startTimestamp < strtotime('today'))
                         {
                             $objTs->isEditable = false;
                         }
@@ -372,6 +372,7 @@ class AjaxHelper
                 }
             }
         }
+
         $arrData['rows'] = $rows;
 
         // Get time slots
@@ -583,7 +584,8 @@ class AjaxHelper
             // add empty
             if ($dateHelperAdapter->getMondayOfCurrentWeek() == $currentTstamp)
             {
-                if($injectEmptyLine ){
+                if ($injectEmptyLine)
+                {
                     $arrWeeks[] = [
                         'tstamp'     => '',
                         'date'       => '',
@@ -606,16 +608,16 @@ class AjaxHelper
             $calWeek = $dateAdapter->parse('W', $tstampMonday);
             $yearMonday = $dateAdapter->parse('Y', $tstampMonday);
             $arrWeeks[] = [
-                'cssClass' => $cssClass,
-                'tstamp'        => (int) $currentTstamp,
-                'tstampMonday'  => (int) $tstampMonday,
-                'tstampSunday'  => (int) $tstampSunday,
-                'stringMonday'  => $dateMonday,
-                'stringSunday'  => $dateSunday,
-                'daySpan'       => $dateMonday . ' - ' . $dateSunday,
-                'calWeek'       => (int) $calWeek,
-                'year'          => $yearMonday,
-                'optionText'    => sprintf($GLOBALS['TL_LANG']['MSC']['weekSelectOptionText'], $calWeek, $yearMonday, $dateMonday, $dateSunday)
+                'cssClass'     => $cssClass,
+                'tstamp'       => (int) $currentTstamp,
+                'tstampMonday' => (int) $tstampMonday,
+                'tstampSunday' => (int) $tstampSunday,
+                'stringMonday' => $dateMonday,
+                'stringSunday' => $dateSunday,
+                'daySpan'      => $dateMonday . ' - ' . $dateSunday,
+                'calWeek'      => (int) $calWeek,
+                'year'         => $yearMonday,
+                'optionText'   => sprintf($GLOBALS['TL_LANG']['MSC']['weekSelectOptionText'], $calWeek, $yearMonday, $dateMonday, $dateSunday)
             ];
 
             $currentTstamp = $dateHelperAdapter->addDaysToTime(7, $currentTstamp);
