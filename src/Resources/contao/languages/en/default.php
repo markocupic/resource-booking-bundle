@@ -45,8 +45,6 @@ $GLOBALS['TL_LANG']['MSG']['successfullyCanceledBooking'] = 'Booking has been su
 // Frontend template
 $GLOBALS['TL_LANG']['RBB']['1WeekBack'] = '1 Woche zurück';
 $GLOBALS['TL_LANG']['RBB']['1WeekAhead'] = '1 Woche vor';
-$GLOBALS['TL_LANG']['RBB']['autoLogout'] = 'Automatischer Logout';
-$GLOBALS['TL_LANG']['RBB']['logoutDueToSecurityReasons'] = 'Sie wurden aus Sicherheitsgründen abgemeldet.';
 $GLOBALS['TL_LANG']['RBB']['close'] = 'Schliessen';
 $GLOBALS['TL_LANG']['RBB']['cancelBooking'] = 'Soll Ihre Buchung storniert werden?';
 $GLOBALS['TL_LANG']['RBB']['bookResourceRepetitions'] = 'Ressource buchen bis (Wiederholungen)';
@@ -72,6 +70,8 @@ $GLOBALS['TL_LANG']['RBB']['loggedInAs'] = 'Angemeldet als';
 $GLOBALS['TL_LANG']['RBB']['week'] = 'Woche';
 $GLOBALS['TL_LANG']['RBB']['fullname'] = 'Name';
 $GLOBALS['TL_LANG']['RBB']['selectResourceType'] = 'Kategorie auswählen';
+$GLOBALS['TL_LANG']['RBB']['generalError'] = 'An error has occured. Please check connectivity.';
+$GLOBALS['TL_LANG']['RBB']['error401'] = 'An error has occured. You are not authorized. Please try to log in.';
 
 
 

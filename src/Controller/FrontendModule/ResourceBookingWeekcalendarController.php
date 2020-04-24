@@ -14,15 +14,20 @@ namespace Markocupic\ResourceBookingBundle\Controller\FrontendModule;
 
 use Contao\Controller;
 use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController;
+use Contao\CoreBundle\Csrf\MemoryTokenStorage;
 use Contao\CoreBundle\Framework\ContaoFramework;
+use Contao\Environment;
 use Contao\ModuleModel;
 use Contao\PageModel;
+use Contao\System;
 use Contao\Template;
-use Contao\CoreBundle\Csrf\MemoryTokenStorage;
+use Markocupic\ResourceBookingBundle\Ajax\AjaxHandler;
+use Markocupic\ResourceBookingBundle\Ajax\AjaxResponse;
 use Markocupic\ResourceBookingBundle\AppInitialization\Initialize;
+use Markocupic\ResourceBookingBundle\Csrf\CsrfTokenManager;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Markocupic\ResourceBookingBundle\Csrf\CsrfTokenManager;
 use Contao\CoreBundle\ServiceAnnotation\FrontendModule;
 
 /**
@@ -37,25 +42,30 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
     /** @var Initialize */
     private $appInitializer;
 
-   /** @var MemoryTokenStorage  */
+    /** @var MemoryTokenStorage */
     private $tokenStorage;
 
     /** @var CsrfTokenManager */
-    private $CsrfTokenManager;
+    private $csrfTokenManager;
+
+    /** @var AjaxHandler */
+    private $ajaxHandler;
 
     /**
      * ResourceBookingWeekcalendarController constructor.
      * @param ContaoFramework $framework
      * @param Initialize $appInitializer
      * @param MemoryTokenStorage $tokenStorage
-     * @param CsrfTokenManager $csrfCookie
+     * @param CsrfTokenManager $csrfTokenManager
+     * @param AjaxHandler $ajaxHandler
      */
-    public function __construct(ContaoFramework $framework, Initialize $appInitializer, MemoryTokenStorage $tokenStorage, CsrfTokenManager $CsrfTokenManager)
+    public function __construct(ContaoFramework $framework, Initialize $appInitializer, MemoryTokenStorage $tokenStorage, CsrfTokenManager $csrfTokenManager, AjaxHandler $ajaxHandler)
     {
         $this->framework = $framework;
         $this->appInitializer = $appInitializer;
         $this->tokenStorage = $tokenStorage;
-        $this->CsrfTokenManager = $CsrfTokenManager;
+        $this->csrfTokenManager = $csrfTokenManager;
+        $this->ajaxHandler = $ajaxHandler;
     }
 
     /**
@@ -75,11 +85,17 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
             /** @var Controller $controllerAdapter */
             $controllerAdapter = $this->framework->getAdapter(Controller::class);
 
-            $container = \Contao\System::getContainer();
+            /** @var System $systemAdapter */
+            $systemAdapter = $this->framework->getAdapter(System::class);
 
-            if (!$this->CsrfTokenManager->hasValidCsrfToken())
+            /** @var Environment $environmentAdapter */
+            $environmentAdapter = $this->framework->getAdapter(Environment::class);
+
+            $container = $systemAdapter->getContainer();
+
+            if (!$this->csrfTokenManager->hasValidCsrfToken())
             {
-                // Generate csrf token that we will use as the session bag key
+                // Generate csrf token, that we will be used as the session bag key
                 $container
                     ->get('contao.csrf.token_manager')
                     ->getToken($container->getParameter('contao.csrf_token_name'))
@@ -90,7 +106,14 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
             }
 
             // Initialize application
-            $this->appInitializer->initialize(false, (int) $model->id, (int) $page->id);
+            $isAjax = $environmentAdapter->get('isAjaxRequest');
+            $this->appInitializer->initialize((bool) $isAjax, (int) $model->id, (int) $page->id);
+
+            if ($environmentAdapter->get('isAjaxRequest'))
+            {
+                $this->getAjaxResponse($request)->send();
+                exit;
+            }
         }
 
         // Call the parent method
@@ -102,25 +125,49 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
      * @param ModuleModel $model
      * @param Request $request
      * @return null|Response
+     * @throws \Exception
      */
     protected function getResponse(Template $template, ModuleModel $model, Request $request): ?Response
     {
-
-        /**
-        $action = 'bsadd';
-        $objJson = new \Markocupic\ResourceBookingBundle\Ajax\AjaxResponse();
-        $objJson->setStatus(\Markocupic\ResourceBookingBundle\Ajax\AjaxResponse::STATUS_ERROR);
-        $objJson->setErrorMessage(sprintf('Action "%s" not found.', $action));
-        $data = [
-            'k1' => 'bla',
-            'k2' => ['a' => '323213'],
-        ];
-        $objJson->setDataFromArray($data);
-
-        die(print_r($objJson->getAll(),true));
-*/
         // Let vue.js do the rest ;-)
         return $template->getResponse();
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     * @throws \Exception
+     */
+    protected function getAjaxResponse(Request $request): JsonResponse
+    {
+        $action = $request->request->get('action', null);
+
+        /** @var System $systemAdapter */
+        $systemAdapter = $this->framework->getAdapter(System::class);
+
+        if (is_callable([AjaxHandler::class, $action]))
+        {
+            /** @var AjaxResponse $xhrResponse */
+            $xhrResponse = $this->ajaxHandler->{$action}();
+
+            // HOOK: add custom logic
+            if (isset($GLOBALS['TL_HOOKS']['resourceBookingAjaxResponse']) && \is_array($GLOBALS['TL_HOOKS']['resourceBookingAjaxResponse']))
+            {
+                foreach ($GLOBALS['TL_HOOKS']['resourceBookingAjaxResponse'] as $callback)
+                {
+                    /** @var AjaxResponse $xhrResponse */
+                    $systemAdapter->importStatic($callback[0])->{$callback[1]}($action, $xhrResponse, $this);
+                }
+            }
+            return new JsonResponse($xhrResponse->getAll(), 200);
+        }
+
+        $xhrResponse = new AjaxResponse();
+        $xhrResponse->setStatus(AjaxResponse::STATUS_ERROR);
+        $xhrResponse->setErrorMessage(sprintf('Action "%s" not found.', $action));
+
+        return new JsonResponse($xhrResponse->getAll(), 501);
+    }
+
 }
+

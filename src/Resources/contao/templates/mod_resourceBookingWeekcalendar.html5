@@ -4,8 +4,7 @@
 <?php $GLOBALS['TL_CSS'][] =  'assets/contao-component-fontawesome-free/css/all.min.css|static'; ?>
 <?php $GLOBALS['TL_JAVASCRIPT'][] = 'assets/contao-component-vue-js/vue/dist/vue.min.js|static'; ?>
 <?php $GLOBALS['TL_CSS'][] = \Markocupic\ResourceBookingBundle\Config\Config::MOD_RESOURCE_BOOKING_ASSET_PATH . '/css/frontend.css|static'; ?>
-<?php $GLOBALS['TL_JAVASCRIPT'][] = \Markocupic\ResourceBookingBundle\Config\Config::MOD_RESOURCE_BOOKING_ASSET_PATH . '/jquery.idle/jquery.idle.min.min.js'; ?>
-<?php $GLOBALS['TL_JAVASCRIPT'][] = \Markocupic\ResourceBookingBundle\Config\Config::MOD_RESOURCE_BOOKING_ASSET_PATH . '/resource-booking-app-vue.js'; ?>
+<?php $GLOBALS['TL_JAVASCRIPT'][] = \Markocupic\ResourceBookingBundle\Config\Config::MOD_RESOURCE_BOOKING_ASSET_PATH . '/resource-booking-app-vue.min.js'; ?>
 
 <?php $this->extend('block_unsearchable'); ?>
 
@@ -15,9 +14,18 @@
 
     <div class="logged-in-user-data mb-2"><strong>{{rbb_lang::loggedInAs}}:</strong> {{user::firstname}} {{user::lastname}}</div>
 
-    <div class="text-center mt-5" v-if="isReady === false">
+    <div class="text-center mt-5" v-if="isReady === false && lastResponseStatus === 200">
         <div class="spinner-border" role="status">
             <span class="sr-only">{{rbb_lang::loading}}</span>
+        </div>
+    </div>
+
+    <div class="mt-2" v-if="isReady === false && lastResponseStatus !== 200">
+        <div class="text-muted" v-if="lastResponseStatus === 401">
+            {{rbb_lang::error401}}
+        </div>
+        <div class="text-muted" v-else>
+            {{rbb_lang::generalError}}
         </div>
     </div>
 
@@ -233,26 +241,6 @@
         </div>
         <!-- End booking modal -->
 
-        <!-- logout modal -->
-        <div class="modal auto-logout-modal" tabindex="-1" role="dialog">
-            <div class="modal-dialog modal-lg" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3 class="modal-title">{{rbb_lang::autoLogout}}</h3>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <p>{{rbb_lang::logoutDueToSecurityReasons}}</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" data-dismiss="modal">{{rbb_lang::close}}</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- End logout modal -->
 
     </div>
 </div>

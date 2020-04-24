@@ -15,17 +15,22 @@ class resourceBookingApp {
 
                 // Module options
                 opt: [],
-                // inicates if application is initialized, switches to true, when fetchData request was fired first time
+                // indicates if application is initialized, switches to true, when fetchData request was fired first time
+                // and the request status is 200
                 isReady: false,
+                // Contains the last response code
+                lastResponseStatus: 200,
                 // Contains data about available resource types, resources and weeks (week selector)
                 filterBoard: null,
-
-                userLoggedOut: false,
-                isOnline: false,
+                // Indicates if the current user hass logged in as a frontend user
                 userIsLoggedIn: false,
+                // Contains the logged in user data
                 loggedInUser: [],
+                // The request token
                 requestToken: '',
+                // Contains the weekdays
                 weekdays: [],
+                // Contains the time slots (first col in the booking table)
                 timeSlots: [],
                 // The cell data of a each row in the booking table
                 rows: [],
@@ -66,40 +71,13 @@ class resourceBookingApp {
                 self.intervals.fetchDataRequest = window.setInterval(function () {
                     self.fetchDataRequest();
                 }, 30000);
-
-                // Initialize idle detector
-                window.setTimeout(function () {
-                    self.initializeIdleDetector();
-                }, 10000);
             },
 
             // Watchers
             watch: {
                 // Watcher
-                isOnline: function isOnline(val) {
-                    let self = this;
+                isReady: function isOnline(val) {
 
-                    if (val === false) {
-                        // Clear interval
-                        clearInterval(self.intervals.fetchDataRequest);
-
-                        // Logout user after 7 min (420000 ms) of idle time
-                        self.sendLogoutRequest();
-                        window.setTimeout(function () {
-                            // Close booking modal if it is still open
-                            $(self.$el).find('.resource-booking-modal').first().modal('hide');
-                            window.setTimeout(function () {
-                                $(self.$el).find('.auto-logout-modal').first().on('hidden.bs.modal', function () {
-                                    if (self.opt.resourceBooking_autologout) {
-                                        location.href = self.opt.resourceBooking_autologoutRedirect;
-                                    } else {
-                                        location.href = '';
-                                    }
-                                });
-                                $(self.$el).find('.auto-logout-modal').first().modal('show');
-                            }, 100);
-                        }, 400);
-                    }
                 },
                 activeResourceTypeId: function activeResourceTypeId(newObj, oldObj) {
                     this.applyFilterRequest();
@@ -115,18 +93,22 @@ class resourceBookingApp {
             },
 
             methods: {
+
                 /**
                  * Fetch all the data from the server
                  */
                 fetchDataRequest: function fetchDataRequest() {
+
                     let self = this;
+                    let action = 'fetchDataRequest';
 
                     let data = new FormData();
                     data.append('REQUEST_TOKEN', self.requestToken);
+                    data.append('action', action);
+
 
                     // Fetch
-                    let action = 'fetchDataRequest';
-                    fetch('_resource_booking/ajax/' + action, {
+                    fetch(window.location.href, {
                         method: "POST",
                         body: data,
                         headers: {
@@ -134,6 +116,7 @@ class resourceBookingApp {
                         },
                     })
                         .then(function (res) {
+                            self.checkResponse(res);
                             return res.json();
                         })
                         .then(function (response) {
@@ -141,14 +124,52 @@ class resourceBookingApp {
                                 for (let key in response['data']) {
                                     self[key] = response['data'][key];
                                 }
-
-                                self.isReady = true;
                             }
-
-                            self.isOnline = true;
                         }).catch(function (error) {
-                        self.isOnline = false;
+                        self.isReady = false;
                     });
+                },
+
+                /**
+                 * Apply the filter changes
+                 */
+                applyFilterRequest: function applyFilterRequest() {
+
+                    let self = this;
+                    let action = 'applyFilterRequest';
+
+                    self.toggleBackdrop(true);
+
+                    let data = new FormData();
+                    data.append('REQUEST_TOKEN', self.requestToken);
+                    data.append('action', action);
+                    data.append('resType', self.activeResourceTypeId);
+                    data.append('res', self.activeResourceId);
+                    data.append('date', self.activeWeekTstamp);
+
+                    fetch(window.location.href, {
+                        method: "POST",
+                        body: data,
+                        headers: {
+                            'x-requested-with': 'XMLHttpRequest'
+                        },
+                    })
+                        .then(function (res) {
+                            self.checkResponse(res);
+                            return res.json();
+                        })
+                        .then(function (response) {
+                            if (response.status === 'success') {
+                                for (let key in response.data) {
+                                    self[key] = response.data[key];
+                                }
+                            }
+                            self.toggleBackdrop(false);
+                        })
+                        .catch(function (response) {
+                            self.isReady = false;
+                            self.toggleBackdrop(false);
+                        });
                 },
 
                 /**
@@ -157,9 +178,11 @@ class resourceBookingApp {
                 bookingRequest: function bookingRequest() {
 
                     let self = this;
+                    let action = 'bookingRequest';
 
                     let data = new FormData();
                     data.append('REQUEST_TOKEN', self.requestToken);
+                    data.append('action', action);
                     data.append('resourceId', self.bookingModal.activeTimeSlot.resourceId);
                     data.append('description', $(self.$el).find('.resource-booking-modal [name="bookingDescription"]').first().val());
                     data.append('bookingRepeatStopWeekTstamp', $(self.$el).find('.booking-repeat-stop-week-tstamp').first().val());
@@ -169,8 +192,7 @@ class resourceBookingApp {
                         data.append('bookingDateSelection[]', self.bookingModal.selectedTimeSlots[i]);
                     }
 
-                    let action = 'bookingRequest';
-                    fetch('_resource_booking/ajax/' + action,
+                    fetch(window.location.href,
                         {
                             method: "POST",
                             body: data,
@@ -179,6 +201,7 @@ class resourceBookingApp {
                             },
                         })
                         .then(function (res) {
+                            self.checkResponse(res);
                             return res.json();
                         })
                         .then(function (response) {
@@ -190,13 +213,12 @@ class resourceBookingApp {
                             } else {
                                 self.bookingModal.message.error = response.message.error;
                             }
-                            self.isOnline = true;
                             // Always
                             self.bookingModal.showConfirmationMsg = true;
                             self.fetchDataRequest();
                         })
                         .catch(function (response) {
-                            self.isOnline = false;
+                            self.isReady = false;
                             // Always
                             self.bookingModal.showConfirmationMsg = true;
                             self.fetchDataRequest();
@@ -208,9 +230,11 @@ class resourceBookingApp {
                  */
                 bookingFormValidationRequest: function bookingFormValidationRequest() {
                     let self = this;
+                    let action = 'bookingFormValidationRequest';
 
                     let data = new FormData();
                     data.append('REQUEST_TOKEN', self.requestToken);
+                    data.append('action', action);
                     data.append('resourceId', self.bookingModal.activeTimeSlot.resourceId);
                     data.append('bookingRepeatStopWeekTstamp', $(self.$el).find('.booking-repeat-stop-week-tstamp').first().val());
 
@@ -218,8 +242,8 @@ class resourceBookingApp {
                     for (i = 0; i < self.bookingModal.selectedTimeSlots.length; i++) {
                         data.append('bookingDateSelection[]', self.bookingModal.selectedTimeSlots[i]);
                     }
-                    let action = 'bookingFormValidationRequest';
-                    fetch('_resource_booking/ajax/' + action,
+
+                    fetch(window.location.href,
                         {
                             method: "POST",
                             body: data,
@@ -228,17 +252,16 @@ class resourceBookingApp {
                             },
                         })
                         .then(function (res) {
+                            self.checkResponse(res);
                             return res.json();
                         })
                         .then(function (response) {
                             if (response.status === 'success') {
                                 self.bookingFormValidation = response.data;
-                                self.isOnline = true;
-                            } else {
-                                self.isOnline = false;
+                                self.isReady = true;
                             }
                         }).catch(function (response) {
-                        self.isOnline = false;
+                        self.isReady = false;
                     });
 
                 },
@@ -248,114 +271,43 @@ class resourceBookingApp {
                  */
                 cancelBookingRequest: function cancelBookingRequest() {
                     let self = this;
+                    let action = 'cancelBookingRequest';
 
                     let data = new FormData();
                     data.append('REQUEST_TOKEN', self.requestToken);
+                    data.append('action', action);
                     data.append('bookingId', self.bookingModal.activeTimeSlot.bookingId);
 
-                    let action = 'cancelBookingRequest';
-                    fetch('_resource_booking/ajax/' + action, {
+                    fetch(window.location.href, {
                         method: "POST",
                         body: data,
                         headers: {
                             'x-requested-with': 'XMLHttpRequest'
                         },
                     })
-                        .then(function (res) {
-                            return res.json();
-                        })
-                        .then(function (response) {
-                            if (response.status === 'success') {
-                                self.bookingModal.message.success = response.message.success;
-                                window.setTimeout(function () {
-                                    $(self.$el).find('.resource-booking-modal').first().modal('hide');
-                                }, 2500);
-                            } else {
-                                self.bookingModal.message.error = response.message.error;
-                            }
-                            // Always
-                            self.bookingModal.showConfirmationMsg = true;
-                            self.fetchDataRequest();
-                        })
-                        .catch(function (response) {
-                            self.isOnline = false;
-                            // Always
-                            self.bookingModal.showConfirmationMsg = true;
-                            self.fetchDataRequest();
-                        });
-                },
-
-                /**
-                 * Send logout request
-                 */
-                sendLogoutRequest: function sendLogoutRequest() {
-
-                    let self = this;
-
-                    let data = new FormData();
-
-                    fetch('_resource_booking/ajax/logout',
-                        {
-                            method: "POST",
-                            body: data,
-                            headers: {
-                                'x-requested-with': 'XMLHttpRequest'
-                            },
-                        })
-                        .then(function (res) {
-                            return res.json();
-                        })
-                        .then(function (response) {
-                            // Always
-                            self.isOnline = false;
-                            self.userLoggedOut = true;
-                        })
-                        .catch(function (response) {
-                            // Always
-                            self.isOnline = false;
-                            self.userLoggedOut = true;
-                        });
-                },
-
-                /**
-                 * Apply the filter changes
-                 */
-                applyFilterRequest: function applyFilterRequest() {
-
-                    let self = this;
-
-                    self.toggleBackdrop(true);
-
-                    let data = new FormData();
-                    data.append('REQUEST_TOKEN', self.requestToken);
-                    data.append('resType', self.activeResourceTypeId);
-                    data.append('res', self.activeResourceId);
-                    data.append('date', self.activeWeekTstamp);
-
-                    let action = 'applyFilterRequest';
-                    fetch('_resource_booking/ajax/' + action, {
-                        method: "POST",
-                        body: data,
-                        headers: {
-                            'x-requested-with': 'XMLHttpRequest'
-                        },
+                    .then(function (res) {
+                        self.checkResponse(res);
+                        return res.json();
                     })
-                        .then(function (res) {
-                            return res.json();
-                        })
-                        .then(function (response) {
-                            if (response.status === 'success') {
-                                for (let key in response.data) {
-                                    self[key] = response.data[key];
-                                }
-                            }
-                            self.isOnline = true;
-                            self.toggleBackdrop(false);
-                        })
-                        .catch(function (response) {
-                            self.isOnline = false;
-                            self.toggleBackdrop(false);
-                        });
+                    .then(function (response) {
+                        if (response.status === 'success') {
+                            self.bookingModal.message.success = response.message.success;
+                            window.setTimeout(function () {
+                                $(self.$el).find('.resource-booking-modal').first().modal('hide');
+                            }, 2500);
+                        } else {
+                            self.bookingModal.message.error = response.message.error;
+                        }
+                        // Always
+                        self.bookingModal.showConfirmationMsg = true;
+                        self.fetchDataRequest();
+                    })
+                    .catch(function (response) {
+                        self.isReady = false;
+                        // Always
+                        self.bookingModal.showConfirmationMsg = true;
+                        self.fetchDataRequest();
+                    });
                 },
 
                 /**
@@ -372,21 +324,6 @@ class resourceBookingApp {
                     self.activeWeekTstamp = tstamp;
                 },
 
-                /**
-                 * Initialize idle detector
-                 */
-                initializeIdleDetector: function initializeIdleDetector() {
-                    let self = this;
-                    if (self.opt.resourceBooking_autologout && parseInt(self.opt.resourceBooking_autologoutDelay) > 0) {
-
-                        $(document).idle({
-                            onIdle: function onIdle() {
-                                self.sendLogoutRequest();
-                            },
-                            idle: parseInt(self.opt.resourceBooking_autologoutDelay) * 1000
-                        });
-                    }
-                },
 
                 /**
                  * Open booking modal window
@@ -435,7 +372,21 @@ class resourceBookingApp {
                             $('.modal-backdrop').remove();
                         }, 200);
                     }
+                },
+
+                /**
+                 * Check json response
+                 * @param status
+                 */
+                checkResponse: function checkResponse(res) {
+                    this.lastResponseStatus = res.status;
+                    if (res.status != 200) {
+                        this.isReady = false;
+                    } else {
+                        this.isReady = true;
+                    }
                 }
+
             }
         });
     }

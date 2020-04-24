@@ -147,8 +147,7 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\Listener\ContaoHooks;
 
 use Markocupic\ResourceBookingBundle\Ajax\AjaxResponse;
-use Markocupic\ResourceBookingBundle\Controller\Ajax\AjaxController;
-
+use Markocupic\ResourceBookingBundle\Controller\FrontendModule\ResourceBookingWeekcalendarController;
 
 /**
  * Class ResourceBookingAjaxResponse
@@ -157,13 +156,11 @@ use Markocupic\ResourceBookingBundle\Controller\Ajax\AjaxController;
 class ResourceBookingAjaxResponse
 {
     /**
-     * Manipulate the response object
-     * ! the xhrResponse is passed by reference
      * @param string $action
      * @param AjaxResponse $xhrResponse
-     * @param AjaxController $objController
+     * @param ResourceBookingWeekcalendarController $objController
      */
-    public function onBeforeSend(string $action, AjaxResponse &$xhrResponse, AjaxController $objController): void
+    public function onBeforeSend(string $action, AjaxResponse &$xhrResponse, ResourceBookingWeekcalendarController $objController): void
     {
         if($action === 'fetchDataRequest')
         {
