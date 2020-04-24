@@ -4,6 +4,15 @@
 .mod_resourceBookingWeekcalendar .resource-booking-app.is-ready .vue-application {
     visibility: visible;
 }
+.mod_resourceBookingWeekcalendar .resource-booking-form .week-select option.past-week {
+    color: #8e8e8e;
+}
+.mod_resourceBookingWeekcalendar .resource-booking-form .week-select option.current-week {
+    font-weight: bold;
+}
+.mod_resourceBookingWeekcalendar .resource-booking-form .week-select option.future-week {
+    /** **/
+}
 .mod_resourceBookingWeekcalendar table.resource-booking-table-main *, .mod_resourceBookingWeekcalendar table.resource-booking-table-modal * {
     font-size: small;
 }

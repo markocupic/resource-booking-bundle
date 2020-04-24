@@ -27,6 +27,6 @@ $GLOBALS['TL_MODELS']['tl_resource_booking_time_slot'] = \Markocupic\ResourceBoo
 $GLOBALS['TL_MODELS']['tl_resource_booking_time_slot_type'] = \Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotTypeModel::class;
 
 // Set backWeeks and aheadWeeks
-\Contao\Config::set('rbb_intBackWeeks', -27);
+\Contao\Config::set('rbb_intBackWeeks', -10);
 \Contao\Config::set('rbb_intAheadWeeks', 51);
 

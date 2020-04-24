@@ -10,6 +10,21 @@ $iconBookingColor: #fff;
   .resource-booking-app.is-ready .vue-application {
     visibility: visible;
   }
+
+  .resource-booking-form{
+    .week-select{
+      option.past-week{
+        color: #8e8e8e;
+      }
+      option.current-week{
+        font-weight: bold;
+      }
+      option.future-week{
+        /** **/
+      }
+    }
+  }
+
   table.resource-booking-table-main, table.resource-booking-table-modal {
     * {
       font-size: small;

@@ -195,6 +195,8 @@ class Initialize
             $controllerAdapter->redirect($url);
         }
 
+
+
         // Check if access to active resource type is allowed
         if (($resTypeId = $this->sessionBag->get('resType', 0)) > 0)
         {

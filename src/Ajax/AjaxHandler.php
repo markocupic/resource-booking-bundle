@@ -122,13 +122,25 @@ class AjaxHandler
         {
             $this->sessionBag->set('resType', $intResType);
         }
+        else
+        {
+            $this->sessionBag->set('resType', 0);
+        }
 
         // Get resource from post request
         $intRes = (int) $request->request->get('res', 0);
-
+        if ($this->sessionBag->get('resType') === 0)
+        {
+            // Set resource to 0, if there is no resource type selected
+            $intRes = 0;
+        }
         if ($resourceBookingResourceModelAdapter->findByPk($intRes) !== null)
         {
             $this->sessionBag->set('res', $intRes);
+        }
+        else
+        {
+            $this->sessionBag->set('res', 0);
         }
 
         // Get active week timestamp from post request

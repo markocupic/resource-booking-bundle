@@ -158,13 +158,13 @@ class AjaxHelper
         {
             $arrData['opt']['resourceBooking_autologoutRedirect_autologout'] = '1';
         }
-        $arrData['opt'] = array_map(function($v){
-            if(!empty($v) && Validator::isBinaryUuid($v))
+        $arrData['opt'] = array_map(function ($v) {
+            if (!empty($v) && Validator::isBinaryUuid($v))
             {
                 $v = StringUtil::binToUuid($v);
             }
             return $v;
-        },$arrData['opt']);
+        }, $arrData['opt']);
 
         // Messages
         if ($this->objSelectedResourceType === null && !$messageAdapter->hasMessages())
@@ -578,15 +578,27 @@ class AjaxHelper
         $currentTstamp = $startTstamp;
         while ($currentTstamp <= $endTstamp)
         {
+            $cssClass = 'past-week';
+
             // add empty
-            if ($injectEmptyLine && $dateHelperAdapter->getMondayOfCurrentWeek() == $currentTstamp)
+            if ($dateHelperAdapter->getMondayOfCurrentWeek() == $currentTstamp)
             {
-                $arrWeeks[] = [
-                    'tstamp'     => '',
-                    'date'       => '',
-                    'optionText' => '-------------'
-                ];
+                if($injectEmptyLine ){
+                    $arrWeeks[] = [
+                        'tstamp'     => '',
+                        'date'       => '',
+                        'optionText' => '-------------'
+                    ];
+                }
+
+                $cssClass = 'current-week';
             }
+
+            if ($dateHelperAdapter->getMondayOfCurrentWeek() < $currentTstamp)
+            {
+                $cssClass = 'future-week';
+            }
+
             $tstampMonday = $currentTstamp;
             $dateMonday = $dateAdapter->parse('d.m.Y', $currentTstamp);
             $tstampSunday = strtotime($dateMonday . ' + 6 days');
@@ -594,15 +606,16 @@ class AjaxHelper
             $calWeek = $dateAdapter->parse('W', $tstampMonday);
             $yearMonday = $dateAdapter->parse('Y', $tstampMonday);
             $arrWeeks[] = [
-                'tstamp'       => (int) $currentTstamp,
-                'tstampMonday' => (int) $tstampMonday,
-                'tstampSunday' => (int) $tstampSunday,
-                'stringMonday' => $dateMonday,
-                'stringSunday' => $dateSunday,
-                'daySpan'      => $dateMonday . ' - ' . $dateSunday,
-                'calWeek'      => (int) $calWeek,
-                'year'         => $yearMonday,
-                'optionText'   => sprintf($GLOBALS['TL_LANG']['MSC']['weekSelectOptionText'], $calWeek, $yearMonday, $dateMonday, $dateSunday)
+                'cssClass' => $cssClass,
+                'tstamp'        => (int) $currentTstamp,
+                'tstampMonday'  => (int) $tstampMonday,
+                'tstampSunday'  => (int) $tstampSunday,
+                'stringMonday'  => $dateMonday,
+                'stringSunday'  => $dateSunday,
+                'daySpan'       => $dateMonday . ' - ' . $dateSunday,
+                'calWeek'       => (int) $calWeek,
+                'year'          => $yearMonday,
+                'optionText'    => sprintf($GLOBALS['TL_LANG']['MSC']['weekSelectOptionText'], $calWeek, $yearMonday, $dateMonday, $dateSunday)
             ];
 
             $currentTstamp = $dateHelperAdapter->addDaysToTime(7, $currentTstamp);

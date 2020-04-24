@@ -158,14 +158,35 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
                     $systemAdapter->importStatic($callback[0])->{$callback[1]}($action, $xhrResponse, $this);
                 }
             }
-            return new JsonResponse($xhrResponse->getAll(), 200);
+
+            return $this->createJsonResponse($xhrResponse->getAll(), 200);
         }
 
         $xhrResponse = new AjaxResponse();
         $xhrResponse->setStatus(AjaxResponse::STATUS_ERROR);
         $xhrResponse->setErrorMessage(sprintf('Action "%s" not found.', $action));
 
-        return new JsonResponse($xhrResponse->getAll(), 501);
+        return $this->createJsonResponse($xhrResponse->getAll(), 501);
+    }
+
+    /**
+     * @param array $arrData
+     * @param int $statusCode
+     * @return JsonResponse
+     */
+    protected function createJsonResponse(array $arrData, int $statusCode): JsonResponse
+    {
+        $response = new JsonResponse();
+
+        $response->setData($arrData);
+        $response->setStatusCode($statusCode);
+        $response->setPrivate();
+        $response->setMaxAge(0);
+        $response->setSharedMaxAge(0);
+        $response->headers->addCacheControlDirective('must-revalidate', true);
+        $response->headers->addCacheControlDirective('no-store', true);
+
+        return $response;
     }
 
 }

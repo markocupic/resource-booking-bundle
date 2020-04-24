@@ -71,7 +71,7 @@ class resourceBookingApp {
                 // Fetch data from server each 30s
                 self.fetchDataRequest();
                 self.intervals.fetchDataRequest = window.setInterval(function () {
-                    if(!self.isIdle){
+                    if (!self.isIdle) {
                         self.fetchDataRequest();
                     }
                 }, 15000);
@@ -95,9 +95,7 @@ class resourceBookingApp {
                     this.applyFilterRequest();
                 },
                 activeWeekTstamp: function activeWeekTstamp(newObj, oldObj) {
-                    if (this.activeResourceTypeId != 'undefined' && this.activeResourceId != 'undefined') {
-                        this.applyFilterRequest();
-                    }
+                    this.applyFilterRequest();
                 }
             },
 
@@ -294,29 +292,29 @@ class resourceBookingApp {
                             'x-requested-with': 'XMLHttpRequest'
                         },
                     })
-                    .then(function (res) {
-                        self.checkResponse(res);
-                        return res.json();
-                    })
-                    .then(function (response) {
-                        if (response.status === 'success') {
-                            self.bookingModal.message.success = response.message.success;
-                            window.setTimeout(function () {
-                                $(self.$el).find('.resource-booking-modal').first().modal('hide');
-                            }, 2500);
-                        } else {
-                            self.bookingModal.message.error = response.message.error;
-                        }
-                        // Always
-                        self.bookingModal.showConfirmationMsg = true;
-                        self.fetchDataRequest();
-                    })
-                    .catch(function (response) {
-                        self.isReady = false;
-                        // Always
-                        self.bookingModal.showConfirmationMsg = true;
-                        self.fetchDataRequest();
-                    });
+                        .then(function (res) {
+                            self.checkResponse(res);
+                            return res.json();
+                        })
+                        .then(function (response) {
+                            if (response.status === 'success') {
+                                self.bookingModal.message.success = response.message.success;
+                                window.setTimeout(function () {
+                                    $(self.$el).find('.resource-booking-modal').first().modal('hide');
+                                }, 2500);
+                            } else {
+                                self.bookingModal.message.error = response.message.error;
+                            }
+                            // Always
+                            self.bookingModal.showConfirmationMsg = true;
+                            self.fetchDataRequest();
+                        })
+                        .catch(function (response) {
+                            self.isReady = false;
+                            // Always
+                            self.bookingModal.showConfirmationMsg = true;
+                            self.fetchDataRequest();
+                        });
                 },
 
                 /**
