@@ -5,7 +5,7 @@
 <?php $GLOBALS['TL_JAVASCRIPT'][] = 'assets/contao-component-vue-js/vue/dist/vue.min.js|static'; ?>
 <?php $GLOBALS['TL_CSS'][] = \Markocupic\ResourceBookingBundle\Config\Config::MOD_RESOURCE_BOOKING_ASSET_PATH . '/css/frontend.css|static'; ?>
 <?php $GLOBALS['TL_JAVASCRIPT'][] = \Markocupic\ResourceBookingBundle\Config\Config::MOD_RESOURCE_BOOKING_ASSET_PATH . '/jquery.idle/jquery.idle.min.min.js'; ?>
-<?php $GLOBALS['TL_JAVASCRIPT'][] = \Markocupic\ResourceBookingBundle\Config\Config::MOD_RESOURCE_BOOKING_ASSET_PATH . '/resource-booking-app-vue.js'; ?>
+<?php $GLOBALS['TL_JAVASCRIPT'][] = \Markocupic\ResourceBookingBundle\Config\Config::MOD_RESOURCE_BOOKING_ASSET_PATH . '/resource-booking-app-vue.min.js'; ?>
 
 <?php $this->extend('block_unsearchable'); ?>
 
@@ -16,7 +16,10 @@
     <div class="logged-in-user-data mb-2"><strong>{{rbb_lang::loggedInAs}}:</strong> {{user::firstname}} {{user::lastname}}</div>
 
     <div class="text-center mt-5" v-if="isReady === false && lastResponseStatus === 200">
-        <div class="spinner-border" role="status">
+        <div class="fa-5x loading-spinner">
+            <i class="fas fa-sync fa-spin"></i>
+        </div>
+        <div role="status">
             <span class="sr-only">{{rbb_lang::loading}}</span>
         </div>
     </div>

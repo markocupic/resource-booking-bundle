@@ -53,6 +53,8 @@ class resourceBookingApp {
                 messages: null,
                 // Indicates if user is idle
                 isIdle: false,
+                // Do not run applyFilterRequest() if there is a pending request
+                isBusy: false,
             },
 
             created: function created() {
@@ -68,13 +70,17 @@ class resourceBookingApp {
                 // Post requests require a request token
                 self.requestToken = params.requestToken;
 
+                // Show the loading spinner for 2s
+                window.setTimeout(function(){
+                    self.fetchDataRequest();
+                }, 2000);
+
                 // Fetch data from server each 30s
-                self.fetchDataRequest();
                 self.intervals.fetchDataRequest = window.setInterval(function () {
-                    if (!self.isIdle) {
+                    if (!self.isIdle && !self.isBusy) {
                         self.fetchDataRequest();
                     }
-                }, 15000);
+                }, 30000);
 
                 // Initialize idle detector
                 window.setTimeout(function () {
@@ -113,7 +119,6 @@ class resourceBookingApp {
                     data.append('REQUEST_TOKEN', self.requestToken);
                     data.append('action', action);
 
-
                     // Fetch
                     fetch(window.location.href, {
                         method: "POST",
@@ -122,17 +127,17 @@ class resourceBookingApp {
                             'x-requested-with': 'XMLHttpRequest'
                         },
                     })
-                        .then(function (res) {
-                            self.checkResponse(res);
-                            return res.json();
-                        })
-                        .then(function (response) {
-                            if (response.status === 'success') {
-                                for (let key in response['data']) {
-                                    self[key] = response['data'][key];
-                                }
+                    .then(function (res) {
+                        self.checkResponse(res);
+                        return res.json();
+                    })
+                    .then(function (response) {
+                        if (response.status === 'success') {
+                            for (let key in response['data']) {
+                                self[key] = response['data'][key];
                             }
-                        }).catch(function (error) {
+                        }
+                    }).catch(function (error) {
                         self.isReady = false;
                     });
                 },
@@ -144,6 +149,7 @@ class resourceBookingApp {
 
                     let self = this;
                     let action = 'applyFilterRequest';
+                    self.isBusy = true;
 
                     self.toggleBackdrop(true);
 
@@ -161,22 +167,28 @@ class resourceBookingApp {
                             'x-requested-with': 'XMLHttpRequest'
                         },
                     })
-                        .then(function (res) {
-                            self.checkResponse(res);
-                            return res.json();
-                        })
-                        .then(function (response) {
-                            if (response.status === 'success') {
-                                for (let key in response.data) {
-                                    self[key] = response.data[key];
-                                }
+                    .then(function (res) {
+                        self.checkResponse(res);
+                        return res.json();
+                    })
+                    .then(function (response) {
+                        if (response.status === 'success') {
+                            for (let key in response.data) {
+                                self[key] = response.data[key];
                             }
-                            self.toggleBackdrop(false);
-                        })
-                        .catch(function (response) {
-                            self.isReady = false;
-                            self.toggleBackdrop(false);
-                        });
+                        }
+                        self.toggleBackdrop(false);
+                        window.setTimeout(function(){
+                            self.isBusy = false;
+                        },150);
+                    })
+                    .catch(function (response) {
+                        self.isReady = false;
+                        self.toggleBackdrop(false);
+                        window.setTimeout(function(){
+                            self.isBusy = false;
+                        },150);
+                    });
                 },
 
                 /**
@@ -326,6 +338,18 @@ class resourceBookingApp {
 
                     let self = this;
                     event.preventDefault();
+                    event.stopPropagation();
+
+                    if(self.isBusy){
+                       return false;
+                    }
+
+
+                    // Prevent bubbling invalid requests
+                    if(tstamp === self.activeWeekTstamp || tstamp < self.filterBoard.tstampFirstPossibleWeek || tstamp > self.filterBoard.tstampLastPossibleWeek)
+                    {
+                        return false;
+                    }
 
                     // Vue watcher will trigger self.applyFilterRequest()
                     self.activeWeekTstamp = tstamp;
@@ -372,12 +396,12 @@ class resourceBookingApp {
                 toggleBackdrop: function toggleBackdrop(blnAdd = true) {
                     if (blnAdd) {
                         $('.modal-backdrop').remove();
-                        let backdrop = '<div class="modal-backdrop show"></div>';
+                        let backdrop = '<div class="modal-backdrop resource-booking-backdrop show"></div>';
                         $("body").append(backdrop);
                     } else {
                         window.setTimeout(function () {
                             $('.modal-backdrop').remove();
-                        }, 200);
+                        }, 100);
                     }
                 },
 

@@ -1,8 +1,14 @@
-﻿.mod_resourceBookingWeekcalendar .resource-booking-app .vue-application {
+﻿.resource-booking-backdrop{
+    background-color: transparent !important;
+}
+.mod_resourceBookingWeekcalendar .resource-booking-app .vue-application {
     visibility: hidden;
 }
 .mod_resourceBookingWeekcalendar .resource-booking-app.is-ready .vue-application {
     visibility: visible;
+}
+.mod_resourceBookingWeekcalendar .resource-booking-app .loading-spinner {
+    color: #d8d8d8;
 }
 .mod_resourceBookingWeekcalendar .resource-booking-form .week-select option.past-week {
     color: #8e8e8e;
@@ -86,4 +92,3 @@
 .mod_resourceBookingWeekcalendar .timeSpanSelect option[selected] {
     background-color: #149efb;
 }
-

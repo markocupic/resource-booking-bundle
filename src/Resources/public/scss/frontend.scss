@@ -3,12 +3,23 @@ $bookableBg: rgba(115, 207, 97, 0.42);
 $loggedInUserIsHolderBg: rgba(3, 169, 244, 0.32);
 $iconBookingColor: #fff;
 
+
+.resource-booking-backdrop{
+  background-color: transparent !important;
+}
+
 .mod_resourceBookingWeekcalendar {
   .resource-booking-app .vue-application {
     visibility: hidden;
   }
   .resource-booking-app.is-ready .vue-application {
     visibility: visible;
+  }
+
+  .resource-booking-app{
+    .loading-spinner{
+      color: #d8d8d8;
+    }
   }
 
   .resource-booking-form{
