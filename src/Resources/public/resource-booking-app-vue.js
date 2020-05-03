@@ -18,6 +18,8 @@ class resourceBookingApp {
                 // indicates if application is initialized, switches to true, when fetchData request was fired first time
                 // and the request status is 200
                 isReady: false,
+                // Indicate the mode
+                mode: 'main-window',
                 // Contains the last response code
                 lastResponseStatus: 200,
                 // Contains data about available resource types, resources and weeks (week selector)
@@ -47,7 +49,7 @@ class resourceBookingApp {
                 // Contains data about the active week: tstampStart, tstampEnd, dateStart, dateEnd, weekNumber, year
                 activeWeek: [],
                 bookingRepeatsSelection: [],
-                bookingModal: [],
+                bookingWindow: [],
                 bookingFormValidation: [],
                 intervals: [],
                 messages: null,
@@ -55,6 +57,7 @@ class resourceBookingApp {
                 isIdle: false,
                 // Do not run fetchDataRequest() if there is a pending request
                 isBusy: false,
+
             },
 
             created: function created() {
@@ -71,7 +74,7 @@ class resourceBookingApp {
                 self.requestToken = params.requestToken;
 
                 // Show the loading spinner for 2s
-                window.setTimeout(function(){
+                window.setTimeout(function () {
                     self.fetchDataRequest();
                 }, 2000);
 
@@ -88,6 +91,12 @@ class resourceBookingApp {
                 window.setTimeout(function () {
                     self.initializeIdleDetector(idleAfter);
                 }, 10000);
+
+                document.addEventListener('keyup', function (evt) {
+                    if (evt.keyCode === 27 && self.mode === 'booking-window') {
+                        self.hideBookingWindow();
+                    }
+                });
             },
 
             // Watchers
@@ -130,27 +139,27 @@ class resourceBookingApp {
                             'x-requested-with': 'XMLHttpRequest'
                         },
                     })
-                    .then(function (res) {
-                        self.checkResponse(res);
-                        return res.json();
-                    })
-                    .then(function (response) {
-                        if (response.status === 'success') {
-                            for (let key in response['data']) {
-                                self[key] = response['data'][key];
+                        .then(function (res) {
+                            self.checkResponse(res);
+                            return res.json();
+                        })
+                        .then(function (response) {
+                            if (response.status === 'success') {
+                                for (let key in response['data']) {
+                                    self[key] = response['data'][key];
+                                }
                             }
-                        }
-                        return response;
-                    })
-                    .then(function (response) {
-                        self.isReady = true;
-                        self.isBusy = false;
+                            return response;
+                        })
+                        .then(function (response) {
+                            self.isReady = true;
+                            self.isBusy = false;
 
-                    })
-                    .catch(function (error) {
-                        self.isReady = false;
-                        self.isBusy = false;
-                    });
+                        })
+                        .catch(function (error) {
+                            self.isReady = false;
+                            self.isBusy = false;
+                        });
                 },
 
                 /**
@@ -178,27 +187,26 @@ class resourceBookingApp {
                             'x-requested-with': 'XMLHttpRequest'
                         },
                     })
-                    .then(function (res) {
-                        self.checkResponse(res);
-                        return res.json();
-                    })
-                    .then(function (response) {
-                        if (response.status === 'success') {
-                            for (let key in response.data) {
-                                self[key] = response.data[key];
+                        .then(function (res) {
+                            self.checkResponse(res);
+                            return res.json();
+                        })
+                        .then(function (response) {
+                            if (response.status === 'success') {
+                                for (let key in response.data) {
+                                    self[key] = response.data[key];
+                                }
                             }
-                        }
-                        return response;
-                    })
-                    .then(function(response)
-                    {
-                        self.toggleBackdrop(false);
-                        self.isBusy = false;
-                    })
-                    .catch(function (response) {
-                        self.toggleBackdrop(false);
-                        self.isBusy = false;
-                    });
+                            return response;
+                        })
+                        .then(function (response) {
+                            self.toggleBackdrop(false);
+                            self.isBusy = false;
+                        })
+                        .catch(function (response) {
+                            self.toggleBackdrop(false);
+                            self.isBusy = false;
+                        });
                 },
 
                 /**
@@ -212,13 +220,13 @@ class resourceBookingApp {
                     let data = new FormData();
                     data.append('REQUEST_TOKEN', self.requestToken);
                     data.append('action', action);
-                    data.append('resourceId', self.bookingModal.activeTimeSlot.resourceId);
-                    data.append('description', $(self.$el).find('.resource-booking-modal [name="bookingDescription"]').first().val());
+                    data.append('resourceId', self.bookingWindow.activeTimeSlot.resourceId);
+                    data.append('description', $(self.$el).find('.booking-window [name="bookingDescription"]').first().val());
                     data.append('bookingRepeatStopWeekTstamp', $(self.$el).find('.booking-repeat-stop-week-tstamp').first().val());
 
                     let i;
-                    for (i = 0; i < self.bookingModal.selectedTimeSlots.length; i++) {
-                        data.append('bookingDateSelection[]', self.bookingModal.selectedTimeSlots[i]);
+                    for (i = 0; i < self.bookingWindow.selectedTimeSlots.length; i++) {
+                        data.append('bookingDateSelection[]', self.bookingWindow.selectedTimeSlots[i]);
                     }
 
                     fetch(window.location.href,
@@ -235,21 +243,21 @@ class resourceBookingApp {
                         })
                         .then(function (response) {
                             if (response.status === 'success') {
-                                self.bookingModal.message.success = response.message.success;
+                                self.bookingWindow.message.success = response.message.success;
                                 window.setTimeout(function () {
-                                    $(self.$el).find('.resource-booking-modal').first().modal('hide');
+                                    self.mode = 'main-window';
                                 }, 2500);
                             } else {
-                                self.bookingModal.message.error = response.message.error;
+                                self.bookingWindow.message.error = response.message.error;
                             }
                             // Always
-                            self.bookingModal.showConfirmationMsg = true;
+                            self.bookingWindow.showConfirmationMsg = true;
                             self.fetchDataRequest();
                         })
                         .catch(function (response) {
                             self.isReady = false;
                             // Always
-                            self.bookingModal.showConfirmationMsg = true;
+                            self.bookingWindow.showConfirmationMsg = true;
                             self.fetchDataRequest();
                         });
                 },
@@ -264,12 +272,12 @@ class resourceBookingApp {
                     let data = new FormData();
                     data.append('REQUEST_TOKEN', self.requestToken);
                     data.append('action', action);
-                    data.append('resourceId', self.bookingModal.activeTimeSlot.resourceId);
+                    data.append('resourceId', self.bookingWindow.activeTimeSlot.resourceId);
                     data.append('bookingRepeatStopWeekTstamp', $(self.$el).find('.booking-repeat-stop-week-tstamp').first().val());
 
                     let i;
-                    for (i = 0; i < self.bookingModal.selectedTimeSlots.length; i++) {
-                        data.append('bookingDateSelection[]', self.bookingModal.selectedTimeSlots[i]);
+                    for (i = 0; i < self.bookingWindow.selectedTimeSlots.length; i++) {
+                        data.append('bookingDateSelection[]', self.bookingWindow.selectedTimeSlots[i]);
                     }
 
                     fetch(window.location.href,
@@ -291,8 +299,8 @@ class resourceBookingApp {
                             }
                         })
                         .catch(function (response) {
-                        self.isReady = false;
-                    });
+                            self.isReady = false;
+                        });
 
                 },
 
@@ -306,7 +314,7 @@ class resourceBookingApp {
                     let data = new FormData();
                     data.append('REQUEST_TOKEN', self.requestToken);
                     data.append('action', action);
-                    data.append('bookingId', self.bookingModal.activeTimeSlot.bookingId);
+                    data.append('bookingId', self.bookingWindow.activeTimeSlot.bookingId);
 
                     fetch(window.location.href, {
                         method: "POST",
@@ -315,29 +323,29 @@ class resourceBookingApp {
                             'x-requested-with': 'XMLHttpRequest'
                         },
                     })
-                    .then(function (res) {
-                        self.checkResponse(res);
-                        return res.json();
-                    })
-                    .then(function (response) {
-                        if (response.status === 'success') {
-                            self.bookingModal.message.success = response.message.success;
-                            window.setTimeout(function () {
-                                $(self.$el).find('.resource-booking-modal').first().modal('hide');
-                            }, 2500);
-                        } else {
-                            self.bookingModal.message.error = response.message.error;
-                        }
-                        // Always
-                        self.bookingModal.showConfirmationMsg = true;
-                        self.fetchDataRequest();
-                    })
-                    .catch(function (response) {
-                        self.isReady = false;
-                        // Always
-                        self.bookingModal.showConfirmationMsg = true;
-                        self.fetchDataRequest();
-                    });
+                        .then(function (res) {
+                            self.checkResponse(res);
+                            return res.json();
+                        })
+                        .then(function (response) {
+                            if (response.status === 'success') {
+                                self.bookingWindow.message.success = response.message.success;
+                                window.setTimeout(function () {
+                                    self.mode = 'main-window';
+                                }, 2500);
+                            } else {
+                                self.bookingWindow.message.error = response.message.error;
+                            }
+                            // Always
+                            self.bookingWindow.showConfirmationMsg = true;
+                            self.fetchDataRequest();
+                        })
+                        .catch(function (response) {
+                            self.isReady = false;
+                            // Always
+                            self.bookingWindow.showConfirmationMsg = true;
+                            self.fetchDataRequest();
+                        });
                 },
 
                 /**
@@ -351,14 +359,13 @@ class resourceBookingApp {
                     event.preventDefault();
                     event.stopPropagation();
 
-                    if(self.isBusy){
-                       return false;
+                    if (self.isBusy) {
+                        return false;
                     }
 
 
                     // Prevent bubbling invalid requests
-                    if(tstamp === self.activeWeekTstamp || tstamp < self.filterBoard.tstampFirstPossibleWeek || tstamp > self.filterBoard.tstampLastPossibleWeek)
-                    {
+                    if (tstamp === self.activeWeekTstamp || tstamp < self.filterBoard.tstampFirstPossibleWeek || tstamp > self.filterBoard.tstampLastPossibleWeek) {
                         return false;
                     }
 
@@ -368,22 +375,26 @@ class resourceBookingApp {
 
 
                 /**
-                 * Open booking modal window
+                 * Open booking window
                  * @param objActiveTimeSlot
                  * @param action
                  */
-                openBookingModal: function openBookingModal(objActiveTimeSlot, action) {
+                openBookingWindow: function openBookingWindow(objActiveTimeSlot, action) {
                     let self = this;
 
-                    self.bookingModal.selectedTimeSlots = [];
-                    self.bookingModal.action = action;
-                    self.bookingModal.showConfirmationMsg = false;
-                    self.bookingModal.activeTimeSlot = objActiveTimeSlot;
-                    self.bookingModal.message = {
+                    self.mode = 'booking-window';
+
+                    console.log(self.mode);
+
+                    self.bookingWindow.selectedTimeSlots = [];
+                    self.bookingWindow.action = action;
+                    self.bookingWindow.showConfirmationMsg = false;
+                    self.bookingWindow.activeTimeSlot = objActiveTimeSlot;
+                    self.bookingWindow.message = {
                         success: null,
                         error: null,
                     };
-                    self.bookingModal.selectedTimeSlots.push(objActiveTimeSlot.bookingCheckboxValue);
+                    self.bookingWindow.selectedTimeSlots.push(objActiveTimeSlot.bookingCheckboxValue);
                     self.bookingFormValidation = [];
 
                     // Hide booking preview
@@ -392,13 +403,20 @@ class resourceBookingApp {
                         self.bookingFormValidationRequest();
                     }, 500);
 
-                    $(self.$el).find('.resource-booking-modal').first().on('show.bs.modal', function () {
-                        $(self.$el).find('.resource-booking-modal [name="bookingDescription"]').first().val('');
-                        $(self.$el).find('.booking-repeat-stop-week-tstamp option').prop('selected', false);
-                    });
+                    // Switch window
+                    self.mode = 'booking-window';
+                    $(self.$el).find('.booking-window [name="bookingDescription"]').first().val('');
+                    $(self.$el).find('.booking-window .booking-repeat-stop-week-tstamp option').prop('selected', false);
 
-                    $(self.$el).find('.resource-booking-modal').first().modal('show');
                 },
+
+                /**
+                 * Hide booking window
+                 */
+                hideBookingWindow: function hideBookingWindow() {
+                    this.mode = 'main-window';
+                },
+
 
                 /**
                  * Add or remove the backdrop
@@ -406,12 +424,12 @@ class resourceBookingApp {
                  */
                 toggleBackdrop: function toggleBackdrop(blnAdd = true) {
                     if (blnAdd) {
-                        $('.modal-backdrop').remove();
-                        let backdrop = '<div class="modal-backdrop resource-booking-backdrop show"></div>';
+                        $('.resource-booking-backdrop-layer').remove();
+                        let backdrop = '<div class="resource-booking-backdrop-layer show"></div>';
                         $("body").append(backdrop);
                     } else {
                         window.setTimeout(function () {
-                            $('.modal-backdrop').remove();
+                            $('.resource-booking-backdrop-layer').remove();
                         }, 100);
                     }
                 },
