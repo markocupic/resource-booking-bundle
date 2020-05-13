@@ -114,7 +114,7 @@ class ResourceBookingResourceModel extends Model
      * @param $arrIds
      * @return Model\Collection|null
      */
-    public static function findMultipleAndPublishedByIds($arrIds)
+    public static function findPublishedByIds($arrIds)
     {
         $arrIdsNew = [];
         if (($objDb = static::findMultipleByIds($arrIds)) !== null)

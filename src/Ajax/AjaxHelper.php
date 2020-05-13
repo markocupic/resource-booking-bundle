@@ -180,7 +180,7 @@ class AjaxHelper
         // Filter form: get resource types dropdown
         $rows = [];
         $arrResTypesIds = StringUtil::deserialize($this->moduleModel->resourceBooking_resourceTypes, true);
-        if (($objResourceTypes = ResourceBookingResourceTypeModel::findMultipleAndPublishedByIds($arrResTypesIds)) !== null)
+        if (($objResourceTypes = ResourceBookingResourceTypeModel::findPublishedByIds($arrResTypesIds)) !== null)
         {
             while ($objResourceTypes->next())
             {

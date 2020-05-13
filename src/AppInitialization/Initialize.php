@@ -195,7 +195,8 @@ class Initialize
             $controllerAdapter->redirect($url);
         }
 
-
+        // Get resource type ids from module settings
+        $arrResTypeIds = $stringUtilAdapter->deserialize($objModuleModel->resourceBooking_resourceTypes, true);
 
         // Check if access to active resource type is allowed
         if (($resTypeId = $this->sessionBag->get('resType', 0)) > 0)
@@ -205,8 +206,6 @@ class Initialize
             {
                 $blnForbidden = true;
             }
-            // Get ids from module settings
-            $arrResTypeIds = $stringUtilAdapter->deserialize($objModuleModel->resourceBooking_resourceTypes, true);
 
             if (!in_array($resTypeId, $arrResTypeIds))
             {
@@ -218,6 +217,22 @@ class Initialize
                 throw new UnauthorizedHttpException(sprintf('Unauthorized access to resource type with ID %s.', $resTypeId));
             }
         }
+        else
+        {
+            // Autoredirect if there is only one item in selection list
+            if (!$environmentAdapter->get('isAjaxRequest'))
+            {
+                $oResType = $resourceBookingResourceTypeModelAdapter->findPublishedByIds($arrResTypeIds);
+                if ($oResType !== null && $oResType->count() === 1)
+                {
+                    $resTypeId = $oResType->id;
+                    $this->sessionBag->set('resType', $oResType->id);
+                }
+            }
+        }
+
+        // Get resource ids from module settings
+        $arrResIds = $stringUtilAdapter->deserialize($objModuleModel->resourceBooking_resource, true);
 
         // Check if access to active resource is allowed
         if (($resId = $this->sessionBag->get('res', 0)) > 0)
@@ -231,6 +246,18 @@ class Initialize
             if ($blnForbidden)
             {
                 throw new UnauthorizedHttpException(sprintf('Unauthorized access to resource with ID %s.', $resId));
+            }
+        }
+        else
+        {
+            // Autoredirect if there is only one item in selection list
+            if (!$environmentAdapter->get('isAjaxRequest') && $resTypeId > 0)
+            {
+                $oRes = $resourceBookingResourceModelAdapter->findPublishedByPid($resTypeId);
+                if ($oRes !== null && $oRes->count() === 1)
+                {
+                    $this->sessionBag->set('res', $oRes->id);
+                }
             }
         }
 
