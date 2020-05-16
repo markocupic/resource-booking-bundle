@@ -31,6 +31,7 @@ class AddSessionBagsPass implements CompilerPassInterface
         {
             return;
         }
+
         $session = $container->findDefinition('session');
         $session->addMethodCall('registerBag', [new Reference('Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag')]);
     }

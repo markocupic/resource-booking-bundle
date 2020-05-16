@@ -36,10 +36,11 @@ class MarkocupicResourceBookingExtension extends Extension
             new FileLocator(__DIR__ . '/../Resources/config')
         );
 
+        // Pay attention to load these files in src/ContaoManager/Plugin.php too!!!!!
         $loader->load('parameters.yml');
-        $loader->load('services.yml');
         $loader->load('listener.yml');
         $loader->load('cron.yml');
         $loader->load('migration.yml');
+        $loader->load('services.yml');
     }
 }
