@@ -67,7 +67,6 @@ services:
 
   # Register session bag
   Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag:
-    class: Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag
     arguments:
     - '@Markocupic\ResourceBookingBundle\Csrf\CsrfTokenManager'
     - '%resource_booking_bundle.session.attribute_bag_key%'
