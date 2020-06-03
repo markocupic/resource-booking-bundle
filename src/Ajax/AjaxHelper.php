@@ -235,7 +235,7 @@ class AjaxHelper
         ];
 
         // Get booking RepeatsSelection
-        $arrData['bookingRepeatsSelection'] = $this->getWeekSelection((int) $this->sessionBag->get('activeWeekTstamp'), $dateHelperAdapter->addDaysToTime(7 * $this->sessionBag->get('intAheadWeeks')), false);
+        $arrData['bookingRepeatsSelection'] = $this->getWeekSelection((int) $this->sessionBag->get('activeWeekTstamp'), (int) $this->sessionBag->get('tstampLastPossibleWeek'), false);
 
         // Send weekdays, dates and day
         $arrWeek = [];

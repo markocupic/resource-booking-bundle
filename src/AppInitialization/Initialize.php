@@ -265,6 +265,12 @@ class Initialize
         $tstampCurrentWeek = (int) $this->sessionBag->get('activeWeekTstamp', $dateHelperAdapter->getMondayOfCurrentWeek());
         $this->sessionBag->set('activeWeekTstamp', $tstampCurrentWeek);
 
+        // Overwrite rbb_intAheadWeeks from module settings
+        if ((int) $objModuleModel->resourceBooking_intAheadWeek > 0)
+        {
+            $configAdapter->set('rbb_intAheadWeeks', (int) $objModuleModel->resourceBooking_intAheadWeek);
+        }
+
         // Get intBackWeeks && intBackWeeks
         $intBackWeeks = (int) $configAdapter->get('rbb_intBackWeeks');
         $this->sessionBag->set('intBackWeeks', $intBackWeeks);
@@ -273,7 +279,17 @@ class Initialize
 
         // Get first and last possible week tstamp
         $this->sessionBag->set('tstampFirstPossibleWeek', $dateHelperAdapter->addWeeksToTime($intBackWeeks, $dateHelperAdapter->getMondayOfCurrentWeek()));
-        $this->sessionBag->set('tstampLastPossibleWeek', $dateHelperAdapter->addWeeksToTime($intAheadWeeks, $dateHelperAdapter->getMondayOfCurrentWeek()));
+
+        $intTstampLastPossibleWeek = $dateHelperAdapter->addWeeksToTime($intAheadWeeks, $dateHelperAdapter->getMondayOfCurrentWeek());
+        if ($objModuleModel->resourceBooking_addDateStop)
+        {
+            $intTstampStop = $dateHelperAdapter->getMondayOfWeekDate($objModuleModel->resourceBooking_dateStop);
+            if ($intTstampStop < $intTstampLastPossibleWeek)
+            {
+                $intTstampLastPossibleWeek = $intTstampStop;
+            }
+        }
+        $this->sessionBag->set('tstampLastPossibleWeek', $intTstampLastPossibleWeek);
     }
 
 }

@@ -79,6 +79,31 @@ class DateHelper
     }
 
     /**
+     * @param null $tstamp
+     * @return int
+     */
+    function getMondayOfWeekDate($tstamp = null): int
+    {
+        if($tstamp === null)
+        {
+            $tstamp = time();
+        }
+
+        $date = new \DateTime(Date::parse('Y-m-d', $tstamp));
+
+        $date->setTime(0, 0, 0);
+
+        if ($date->format('N') === 1) {
+            // If the date is already a Monday, return it as-is
+            return $date->getTimestamp();
+        } else {
+            // Otherwise, return the date of the nearest Monday in the past
+            // This includes Sunday in the previous week instead of it being the start of a new week
+            return $date->modify('last monday')->getTimestamp();
+        }
+    }
+
+    /**
      * @param $dateString
      * @return bool
      */
@@ -115,6 +140,16 @@ class DateHelper
         }
 
         return true;
+    }
+
+    /**
+     * @param int $tstampStart
+     * @param int $tstampEnd
+     * @return int
+     */
+    public static function calculateWeeksBetween(int$tstampStart, int$tstampEnd): int
+    {
+        $mondayCurrentWeek = static::getMondayOfCurrentWeek();
     }
 
 }

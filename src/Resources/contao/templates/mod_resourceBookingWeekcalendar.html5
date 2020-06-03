@@ -114,142 +114,142 @@
 
         <!-- booking window mode === 'booking-window'-->
         <div class="booking-window" v-if="mode === 'booking-window'" v-if="userIsLoggedIn" tabindex="-1" role="dialog">
-            <div class="booking-window-header bg-primary d-flex justify-content-between">
-                <h3 class="booking-window-header-title m-3" v-if="bookingWindow.action == 'showBookingForm'">{{ activeResource.title }} {{rbb_lang::book}}</h3>
-                <h3 class="booking-window-header-title m-3" v-if="bookingWindow.action == 'showCancelBookingForm'">{{ activeResource.title }} {{rbb_lang::cancel}}</h3>
-                <button type="button" v-on:click="hideBookingWindow" class="close-window bg-primary" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <!-- Info table -->
-            <div class="info-table layout-table mt-4">
-                <div class="d-flex layout-row row-first row-0">
-                    <div class="layout-cell column-0 column-first"><strong>{{rbb_lang::resource}}</strong></div>
-                    <div class="layout-cell column-1 column-last">{{ activeResource.title }}</div>
-                </div>
-                <div class="d-flex layout-row row-first row-1">
-                    <div class="layout-cell column-0 column-first"><strong>{{rbb_lang::fullname}}</strong></div>
-                    <div class="layout-cell column-1 column-last">{{ loggedInUser.firstname }} {{ loggedInUser.lastname }}</div>
-                </div>
-                <div class="d-flex layout-row row-last row-2">
-                    <div class="layout-cell column-0 column-first"><strong>{{rbb_lang::week}}</strong></div>
-                    <div class="layout-cell column-1 column-last">{{ activeWeek.weekNumber }}/{{ activeWeek.year }}: {{ activeWeek.dateStart }} - {{ activeWeek.dateEnd }}</div>
-                </div>
-            </div>
-            <!-- End info table -->
-
-            <!-- alert -->
-            <div v-if="bookingWindow.message && bookingWindow.message.success" class="mt-5">
-                <div class="message-box">
-                    <div class="alert alert-success pt-3 pb-3">
-                        {{ bookingWindow.message.success }}
-                    </div>
-                    <p>
-                        <small>{{rbb_lang::windowIsClosingAutomatically}}</small>
-                    </p>
-                </div>
-            </div>
-            <!-- End alert -->
-
-            <!-- alert -->
-            <div v-if="bookingFormValidation.message && bookingFormValidation.message.error" class="mt-5">
-                <div class="message-box">
-                    <div class="alert alert-danger pt-3 pb-3">
-                        {{ bookingFormValidation.message.error }}
-                    </div>
-                </div>
-            </div>
-            <!-- End alert -->
-
-            <div v-if="!bookingWindow.showConfirmationMsg && bookingWindow.action == 'showBookingForm'" class="mt-5">
-                <!-- alert -->
-                <div class="message-box">
-                    <div v-if="bookingFormValidation.noDatesSelected" class="alert alert-warning" role="alert">
-                        {{rbb_lang::selectBookingTime}}
-                    </div>
-                    <div v-if="bookingFormValidation.passedValidation" class="alert alert-success" role="alert">
-                        {{ activeResource.title }} {{rbb_lang::isAvailable}}
-                    </div>
-                    <div v-if="bookingFormValidation.resourceIsAlreadyBooked" class="alert alert-danger" role="alert">
-                        {{ activeResource.title }} {{rbb_lang::isNoMoreAvailable}}
-                    </div>
-                </div>
-                <!-- End alert -->
-
-
-                <div v-if="bookingFormValidation.resourceIsAlreadyBooked">
-                    <div class="mt-4">
-                        <button class="btn btn-sm btn-danger" type="button" data-toggle="collapse" data-target="#bookingPreview_<?= $this->id ?>" aria-expanded="false" aria-controls="bookingPreview">
-                            {{rbb_lang::showOccupiedResources}}
+            <div class="booking-window-dialog">
+                <div class="booking-window-content">
+                    <div class="booking-window-header bg-primary d-flex justify-content-between">
+                        <h3 class="booking-window-header-title m-3" v-if="bookingWindow.action == 'showBookingForm'">{{ activeResource.title }} {{rbb_lang::book}}</h3>
+                        <h3 class="booking-window-header-title m-3" v-if="bookingWindow.action == 'showCancelBookingForm'">{{ activeResource.title }} {{rbb_lang::cancel}}</h3>
+                        <button type="button" v-on:click="hideBookingWindow" class="close-window bg-primary" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
+                    <!-- Info table -->
+                    <div class="info-table layout-table mt-4">
+                        <div class="d-flex layout-row row-first row-0">
+                            <div class="layout-cell column-0 column-first"><strong>{{rbb_lang::resource}}</strong></div>
+                            <div class="layout-cell column-1 column-last">{{ activeResource.title }}</div>
+                        </div>
+                        <div class="d-flex layout-row row-first row-1">
+                            <div class="layout-cell column-0 column-first"><strong>{{rbb_lang::fullname}}</strong></div>
+                            <div class="layout-cell column-1 column-last">{{ loggedInUser.firstname }} {{ loggedInUser.lastname }}</div>
+                        </div>
+                        <div class="d-flex layout-row row-last row-2">
+                            <div class="layout-cell column-0 column-first"><strong>{{rbb_lang::week}}</strong></div>
+                            <div class="layout-cell column-1 column-last">{{ activeWeek.weekNumber }}/{{ activeWeek.year }}: {{ activeWeek.dateStart }} - {{ activeWeek.dateEnd }}</div>
+                        </div>
+                    </div>
+                    <!-- End info table -->
 
-                    <div id="bookingPreview_<?= $this->id ?>" class="booking-preview collapse mt-5">
-                        <div class="layout-table">
-                            <div class="layout-row d-flex" v-for="(booking, index) in bookingFormValidation.bookingSelection" v-bind:class="booking.resourceBlocked ? 'not-bookable' : 'bookable'">
-                                <div class="layout-cell">
-                                    <small>{{ booking.datim }}</small>
-                                </div>
-                                <div class="layout-cell">
-                                    <span v-if="booking.resourceAlreadyBooked && !booking.resourceAlreadyBookedByLoggedInUser"><small>{{ booking.holder }}</small></span>
-                                    <span v-if="booking.resourceAlreadyBooked && booking.resourceAlreadyBookedByLoggedInUser"><small>{{rbb_lang::alreadyBooked}}</small></span>
-                                    <span v-if="!booking.resourceAlreadyBooked"><small>{{rbb_lang::available}}</small></span>
-                                </div>
+                    <!-- alert -->
+                    <div v-if="bookingWindow.message && bookingWindow.message.success" class="mt-5">
+                        <div class="message-box">
+                            <div class="alert alert-success pt-3 pb-3">
+                                {{ bookingWindow.message.success }}
+                            </div>
+                            <p>
+                                <small>{{rbb_lang::windowIsClosingAutomatically}}</small>
+                            </p>
+                        </div>
+                    </div>
+                    <!-- End alert -->
+
+                    <!-- alert -->
+                    <div v-if="bookingFormValidation.message && bookingFormValidation.message.error" class="mt-5">
+                        <div class="message-box">
+                            <div class="alert alert-danger pt-3 pb-3">
+                                {{ bookingFormValidation.message.error }}
                             </div>
                         </div>
                     </div>
-                </div>
+                    <!-- End alert -->
 
-                <div class="row"><!-- start row -->
-                    <div class="col-xl-7"><!-- start col -->
-                        <!-- start booking table -->
-                        <div class="layout-table resource-booking-table-window mt-5" v-if="rows.length > 0">
-                            <div class="layout-row">
-                                <div class="layout-cell time-slot-indicator">{{rbb_lang::time}}</div>
-                                <div class="layout-cell" v-for="(weekday, index) in weekdays" v-bind:data-day-index="weekday.index">{{ weekday.titleShort }}</div>
+                    <div v-if="!bookingWindow.showConfirmationMsg && bookingWindow.action == 'showBookingForm'" class="mt-5">
+                        <!-- alert -->
+                        <div class="message-box">
+                            <div v-if="bookingFormValidation.noDatesSelected" class="alert alert-warning" role="alert">
+                                {{rbb_lang::selectBookingTime}}
+                            </div>
+                            <div v-if="bookingFormValidation.passedValidation" class="alert alert-success" role="alert">
+                                {{ activeResource.title }} {{rbb_lang::isAvailable}}
+                            </div>
+                            <div v-if="bookingFormValidation.resourceIsAlreadyBooked" class="alert alert-danger" role="alert">
+                                {{ activeResource.title }} {{rbb_lang::isNoMoreAvailable}}
+                            </div>
+                        </div>
+                        <!-- End alert -->
+
+                        <div v-if="bookingFormValidation.resourceIsAlreadyBooked">
+                            <div class="mt-4">
+                                <button class="btn btn-sm btn-danger" type="button" data-toggle="collapse" data-target="#bookingPreview_<?= $this->id ?>" aria-expanded="false" aria-controls="bookingPreview">
+                                    {{rbb_lang::showOccupiedResources}}
+                                </button>
                             </div>
 
-                            <div class="layout-row" v-for="(row, rowIndex) in rows" v-bind:data-row-index="rowIndex" v-bind:class="row.rowData.cssRowClass">
-                                <div class="layout-cell time-slot-indicator">{{ timeSlots[rowIndex].timeSpanString }}</div>
-                                <div class="layout-cell time-slot-cell" v-for="(eventBox, colIndex) in row.cellData" v-bind:data-day-index="eventBox.index" v-bind:data-isbooked="eventBox.isBooked">
-                                    <div v-if="!eventBox.isBooked">
-                                        <div class="custom-control custom-checkbox">
-                                            <input type="checkbox" v-on:change="bookingFormValidationRequest()" v-model="bookingWindow.selectedTimeSlots" v-bind:value="eventBox.bookingCheckboxValue" class="custom-control-input" v-bind:id="eventBox.bookingCheckboxId">
-                                            <label class="custom-control-label" v-bind:for="eventBox.bookingCheckboxId"></label>
+                            <div id="bookingPreview_<?= $this->id ?>" class="booking-preview collapse mt-5">
+                                <div class="layout-table">
+                                    <div class="layout-row d-flex" v-for="(booking, index) in bookingFormValidation.bookingSelection" v-bind:class="booking.resourceBlocked ? 'not-bookable' : 'bookable'">
+                                        <div class="layout-cell">
+                                            <small>{{ booking.datim }}</small>
+                                        </div>
+                                        <div class="layout-cell">
+                                            <span v-if="booking.resourceAlreadyBooked && !booking.resourceAlreadyBookedByLoggedInUser"><small>{{ booking.holder }}</small></span>
+                                            <span v-if="booking.resourceAlreadyBooked && booking.resourceAlreadyBookedByLoggedInUser"><small>{{rbb_lang::alreadyBooked}}</small></span>
+                                            <span v-if="!booking.resourceAlreadyBooked"><small>{{rbb_lang::available}}</small></span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        <!-- end booking table -->
-                    </div><!-- end col -->
 
-                    <div class="col-xl-5"><!-- start col -->
-                        <div class="form-group mt-5">
-                            <label for="bookingDescription_<?= $this->id ?>">{{rbb_lang::abstract}}</label>
-                            <input type="text" class="form-control" id="bookingDescription_<?= $this->id ?>" name="bookingDescription" aria-describedby="bookingDescriptionHelp" maxlength="50" placeholder="Kurzbeschreibung eingeben">
-                            <small class="booking-description-help" class="form-text text-muted">{{rbb_lang::enterAbstract}}</small>
-                        </div>
+                        <form>
+                            <!-- start booking table -->
+                            <div class="layout-table resource-booking-table-window mt-5" v-if="rows.length > 0">
+                                <div class="layout-row">
+                                    <div class="layout-cell time-slot-indicator">{{rbb_lang::time}}</div>
+                                    <div class="layout-cell" v-for="(weekday, index) in weekdays" v-bind:data-day-index="weekday.index">{{ weekday.titleShort }}</div>
+                                </div>
 
-                        <div class="form-group mt-4">
-                            <label for="bookingRepeatStopWeekTstamp_<?= $this->id ?>">{{rbb_lang::bookResourceRepetitions}}</label>
-                            <select id="bookingRepeatStopWeekTstamp_<?= $this->id ?>" class="booking-repeat-stop-week-tstamp form-control timeSpanSelect" name="bookingRepeatStopWeekTstamp" v-on:change="bookingFormValidationRequest()">
-                                <option v-for="(row, rowIndex) in bookingRepeatsSelection" v-bind:value="row.tstamp">{{ row.optionText }}</option>
-                            </select>
-                        </div>
-                    </div><!-- end col -->
-                </div><!-- end row -->
-            </div>
+                                <div class="layout-row" v-for="(row, rowIndex) in rows" v-bind:data-row-index="rowIndex" v-bind:class="row.rowData.cssRowClass">
+                                    <div class="layout-cell time-slot-indicator">{{ timeSlots[rowIndex].timeSpanString }}</div>
+                                    <div class="layout-cell time-slot-cell" v-for="(eventBox, colIndex) in row.cellData" v-bind:data-day-index="eventBox.index" v-bind:data-isbooked="eventBox.isBooked">
+                                        <div v-if="!eventBox.isBooked">
+                                            <div class="custom-control custom-checkbox">
+                                                <input type="checkbox" v-on:change="bookingFormValidationRequest()" v-model="bookingWindow.selectedTimeSlots" v-bind:value="eventBox.bookingCheckboxValue" class="custom-control-input" v-bind:id="eventBox.bookingCheckboxId">
+                                                <label class="custom-control-label" v-bind:for="eventBox.bookingCheckboxId"></label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- end booking table -->
 
-            <div class="mt-5" v-if="bookingWindow.action == 'showCancelBookingForm'">
-                <p v-if="!bookingWindow.showConfirmationMsg">{{rbb_lang::cancelBooking}}</p>
-            </div>
+                            <div class="form-group mt-4">
+                                <label class="d-none" for="bookingDescription_<?= $this->id ?>">{{rbb_lang::abstract}}</label>
+                                <input type="text" class="form-control" id="bookingDescription_<?= $this->id ?>" name="bookingDescription" aria-describedby="bookingDescriptionHelp" maxlength="50" placeholder="Kurzbeschreibung eingeben">
+                                <small class="booking-description-help" class="form-text text-muted">{{rbb_lang::enterAbstract}}</small>
+                            </div>
+
+                            <div class="form-group mt-4">
+                                <label for="bookingRepeatStopWeekTstamp_<?= $this->id ?>">{{rbb_lang::bookResourceRepetitions}}</label>
+                                <select id="bookingRepeatStopWeekTstamp_<?= $this->id ?>" class="booking-repeat-stop-week-tstamp form-control timeSpanSelect" name="bookingRepeatStopWeekTstamp" v-on:change="bookingFormValidationRequest()">
+                                    <option v-for="(row, rowIndex) in bookingRepeatsSelection" v-bind:value="row.tstamp">{{ row.optionText }}</option>
+                                </select>
+                            </div>
+
+                        </form>
+                    </div>
+
+                    <div class="mt-5" v-if="bookingWindow.action == 'showCancelBookingForm'">
+                        <p v-if="!bookingWindow.showConfirmationMsg">{{rbb_lang::cancelBooking}}</p>
+                    </div>
 
 
-            <div class="booking-window-footer mt-5">
-                <button type="button" class="btn btn-secondary" v-on:click="hideBookingWindow">{{rbb_lang::close}}</button>
-                <button type="button" class="btn btn-primary" v-if="bookingFormValidation.passedValidation && !bookingWindow.showConfirmationMsg && bookingWindow.action == 'showBookingForm'" v-on:click="bookingRequest">{{rbb_lang::bookResource}}</button>
-                <button type="button" class="btn btn-danger" v-if="!bookingWindow.showConfirmationMsg && bookingWindow.action == 'showCancelBookingForm'" v-on:click="cancelBookingRequest">{{rbb_lang::cancelResource}}</button>
+                    <div class="booking-window-footer mt-5">
+                        <button type="button" class="btn btn-secondary" v-on:click="hideBookingWindow">{{rbb_lang::close}}</button>
+                        <button type="button" class="btn btn-primary" v-if="bookingFormValidation.passedValidation && !bookingWindow.showConfirmationMsg && bookingWindow.action == 'showBookingForm'" v-on:click="bookingRequest">{{rbb_lang::bookResource}}</button>
+                        <button type="button" class="btn btn-danger" v-if="!bookingWindow.showConfirmationMsg && bookingWindow.action == 'showCancelBookingForm'" v-on:click="cancelBookingRequest">{{rbb_lang::cancelResource}}</button>
+                    </div>
+                </div>
             </div>
         </div>
         <!-- End booking window -->

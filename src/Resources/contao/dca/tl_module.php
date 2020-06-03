@@ -11,8 +11,12 @@
 /**
  * Add palettes to tl_module
  */
-$GLOBALS['TL_DCA']['tl_module']['palettes']['resourceBookingWeekcalendar'] = '{title_legend},name,headline,type;{config_legend},resourceBooking_resourceTypes,resourceBooking_hideDays;{template_legend:hide},customTpl;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['resourceBookingWeekcalendar'] = '{title_legend},name,headline,type;{config_legend},resourceBooking_resourceTypes,resourceBooking_hideDays,resourceBooking_intAheadWeek,resourceBooking_addDateStop;{template_legend:hide},customTpl;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 $GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'resourceBooking_hideDays';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'resourceBooking_addDateStop';
+
+// Subpalettes
+$GLOBALS['TL_DCA']['tl_module']['subpalettes']['resourceBooking_addDateStop'] = 'resourceBooking_dateStop';
 
 /**
  * Add subpalettes to tl_module
@@ -22,36 +26,58 @@ $GLOBALS['TL_DCA']['tl_module']['subpalettes']['resourceBooking_hideDays'] = 're
 /**
  * Add fields to tl_module
  */
-$GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_resourceTypes'] = array
-(
+$GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_resourceTypes'] = [
     'label'            => &$GLOBALS['TL_LANG']['tl_module']['resourceBooking_resourceTypes'],
     'exclude'          => true,
     'inputType'        => 'checkbox',
-    'options_callback' => array('tl_module_resource_booking', 'getResourceTypes'),
-    'eval'             => array('multiple' => true, 'tl_class' => 'clr'),
+    'options_callback' => ['tl_module_resource_booking', 'getResourceTypes'],
+    'eval'             => ['multiple' => true, 'tl_class' => 'clr'],
     'sql'              => "blob NULL"
-);
+];
 
-$GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_hideDays'] = array
-(
+$GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_hideDays'] = [
     'label'     => &$GLOBALS['TL_LANG']['tl_module']['resourceBooking_hideDays'],
     'exclude'   => true,
     'inputType' => 'checkbox',
-    'eval'      => array('submitOnChange' => true, 'tl_class' => 'clr'),
+    'eval'      => ['submitOnChange' => true, 'tl_class' => 'clr'],
     'sql'       => "char(1) NOT NULL default ''"
-);
+];
 
-$GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_hideDaysSelection'] = array
-(
+$GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_hideDaysSelection'] = [
     'label'     => &$GLOBALS['TL_LANG']['tl_module']['resourceBooking_hideDaysSelection'],
     'exclude'   => true,
     'inputType' => 'checkbox',
     'options'   => range(0, 6),
     'reference' => &$GLOBALS['TL_LANG']['DAYS_LONG'],
-    'eval'      => array('multiple' => true, 'tl_class' => 'clr'),
+    'eval'      => ['multiple' => true, 'tl_class' => 'clr'],
     'sql'       => "blob NULL"
-);
+];
 
+$GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_intAheadWeek'] = [
+    'label'     => &$GLOBALS['TL_LANG']['tl_module']['resourceBooking_intAheadWeek'],
+    'exclude'   => true,
+    'inputType' => 'text',
+    'options'   => range(0, 156),
+    'eval'      => ['tl_class' => 'clr', 'rgxp' => 'natural'],
+    'sql'       => "int(10) unsigned NOT NULL default '0'",
+];
+
+$GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_addDateStop'] = [
+    'label'     => &$GLOBALS['TL_LANG']['tl_module']['resourceBooking_addDateStop'],
+    'exclude'   => true,
+    'inputType' => 'checkbox',
+    'eval'      => ['submitOnChange' => true, 'tl_class' => 'clr'],
+    'sql'       => "char(1) NOT NULL default ''"
+];
+
+$GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_dateStop'] = [
+    'label'     => &$GLOBALS['TL_LANG']['tl_module']['resourceBooking_dateStop'],
+    'exclude'   => true,
+    'default'   => time(),
+    'inputType' => 'text',
+    'eval'      => ['rgxp' => 'date', 'datepicker' => true, 'tl_class' => 'w50 wizard'],
+    'sql'       => "varchar(11) NOT NULL default ''"
+];
 
 /**
  * Class tl_module_resource_booking
@@ -73,7 +99,7 @@ class tl_module_resource_booking extends Contao\Backend
      */
     public function getResourceTypes(): array
     {
-        $opt = array();
+        $opt = [];
         $objDb = Contao\Database::getInstance()->prepare('SELECT * FROM tl_resource_booking_resource_type')->execute();
         while ($objDb->next())
         {
