@@ -444,19 +444,22 @@ class AjaxHandler
                             $timeSlotId,
                         ];
                         $objSiblings = $resourceBookingModelAdapter->findBy($arrColumns, $arrValues);
-                        while ($objSiblings->next())
+                        if ($objSiblings !== null)
                         {
-                            $intIdSibling = $objSiblings->id;
-                            $objSiblings->delete();
-
-                            // Log
-                            $logger = $systemAdapter->getContainer()->get('monolog.logger.contao');
-                            if ($logger)
+                            while ($objSiblings->next())
                             {
-                                $strLog = sprintf('Resource Booking with ID %s has been deleted.', $intIdSibling);
-                                $logger->log(LogLevel::INFO, $strLog, ['contao' => new ContaoContext(__METHOD__, 'INFO')]);
+                                $intIdSibling = $objSiblings->id;
+                                $objSiblings->delete();
+
+                                // Log
+                                $logger = $systemAdapter->getContainer()->get('monolog.logger.contao');
+                                if ($logger)
+                                {
+                                    $strLog = sprintf('Resource Booking with ID %s has been deleted.', $intIdSibling);
+                                    $logger->log(LogLevel::INFO, $strLog, ['contao' => new ContaoContext(__METHOD__, 'INFO')]);
+                                }
+                                $countSiblingsToDelete++;
                             }
-                            $countSiblingsToDelete++;
                         }
                     }
                     // End delete siblings
