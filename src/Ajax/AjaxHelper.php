@@ -358,6 +358,8 @@ class AjaxHelper
 
                                 $objTs->bookingDescription = $objBooking->description;
                                 $objTs->bookingId = $objBooking->id;
+                                $objTs->bookingUuid = $objBooking->bookingUuid;
+
                             }
                         }
 

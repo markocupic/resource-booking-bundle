@@ -125,20 +125,34 @@
                     </div>
                     <!-- Info table -->
                     <div class="info-table layout-table mt-4">
-                        <div class="d-flex layout-row row-first row-0">
+                        <div class="d-flex layout-row row-first">
                             <div class="layout-cell column-0 column-first"><strong>{{rbb_lang::resource}}</strong></div>
                             <div class="layout-cell column-1 column-last">{{ activeResource.title }}</div>
                         </div>
-                        <div class="d-flex layout-row row-first row-1">
+                        <div class="d-flex layout-row">
                             <div class="layout-cell column-0 column-first"><strong>{{rbb_lang::fullname}}</strong></div>
                             <div class="layout-cell column-1 column-last">{{ loggedInUser.firstname }} {{ loggedInUser.lastname }}</div>
                         </div>
-                        <div class="d-flex layout-row row-last row-2">
+                        <div class="d-flex layout-row" v-if="bookingWindow.activeTimeSlot.bookingId">
+                            <div class="layout-cell column-0 column-first"><strong>{{rbb_lang::bookingIdAndUuid}}</strong></div>
+                            <div class="layout-cell column-1 column-last">{{ bookingWindow.activeTimeSlot.bookingId }} / {{ bookingWindow.activeTimeSlot.bookingUuid }}</div>
+                        </div>
+                        <div class="d-flex layout-row row-last">
                             <div class="layout-cell column-0 column-first"><strong>{{rbb_lang::week}}</strong></div>
                             <div class="layout-cell column-1 column-last">{{ activeWeek.weekNumber }}/{{ activeWeek.year }}: {{ activeWeek.dateStart }} - {{ activeWeek.dateEnd }}</div>
                         </div>
+
                     </div>
                     <!-- End info table -->
+
+                    <!-- Switch delete siblings with same booking id -->
+                    <div v-if="bookingWindow.action == 'showCancelBookingForm'" class="mt-4">
+                        <div class="custom-control custom-switch">
+                            <input v-model="bookingWindow.deleteBookingsWithSameBookingUuid" type="checkbox" class="custom-control-input" id="deleteSiblingsWihtSameBookingIdSwitch">
+                            <label class="custom-control-label" for="deleteSiblingsWihtSameBookingIdSwitch">{{rbb_lang::deleteSiblingsWithSameBookingUuid}}</label>
+                        </div>
+                    </div>
+                    <!-- End switch delete siblings with same booking id -->
 
                     <!-- alert -->
                     <div v-if="bookingWindow.message && bookingWindow.message.success" class="mt-5">

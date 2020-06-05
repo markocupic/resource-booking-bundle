@@ -398,6 +398,9 @@ class AjaxHandler
         /** @var System $systemAdapter */
         $systemAdapter = $this->framework->getAdapter(System::class);
 
+        /** @var  ResourceBookingModel $resourceBookingModelAdapter */
+        $resourceBookingModelAdapter = $this->framework->getAdapter(ResourceBookingModel::class);
+
         $request = $this->requestStack->getCurrentRequest();
 
         // Load language file
@@ -408,12 +411,15 @@ class AjaxHandler
         if ($this->objUser !== null && $request->request->get('bookingId') > 0)
         {
             $bookingId = $request->request->get('bookingId');
-            $objBooking = ResourceBookingModel::findByPk($bookingId);
+            $objBooking = $resourceBookingModelAdapter->findByPk($bookingId);
             if ($objBooking !== null)
             {
                 if ($objBooking->member === $this->objUser->id)
                 {
                     $intId = $objBooking->id;
+                    $bookingUuid = $objBooking->bookingUuid;
+                    $timeSlotId = $objBooking->timeSlotId;
+
                     // Delete entry
                     $intAffected = $objBooking->delete();
                     if ($intAffected)
@@ -424,8 +430,46 @@ class AjaxHandler
                         $logger->log(LogLevel::INFO, $strLog, ['contao' => new ContaoContext(__METHOD__, 'INFO')]);
                     }
 
+                    $countSiblingsToDelete = 0;
+
+                    // Delete bookings with same bookingUuid and same time slot id
+                    if ($request->request->get('deleteBookingsWithSameBookingUuid') === 'true')
+                    {
+                        $arrColumns = [
+                            'tl_resource_booking.bookingUuid=?',
+                            'tl_resource_booking.timeSlotId=?',
+                        ];
+                        $arrValues = [
+                            $bookingUuid,
+                            $timeSlotId,
+                        ];
+                        $objSiblings = $resourceBookingModelAdapter->findBy($arrColumns, $arrValues);
+                        while ($objSiblings->next())
+                        {
+                            $intIdSibling = $objSiblings->id;
+                            $objSiblings->delete();
+
+                            // Log
+                            $logger = $systemAdapter->getContainer()->get('monolog.logger.contao');
+                            if ($logger)
+                            {
+                                $strLog = sprintf('Resource Booking with ID %s has been deleted.', $intIdSibling);
+                                $logger->log(LogLevel::INFO, $strLog, ['contao' => new ContaoContext(__METHOD__, 'INFO')]);
+                            }
+                            $countSiblingsToDelete++;
+                        }
+                    }
+                    // End delete siblings
+
                     $this->ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
-                    $this->ajaxResponse->setSuccessMessage($GLOBALS['TL_LANG']['MSG']['successfullyCanceledBooking']);
+                    if ($request->request->get('deleteBookingsWithSameBookingUuid') === 'true')
+                    {
+                        $this->ajaxResponse->setSuccessMessage(sprintf($GLOBALS['TL_LANG']['MSG']['successfullyCanceledBookingAndItsSiblings'], $intId, $countSiblingsToDelete));
+                    }
+                    else
+                    {
+                        $this->ajaxResponse->setSuccessMessage(sprintf($GLOBALS['TL_LANG']['MSG']['successfullyCanceledBooking'], $intId));
+                    }
                 }
                 else
                 {

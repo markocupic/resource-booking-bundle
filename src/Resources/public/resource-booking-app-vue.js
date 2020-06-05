@@ -315,6 +315,7 @@ class resourceBookingApp {
                     data.append('REQUEST_TOKEN', self.requestToken);
                     data.append('action', action);
                     data.append('bookingId', self.bookingWindow.activeTimeSlot.bookingId);
+                    data.append('deleteBookingsWithSameBookingUuid', self.bookingWindow.deleteBookingsWithSameBookingUuid);
 
                     fetch(window.location.href, {
                         method: "POST",
@@ -337,6 +338,7 @@ class resourceBookingApp {
                                 self.bookingWindow.message.error = response.message.error;
                             }
                             // Always
+                            self.bookingWindow.deleteBookingsWithSameBookingUuid = false;
                             self.bookingWindow.showConfirmationMsg = true;
                             self.fetchDataRequest();
                         })
@@ -345,6 +347,7 @@ class resourceBookingApp {
                             // Always
                             self.bookingWindow.showConfirmationMsg = true;
                             self.fetchDataRequest();
+                            self.bookingWindow.deleteBookingsWithSameBookingUuid = false;
                         });
                 },
 
@@ -384,8 +387,7 @@ class resourceBookingApp {
 
                     self.mode = 'booking-window';
 
-                    console.log(self.mode);
-
+                    self.bookingWindow.deleteBookingsWithSameBookingUuid = false;
                     self.bookingWindow.selectedTimeSlots = [];
                     self.bookingWindow.action = action;
                     self.bookingWindow.showConfirmationMsg = false;

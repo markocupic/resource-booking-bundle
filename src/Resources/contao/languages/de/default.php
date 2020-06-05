@@ -40,7 +40,8 @@ $GLOBALS['TL_LANG']['MSG']['selectResourceTypePlease'] = 'Bitte wählen Sie eine
 $GLOBALS['TL_LANG']['MSG']['selectResourcePlease'] = 'Bitte wählen Sie eine Ressource aus.';
 $GLOBALS['TL_LANG']['MSG']['selectValidResourcePlease'] = 'Bitte wählen Sie eine gültige Ressource aus.';
 $GLOBALS['TL_LANG']['MSG']['successfullyBookedXItems'] = 'Für %s konnte(n) erfolgreich %s Buchung(en) angelegt werden.';
-$GLOBALS['TL_LANG']['MSG']['successfullyCanceledBooking'] = 'Ihre Buchung wurde erfolgreich storniert.';
+$GLOBALS['TL_LANG']['MSG']['successfullyCanceledBooking'] = 'Ihre Buchung mit ID %s wurde erfolgreich storniert.';
+$GLOBALS['TL_LANG']['MSG']['successfullyCanceledBookingAndItsSiblings'] = 'Ihre Buchung mit ID %s und weitere %s Buchung(en) mit identischer UUID wurde(n) erfolgreich storniert.';
 
 // Frontend template
 $GLOBALS['TL_LANG']['RBB']['1WeekBack'] = '1 Woche zurück';
@@ -70,9 +71,10 @@ $GLOBALS['TL_LANG']['RBB']['loggedInAs'] = 'Angemeldet als';
 $GLOBALS['TL_LANG']['RBB']['week'] = 'Woche';
 $GLOBALS['TL_LANG']['RBB']['fullname'] = 'Name';
 $GLOBALS['TL_LANG']['RBB']['selectResourceType'] = 'Kategorie auswählen';
+$GLOBALS['TL_LANG']['RBB']['bookingIdAndUuid'] = 'Buchungs-Id/Uuid';
+$GLOBALS['TL_LANG']['RBB']['deleteSiblingsWithSameBookingUuid'] = 'Buchungen im selben Zeitraum, mit selber Buchungs UUID ebenfalls löschen';
 $GLOBALS['TL_LANG']['RBB']['generalError'] = 'Es ist ein Fehler aufgetreten. Bitte überprüfen Sie die Verbindung.';
 $GLOBALS['TL_LANG']['RBB']['error401'] = 'Es ist ein Fehler aufgetreten. Sie haben nicht die benötigen Rechte für diesen Seiteninhalt. Bitte versuchen Sie sich anzumelden.';
-
 
 
 
