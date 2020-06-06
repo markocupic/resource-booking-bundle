@@ -58,6 +58,9 @@
     background-color: rgba(115, 207, 97, 0.42);
     justify-content: center;
 }
+.mod_resourceBookingWeekcalendar .resource-booking-table-window .layout-cell.time-slot-cell[data-isinvaliddate=true], .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell.time-slot-cell[data-isinvaliddate=true] {
+    background-color: rgba(255, 200, 196, 0.66);
+}
 .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell {
     min-width: 180px;
     max-width: 250px;

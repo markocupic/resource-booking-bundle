@@ -82,6 +82,10 @@ $tableBorderColor: #ccc;
         background-color: $bookableBg;
         justify-content: center;
       }
+
+      &.time-slot-cell[data-isinvaliddate="true"] {
+        background-color: $notBookableBg;
+      }
     }
 
   }

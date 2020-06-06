@@ -325,9 +325,10 @@ class AjaxHelper
                         $objTs->isBooked = $this->isResourceBooked($this->objSelectedResource, $startTimestamp, $endTimestamp);
                         $objTs->isEditable = $objTs->isBooked ? false : true;
                         $objTs->timeSlotId = $objTimeslots->id;
+                        $objTs->validDate = true;
                         $objTs->resourceId = $this->objSelectedResource->id;
                         $objTs->cssClass = $cssCellClass;
-                        $objTs->isEditable = true;
+                        //$objTs->isEditable = true;
                         // slotId-startTime-endTime-mondayTimestampSelectedWeek
                         $objTs->bookingCheckboxValue = sprintf('%s-%s-%s-%s', $objTimeslots->id, $startTimestamp, $endTimestamp, $this->sessionBag->get('activeWeekTstamp'));
                         $objTs->bookingCheckboxId = sprintf('bookingCheckbox_modId_%s_%s_%s', $this->moduleModel->id, $rowCount, $colCount);
@@ -359,12 +360,21 @@ class AjaxHelper
                                 $objTs->bookingDescription = $objBooking->description;
                                 $objTs->bookingId = $objBooking->id;
                                 $objTs->bookingUuid = $objBooking->bookingUuid;
+                            }
+                        }
 
+                        // Do not allow editing if resourceBooking_addDateStop is set and resourceBooking_dateStop < time()
+                        if ($this->moduleModel->resourceBooking_addDateStop)
+                        {
+                            if ($objTs->endTimestamp > $this->moduleModel->resourceBooking_dateStop + 24 * 3600)
+                            {
+                                $objTs->isEditable = false;
+                                $objTs->validDate = false;
                             }
                         }
 
                         // Do not allow editing, if time slot lies in the past
-                        if ($objTs->startTimestamp < strtotime('today'))
+                        if ($objTs->endTimestamp < strtotime('today'))
                         {
                             $objTs->isEditable = false;
                         }
@@ -459,23 +469,24 @@ class AjaxHelper
             $arrTimeSlot = explode('-', $strTimeSlot);
             // Defaults
             $arrBooking = [
-                'id'                                  => null,
-                'timeSlotId'                          => $arrTimeSlot[0],
-                'startTime'                           => (int) $arrTimeSlot[1],
-                'endTime'                             => (int) $arrTimeSlot[2],
-                'date'                                => '',
-                'datim'                               => '',
-                'mondayTimestampSelectedWeek'         => (int) $arrTimeSlot[3],
-                'pid'                                 => Input::post('resourceId'),
-                'bookingUuid'                         => '',
-                'description'                         => Input::post('description'),
-                'member'                              => $objUser->id,
-                'tstamp'                              => time(),
-                'resourceAlreadyBooked'               => true,
-                'resourceBlocked'                     => true,
-                'resourceAlreadyBookedByLoggedInUser' => false,
-                'newEntry'                            => false,
-                'holder'                              => ''
+                'id'                                    => null,
+                'timeSlotId'                            => $arrTimeSlot[0],
+                'startTime'                             => (int) $arrTimeSlot[1],
+                'endTime'                               => (int) $arrTimeSlot[2],
+                'date'                                  => '',
+                'datim'                                 => '',
+                'mondayTimestampSelectedWeek'           => (int) $arrTimeSlot[3],
+                'pid'                                   => Input::post('resourceId'),
+                'bookingUuid'                           => '',
+                'description'                           => Input::post('description'),
+                'member'                                => $objUser->id,
+                'tstamp'                                => time(),
+                'resourceIsAlreadyBooked'               => true,
+                'resourceBlocked'                       => true,
+                'invalidDate'                           => false,
+                'resourceIsAlreadyBookedByLoggedInUser' => false,
+                'newEntry'                              => false,
+                'holder'                                => '',
             ];
             $arrBookings[] = $arrBooking;
 
@@ -515,25 +526,32 @@ class AjaxHelper
             $arrBookings[$index]['date'] = $dateAdapter->parse(Config::get('dateFormat'), $arrData['startTime']);
             $arrBookings[$index]['datim'] = sprintf('%s, %s: %s - %s', $dateAdapter->parse('D', $arrData['startTime']), $dateAdapter->parse(Config::get('dateFormat'), $arrData['startTime']), $dateAdapter->parse('H:i', $arrData['startTime']), $dateAdapter->parse('H:i', $arrData['endTime']));
 
-            // Resource is unoccupied
-            if (!$this->isResourceBooked($objResource, $arrData['startTime'], $arrData['endTime']))
+            if ($this->moduleModel->resourceBooking_addDateStop && $this->moduleModel->resourceBooking_dateStop + 24 * 3600 < $arrData['endTime'])
             {
-                if (($objTimeslot = ResourceBookingTimeSlotModel::findByPk($arrData['timeSlotId'])) !== null)
-                {
-                    $arrBookings[$index]['resourceAlreadyBooked'] = false;
-                    $arrBookings[$index]['resourceBlocked'] = false;
-                }
+                $arrBookings[$index]['resourceBlocked'] = true;
+                $arrBookings[$index]['invalidDate'] = true;
+            }
+
+            // Resource is bookable
+            elseif (ResourceBookingTimeSlotModel::findByPk($arrData['timeSlotId']) !== null && !$this->isResourceBooked($objResource, $arrData['startTime'], $arrData['endTime']))
+            {
+                $arrBookings[$index]['resourceBlocked'] = false;
+                $arrBookings[$index]['resourceIsAlreadyBooked'] = false;
             }
             // Resource has already been booked by the current/logged in user in a previous session
             elseif (null !== ($objBooking = ResourceBookingModel::findOneByResourceIdStarttimeEndtimeAndMember($objResource, $arrData['startTime'], $arrData['endTime'], $arrData['member'])))
             {
-                $arrBookings[$index]['id'] = $objBooking->id;
-                $arrBookings[$index]['resourceAlreadyBooked'] = true;
-                $arrBookings[$index]['resourceAlreadyBookedByLoggedInUser'] = true;
                 $arrBookings[$index]['resourceBlocked'] = false;
+                $arrBookings[$index]['resourceIsAlreadyBooked'] = true;
+                $arrBookings[$index]['resourceIsAlreadyBookedByLoggedInUser'] = true;
+                $arrBookings[$index]['id'] = $objBooking->id;
+
             }
             else
             {
+                $arrBookings[$index]['resourceBlocked'] = true;
+                $arrBookings[$index]['resourceIsAlreadyBooked'] = true;
+
                 // This case normally should not happen
                 $arrBookings[$index]['holder'] = '';
 

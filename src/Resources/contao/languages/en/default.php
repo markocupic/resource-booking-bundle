@@ -34,14 +34,14 @@ $GLOBALS['TL_LANG']['MSG']['pleaseInsertValidBookingTime'] = 'Please insert a va
 $GLOBALS['TL_LANG']['MSG']['generalBookingError'] = 'Error, while trying to book a resource.';
 $GLOBALS['TL_LANG']['MSG']['selectBookingDatesPlease'] = 'Please select one or more booking time slots.';
 $GLOBALS['TL_LANG']['MSG']['noResourceSelected'] = 'Please select a ressource.';
-$GLOBALS['TL_LANG']['MSG']['resourceAlreadyBooked'] = 'Resource already booked.';
+$GLOBALS['TL_LANG']['MSG']['resourceIsAlreadyBooked'] = 'Resource already booked.';
 $GLOBALS['TL_LANG']['MSG']['notAllowedToCancelBooking'] = 'You are not allowed to cancel this booking.';
 $GLOBALS['TL_LANG']['MSG']['selectResourceTypePlease'] = 'Please select a resource type.';
 $GLOBALS['TL_LANG']['MSG']['selectResourcePlease'] = 'Please select a resource.';
 $GLOBALS['TL_LANG']['MSG']['selectValidResourcePlease'] = 'Please select a valid resource.';
 $GLOBALS['TL_LANG']['MSG']['successfullyBookedXItems'] = 'Successfully booked for %s %s items.';
 $GLOBALS['TL_LANG']['MSG']['successfullyCanceledBooking'] = 'Booking with ID %s has been successfully canceled.';
-$GLOBALS['TL_LANG']['MSG']['successfullyCanceledBookingAndItsSiblings'] = 'Booking with ID %s and %s other bookings with identical booking uuids have been canceled.';
+$GLOBALS['TL_LANG']['MSG']['successfullyCanceledBookingAndItsRepetitions'] = 'Successfully canceled booking with ID %s and %s of its repetitions.';
 
 // Frontend template
 $GLOBALS['TL_LANG']['RBB']['1WeekBack'] = '1 Woche zurück';
@@ -72,7 +72,8 @@ $GLOBALS['TL_LANG']['RBB']['week'] = 'Woche';
 $GLOBALS['TL_LANG']['RBB']['fullname'] = 'Name';
 $GLOBALS['TL_LANG']['RBB']['selectResourceType'] = 'Kategorie auswählen';
 $GLOBALS['TL_LANG']['RBB']['bookingIdAndUuid'] = 'Booking-Id/Uuid';
-$GLOBALS['TL_LANG']['RBB']['deleteSiblingsWithSameBookingUuid'] = 'Delete bookings in the same time slot and with the same booking uuid';
+$GLOBALS['TL_LANG']['RBB']['deleteRepetitions'] = 'Delete repetitions.';
+$GLOBALS['TL_LANG']['RBB']['invalidDate'] = 'Invalid Date';
 $GLOBALS['TL_LANG']['RBB']['generalError'] = 'An error has occured. Please check connectivity.';
 $GLOBALS['TL_LANG']['RBB']['error401'] = 'An error has occured. You are not authorized. Please try to log in.';
 

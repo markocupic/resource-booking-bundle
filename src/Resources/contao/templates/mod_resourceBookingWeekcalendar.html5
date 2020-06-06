@@ -93,7 +93,7 @@
 
                 <div v-for="(row, rowIndex) in rows" v-bind:data-row-index="rowIndex" v-bind:id="row.rowData.cssRowId" class="layout-row" v-bind:class="row.rowData.cssRowClass">
                     <div class="layout-cell time-slot-indicator" v-bind:class="timeSlots[rowIndex].cssClass ? timeSlots[rowIndex].cssClass : ''">{{ timeSlots[rowIndex].timeSpanString }}</div>
-                    <div class="layout-cell time-slot-cell" v-for="(eventBox, colIndex) in row.cellData" v-bind:class="eventBox.cssClass ? eventBox.cssClass : ''" v-bind:data-day-index="eventBox.index" v-bind:data-is-holder="eventBox.isHolder ? 'true' : 'false'" v-bind:data-isBookable="!eventBox.isBooked && eventBox.isEditable" v-bind:data-isbooked="eventBox.isBooked">
+                    <div class="layout-cell time-slot-cell" v-for="(eventBox, colIndex) in row.cellData" v-bind:class="eventBox.cssClass ? eventBox.cssClass : ''" v-bind:data-day-index="eventBox.index" v-bind:data-is-holder="eventBox.isHolder ? 'true' : 'false'" v-bind:data-isbookable="!eventBox.isBooked && eventBox.isEditable && eventBox.validDate" v-bind:data-isbooked="eventBox.isBooked" v-bind:data-isinvaliddate="!eventBox.validDate">
                         <div v-if="eventBox.isBooked">
                             <span class="holder-box">{{ eventBox.bookedByFullname }}</span>{{br}}<span class="description-box">{{ eventBox.bookingDescription }}</span>
                         </div>
@@ -149,7 +149,7 @@
                     <div v-if="bookingWindow.action == 'showCancelBookingForm'" class="mt-4">
                         <div class="custom-control custom-switch">
                             <input v-model="bookingWindow.deleteBookingsWithSameBookingUuid" type="checkbox" class="custom-control-input" id="deleteSiblingsWihtSameBookingIdSwitch">
-                            <label class="custom-control-label" for="deleteSiblingsWihtSameBookingIdSwitch">{{rbb_lang::deleteSiblingsWithSameBookingUuid}}</label>
+                            <label class="custom-control-label" for="deleteSiblingsWihtSameBookingIdSwitch">{{rbb_lang::deleteRepetitions}}</label>
                         </div>
                     </div>
                     <!-- End switch delete siblings with same booking id -->
@@ -186,7 +186,7 @@
                             <div v-if="bookingFormValidation.passedValidation" class="alert alert-success" role="alert">
                                 {{ activeResource.title }} {{rbb_lang::isAvailable}}
                             </div>
-                            <div v-if="bookingFormValidation.resourceIsAlreadyBooked" class="alert alert-danger" role="alert">
+                            <div v-if="bookingFormValidation.resourceBlocked" class="alert alert-danger" role="alert">
                                 {{ activeResource.title }} {{rbb_lang::isNoMoreAvailable}}
                             </div>
                         </div>
@@ -206,9 +206,10 @@
                                             <small>{{ booking.datim }}</small>
                                         </div>
                                         <div class="layout-cell">
-                                            <span v-if="booking.resourceAlreadyBooked && !booking.resourceAlreadyBookedByLoggedInUser"><small>{{ booking.holder }}</small></span>
-                                            <span v-if="booking.resourceAlreadyBooked && booking.resourceAlreadyBookedByLoggedInUser"><small>{{rbb_lang::alreadyBooked}}</small></span>
-                                            <span v-if="!booking.resourceAlreadyBooked"><small>{{rbb_lang::available}}</small></span>
+                                            <span v-if="booking.invalidDate"><small>{{rbb_lang::invalidDate}}</small></span>
+                                            <span v-else-if="booking.resourceIsAlreadyBooked && !booking.resourceIsAlreadyBookedByLoggedInUser"><small>{{ booking.holder }}</small></span>
+                                            <span v-else-if="booking.resourceIsAlreadyBooked && booking.resourceIsAlreadyBookedByLoggedInUser"><small>{{rbb_lang::alreadyBooked}}</small></span>
+                                            <span v-else-if="!booking.resourceIsAlreadyBooked"><small>{{rbb_lang::available}}</small></span>
                                         </div>
                                     </div>
                                 </div>
@@ -225,8 +226,8 @@
 
                                 <div class="layout-row" v-for="(row, rowIndex) in rows" v-bind:data-row-index="rowIndex" v-bind:class="row.rowData.cssRowClass">
                                     <div class="layout-cell time-slot-indicator">{{ timeSlots[rowIndex].timeSpanString }}</div>
-                                    <div class="layout-cell time-slot-cell" v-for="(eventBox, colIndex) in row.cellData" v-bind:data-day-index="eventBox.index" v-bind:data-isbooked="eventBox.isBooked">
-                                        <div v-if="!eventBox.isBooked">
+                                    <div class="layout-cell time-slot-cell" v-for="(eventBox, colIndex) in row.cellData" v-bind:data-day-index="eventBox.index" v-bind:data-is-holder="eventBox.isHolder ? 'true' : 'false'" v-bind:data-isbookable="!eventBox.isBooked && eventBox.isEditable && eventBox.validDate" v-bind:data-isbooked="eventBox.isBooked" v-bind:data-isinvaliddate="!eventBox.validDate">
+                                        <div v-if="eventBox.isEditable && !eventBox.isBooked">
                                             <div class="custom-control custom-checkbox">
                                                 <input type="checkbox" v-on:change="bookingFormValidationRequest()" v-model="bookingWindow.selectedTimeSlots" v-bind:value="eventBox.bookingCheckboxValue" class="custom-control-input" v-bind:id="eventBox.bookingCheckboxId">
                                                 <label class="custom-control-label" v-bind:for="eventBox.bookingCheckboxId"></label>

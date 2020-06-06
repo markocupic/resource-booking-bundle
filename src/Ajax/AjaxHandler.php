@@ -242,7 +242,7 @@ class AjaxHandler
 
             foreach ($arrBookings as $arrBooking)
             {
-                if ($arrBooking['resourceAlreadyBooked'] && $arrBooking['resourceAlreadyBookedByLoggedInUser'] === false)
+                if ($arrBooking['resourceIsAlreadyBooked'] && $arrBooking['resourceIsAlreadyBookedByLoggedInUser'] === false)
                 {
                     $errors++;
                 }
@@ -250,7 +250,7 @@ class AjaxHandler
 
             if ($errors)
             {
-                $this->ajaxResponse->setErrorMessage($GLOBALS['TL_LANG']['MSG']['resourceAlreadyBooked']);
+                $this->ajaxResponse->setErrorMessage($GLOBALS['TL_LANG']['MSG']['resourceIsAlreadyBooked']);
             }
             else
             {
@@ -258,7 +258,7 @@ class AjaxHandler
                 {
                     // Set title
                     $arrBooking['title'] = sprintf('%s : %s %s %s [%s - %s]', $objResource->title, $GLOBALS['TL_LANG']['MSC']['bookingFor'], $this->objUser->firstname, $this->objUser->lastname, $dateAdapter->parse($configAdapter->get('datimFormat'), $arrBooking['startTime']), $dateAdapter->parse(Config::get('datimFormat'), $arrBooking['endTime']));
-                    if ($arrBooking['resourceAlreadyBookedByLoggedInUser'] === true && null !== $arrBooking['id'])
+                    if ($arrBooking['resourceIsAlreadyBookedByLoggedInUser'] === true && null !== $arrBooking['id'])
                     {
                         $objBooking = $resourceBookingModelAdapter->findByPk($arrBooking['id']);
                     }
@@ -340,7 +340,6 @@ class AjaxHandler
 
         $errors = 0;
         $selectedSlots = 0;
-        $blnBookingsPossible = true;
         $arrBookings = [];
         $objResource = $resourceBookingResourceModelAdapter->findPublishedByPk($request->request->get('resourceId', 0));
         $arrBookingDateSelection = !empty($request->request->get('bookingDateSelection')) && \is_array($request->request->get('bookingDateSelection')) ? $request->request->get('bookingDateSelection') : [];
@@ -354,31 +353,31 @@ class AjaxHandler
 
         if (!$errors)
         {
+            $this->ajaxResponse->setData('passedValidation', true);
+
             // Prepare $arrBookings with the helper method
             $arrBookings = $this->ajaxHelper->prepareBookingSelection($this->objUser, $objResource, $arrBookingDateSelection, (int) $bookingRepeatStopWeekTstamp);
 
             foreach ($arrBookings as $arrBooking)
             {
-                if ($arrBooking['resourceAlreadyBooked'] === true && $arrBooking['resourceAlreadyBookedByLoggedInUser'] === false)
+                if ($arrBooking['invalidDate'] === true)
                 {
-                    $blnBookingsPossible = false;
+                    $this->ajaxResponse->setData('passedValidation', false);
+                    $this->ajaxResponse->setData('dateNotInAllowedTimeSpan', true);
+                }
+
+                if ($arrBooking['resourceIsAlreadyBooked'] === true && $arrBooking['resourceIsAlreadyBookedByLoggedInUser'] === false)
+                {
+                    $this->ajaxResponse->setData('passedValidation', false);
+                    $this->ajaxResponse->setData('resourceIsAlreadyBooked', true);
                 }
                 $selectedSlots++;
             }
 
-            if (!$selectedSlots)
+            if (count($arrBookings) === 0)
             {
                 $this->ajaxResponse->setData('passedValidation', false);
                 $this->ajaxResponse->setData('noDatesSelected', true);
-            }
-            elseif (!$blnBookingsPossible)
-            {
-                $this->ajaxResponse->setData('passedValidation', false);
-                $this->ajaxResponse->setData('resourceIsAlreadyBooked', true);
-            }
-            else // All ok!
-            {
-                $this->ajaxResponse->setData('passedValidation', true);
             }
         }
 
@@ -467,7 +466,7 @@ class AjaxHandler
                     $this->ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
                     if ($request->request->get('deleteBookingsWithSameBookingUuid') === 'true')
                     {
-                        $this->ajaxResponse->setSuccessMessage(sprintf($GLOBALS['TL_LANG']['MSG']['successfullyCanceledBookingAndItsSiblings'], $intId, $countSiblingsToDelete));
+                        $this->ajaxResponse->setSuccessMessage(sprintf($GLOBALS['TL_LANG']['MSG']['successfullyCanceledBookingAndItsRepetitions'], $intId, $countSiblingsToDelete));
                     }
                     else
                     {

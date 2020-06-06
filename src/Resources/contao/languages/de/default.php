@@ -34,14 +34,14 @@ $GLOBALS['TL_LANG']['MSG']['pleaseInsertValidBookingTime'] = 'Bitte geben Sie ei
 $GLOBALS['TL_LANG']['MSG']['generalBookingError'] = 'Beim Versuch die Ressource zu buchen ist ein Fehler aufgetreten.';
 $GLOBALS['TL_LANG']['MSG']['selectBookingDatesPlease'] = 'Bitte wählen Sie ein oder mehrere Buchungszeitfenster aus.';
 $GLOBALS['TL_LANG']['MSG']['noResourceSelected'] = 'Es wurde keine Ressource ausgewählt';
-$GLOBALS['TL_LANG']['MSG']['resourceAlreadyBooked'] = 'Die Ressource ist bereits ausgebucht.';
+$GLOBALS['TL_LANG']['MSG']['resourceIsAlreadyBooked'] = 'Die Ressource ist bereits ausgebucht.';
 $GLOBALS['TL_LANG']['MSG']['notAllowedToCancelBooking'] = 'Sie besitzen nicht die nötigen Rechte, um diese Buchung zu stornieren.';
 $GLOBALS['TL_LANG']['MSG']['selectResourceTypePlease'] = 'Bitte wählen Sie einen Ressourcen-Typ aus.';
 $GLOBALS['TL_LANG']['MSG']['selectResourcePlease'] = 'Bitte wählen Sie eine Ressource aus.';
 $GLOBALS['TL_LANG']['MSG']['selectValidResourcePlease'] = 'Bitte wählen Sie eine gültige Ressource aus.';
 $GLOBALS['TL_LANG']['MSG']['successfullyBookedXItems'] = 'Für %s konnte(n) erfolgreich %s Buchung(en) angelegt werden.';
 $GLOBALS['TL_LANG']['MSG']['successfullyCanceledBooking'] = 'Ihre Buchung mit ID %s wurde erfolgreich storniert.';
-$GLOBALS['TL_LANG']['MSG']['successfullyCanceledBookingAndItsSiblings'] = 'Ihre Buchung mit ID %s und weitere %s Buchung(en) mit identischer UUID wurde(n) erfolgreich storniert.';
+$GLOBALS['TL_LANG']['MSG']['successfullyCanceledBookingAndItsRepetitions'] = 'Ihre Buchung mit ID %s und weitere %s Wiederholunge(en) wurde(n) erfolgreich storniert.';
 
 // Frontend template
 $GLOBALS['TL_LANG']['RBB']['1WeekBack'] = '1 Woche zurück';
@@ -72,7 +72,8 @@ $GLOBALS['TL_LANG']['RBB']['week'] = 'Woche';
 $GLOBALS['TL_LANG']['RBB']['fullname'] = 'Name';
 $GLOBALS['TL_LANG']['RBB']['selectResourceType'] = 'Kategorie auswählen';
 $GLOBALS['TL_LANG']['RBB']['bookingIdAndUuid'] = 'Buchungs-Id/Uuid';
-$GLOBALS['TL_LANG']['RBB']['deleteSiblingsWithSameBookingUuid'] = 'Buchungen im selben Zeitraum, mit selber Buchungs UUID ebenfalls löschen';
+$GLOBALS['TL_LANG']['RBB']['deleteRepetitions'] = 'Wiederholungen mitlöschen.';
+$GLOBALS['TL_LANG']['RBB']['invalidDate'] = 'Ungültiges Datum.';
 $GLOBALS['TL_LANG']['RBB']['generalError'] = 'Es ist ein Fehler aufgetreten. Bitte überprüfen Sie die Verbindung.';
 $GLOBALS['TL_LANG']['RBB']['error401'] = 'Es ist ein Fehler aufgetreten. Sie haben nicht die benötigen Rechte für diesen Seiteninhalt. Bitte versuchen Sie sich anzumelden.';
 
