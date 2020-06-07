@@ -400,6 +400,9 @@ class AjaxHandler
         /** @var  ResourceBookingModel $resourceBookingModelAdapter */
         $resourceBookingModelAdapter = $this->framework->getAdapter(ResourceBookingModel::class);
 
+        /** @var Date $dateAdapter */
+        $dateAdapter = $this->framework->getAdapter(Date::class);
+
         $request = $this->requestStack->getCurrentRequest();
 
         // Load language file
@@ -418,6 +421,7 @@ class AjaxHandler
                     $intId = $objBooking->id;
                     $bookingUuid = $objBooking->bookingUuid;
                     $timeSlotId = $objBooking->timeSlotId;
+                    $weekday = $dateAdapter->parse('D', $objBooking->startTime);
 
                     // Delete entry
                     $intAffected = $objBooking->delete();
@@ -429,9 +433,9 @@ class AjaxHandler
                         $logger->log(LogLevel::INFO, $strLog, ['contao' => new ContaoContext(__METHOD__, 'INFO')]);
                     }
 
-                    $countSiblingsToDelete = 0;
+                    $countRepetitionsToDelete = 0;
 
-                    // Delete bookings with same bookingUuid and same time slot id
+                    // Delete repetitions with same bookingUuid and same starttime and endtime
                     if ($request->request->get('deleteBookingsWithSameBookingUuid') === 'true')
                     {
                         $arrColumns = [
@@ -442,31 +446,35 @@ class AjaxHandler
                             $bookingUuid,
                             $timeSlotId,
                         ];
-                        $objSiblings = $resourceBookingModelAdapter->findBy($arrColumns, $arrValues);
-                        if ($objSiblings !== null)
+                        $objRepetitions = $resourceBookingModelAdapter->findBy($arrColumns, $arrValues);
+                        if ($objRepetitions !== null)
                         {
-                            while ($objSiblings->next())
+                            while ($objRepetitions->next())
                             {
-                                $intIdSibling = $objSiblings->id;
-                                $objSiblings->delete();
-
-                                // Log
-                                $logger = $systemAdapter->getContainer()->get('monolog.logger.contao');
-                                if ($logger)
+                                if ($dateAdapter->parse('D', $objRepetitions->startTime) === $weekday)
                                 {
-                                    $strLog = sprintf('Resource Booking with ID %s has been deleted.', $intIdSibling);
-                                    $logger->log(LogLevel::INFO, $strLog, ['contao' => new ContaoContext(__METHOD__, 'INFO')]);
+                                    $intIdRepetition = $objRepetitions->id;
+
+                                    $objRepetitions->delete();
+
+                                    // Log
+                                    $logger = $systemAdapter->getContainer()->get('monolog.logger.contao');
+                                    if ($logger)
+                                    {
+                                        $strLog = sprintf('Resource Booking with ID %s has been deleted.', $intIdRepetition);
+                                        $logger->log(LogLevel::INFO, $strLog, ['contao' => new ContaoContext(__METHOD__, 'INFO')]);
+                                    }
+                                    $countRepetitionsToDelete++;
                                 }
-                                $countSiblingsToDelete++;
                             }
                         }
                     }
-                    // End delete siblings
+                    // End delete repetitions
 
                     $this->ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
                     if ($request->request->get('deleteBookingsWithSameBookingUuid') === 'true')
                     {
-                        $this->ajaxResponse->setSuccessMessage(sprintf($GLOBALS['TL_LANG']['MSG']['successfullyCanceledBookingAndItsRepetitions'], $intId, $countSiblingsToDelete));
+                        $this->ajaxResponse->setSuccessMessage(sprintf($GLOBALS['TL_LANG']['MSG']['successfullyCanceledBookingAndItsRepetitions'], $intId, $countRepetitionsToDelete));
                     }
                     else
                     {
