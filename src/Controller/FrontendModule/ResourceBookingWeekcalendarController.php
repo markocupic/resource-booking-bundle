@@ -17,7 +17,6 @@ use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController
 use Contao\CoreBundle\Csrf\MemoryTokenStorage;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Environment;
-use Contao\Input;
 use Contao\ModuleModel;
 use Contao\PageModel;
 use Contao\System;
@@ -28,6 +27,7 @@ use Markocupic\ResourceBookingBundle\AppInitialization\Initialize;
 use Markocupic\ResourceBookingBundle\Csrf\CsrfTokenManager;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Contao\CoreBundle\ServiceAnnotation\FrontendModule;
 
@@ -39,6 +39,9 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
 {
     /** @var ContaoFramework */
     private $framework;
+
+    /** @var RequestStack */
+    private $requestStack;
 
     /** @var Initialize */
     private $appInitializer;
@@ -52,17 +55,22 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
     /** @var AjaxHandler */
     private $ajaxHandler;
 
+    /** @var string */
+    private $moduleKey;
+
     /**
      * ResourceBookingWeekcalendarController constructor.
      * @param ContaoFramework $framework
+     * @param RequestStack $requestStack
      * @param Initialize $appInitializer
      * @param MemoryTokenStorage $tokenStorage
      * @param CsrfTokenManager $csrfTokenManager
      * @param AjaxHandler $ajaxHandler
      */
-    public function __construct(ContaoFramework $framework, Initialize $appInitializer, MemoryTokenStorage $tokenStorage, CsrfTokenManager $csrfTokenManager, AjaxHandler $ajaxHandler)
+    public function __construct(ContaoFramework $framework, RequestStack $requestStack, Initialize $appInitializer, MemoryTokenStorage $tokenStorage, CsrfTokenManager $csrfTokenManager, AjaxHandler $ajaxHandler)
     {
         $this->framework = $framework;
+        $this->requestStack = $requestStack;
         $this->appInitializer = $appInitializer;
         $this->tokenStorage = $tokenStorage;
         $this->csrfTokenManager = $csrfTokenManager;
@@ -106,20 +114,38 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
                 $controllerAdapter->reload();
             }
 
+            /**
+             * The module key is necessary to run several rbb applications on the same page
+             * and is sent as a post parameter in every xhr request
+             *
+             * The module key (#moduleId_#moduleIndex f.ex. 33_2) contains the module id and the module index
+             * The module index is 1, if the current module is the first rbb module on the current page
+             * The module index is 2, if the current module is the first rbb module on the current page, etc.
+             *
+             */
+            if (!isset($GLOBALS['rbb_moduleIndex']))
+            {
+                $GLOBALS['rbb_moduleIndex'] = 1;
+            }
+            else
+            {
+                $GLOBALS['rbb_moduleIndex']++;
+            }
+
+            $this->moduleKey = $model->id . '_' . $GLOBALS['rbb_moduleIndex'];
+            $GLOBALS['rbb_moduleKey'] = $this->moduleKey;
+
             // Initialize application
             $this->appInitializer->initialize((int) $model->id, (int) $page->id);
+
             if ($environmentAdapter->get('isAjaxRequest'))
             {
-                if ((int) Input::post('moduleId') === (int) $model->id)
+                $request = $this->requestStack->getCurrentRequest();
+                if ($request->request->get('moduleKey') === $this->moduleKey)
                 {
                     $this->getAjaxResponse($request)->send();
                     exit;
                 }
-            }
-            else
-            {
-                // Store module id in globals though it canbe used in the ArrayAttributeBag service
-                $GLOBALS['rbb_moduleId'] = $model->id;
             }
         }
 
@@ -136,6 +162,9 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
      */
     protected function getResponse(Template $template, ModuleModel $model, Request $request): ?Response
     {
+        // Used, if multiple rbb modules are used on the same page
+        $template->moduleKey = $this->moduleKey;
+
         // Let vue.js do the rest ;-)
         return $template->getResponse();
     }

@@ -196,25 +196,37 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
     {
         /** @var Environment $environmentAdapter */
         $environmentAdapter = $this->framework->getAdapter(Environment::class);
-        
+
         // Add session id to url
         if (null !== ($strToken = $this->csrfTokenManager->getValidCsrfToken()))
         {
-            $moduleId = '';
-            if (Environment::get('isAjaxRequest'))
+            /**
+             * The module key is necessary to run several rbb applications on the same page
+             * and is sent as a post parameter in every xhr request
+             *
+             * The module key (#moduleId_#moduleIndex f.ex. 33_2) contains the module id and the module index
+             * The module index is 1, if the current module is the first rbb module on the current page
+             * The module index is 2, if the current module is the first rbb module on the current page, etc.
+             *
+             */
+            if ($environmentAdapter->get('isAjaxRequest'))
             {
-                if (!$this->requestStack->getCurrentRequest()->request->has('moduleId'))
+                if (!$this->requestStack->getCurrentRequest()->request->has('moduleKey'))
                 {
-                    throw new \Exception('Parameter "moduleId" not found in Ajax request.');
+                    throw new \Exception('Parameter "moduleKey" not found in Ajax request.');
                 }
-                $moduleId = $this->requestStack->getCurrentRequest()->request->get('moduleId');
+                $moduleKey = $this->requestStack->getCurrentRequest()->request->get('moduleKey');
             }
             else
             {
-                $moduleId = $GLOBALS['rbb_moduleId'];
+                if (!isset($GLOBALS['rbb_moduleIndex']))
+                {
+                    throw new \Exception('$GLOBALS["rbb_moduleKey"] not set.');
+                }
+                $moduleKey = $GLOBALS['rbb_moduleKey'];
             }
 
-            return sha1($moduleId . $strToken);
+            return sha1($moduleKey . '_' . $strToken);
         }
         else
         {

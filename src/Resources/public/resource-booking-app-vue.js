@@ -30,8 +30,8 @@ class resourceBookingApp {
                 loggedInUser: [],
                 // The request token
                 requestToken: '',
-                // The module id
-                moduleId: '',
+                // The module key
+                moduleKey: '',
                 // Contains the weekdays
                 weekdays: [],
                 // Contains the time slots (first col in the booking table)
@@ -75,9 +75,8 @@ class resourceBookingApp {
                 // Post requests require a request token
                 self.requestToken = params.requestToken;
 
-                // Post reqests require moduleId
-                self.moduleId = params.moduleId;
-
+                // Post requests require moduleKey
+                self.moduleKey = params.moduleKey;
 
                 // Show the loading spinner for 2s
                 window.setTimeout(function () {
@@ -136,7 +135,7 @@ class resourceBookingApp {
                     let data = new FormData();
                     data.append('REQUEST_TOKEN', self.requestToken);
                     data.append('action', action);
-                    data.append('moduleId', self.moduleId);
+                    data.append('moduleKey', self.moduleKey);
 
                     // Fetch
                     fetch(window.location.href, {
@@ -186,7 +185,7 @@ class resourceBookingApp {
                     data.append('resType', activeResourceTypeId);
                     data.append('res', activeResourceId);
                     data.append('date', activeWeekTstamp);
-                    data.append('moduleId', self.moduleId);
+                    data.append('moduleKey', self.moduleKey);
 
                     fetch(window.location.href, {
                         method: "POST",
@@ -231,7 +230,7 @@ class resourceBookingApp {
                     data.append('resourceId', self.bookingWindow.activeTimeSlot.resourceId);
                     data.append('description', $(self.$el).find('.booking-window [name="bookingDescription"]').first().val());
                     data.append('bookingRepeatStopWeekTstamp', $(self.$el).find('.booking-repeat-stop-week-tstamp').first().val());
-                    data.append('moduleId', self.moduleId);
+                    data.append('moduleKey', self.moduleKey);
 
                     let i;
                     for (i = 0; i < self.bookingWindow.selectedTimeSlots.length; i++) {
@@ -283,7 +282,7 @@ class resourceBookingApp {
                     data.append('action', action);
                     data.append('resourceId', self.bookingWindow.activeTimeSlot.resourceId);
                     data.append('bookingRepeatStopWeekTstamp', $(self.$el).find('.booking-repeat-stop-week-tstamp').first().val());
-                    data.append('moduleId', self.moduleId);
+                    data.append('moduleKey', self.moduleKey);
 
                     let i;
                     for (i = 0; i < self.bookingWindow.selectedTimeSlots.length; i++) {
@@ -326,7 +325,7 @@ class resourceBookingApp {
                     data.append('action', action);
                     data.append('bookingId', self.bookingWindow.activeTimeSlot.bookingId);
                     data.append('deleteBookingsWithSameBookingUuid', self.bookingWindow.deleteBookingsWithSameBookingUuid);
-                    data.append('moduleId', self.moduleId);
+                    data.append('moduleKey', self.moduleKey);
 
                     fetch(window.location.href, {
                         method: "POST",

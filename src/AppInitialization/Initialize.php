@@ -219,7 +219,7 @@ class Initialize
         }
         else
         {
-            // Autoredirect if there is only one item in selection list
+            // Autoredirect if there is only one resource type in the filter menu
             if (!$environmentAdapter->get('isAjaxRequest'))
             {
                 $oResType = $resourceBookingResourceTypeModelAdapter->findPublishedByIds($arrResTypeIds);
@@ -233,7 +233,10 @@ class Initialize
 
         // Get resource ids from module settings
         $arrResIds = $stringUtilAdapter->deserialize($objModuleModel->resourceBooking_resource, true);
-
+if($GLOBALS['rbb_moduleKey'] == 2)
+{
+    die('bla');
+}
         // Check if access to active resource is allowed
         if (($resId = $this->sessionBag->get('res', 0)) > 0)
         {
@@ -250,7 +253,7 @@ class Initialize
         }
         else
         {
-            // Autoredirect if there is only one item in selection list
+            // Autoredirect if there is only one resource in the filter menu
             if (!$environmentAdapter->get('isAjaxRequest') && $resTypeId > 0)
             {
                 $oRes = $resourceBookingResourceModelAdapter->findPublishedByPid($resTypeId);

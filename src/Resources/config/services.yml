@@ -40,6 +40,7 @@ services:
   Markocupic\ResourceBookingBundle\Controller\FrontendModule\ResourceBookingWeekcalendarController:
     arguments:
     - '@contao.framework'
+    - '@request_stack'
     - '@Markocupic\ResourceBookingBundle\AppInitialization\Initialize'
     - '@contao.csrf.token_storage'
     - '@Markocupic\ResourceBookingBundle\Csrf\CsrfTokenManager'
