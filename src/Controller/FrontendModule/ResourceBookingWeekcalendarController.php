@@ -17,6 +17,7 @@ use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController
 use Contao\CoreBundle\Csrf\MemoryTokenStorage;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Environment;
+use Contao\Input;
 use Contao\ModuleModel;
 use Contao\PageModel;
 use Contao\System;
@@ -107,11 +108,18 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
 
             // Initialize application
             $this->appInitializer->initialize((int) $model->id, (int) $page->id);
-
             if ($environmentAdapter->get('isAjaxRequest'))
             {
-                $this->getAjaxResponse($request)->send();
-                exit;
+                if ((int) Input::post('moduleId') === (int) $model->id)
+                {
+                    $this->getAjaxResponse($request)->send();
+                    exit;
+                }
+            }
+            else
+            {
+                // Store module id in globals though it canbe used in the ArrayAttributeBag service
+                $GLOBALS['rbb_moduleId'] = $model->id;
             }
         }
 

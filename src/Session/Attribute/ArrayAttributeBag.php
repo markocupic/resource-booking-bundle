@@ -12,7 +12,10 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\Session\Attribute;
 
+use Contao\CoreBundle\Framework\ContaoFramework;
+use Contao\Environment;
 use Markocupic\ResourceBookingBundle\Csrf\CsrfTokenManager;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\Attribute\AttributeBag;
 
 /**
@@ -21,18 +24,27 @@ use Symfony\Component\HttpFoundation\Session\Attribute\AttributeBag;
  */
 class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
 {
+    /** @var ContaoFramework */
+    private $framework;
+
+    /** @var RequestStack */
+    private $requestStack;
 
     /** @var CsrfTokenManager */
     private $csrfTokenManager;
 
     /**
      * ArrayAttributeBag constructor.
+     * @param RequestStack $requestStack
      * @param CsrfTokenManager $csrfTokenManager
      * @param string $storageKey
      */
-    public function __construct(CsrfTokenManager $csrfTokenManager, string $storageKey = '_sf2_attributes')
+    public function __construct(ContaoFramework $framework, RequestStack $requestStack, CsrfTokenManager $csrfTokenManager, string $storageKey = '_sf2_attributes')
     {
+        $this->framework = $framework;
+        $this->requestStack = $requestStack;
         $this->csrfTokenManager = $csrfTokenManager;
+
         parent::__construct($storageKey);
     }
 
@@ -182,10 +194,27 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
      */
     private function getSessionBagSubkey()
     {
+        /** @var Environment $environmentAdapter */
+        $environmentAdapter = $this->framework->getAdapter(Environment::class);
+        
         // Add session id to url
         if (null !== ($strToken = $this->csrfTokenManager->getValidCsrfToken()))
         {
-            return sha1($strToken);
+            $moduleId = '';
+            if (Environment::get('isAjaxRequest'))
+            {
+                if (!$this->requestStack->getCurrentRequest()->request->has('moduleId'))
+                {
+                    throw new \Exception('Parameter "moduleId" not found in Ajax request.');
+                }
+                $moduleId = $this->requestStack->getCurrentRequest()->request->get('moduleId');
+            }
+            else
+            {
+                $moduleId = $GLOBALS['rbb_moduleId'];
+            }
+
+            return sha1($moduleId . $strToken);
         }
         else
         {
