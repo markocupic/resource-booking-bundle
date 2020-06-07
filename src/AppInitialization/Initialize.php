@@ -231,12 +231,6 @@ class Initialize
             }
         }
 
-        // Get resource ids from module settings
-        $arrResIds = $stringUtilAdapter->deserialize($objModuleModel->resourceBooking_resource, true);
-if($GLOBALS['rbb_moduleKey'] == 2)
-{
-    die('bla');
-}
         // Check if access to active resource is allowed
         if (($resId = $this->sessionBag->get('res', 0)) > 0)
         {
@@ -291,7 +285,7 @@ if($GLOBALS['rbb_moduleKey'] == 2)
             {
                 $intTstampLastPossibleWeek = $intTstampStop;
             }
-            if($intTstampStop < time())
+            if ($intTstampStop < time())
             {
                 $intTstampLastPossibleWeek = $dateHelperAdapter->getMondayOfCurrentWeek();
             }
