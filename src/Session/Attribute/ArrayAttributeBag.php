@@ -209,21 +209,29 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
              * The module index is 2, if the current module is the first rbb module on the current page, etc.
              *
              */
+            if (!$this->requestStack->getCurrentRequest()->request->has('moduleKey'))
+            {
+                //die(print_r(debug_print_backtrace(0,20)));
+            }
+            $moduleKey = '';
+            $strToken = '';
             if ($environmentAdapter->get('isAjaxRequest'))
             {
                 if (!$this->requestStack->getCurrentRequest()->request->has('moduleKey'))
                 {
-                    throw new \Exception('Parameter "moduleKey" not found in Ajax request.');
+                    //throw new \Exception('Parameter "moduleKey" not found in Ajax request.');
                 }
-                $moduleKey = $this->requestStack->getCurrentRequest()->request->get('moduleKey');
+                else
+                {
+                    $moduleKey = $this->requestStack->getCurrentRequest()->request->get('moduleKey');
+                }
             }
             else
             {
-                if (!isset($GLOBALS['rbb_moduleIndex']))
+                if (isset($GLOBALS['rbb_moduleIndex']))
                 {
-                    throw new \Exception('$GLOBALS["rbb_moduleKey"] not set.');
+                    $moduleKey = $GLOBALS['rbb_moduleKey'];
                 }
-                $moduleKey = $GLOBALS['rbb_moduleKey'];
             }
 
             return sha1($moduleKey . '_' . $strToken);
