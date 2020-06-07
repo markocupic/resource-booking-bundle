@@ -1,120 +1,228 @@
 $notBookableBg: rgba(255, 200, 196, 0.66);
 $bookableBg: rgba(115, 207, 97, 0.42);
 $loggedInUserIsHolderBg: rgba(3, 169, 244, 0.32);
-$iconBookingColor: #fff;
+$iconBookingColor: #ffffff;
+$tableBorderColor: #ccc;
+
+.resource-booking-backdrop-layer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1040;
+  width: 100vw;
+  height: 100vh;
+  background-color: transparent;
+  opacity: 0;
+}
 
 .mod_resourceBookingWeekcalendar {
   .resource-booking-app .vue-application {
     visibility: hidden;
   }
+
   .resource-booking-app.is-ready .vue-application {
     visibility: visible;
   }
-  table.resource-booking-table-main, table.resource-booking-table-modal {
-    * {
-      font-size: small;
-    }
-    td, th {
-      background-color: #fff;
-      border: 3px solid #fff;
-      padding: .25rem;
-    }
 
-    td.time-slot-cell {
-      background-color: $bookableBg;
-      height: 6rem;
-    }
-    td.time-slot-cell[data-isbooked="true"] {
-      background-color: $notBookableBg;
-    }
-    td.time-slot-cell[data-isbookable="true"] {
-      background-color: $bookableBg;
-      text-align: center;
-      vertical-align: middle;
-    }
-    .btn-cancel-booking, .icon-cancel-booking {
-      color: red;
-    }
-    .btn-booking, .icon-booking {
-      font-size: 2rem;
-      color: $iconBookingColor;
-    }
-    .btn-booking .icon-cancel-booking {
-      display: none;
-    }
-    .btn-cancel-booking .icon-booking {
-      display: none;
+  .resource-booking-app {
+    .loading-spinner {
+      color: #d8d8d8;
     }
   }
-  // Wrap long words
-  table.resource-booking-table-main {
-    td, th {
-      min-width: 100px;
-      max-width: 100px;
-      word-break: break-all;
+  // filter form (restype-, res- and week selector
+  .resource-booking-form {
+    .week-select {
+      option.past-week {
+        color: #8e8e8e;
+      }
 
-    }
-    td.time-slot-cell[data-is-holder="true"] {
-      background-color: $loggedInUserIsHolderBg;
-      .holder-box {
+      option.current-week {
         font-weight: bold;
+        color: #000000;
+      }
+
+      option.future-week {
+        /** **/
       }
     }
   }
+
+  .resource-booking-table-window, .resource-booking-table-main {
+    overflow-x: auto;
+
+    * {
+      font-size: small;
+    }
+
+    .layout-row {
+      display: flex;
+    }
+
+    .layout-cell {
+      // Set equal width
+      flex-grow: 1;
+      flex-basis: 0;
+      overflow: hidden;
+      background-color: #ffffff;
+      border: 3px solid #ffffff;
+      padding: .25rem;
+
+      &.time-slot-cell {
+        background-color: $bookableBg;
+        height: 6rem;
+      }
+
+      &.time-slot-cell[data-isbooked="true"] {
+        background-color: $notBookableBg;
+      }
+
+      &.time-slot-cell[data-isbookable="true"] {
+        display: flex;
+        align-items: center;
+        background-color: $bookableBg;
+        justify-content: center;
+      }
+
+      &.time-slot-cell[data-isinvaliddate="true"] {
+        background-color: $notBookableBg;
+      }
+    }
+
+  }
+
+  // Wrap long words
+  .resource-booking-table-main {
+    .layout-cell {
+      min-width: 180px;
+      max-width: 250px;
+      word-break: break-all;
+
+      .btn-cancel-booking, .icon-cancel-booking {
+        color: red;
+      }
+
+      .btn-booking, .icon-booking {
+        font-size: 2rem;
+        color: $iconBookingColor;
+      }
+
+      .btn-booking .icon-cancel-booking {
+        display: none;
+      }
+
+      .btn-cancel-booking .icon-booking {
+        display: none;
+      }
+
+      &.time-slot-indicator {
+        width: 110px;
+        min-width: 110px;
+        max-width: 110px;
+        word-break: break-all;
+      }
+
+      &.time-slot-cell[data-is-holder="true"] {
+        background-color: $loggedInUserIsHolderBg;
+        .holder-box {
+          font-weight: bold;
+        }
+      }
+    }
+  }
+
+  .resource-booking-table-window {
+    .layout-cell {
+      height: auto !important;
+      min-height: 2.5rem;
+      display: flex;
+      align-items: center;
+      background-color: $bookableBg;
+      justify-content: center;
+      min-width: 100px;
+      width: 100px;
+      max-width: 100px;
+      &.time-slot-indicator {
+        justify-content: left;
+        background-color: #ffffff;
+        width: 110px;
+        min-width: 110px;
+        max-width: 110px;
+        word-break: break-all;
+      }
+    }
+  }
+
   .tl_error {
     background-color: var(--danger);
     padding: 0.5rem;
   }
 
-  table.resource-booking-table-modal {
-    td, th {
-      height: auto !important;
-      min-height: 2.5rem;
-      text-align: center;
-      vertical-align: middle;
-    }
-  }
-  table.table-no-border {
-    td, th {
+  .table-no-border {
+    .layout-cell, .layout-cell {
       border: none !important;
       border: 0 !important;
       border-color: transparent !important;
     }
   }
 
-  .booking-preview.table > tbody {
-    tr td {
-      padding-left: 4px;
-      padding-right: 4px;
+  // Booking window
+  .booking-window {
+    .booking-window-header-title {
+      color: #ffffff;
     }
-    tr.bookable td {
-      background-color: $bookableBg;
+
+    .info-table, .booking-preview {
+      .layout-row {
+        border-top: 1px solid $tableBorderColor;
+        &.row-last {
+          border-bottom: 1px solid $tableBorderColor;
+        }
+
+        .layout-cell {
+          padding: .35rem .25rem;
+          &.column-first {
+            width: 150px;
+          }
+        }
+      }
     }
-    tr.not-bookable td {
-      background-color: $notBookableBg;
+    .booking-preview {
+      .bookable {
+        background-color: $bookableBg;
+      }
+
+      .not-bookable {
+        background-color: $notBookableBg;
+      }
+    }
+
+    button.close-window {
+      padding: 0 30px;
+      color: #ffffff;
+      border: 0;
+      border-left: 1px solid #ffffff;
+      font-size: x-large;
+    }
+
+    .booking-preview.table > tbody {
+      tr td {
+        padding-left: 4px;
+        padding-right: 4px;
+      }
+
+      tr.bookable td {
+        background-color: $bookableBg;
+      }
+
+      tr.not-bookable td {
+        background-color: $notBookableBg;
+      }
+    }
+
+    .timeSpanSelect option[selected] {
+      background-color: #149efb;
     }
   }
 
-  .timeSpanSelect option[selected] {
-    background-color: #149efb;
-  }
 }
-
-// Customizing
-// Etwas Abstand nach dem Mittag
-tr.time-slot-6 td {
-  border-top: 20px solid #fff !important;
-}
-
-// Etwas Abstand nach de Pausen
-tr.time-slot-4 td, tr.time-slot-8 td {
-  border-top: 8px solid #fff !important;
-}
-
-tr.time-slot-6 td {
-  border-top: 20px solid #fff !important;
-}
-
-
-
 

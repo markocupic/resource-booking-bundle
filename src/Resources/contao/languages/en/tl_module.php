@@ -12,9 +12,8 @@
 $GLOBALS['TL_LANG']['tl_module']['resourceBooking_resourceTypes'] = array('Resourcen-Types', 'Select one ore resource types.');
 $GLOBALS['TL_LANG']['tl_module']['resourceBooking_hideDays'] = array('Allow bookings for limited weekdays only', 'Allow booking for limited weekday only.');
 $GLOBALS['TL_LANG']['tl_module']['resourceBooking_hideDaysSelection'] = array('Select weekdays.', 'Select weekdays where booking will be possible.');
-$GLOBALS['TL_LANG']['tl_module']['resourceBooking_autologout'] = array('Autologout after idle period', 'Enable autologout after idle period.');
-$GLOBALS['TL_LANG']['tl_module']['resourceBooking_autologoutDelay'] = array('Autologout after * seconds of idle time', 'Insert the idle time after which the frontend user will be logged out autmatically.');
-$GLOBALS['TL_LANG']['tl_module']['resourceBooking_autologoutRedirect'] = array('Redirect on autologout', 'Select the redirecting page.');
-
+$GLOBALS['TL_LANG']['tl_module']['resourceBooking_intAheadWeek'] = array('Week selector: Weeks ahead', 'Select number of weeks.');
+$GLOBALS['TL_LANG']['tl_module']['resourceBooking_addDateStop'] = ['Activate booking stop date', 'Activate booking stop date.'];
+$GLOBALS['TL_LANG']['tl_module']['resourceBooking_dateStop'] = ['Select booking stop date', 'Please select a booking stop date.'];
 
 

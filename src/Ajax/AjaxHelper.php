@@ -158,13 +158,13 @@ class AjaxHelper
         {
             $arrData['opt']['resourceBooking_autologoutRedirect_autologout'] = '1';
         }
-        $arrData['opt'] = array_map(function($v){
-            if(!empty($v) && Validator::isBinaryUuid($v))
+        $arrData['opt'] = array_map(function ($v) {
+            if (!empty($v) && Validator::isBinaryUuid($v))
             {
                 $v = StringUtil::binToUuid($v);
             }
             return $v;
-        },$arrData['opt']);
+        }, $arrData['opt']);
 
         // Messages
         if ($this->objSelectedResourceType === null && !$messageAdapter->hasMessages())
@@ -180,7 +180,7 @@ class AjaxHelper
         // Filter form: get resource types dropdown
         $rows = [];
         $arrResTypesIds = StringUtil::deserialize($this->moduleModel->resourceBooking_resourceTypes, true);
-        if (($objResourceTypes = ResourceBookingResourceTypeModel::findMultipleAndPublishedByIds($arrResTypesIds)) !== null)
+        if (($objResourceTypes = ResourceBookingResourceTypeModel::findPublishedByIds($arrResTypesIds)) !== null)
         {
             while ($objResourceTypes->next())
             {
@@ -235,7 +235,7 @@ class AjaxHelper
         ];
 
         // Get booking RepeatsSelection
-        $arrData['bookingRepeatsSelection'] = $this->getWeekSelection((int) $this->sessionBag->get('activeWeekTstamp'), $dateHelperAdapter->addDaysToTime(7 * $this->sessionBag->get('intAheadWeeks')), false);
+        $arrData['bookingRepeatsSelection'] = $this->getWeekSelection((int) $this->sessionBag->get('activeWeekTstamp'), (int) $this->sessionBag->get('tstampLastPossibleWeek'), false);
 
         // Send weekdays, dates and day
         $arrWeek = [];
@@ -281,26 +281,27 @@ class AjaxHelper
                     $cells = [];
                     $objRow = new \stdClass();
 
-                    $cssID = sprintf('timeSlotModId_%s_%s', $this->moduleModel->id, $objTimeslots->id);
-                    $cssClass = 'time-slot-' . $objTimeslots->id;
+                    $cssRowId = sprintf('timeSlotModId_%s_%s', $this->moduleModel->id, $objTimeslots->id);
+                    $cssRowClass = 'time-slot-' . $objTimeslots->id;
 
                     // Get the CSS ID
-                    $arrCssID = StringUtil::deserialize($objTimeslots->cssID, true);
+                    $arrCssCellID = StringUtil::deserialize($objTimeslots->cssID, true);
 
                     // Override the CSS ID
-                    if (!empty($arrCssID[0]))
+                    if (!empty($arrCssCellID[0]))
                     {
-                        $cssID = $arrCssID[0];
+                        $cssRowId = $arrCssCellID[0];
                     }
 
-                    // Merge the CSS classes
-                    if (!empty($arrCssID[1]))
-                    {
-                        $cssClass = trim($cssClass . ' ' . $arrCssID[1]);
-                    }
+                    $objRow->cssRowId = $cssRowId;
+                    $objRow->cssRowClass = $cssRowClass;
 
-                    $objRow->cssRowId = $cssID;
-                    $objRow->cssRowClass = $cssClass;
+                    // Add CSS class to cell
+                    $cssCellClass = null;
+                    if (!empty($arrCssCellID[1]))
+                    {
+                        $cssCellClass = $arrCssCellID[1];
+                    }
 
                     for ($colCount = 0; $colCount < 7; $colCount++)
                     {
@@ -324,8 +325,10 @@ class AjaxHelper
                         $objTs->isBooked = $this->isResourceBooked($this->objSelectedResource, $startTimestamp, $endTimestamp);
                         $objTs->isEditable = $objTs->isBooked ? false : true;
                         $objTs->timeSlotId = $objTimeslots->id;
+                        $objTs->validDate = true;
                         $objTs->resourceId = $this->objSelectedResource->id;
-                        $objTs->isEditable = true;
+                        $objTs->cssClass = $cssCellClass;
+                        //$objTs->isEditable = true;
                         // slotId-startTime-endTime-mondayTimestampSelectedWeek
                         $objTs->bookingCheckboxValue = sprintf('%s-%s-%s-%s', $objTimeslots->id, $startTimestamp, $endTimestamp, $this->sessionBag->get('activeWeekTstamp'));
                         $objTs->bookingCheckboxId = sprintf('bookingCheckbox_modId_%s_%s_%s', $this->moduleModel->id, $rowCount, $colCount);
@@ -356,11 +359,22 @@ class AjaxHelper
 
                                 $objTs->bookingDescription = $objBooking->description;
                                 $objTs->bookingId = $objBooking->id;
+                                $objTs->bookingUuid = $objBooking->bookingUuid;
                             }
                         }
 
-                        // If week lies in the past, then do not allow editing
-                        if ($objTs->mondayTimestampSelectedWeek < strtotime('monday this week'))
+                        // Do not allow editing if resourceBooking_addDateStop is set and resourceBooking_dateStop < time()
+                        if ($this->moduleModel->resourceBooking_addDateStop)
+                        {
+                            if ($objTs->endTimestamp > $this->moduleModel->resourceBooking_dateStop + 24 * 3600)
+                            {
+                                $objTs->isEditable = false;
+                                $objTs->validDate = false;
+                            }
+                        }
+
+                        // Do not allow editing, if time slot lies in the past
+                        if ($objTs->endTimestamp < strtotime('today'))
                         {
                             $objTs->isEditable = false;
                         }
@@ -372,6 +386,7 @@ class AjaxHelper
                 }
             }
         }
+
         $arrData['rows'] = $rows;
 
         // Get time slots
@@ -381,9 +396,19 @@ class AjaxHelper
         {
             while ($objTimeslots->next())
             {
+                // Get the CSS ID
+                $arrCssCellID = StringUtil::deserialize($objTimeslots->cssID, true);
+
+                // Override the CSS ID
+                $cssCellClass = null;
+                if (!empty($arrCssCellID[1]))
+                {
+                    $cssCellClass = $arrCssCellID[1];
+                }
                 $startTimestamp = (int) $objTimeslots->startTime;
                 $endTimestamp = (int) $objTimeslots->endTime;
                 $objTs = new \stdClass();
+                $objTs->cssClass = $cssCellClass;
                 $objTs->startTimeString = UtcTimeHelper::parse('H:i', $startTimestamp);
                 $objTs->startTimestamp = (int) $startTimestamp;
                 $objTs->endTimeString = UtcTimeHelper::parse('H:i', $endTimestamp);
@@ -444,23 +469,24 @@ class AjaxHelper
             $arrTimeSlot = explode('-', $strTimeSlot);
             // Defaults
             $arrBooking = [
-                'id'                                  => null,
-                'timeSlotId'                          => $arrTimeSlot[0],
-                'startTime'                           => (int) $arrTimeSlot[1],
-                'endTime'                             => (int) $arrTimeSlot[2],
-                'date'                                => '',
-                'datim'                               => '',
-                'mondayTimestampSelectedWeek'         => (int) $arrTimeSlot[3],
-                'pid'                                 => Input::post('resourceId'),
-                'bookingUuid'                         => '',
-                'description'                         => Input::post('description'),
-                'member'                              => $objUser->id,
-                'tstamp'                              => time(),
-                'resourceAlreadyBooked'               => true,
-                'resourceBlocked'                     => true,
-                'resourceAlreadyBookedByLoggedInUser' => false,
-                'newEntry'                            => false,
-                'holder'                              => ''
+                'id'                                    => null,
+                'timeSlotId'                            => $arrTimeSlot[0],
+                'startTime'                             => (int) $arrTimeSlot[1],
+                'endTime'                               => (int) $arrTimeSlot[2],
+                'date'                                  => '',
+                'datim'                                 => '',
+                'mondayTimestampSelectedWeek'           => (int) $arrTimeSlot[3],
+                'pid'                                   => Input::post('resourceId'),
+                'bookingUuid'                           => '',
+                'description'                           => Input::post('description'),
+                'member'                                => $objUser->id,
+                'tstamp'                                => time(),
+                'resourceIsAlreadyBooked'               => true,
+                'resourceBlocked'                       => true,
+                'invalidDate'                           => false,
+                'resourceIsAlreadyBookedByLoggedInUser' => false,
+                'newEntry'                              => false,
+                'holder'                                => '',
             ];
             $arrBookings[] = $arrBooking;
 
@@ -500,25 +526,32 @@ class AjaxHelper
             $arrBookings[$index]['date'] = $dateAdapter->parse(Config::get('dateFormat'), $arrData['startTime']);
             $arrBookings[$index]['datim'] = sprintf('%s, %s: %s - %s', $dateAdapter->parse('D', $arrData['startTime']), $dateAdapter->parse(Config::get('dateFormat'), $arrData['startTime']), $dateAdapter->parse('H:i', $arrData['startTime']), $dateAdapter->parse('H:i', $arrData['endTime']));
 
-            // Resource is unoccupied
-            if (!$this->isResourceBooked($objResource, $arrData['startTime'], $arrData['endTime']))
+            if ($this->moduleModel->resourceBooking_addDateStop && $this->moduleModel->resourceBooking_dateStop + 24 * 3600 < $arrData['endTime'])
             {
-                if (($objTimeslot = ResourceBookingTimeSlotModel::findByPk($arrData['timeSlotId'])) !== null)
-                {
-                    $arrBookings[$index]['resourceAlreadyBooked'] = false;
-                    $arrBookings[$index]['resourceBlocked'] = false;
-                }
+                $arrBookings[$index]['resourceBlocked'] = true;
+                $arrBookings[$index]['invalidDate'] = true;
+            }
+
+            // Resource is bookable
+            elseif (ResourceBookingTimeSlotModel::findByPk($arrData['timeSlotId']) !== null && !$this->isResourceBooked($objResource, $arrData['startTime'], $arrData['endTime']))
+            {
+                $arrBookings[$index]['resourceBlocked'] = false;
+                $arrBookings[$index]['resourceIsAlreadyBooked'] = false;
             }
             // Resource has already been booked by the current/logged in user in a previous session
             elseif (null !== ($objBooking = ResourceBookingModel::findOneByResourceIdStarttimeEndtimeAndMember($objResource, $arrData['startTime'], $arrData['endTime'], $arrData['member'])))
             {
-                $arrBookings[$index]['id'] = $objBooking->id;
-                $arrBookings[$index]['resourceAlreadyBooked'] = true;
-                $arrBookings[$index]['resourceAlreadyBookedByLoggedInUser'] = true;
                 $arrBookings[$index]['resourceBlocked'] = false;
+                $arrBookings[$index]['resourceIsAlreadyBooked'] = true;
+                $arrBookings[$index]['resourceIsAlreadyBookedByLoggedInUser'] = true;
+                $arrBookings[$index]['id'] = $objBooking->id;
+
             }
             else
             {
+                $arrBookings[$index]['resourceBlocked'] = true;
+                $arrBookings[$index]['resourceIsAlreadyBooked'] = true;
+
                 // This case normally should not happen
                 $arrBookings[$index]['holder'] = '';
 
@@ -578,15 +611,28 @@ class AjaxHelper
         $currentTstamp = $startTstamp;
         while ($currentTstamp <= $endTstamp)
         {
+            $cssClass = 'past-week';
+
             // add empty
-            if ($injectEmptyLine && $dateHelperAdapter->getMondayOfCurrentWeek() == $currentTstamp)
+            if ($dateHelperAdapter->getMondayOfCurrentWeek() == $currentTstamp)
             {
-                $arrWeeks[] = [
-                    'tstamp'     => '',
-                    'date'       => '',
-                    'optionText' => '-------------'
-                ];
+                if ($injectEmptyLine)
+                {
+                    $arrWeeks[] = [
+                        'tstamp'     => '',
+                        'date'       => '',
+                        'optionText' => '-------------'
+                    ];
+                }
+
+                $cssClass = 'current-week';
             }
+
+            if ($dateHelperAdapter->getMondayOfCurrentWeek() < $currentTstamp)
+            {
+                $cssClass = 'future-week';
+            }
+
             $tstampMonday = $currentTstamp;
             $dateMonday = $dateAdapter->parse('d.m.Y', $currentTstamp);
             $tstampSunday = strtotime($dateMonday . ' + 6 days');
@@ -594,6 +640,7 @@ class AjaxHelper
             $calWeek = $dateAdapter->parse('W', $tstampMonday);
             $yearMonday = $dateAdapter->parse('Y', $tstampMonday);
             $arrWeeks[] = [
+                'cssClass'     => $cssClass,
                 'tstamp'       => (int) $currentTstamp,
                 'tstampMonday' => (int) $tstampMonday,
                 'tstampSunday' => (int) $tstampSunday,

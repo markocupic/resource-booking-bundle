@@ -72,12 +72,11 @@ class Initialize
     }
 
     /**
-     * @param bool $isAjaxRequest
-     * @param int|null $moduleModelId
-     * @param int|null $pageModelId
+     * @param int $moduleModelId
+     * @param int $pageModelId
      * @throws \Exception
      */
-    public function initialize(bool $isAjaxRequest, ?int $moduleModelId, ?int $pageModelId)
+    public function initialize(int $moduleModelId, int $pageModelId)
     {
         /** @var ResourceBookingResourceTypeModel $environmentAdapter */
         $resourceBookingResourceTypeModelAdapter = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class);
@@ -110,11 +109,9 @@ class Initialize
 
         if (null !== ($strToken = $this->csrfTokenManager->getValidCsrfToken()))
         {
-            if (!$isAjaxRequest)
-            {
-                //Add session id to the session bag
-                $this->sessionBag->set('csrfToken', sha1($strToken));
-            }
+            //Add session id to the session bag
+            $this->sessionBag->set('csrfToken', sha1($strToken));
+
             $blnForbidden = false;
         }
 
@@ -147,26 +144,24 @@ class Initialize
         $this->pageModel = $objPageModel;
 
         // Set language
-        if (!$isAjaxRequest)
+
+        if (!empty($objPageModel->language))
         {
-            if (!empty($objPageModel->language))
-            {
-                $language = $objPageModel->language;
-            }
-            elseif (!empty($objPageModel->rootLanguage))
-            {
-                $language = $objPageModel->rootLanguage;
-            }
-            elseif (!empty($objPageModel->rootFallbackLanguage))
-            {
-                $language = $objPageModel->rootFallbackLanguage;
-            }
-            else
-            {
-                $language = 'en';
-            }
-            $this->sessionBag->set('language', $language);
+            $language = $objPageModel->language;
         }
+        elseif (!empty($objPageModel->rootLanguage))
+        {
+            $language = $objPageModel->rootLanguage;
+        }
+        elseif (!empty($objPageModel->rootFallbackLanguage))
+        {
+            $language = $objPageModel->rootFallbackLanguage;
+        }
+        else
+        {
+            $language = 'en';
+        }
+        $this->sessionBag->set('language', $language);
 
         // Set resType by url param
         $blnRedirect = false;
@@ -200,6 +195,9 @@ class Initialize
             $controllerAdapter->redirect($url);
         }
 
+        // Get resource type ids from module settings
+        $arrResTypeIds = $stringUtilAdapter->deserialize($objModuleModel->resourceBooking_resourceTypes, true);
+
         // Check if access to active resource type is allowed
         if (($resTypeId = $this->sessionBag->get('resType', 0)) > 0)
         {
@@ -208,8 +206,6 @@ class Initialize
             {
                 $blnForbidden = true;
             }
-            // Get ids from module settings
-            $arrResTypeIds = $stringUtilAdapter->deserialize($objModuleModel->resourceBooking_resourceTypes, true);
 
             if (!in_array($resTypeId, $arrResTypeIds))
             {
@@ -221,6 +217,22 @@ class Initialize
                 throw new UnauthorizedHttpException(sprintf('Unauthorized access to resource type with ID %s.', $resTypeId));
             }
         }
+        else
+        {
+            // Autoredirect if there is only one item in selection list
+            if (!$environmentAdapter->get('isAjaxRequest'))
+            {
+                $oResType = $resourceBookingResourceTypeModelAdapter->findPublishedByIds($arrResTypeIds);
+                if ($oResType !== null && $oResType->count() === 1)
+                {
+                    $resTypeId = $oResType->id;
+                    $this->sessionBag->set('resType', $oResType->id);
+                }
+            }
+        }
+
+        // Get resource ids from module settings
+        $arrResIds = $stringUtilAdapter->deserialize($objModuleModel->resourceBooking_resource, true);
 
         // Check if access to active resource is allowed
         if (($resId = $this->sessionBag->get('res', 0)) > 0)
@@ -236,12 +248,30 @@ class Initialize
                 throw new UnauthorizedHttpException(sprintf('Unauthorized access to resource with ID %s.', $resId));
             }
         }
+        else
+        {
+            // Autoredirect if there is only one item in selection list
+            if (!$environmentAdapter->get('isAjaxRequest') && $resTypeId > 0)
+            {
+                $oRes = $resourceBookingResourceModelAdapter->findPublishedByPid($resTypeId);
+                if ($oRes !== null && $oRes->count() === 1)
+                {
+                    $this->sessionBag->set('res', $oRes->id);
+                }
+            }
+        }
 
         // Set active week timestamp
         $tstampCurrentWeek = (int) $this->sessionBag->get('activeWeekTstamp', $dateHelperAdapter->getMondayOfCurrentWeek());
         $this->sessionBag->set('activeWeekTstamp', $tstampCurrentWeek);
 
-        // Get intBackWeeks && intBackWeeks
+        // Overwrite rbb_intAheadWeeks from module settings
+        if ((int) $objModuleModel->resourceBooking_intAheadWeek > 0)
+        {
+            $configAdapter->set('rbb_intAheadWeeks', (int) $objModuleModel->resourceBooking_intAheadWeek);
+        }
+
+        // Get intBackWeeks && intAheadWeeks
         $intBackWeeks = (int) $configAdapter->get('rbb_intBackWeeks');
         $this->sessionBag->set('intBackWeeks', $intBackWeeks);
         $intAheadWeeks = (int) $configAdapter->get('rbb_intAheadWeeks');
@@ -249,7 +279,21 @@ class Initialize
 
         // Get first and last possible week tstamp
         $this->sessionBag->set('tstampFirstPossibleWeek', $dateHelperAdapter->addWeeksToTime($intBackWeeks, $dateHelperAdapter->getMondayOfCurrentWeek()));
-        $this->sessionBag->set('tstampLastPossibleWeek', $dateHelperAdapter->addWeeksToTime($intAheadWeeks, $dateHelperAdapter->getMondayOfCurrentWeek()));
+
+        $intTstampLastPossibleWeek = $dateHelperAdapter->addWeeksToTime($intAheadWeeks, $dateHelperAdapter->getMondayOfCurrentWeek());
+        if ($objModuleModel->resourceBooking_addDateStop)
+        {
+            $intTstampStop = $dateHelperAdapter->getMondayOfWeekDate($objModuleModel->resourceBooking_dateStop);
+            if ($intTstampStop < $intTstampLastPossibleWeek)
+            {
+                $intTstampLastPossibleWeek = $intTstampStop;
+            }
+            if($intTstampStop < time())
+            {
+                $intTstampLastPossibleWeek = $dateHelperAdapter->getMondayOfCurrentWeek();
+            }
+        }
+        $this->sessionBag->set('tstampLastPossibleWeek', $intTstampLastPossibleWeek);
     }
 
 }
