@@ -140,11 +140,10 @@ class Initialize
             throw new \Exception('Page model not set.');
         }
 
+        // Save page model id to session
         $this->sessionBag->set('pageModelId', $objPageModel->id);
-        $this->pageModel = $objPageModel;
 
         // Set language
-
         if (!empty($objPageModel->language))
         {
             $language = $objPageModel->language;
