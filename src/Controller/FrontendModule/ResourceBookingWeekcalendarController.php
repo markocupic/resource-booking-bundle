@@ -46,12 +46,6 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
     /** @var Initialize */
     private $appInitializer;
 
-    /** @var MemoryTokenStorage */
-    private $tokenStorage;
-
-    /** @var CsrfTokenManager */
-    private $csrfTokenManager;
-
     /** @var AjaxHandler */
     private $ajaxHandler;
 
@@ -63,17 +57,13 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
      * @param ContaoFramework $framework
      * @param RequestStack $requestStack
      * @param Initialize $appInitializer
-     * @param MemoryTokenStorage $tokenStorage
-     * @param CsrfTokenManager $csrfTokenManager
      * @param AjaxHandler $ajaxHandler
      */
-    public function __construct(ContaoFramework $framework, RequestStack $requestStack, Initialize $appInitializer, MemoryTokenStorage $tokenStorage, CsrfTokenManager $csrfTokenManager, AjaxHandler $ajaxHandler)
+    public function __construct(ContaoFramework $framework, RequestStack $requestStack, Initialize $appInitializer, AjaxHandler $ajaxHandler)
     {
         $this->framework = $framework;
         $this->requestStack = $requestStack;
         $this->appInitializer = $appInitializer;
-        $this->tokenStorage = $tokenStorage;
-        $this->csrfTokenManager = $csrfTokenManager;
         $this->ajaxHandler = $ajaxHandler;
     }
 
@@ -99,20 +89,6 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
 
             /** @var Environment $environmentAdapter */
             $environmentAdapter = $this->framework->getAdapter(Environment::class);
-
-            $container = $systemAdapter->getContainer();
-
-            if (!$this->csrfTokenManager->hasValidCsrfToken())
-            {
-                // Generate csrf token, that we will be used as the session bag key
-                $container
-                    ->get('contao.csrf.token_manager')
-                    ->getToken($container->getParameter('contao.csrf_token_name'))
-                    ->getValue();
-
-                // redirect
-                $controllerAdapter->reload();
-            }
 
             /**
              * The module key is necessary to run several rbb applications on the same page

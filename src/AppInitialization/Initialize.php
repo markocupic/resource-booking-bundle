@@ -22,7 +22,6 @@ use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceTypeModel;
 use Contao\StringUtil;
 use Haste\Util\Url;
-use Markocupic\ResourceBookingBundle\Csrf\CsrfTokenManager;
 use Markocupic\ResourceBookingBundle\Date\DateHelper;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -44,9 +43,6 @@ class Initialize
     /** @var RequestStack */
     private $requestStack;
 
-    /** @var CsrfTokenManager */
-    private $csrfTokenManager;
-
     /** @var string */
     private $bagName;
 
@@ -58,15 +54,13 @@ class Initialize
      * @param ContaoFramework $framework
      * @param SessionInterface $session
      * @param RequestStack $requestStack
-     * @param CsrfTokenManager $csrfTokenManager
      * @param string $bagName
      */
-    public function __construct(ContaoFramework $framework, SessionInterface $session, RequestStack $requestStack, CsrfTokenManager $csrfTokenManager, string $bagName)
+    public function __construct(ContaoFramework $framework, SessionInterface $session, RequestStack $requestStack, string $bagName)
     {
         $this->framework = $framework;
         $this->session = $session;
         $this->requestStack = $requestStack;
-        $this->csrfTokenManager = $csrfTokenManager;
         $this->bagName = $bagName;
         $this->sessionBag = $session->getBag($bagName);
     }
@@ -104,21 +98,6 @@ class Initialize
 
         /** @var Request $request */
         $request = $this->requestStack->getCurrentRequest();
-
-        $blnForbidden = true;
-
-        if (null !== ($strToken = $this->csrfTokenManager->getValidCsrfToken()))
-        {
-            //Add session id to the session bag
-            $this->sessionBag->set('csrfToken', sha1($strToken));
-
-            $blnForbidden = false;
-        }
-
-        if ($blnForbidden === true)
-        {
-            throw new UnauthorizedHttpException('Invalid session detected or cookie has expired. Please check your cookie settings.');
-        }
 
         // Get $moduleModelId from parameter or session
         $moduleModelId = $moduleModelId !== null ? $moduleModelId : ($this->sessionBag->has('moduleModelId') ? $this->sessionBag->get('moduleModelId') : null);

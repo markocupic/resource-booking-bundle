@@ -14,9 +14,11 @@ namespace Markocupic\ResourceBookingBundle\Session\Attribute;
 
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Environment;
-use Markocupic\ResourceBookingBundle\Csrf\CsrfTokenManager;
+use Contao\FrontendUser;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\Attribute\AttributeBag;
+use Symfony\Component\Security\Core\Security;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 /**
  * Class ArrayAttributeBag
@@ -30,20 +32,26 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
     /** @var RequestStack */
     private $requestStack;
 
-    /** @var CsrfTokenManager */
-    private $csrfTokenManager;
+    /** @var SessionInterface */
+    private $session;
+
+    /** @var Security */
+    private $security;
 
     /**
      * ArrayAttributeBag constructor.
+     * @param ContaoFramework $framework
      * @param RequestStack $requestStack
-     * @param CsrfTokenManager $csrfTokenManager
+     * @param SessionInterface $session
+     * @param Security $security
      * @param string $storageKey
      */
-    public function __construct(ContaoFramework $framework, RequestStack $requestStack, CsrfTokenManager $csrfTokenManager, string $storageKey = '_sf2_attributes')
+    public function __construct(ContaoFramework $framework, RequestStack $requestStack, SessionInterface $session, Security $security, string $storageKey = '_sf2_attributes')
     {
         $this->framework = $framework;
         $this->requestStack = $requestStack;
-        $this->csrfTokenManager = $csrfTokenManager;
+        $this->session = $session;
+        $this->security = $security;
 
         parent::__construct($storageKey);
     }
@@ -189,8 +197,7 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
     }
 
     /**
-     * @return mixed
-     * @throws \Exception
+     * @return string
      */
     private function getSessionBagSubkey()
     {
@@ -198,48 +205,47 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
         $environmentAdapter = $this->framework->getAdapter(Environment::class);
 
         // Add session id to url
-        if (null !== ($strToken = $this->csrfTokenManager->getValidCsrfToken()))
-        {
-            /**
-             * The module key is necessary to run several rbb applications on the same page
-             * and is sent as a post parameter in every xhr request
-             *
-             * The module key (#moduleId_#moduleIndex f.ex. 33_2) contains the module id and the module index
-             * The module index is 1, if the current module is the first rbb module on the current page
-             * The module index is 2, if the current module is the first rbb module on the current page, etc.
-             *
-             */
-            if (!$this->requestStack->getCurrentRequest()->request->has('moduleKey'))
-            {
-                //die(print_r(debug_print_backtrace(0,20)));
-            }
-            $moduleKey = '';
-            $strToken = '';
-            if ($environmentAdapter->get('isAjaxRequest'))
-            {
-                if (!$this->requestStack->getCurrentRequest()->request->has('moduleKey'))
-                {
-                    //throw new \Exception('Parameter "moduleKey" not found in Ajax request.');
-                }
-                else
-                {
-                    $moduleKey = $this->requestStack->getCurrentRequest()->request->get('moduleKey');
-                }
-            }
-            else
-            {
-                if (isset($GLOBALS['rbb_moduleIndex']))
-                {
-                    $moduleKey = $GLOBALS['rbb_moduleKey'];
-                }
-            }
 
-            return sha1($moduleKey . '_' . $strToken);
+        /**
+         * The module key is necessary to run several rbb applications on the same page
+         * and is sent as a post parameter in every xhr request
+         *
+         * The module key (#moduleId_#moduleIndex f.ex. 33_2) contains the module id and the module index
+         * The module index is 1, if the current module is the first rbb module on the current page
+         * The module index is 2, if the current module is the first rbb module on the current page, etc.
+         *
+         */
+        $moduleKey = '';
+        $sessionId = '';
+        $userId = '';
+        if ($this->session->isStarted())
+        {
+            $sessionId = $this->session->getId();
+        }
+
+        if ($this->security->getUser() instanceof FrontendUser)
+        {
+            /** @var FrontendUser $objUser */
+            $objUser = $this->security->getUser();
+            if ($objUser->id > 0)
+            {
+                $userId = $objUser->id;
+            }
+        }
+
+        if ($environmentAdapter->get('isAjaxRequest'))
+        {
+            $moduleKey = $this->requestStack->getCurrentRequest()->request->get('moduleKey');
         }
         else
         {
-            throw new \Exception('contao.csrf_token not found.');
+            if (isset($GLOBALS['rbb_moduleKey']))
+            {
+                $moduleKey = $GLOBALS['rbb_moduleKey'];
+            }
         }
+
+        return sha1($sessionId . '_' . $userId . '_' . $moduleKey);
     }
 
 }

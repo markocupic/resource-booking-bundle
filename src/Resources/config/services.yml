@@ -33,7 +33,6 @@ services:
     - '@contao.framework'
     - '@session'
     - '@request_stack'
-    - '@Markocupic\ResourceBookingBundle\Csrf\CsrfTokenManager'
     - '%resource_booking_bundle.session.attribute_bag_name%'
 
   # Contao frontend module "resourceBookingWeekcalendar"
@@ -42,8 +41,6 @@ services:
     - '@contao.framework'
     - '@request_stack'
     - '@Markocupic\ResourceBookingBundle\AppInitialization\Initialize'
-    - '@contao.csrf.token_storage'
-    - '@Markocupic\ResourceBookingBundle\Csrf\CsrfTokenManager'
     - '@Markocupic\ResourceBookingBundle\Ajax\AjaxHandler'
     calls:
     - ['setContainer', ['@Psr\Container\ContainerInterface']]
@@ -57,22 +54,14 @@ services:
     - '@contao.framework'
     public: true
 
-  # CsrfTokenManager helper
-  Markocupic\ResourceBookingBundle\Csrf\CsrfTokenManager:
-    arguments:
-    - '@request_stack'
-    - '@contao.csrf.token_manager'
-    - '%contao.csrf_cookie_prefix%'
-    - '%contao.csrf_token_name%'
-    public: true
-
   # Register session bag
   Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag:
     class: Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag
     arguments:
     - '@contao.framework'
     - '@request_stack'
-    - '@Markocupic\ResourceBookingBundle\Csrf\CsrfTokenManager'
+    - '@session'
+    - '@security.helper'
     - '%resource_booking_bundle.session.attribute_bag_key%'
     calls:
     - ['setName', ['%resource_booking_bundle.session.attribute_bag_name%']]
