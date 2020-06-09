@@ -12,6 +12,9 @@
 .mod_resourceBookingWeekcalendar .resource-booking-app .vue-application {
     visibility: hidden;
 }
+.mod_resourceBookingWeekcalendar .resource-booking-app[v-cloak] {
+    display: none;
+}
 .mod_resourceBookingWeekcalendar .resource-booking-app.is-ready .vue-application {
     visibility: visible;
 }

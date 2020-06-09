@@ -20,6 +20,10 @@ $tableBorderColor: #ccc;
     visibility: hidden;
   }
 
+  .resource-booking-app[v-cloak] {
+    display: none;
+  }
+
   .resource-booking-app.is-ready .vue-application {
     visibility: visible;
   }

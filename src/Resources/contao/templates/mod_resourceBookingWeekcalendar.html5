@@ -11,7 +11,7 @@
 
 <?php $this->block('content'); ?>
 
-<div id="resourceBookingApp_<?= $this->moduleKey ?>" class="resource-booking-app" v-bind:class="{ 'is-ready': isReady }">
+<div id="resourceBookingApp_<?= $this->moduleKey ?>" v-cloak class="resource-booking-app" v-bind:class="{ 'is-ready': isReady }">
 
     <div class="logged-in-user-data mb-2"><strong>{{rbb_lang::loggedInAs}}:</strong> {{user::firstname}} {{user::lastname}}</div>
 
@@ -275,9 +275,11 @@
 
 
 <script>
-    new resourceBookingApp('#resourceBookingApp_<?= $this->moduleKey ?>', {
-        'requestToken': '{{REQUEST_TOKEN}}',
-        'moduleKey': '<?= $this->moduleKey ?>',
+    $( document ).ready(function() {
+        new resourceBookingApp('#resourceBookingApp_<?= $this->moduleKey ?>', {
+            'requestToken': '{{REQUEST_TOKEN}}',
+            'moduleKey': '<?= $this->moduleKey ?>',
+        });
     });
 </script>
 
