@@ -36,9 +36,9 @@
         </div>
     </template>
 
+
     <!-- vue application container -->
     <div class="vue-application">
-
 
         <!-- main window mode === 'main-window'-->
         <div class="main-window" v-if="mode === 'main-window'">
@@ -173,7 +173,7 @@
                     <!-- End alert -->
 
                     <!-- alert -->
-                    <template v-if="bookingFormValidation.message && bookingFormValidation.message.error" class="mt-5">
+                    <template v-if="bookingFormValidation.message && bookingFormValidation.message.error">
                         <div class="message-box mt-5">
                             <div class="alert alert-danger pt-3 pb-3">
                                 {{ bookingFormValidation.message.error }}
@@ -272,7 +272,6 @@
             </div>
         </div>
         <!-- End booking window -->
-
 
     </div>
 </div>
