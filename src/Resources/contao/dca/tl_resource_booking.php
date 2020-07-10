@@ -79,13 +79,10 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = [
         ],
         'pid'         => [
             'foreignKey' => 'tl_resource_booking_resource.title',
-            'relation'   => array('type' => 'belongsTo', 'load' => 'lazy'),
-            'sql' => "int(10) unsigned NOT NULL default '0'",
+            'relation'   => ['type' => 'belongsTo', 'load' => 'lazy'],
+            'sql'        => "int(10) unsigned NOT NULL default '0'",
         ],
         'tstamp'      => [
-            'sql' => "int(10) unsigned NOT NULL default '0'"
-        ],
-        'tstampp'      => [
             'sql' => "int(10) unsigned NOT NULL default '0'"
         ],
         'timeSlotId'  => [
