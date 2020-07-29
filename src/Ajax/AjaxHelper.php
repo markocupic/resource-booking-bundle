@@ -143,9 +143,6 @@ class AjaxHelper
         /** @var Date $dateAdapter */
         $dateAdapter = $this->framework->getAdapter(Date::class);
 
-        /** @var Validator $validatorAdapter */
-        $validatorAdapter = $this->framework->getAdapter(Validator::class);
-
         $arrData = [];
 
         // Load language file
@@ -353,43 +350,35 @@ class AjaxHelper
                                 $objTs->bookedByFullname = '';
 
                                 $arrFields = StringUtil::deserialize($this->moduleModel->resourceBooking_clientPersonalData, true);
-                                if ($this->moduleModel->resourceBooking_displayClientPersonalData && !empty($arrFields))
+
+                                $objMember = MemberModel::findByPk($objBooking->member);
+                                if ($objMember !== null)
                                 {
-                                    $objMember = MemberModel::findByPk($objBooking->member);
-                                    if ($objMember !== null)
+                                    // Do not transmit and display sensitive data if user is not holder
+                                    if (!$objTs->isHolder && $this->moduleModel->resourceBooking_displayClientPersonalData && !empty($arrFields))
                                     {
-                                        // Do not send all the sensitive personal data if user is not the holder
-                                        if (!$objTs->isHolder)
+                                        foreach ($arrFields as $fieldname)
                                         {
-                                            foreach ($arrFields as $fieldname)
-                                            {
-                                                if($validatorAdapter->isAlphanumeric($objMember->$fieldname))
-                                                {
-                                                    $objTs->{'bookedBy' . ucfirst($fieldname)} = $objMember->$fieldname;
-                                                }
-                                            }
-                                            if (in_array('firstname', $arrFields) && in_array('lastname', $arrFields))
-                                            {
-                                                $objTs->bookedByFullname = $objMember->firstname . ' ' . $objMember->lastname;
-                                            }
+                                            $objTs->{'bookedBy' . ucfirst($fieldname)} = $objMember->$fieldname;
                                         }
-                                        else
+                                        if (in_array('firstname', $arrFields) && in_array('lastname', $arrFields))
                                         {
-                                            $arrFields = $objMember->row();
-                                            foreach ($arrFields as $fieldname => $v)
-                                            {
-                                                if ($fieldname === 'id' || $fieldname === 'password')
-                                                {
-                                                    continue;
-                                                }
-                                                if($validatorAdapter->isAlphanumeric($objMember->$fieldname))
-                                                {
-                                                    $objTs->{'bookedBy' . ucfirst($fieldname)} = $objMember->$fieldname;
-                                                }
-                                                $objTs->{'bookedBy' . ucfirst($fieldname)} = $objMember->$fieldname;
-                                            }
                                             $objTs->bookedByFullname = $objMember->firstname . ' ' . $objMember->lastname;
                                         }
+                                    }
+                                    else
+                                    {
+                                        $arrFields = $objMember->row();
+                                        foreach ($arrFields as $fieldname => $v)
+                                        {
+                                            if ($fieldname === 'id' || $fieldname === 'password')
+                                            {
+                                                continue;
+                                            }
+                                            $objTs->{'bookedBy' . ucfirst($fieldname)} = $objMember->$fieldname;
+                                            $objTs->{'bookedBy' . ucfirst($fieldname)} = $objMember->$fieldname;
+                                        }
+                                        $objTs->bookedByFullname = $objMember->firstname . ' ' . $objMember->lastname;
                                     }
                                 }
 
