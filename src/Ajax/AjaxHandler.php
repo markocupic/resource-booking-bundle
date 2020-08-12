@@ -5,6 +5,7 @@ declare(strict_types=1);
 /**
  * Resource Booking Module for Contao CMS
  * Copyright (c) 2008-2020 Marko Cupic
+ *
  * @package resource-booking-bundle
  * @author Marko Cupic m.cupic@gmx.ch, 2020
  * @link https://github.com/markocupic/resource-booking-bundle
@@ -18,12 +19,12 @@ use Contao\CoreBundle\Monolog\ContaoContext;
 use Contao\Database;
 use Contao\Date;
 use Contao\FrontendUser;
-use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
-use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
-use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceTypeModel;
 use Contao\StringUtil;
 use Contao\System;
 use Markocupic\ResourceBookingBundle\Date\DateHelper;
+use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
+use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
+use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceTypeModel;
 use Psr\Log\LogLevel;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
@@ -31,6 +32,7 @@ use Symfony\Component\Security\Core\Security;
 
 /**
  * Class AjaxHandler
+ *
  * @package Markocupic\ResourceBookingBundle
  */
 class AjaxHandler
@@ -62,6 +64,7 @@ class AjaxHandler
 
     /**
      * AjaxHandler constructor.
+     *
      * @param ContaoFramework $framework
      * @param AjaxHelper $ajaxHelper
      * @param SessionInterface $session
@@ -72,6 +75,7 @@ class AjaxHandler
      */
     public function __construct(ContaoFramework $framework, AjaxHelper $ajaxHelper, SessionInterface $session, RequestStack $requestStack, AjaxResponse $ajaxResponse, string $bagName, Security $security)
     {
+
         $this->framework = $framework;
         $this->ajaxHelper = $ajaxHelper;
         $this->session = $session;
@@ -93,6 +97,7 @@ class AjaxHandler
      */
     public function fetchDataRequest(): AjaxResponse
     {
+
         $this->ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
         $this->ajaxResponse->setDataFromArray($this->ajaxHelper->fetchData());
         return $this->ajaxResponse;
@@ -104,6 +109,7 @@ class AjaxHandler
      */
     public function applyFilterRequest(): AjaxResponse
     {
+
         /** @var  ResourceBookingResourceTypeModel $resourceBookingResourceTypeModelAdapter */
         $resourceBookingResourceTypeModelAdapter = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class);
 
@@ -174,6 +180,7 @@ class AjaxHandler
      */
     public function jumpWeekRequest(): AjaxResponse
     {
+
         return $this->applyFilterRequest();
     }
 
@@ -183,6 +190,7 @@ class AjaxHandler
      */
     public function bookingRequest(): AjaxResponse
     {
+
         /** @var System $systemAdapter */
         $systemAdapter = $this->framework->getAdapter(System::class);
 
@@ -268,6 +276,8 @@ class AjaxHandler
                     }
                     if ($objBooking !== null)
                     {
+                        $resourceTitle = $objResource->title;
+
                         $arrBooking['bookingUuid'] = $bookingUuid;
                         foreach ($arrBooking as $k => $v)
                         {
@@ -278,7 +288,7 @@ class AjaxHandler
 
                         // Log
                         $logger = $systemAdapter->getContainer()->get('monolog.logger.contao');
-                        $strLog = sprintf('New resource with ID %s has been booked.', $objBooking->id);
+                        $strLog = sprintf('New resource "%s" (with ID %s) has been booked.', $resourceTitle, $objBooking->id);
                         $logger->log(LogLevel::INFO, $strLog, ['contao' => new ContaoContext(__METHOD__, 'INFO')]);
                     }
 
@@ -321,6 +331,7 @@ class AjaxHandler
      */
     public function bookingFormValidationRequest(): AjaxResponse
     {
+
         /** @var System $systemAdapter */
         $systemAdapter = $this->framework->getAdapter(System::class);
 
@@ -394,6 +405,7 @@ class AjaxHandler
      */
     public function cancelBookingRequest(): AjaxResponse
     {
+
         /** @var System $systemAdapter */
         $systemAdapter = $this->framework->getAdapter(System::class);
 
@@ -422,14 +434,22 @@ class AjaxHandler
                     $bookingUuid = $objBooking->bookingUuid;
                     $timeSlotId = $objBooking->timeSlotId;
                     $weekday = $dateAdapter->parse('D', $objBooking->startTime);
+                    $resourceTitle = '';
+                    if (null !== ($objBookingResource = $objBooking->getRelated('pid')))
+                    {
+                        $resourceTitle = $objBookingResource->title;
+                    }
+
+                    $strLog = sprintf('Resource booking for "%s" (with ID %s) has been deleted.', $resourceTitle, $intId);
 
                     // Delete entry
                     $intAffected = $objBooking->delete();
                     if ($intAffected)
                     {
                         // Log
+                        $resourceTitle = $objResource->title;
+
                         $logger = $systemAdapter->getContainer()->get('monolog.logger.contao');
-                        $strLog = sprintf('Resource Booking with ID %s has been deleted.', $intId);
                         $logger->log(LogLevel::INFO, $strLog, ['contao' => new ContaoContext(__METHOD__, 'INFO')]);
                     }
 
@@ -455,13 +475,19 @@ class AjaxHandler
                                 {
                                     $intIdRepetition = $objRepetitions->id;
 
+                                    $resourceTitle = '';
+                                    if (null !== ($objBookingResource = $objRepetitions->getRelated('pid')))
+                                    {
+                                        $resourceTitle = $objBookingResource->title;
+                                    }
+                                    
+                                    $strLog = sprintf('Resource Booking for "%s" (with ID %s) has been deleted.', $resourceTitle, $intIdRepetition);
                                     $objRepetitions->delete();
 
                                     // Log
                                     $logger = $systemAdapter->getContainer()->get('monolog.logger.contao');
                                     if ($logger)
                                     {
-                                        $strLog = sprintf('Resource Booking with ID %s has been deleted.', $intIdRepetition);
                                         $logger->log(LogLevel::INFO, $strLog, ['contao' => new ContaoContext(__METHOD__, 'INFO')]);
                                     }
                                     $countRepetitionsToDelete++;
