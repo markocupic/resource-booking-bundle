@@ -31,6 +31,12 @@
     "markocupic/contao-component-popper-js": "^1.0",
     "markocupic/contao-component-vue-js": "^2.6"
   },
+  "require-dev": {
+    "contao/easy-coding-standard": "^3.0"
+  },
+  "conflict": {
+    "contao/core-bundle": "4.10.3"
+  },
   "autoload": {
     "psr-4": {
       "Markocupic\\ResourceBookingBundle\\": "src/"

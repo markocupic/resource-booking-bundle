@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-/**
- * Resource Booking Module for Contao CMS
- * Copyright (c) 2008-2020 Marko Cupic
- * @package resource-booking-bundle
- * @author Marko Cupic m.cupic@gmx.ch, 2020
+/*
+ * This file is part of Resource Booking Bundle.
+ *
+ * (c) Marko Cupic 2020 <m.cupic@gmx.ch>
+ * @license MIT
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
@@ -18,43 +18,49 @@ use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Environment;
 use Contao\ModuleModel;
 use Contao\PageModel;
-use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
-use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceTypeModel;
 use Contao\StringUtil;
 use Haste\Util\Url;
 use Markocupic\ResourceBookingBundle\Date\DateHelper;
+use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
+use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceTypeModel;
+use Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 
 /**
- * Class Initialize
- * @package Markocupic\ResourceBookingBundle\AppInitialization
+ * Class Initialize.
  */
 class Initialize
 {
-    /** @var ContaoFramework */
+    /**
+     * @var ContaoFramework
+     */
     private $framework;
 
-    /** @var SessionInterface */
+    /**
+     * @var SessionInterface
+     */
     private $session;
 
-    /** @var RequestStack */
+    /**
+     * @var RequestStack
+     */
     private $requestStack;
 
-    /** @var string */
+    /**
+     * @var string
+     */
     private $bagName;
 
-    /** @var \Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag */
+    /**
+     * @var ArrayAttributeBag
+     */
     private $sessionBag;
 
     /**
      * Initialize constructor.
-     * @param ContaoFramework $framework
-     * @param SessionInterface $session
-     * @param RequestStack $requestStack
-     * @param string $bagName
      */
     public function __construct(ContaoFramework $framework, SessionInterface $session, RequestStack $requestStack, string $bagName)
     {
@@ -66,11 +72,9 @@ class Initialize
     }
 
     /**
-     * @param int $moduleModelId
-     * @param int $pageModelId
      * @throws \Exception
      */
-    public function initialize(int $moduleModelId, int $pageModelId)
+    public function initialize(int $moduleModelId, int $pageModelId): void
     {
         /** @var ResourceBookingResourceTypeModel $environmentAdapter */
         $resourceBookingResourceTypeModelAdapter = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class);
@@ -100,22 +104,22 @@ class Initialize
         $request = $this->requestStack->getCurrentRequest();
 
         // Get $moduleModelId from parameter or session
-        $moduleModelId = $moduleModelId !== null ? $moduleModelId : ($this->sessionBag->has('moduleModelId') ? $this->sessionBag->get('moduleModelId') : null);
+        $moduleModelId = null !== $moduleModelId ? $moduleModelId : ($this->sessionBag->has('moduleModelId') ? $this->sessionBag->get('moduleModelId') : null);
 
         $objModuleModel = ModuleModel::findByPk($moduleModelId);
-        if ($objModuleModel === null)
-        {
+
+        if (null === $objModuleModel) {
             throw new \Exception('Module id not set.');
         }
 
         $this->sessionBag->set('moduleModelId', $objModuleModel->id);
 
         // Get $pageModelId from parameter or session
-        $pageModelId = $pageModelId !== null ? $pageModelId : ($this->sessionBag->has('pageModelId') ? $this->sessionBag->get('pageModelId') : null);
+        $pageModelId = null !== $pageModelId ? $pageModelId : ($this->sessionBag->has('pageModelId') ? $this->sessionBag->get('pageModelId') : null);
 
         $objPageModel = PageModel::findByPk($pageModelId);
-        if ($objPageModel === null)
-        {
+
+        if (null === $objPageModel) {
             throw new \Exception('Page model not set.');
         }
 
@@ -123,41 +127,32 @@ class Initialize
         $this->sessionBag->set('pageModelId', $objPageModel->id);
 
         // Set language
-        if (!empty($objPageModel->language))
-        {
+        if (!empty($objPageModel->language)) {
             $language = $objPageModel->language;
-        }
-        elseif (!empty($objPageModel->rootLanguage))
-        {
+        } elseif (!empty($objPageModel->rootLanguage)) {
             $language = $objPageModel->rootLanguage;
-        }
-        elseif (!empty($objPageModel->rootFallbackLanguage))
-        {
+        } elseif (!empty($objPageModel->rootFallbackLanguage)) {
             $language = $objPageModel->rootFallbackLanguage;
-        }
-        else
-        {
+        } else {
             $language = 'en';
         }
         $this->sessionBag->set('language', $language);
 
         // Set resType by url param
         $blnRedirect = false;
-        if ($request->query->has('resType'))
-        {
+
+        if ($request->query->has('resType')) {
             $this->sessionBag->set('resType', $request->query->get('resType', 0));
             $blnRedirect = true;
         }
 
         // Set res by url param
-        if ($request->query->has('res'))
-        {
+        if ($request->query->has('res')) {
             // @ Todo Ermitteln ob res im erlaubten resType liegt (Modul Einstellung)
             $objRes = $resourceBookingResourceModelAdapter->findByPk($request->query->get('res', 0));
-            if ($objRes !== null)
-            {
-                if (($objResType = $resourceBookingResourceTypeModelAdapter->findPublishedByPk($objRes->pid)) !== null)
-                {
+
+            if (null !== $objRes) {
+                if (null !== ($objResType = $resourceBookingResourceTypeModelAdapter->findPublishedByPk($objRes->pid))) {
                     $this->sessionBag->set('res', (int) $request->query->get('res', 0));
                     $this->sessionBag->set('resType', (int) $objResType->id);
                 }
@@ -165,8 +160,7 @@ class Initialize
             $blnRedirect = true;
         }
 
-        if ($blnRedirect)
-        {
+        if ($blnRedirect) {
             //@ Todo Datum Implementation
             //$url = $urlAdapter->removeQueryString(['date', 'resType', 'res'], $environmentAdapter->get('request'));
             $url = $urlAdapter->removeQueryString(['resType', 'res'], $environmentAdapter->get('request'));
@@ -177,32 +171,26 @@ class Initialize
         $arrResTypeIds = $stringUtilAdapter->deserialize($objModuleModel->resourceBooking_resourceTypes, true);
 
         // Check if access to active resource type is allowed
-        if (($resTypeId = $this->sessionBag->get('resType', 0)) > 0)
-        {
+        if (($resTypeId = $this->sessionBag->get('resType', 0)) > 0) {
             $blnForbidden = false;
-            if ($resourceBookingResourceTypeModelAdapter->findPublishedByPk($resTypeId) === null)
-            {
+
+            if (null === $resourceBookingResourceTypeModelAdapter->findPublishedByPk($resTypeId)) {
                 $blnForbidden = true;
             }
 
-            if (!in_array($resTypeId, $arrResTypeIds))
-            {
+            if (!\in_array($resTypeId, $arrResTypeIds, false)) {
                 $blnForbidden = true;
             }
 
-            if ($blnForbidden)
-            {
+            if ($blnForbidden) {
                 throw new UnauthorizedHttpException(sprintf('Unauthorized access to resource type with ID %s.', $resTypeId));
             }
-        }
-        else
-        {
+        } else {
             // Autoredirect if there is only one resource type in the filter menu
-            if (!$environmentAdapter->get('isAjaxRequest'))
-            {
+            if (!$environmentAdapter->get('isAjaxRequest')) {
                 $oResType = $resourceBookingResourceTypeModelAdapter->findPublishedByIds($arrResTypeIds);
-                if ($oResType !== null && $oResType->count() === 1)
-                {
+
+                if (null !== $oResType && 1 === $oResType->count()) {
                     $resTypeId = $oResType->id;
                     $this->sessionBag->set('resType', $oResType->id);
                 }
@@ -210,27 +198,22 @@ class Initialize
         }
 
         // Check if access to active resource is allowed
-        if (($resId = $this->sessionBag->get('res', 0)) > 0)
-        {
+        if (($resId = $this->sessionBag->get('res', 0)) > 0) {
             $blnForbidden = false;
-            if ($resourceBookingResourceModelAdapter->findPublishedByPkAndPid($resId, $resTypeId) === null)
-            {
+
+            if (null === $resourceBookingResourceModelAdapter->findPublishedByPkAndPid($resId, $resTypeId)) {
                 $blnForbidden = true;
             }
 
-            if ($blnForbidden)
-            {
+            if ($blnForbidden) {
                 throw new UnauthorizedHttpException(sprintf('Unauthorized access to resource with ID %s.', $resId));
             }
-        }
-        else
-        {
+        } else {
             // Autoredirect if there is only one resource in the filter menu
-            if (!$environmentAdapter->get('isAjaxRequest') && $resTypeId > 0)
-            {
+            if (!$environmentAdapter->get('isAjaxRequest') && $resTypeId > 0) {
                 $oRes = $resourceBookingResourceModelAdapter->findPublishedByPid($resTypeId);
-                if ($oRes !== null && $oRes->count() === 1)
-                {
+
+                if (null !== $oRes && 1 === $oRes->count()) {
                     $this->sessionBag->set('res', $oRes->id);
                 }
             }
@@ -241,8 +224,7 @@ class Initialize
         $this->sessionBag->set('activeWeekTstamp', $tstampCurrentWeek);
 
         // Overwrite rbb_intAheadWeeks from module settings
-        if ((int) $objModuleModel->resourceBooking_intAheadWeek > 0)
-        {
+        if ((int) $objModuleModel->resourceBooking_intAheadWeek > 0) {
             $configAdapter->set('rbb_intAheadWeeks', (int) $objModuleModel->resourceBooking_intAheadWeek);
         }
 
@@ -256,19 +238,18 @@ class Initialize
         $this->sessionBag->set('tstampFirstPossibleWeek', $dateHelperAdapter->addWeeksToTime($intBackWeeks, $dateHelperAdapter->getMondayOfCurrentWeek()));
 
         $intTstampLastPossibleWeek = $dateHelperAdapter->addWeeksToTime($intAheadWeeks, $dateHelperAdapter->getMondayOfCurrentWeek());
-        if ($objModuleModel->resourceBooking_addDateStop)
-        {
+
+        if ($objModuleModel->resourceBooking_addDateStop) {
             $intTstampStop = $dateHelperAdapter->getMondayOfWeekDate($objModuleModel->resourceBooking_dateStop);
-            if ($intTstampStop < $intTstampLastPossibleWeek)
-            {
+
+            if ($intTstampStop < $intTstampLastPossibleWeek) {
                 $intTstampLastPossibleWeek = $intTstampStop;
             }
-            if ($intTstampStop < time())
-            {
+
+            if ($intTstampStop < time()) {
                 $intTstampLastPossibleWeek = $dateHelperAdapter->getMondayOfCurrentWeek();
             }
         }
         $this->sessionBag->set('tstampLastPossibleWeek', $intTstampLastPossibleWeek);
     }
-
 }

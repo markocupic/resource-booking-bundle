@@ -2,72 +2,62 @@
 
 declare(strict_types=1);
 
-/**
- * Resource Booking Module for Contao CMS
- * Copyright (c) 2008-2020 Marko Cupic
- * @package resource-booking-bundle
- * @author Marko Cupic m.cupic@gmx.ch, 2020
+/*
+ * This file is part of Resource Booking Bundle.
+ *
+ * (c) Marko Cupic 2020 <m.cupic@gmx.ch>
+ * @license MIT
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
 namespace Markocupic\ResourceBookingBundle\Date;
 
-use Contao\Date;
 use Contao\Config;
+use Contao\Date;
 
 /**
- * Class DateHelper
- * @package Markocupic\ResourceBookingBundle\Date
+ * Class DateHelper.
  */
 class DateHelper
 {
-
     /**
-     * @param int $intDays
-     * @param int|null $time
      * @return false|int
      */
     public static function addDaysToTime(int $intDays = 0, int $time = null): int
     {
-        if ($time === null)
-        {
+        if (null === $time) {
             $time = time();
         }
-        if ($intDays < 0)
-        {
+
+        if ($intDays < 0) {
             $intDays = abs($intDays);
-            $strAddDays = '-' . $intDays . ' days';
-        }
-        else
-        {
-            $strAddDays = '+' . $intDays . ' days';
+            $strAddDays = '-'.$intDays.' days';
+        } else {
+            $strAddDays = '+'.$intDays.' days';
         }
 
-        return strtotime(Date::parse('Y-m-d H:i:s', $time) . ' ' . $strAddDays);
+        return strtotime(Date::parse('Y-m-d H:i:s', $time).' '.$strAddDays);
     }
 
     /**
-     * @param int $intWeeks
      * @param null $time
+     *
      * @return false|int
      */
     public static function addWeeksToTime(int $intWeeks = 0, int $time = null)
     {
-        if ($time === null)
-        {
+        if (null === $time) {
             $time = time();
         }
-        if ($intWeeks < 0)
-        {
+
+        if ($intWeeks < 0) {
             $intWeeks = abs($intWeeks);
-            $strAddWeeks = '-' . $intWeeks . ' weeks';
-        }
-        else
-        {
-            $strAddWeeks = '+' . $intWeeks . ' weeks';
+            $strAddWeeks = '-'.$intWeeks.' weeks';
+        } else {
+            $strAddWeeks = '+'.$intWeeks.' weeks';
         }
 
-        return strtotime(Date::parse('Y-m-d H:i:s', $time) . ' ' . $strAddWeeks);
+        return strtotime(Date::parse('Y-m-d H:i:s', $time).' '.$strAddWeeks);
     }
 
     /**
@@ -79,14 +69,13 @@ class DateHelper
     }
 
     /**
-     * Return monday of the week the timestamp is in
+     * Return monday of the week the timestamp is in.
+     *
      * @param null $tstamp
-     * @return int
      */
-    function getMondayOfWeekDate($tstamp = null): int
+    public function getMondayOfWeekDate($tstamp = null): int
     {
-        if ($tstamp === null)
-        {
+        if (null === $tstamp) {
             $tstamp = time();
         }
 
@@ -94,35 +83,29 @@ class DateHelper
 
         $date->setTime(0, 0, 0);
 
-        if ($date->format('N') === 1)
-        {
+        if (1 === $date->format('N')) {
             // If the date is already a Monday, return it as-is
             return $date->getTimestamp();
         }
-        else
-        {
-            // Otherwise, return the date of the nearest Monday in the past
-            // This includes Sunday in the previous week instead of it being the start of a new week
-            return $date->modify('last monday')->getTimestamp();
-        }
+
+        // Otherwise, return the date of the nearest Monday in the past
+        // This includes Sunday in the previous week instead of it being the start of a new week
+        return $date->modify('last monday')->getTimestamp();
     }
 
     /**
      * @param $dateString
-     * @return bool
      */
     public static function isValidBookingTime(string $dateString): bool
     {
         $format = 'H:i';
         $dateObj = \DateTime::createFromFormat($format, $dateString);
 
-        return $dateObj !== false && $dateObj->format($format) === $dateString;
+        return false !== $dateObj && $dateObj->format($format) === $dateString;
     }
 
     /**
-     * Check if date is in range
-     * @param int $tstamp
-     * @return bool
+     * Check if date is in range.
      */
     public static function isValidDate(int $tstamp): bool
     {
@@ -133,17 +116,14 @@ class DateHelper
         $tstampFirstPossibleWeek = static::addWeeksToTime($intBackWeeks, static::getMondayOfCurrentWeek());
         $tstampLastPossibleWeek = static::addWeeksToTime($intAheadWeeks, static::getMondayOfCurrentWeek());
 
-        if ($tstamp < $tstampFirstPossibleWeek || $tstamp > $tstampLastPossibleWeek)
-        {
+        if ($tstamp < $tstampFirstPossibleWeek || $tstamp > $tstampLastPossibleWeek) {
             return false;
         }
         // Get numeric value of the weekday:  0 for sunday, 1 for monday, etc.
-        if (Date::parse('w', $tstamp) !== '1')
-        {
+        if ('1' !== Date::parse('w', $tstamp)) {
             return false;
         }
 
         return true;
     }
-
 }

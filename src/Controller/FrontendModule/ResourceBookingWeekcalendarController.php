@@ -2,19 +2,17 @@
 
 declare(strict_types=1);
 
-/**
- * Resource Booking Module for Contao CMS
- * Copyright (c) 2008-2020 Marko Cupic
- * @package resource-booking-bundle
- * @author Marko Cupic m.cupic@gmx.ch, 2020
+/*
+ * This file is part of Resource Booking Bundle.
+ *
+ * (c) Marko Cupic 2020 <m.cupic@gmx.ch>
+ * @license MIT
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
 namespace Markocupic\ResourceBookingBundle\Controller\FrontendModule;
 
-use Contao\Controller;
 use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController;
-use Contao\CoreBundle\Csrf\MemoryTokenStorage;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Environment;
 use Contao\ModuleModel;
@@ -24,40 +22,43 @@ use Contao\Template;
 use Markocupic\ResourceBookingBundle\Ajax\AjaxHandler;
 use Markocupic\ResourceBookingBundle\Ajax\AjaxResponse;
 use Markocupic\ResourceBookingBundle\AppInitialization\Initialize;
-use Markocupic\ResourceBookingBundle\Csrf\CsrfTokenManager;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
-use Contao\CoreBundle\ServiceAnnotation\FrontendModule;
 
 /**
- * Class ResourceBookingWeekcalendarController
- * @package Markocupic\ResourceBookingBundle\Controller\FrontendModule
+ * Class ResourceBookingWeekcalendarController.
  */
 class ResourceBookingWeekcalendarController extends AbstractFrontendModuleController
 {
-    /** @var ContaoFramework */
+    /**
+     * @var ContaoFramework
+     */
     private $framework;
 
-    /** @var RequestStack */
+    /**
+     * @var RequestStack
+     */
     private $requestStack;
 
-    /** @var Initialize */
+    /**
+     * @var Initialize
+     */
     private $appInitializer;
 
-    /** @var AjaxHandler */
+    /**
+     * @var AjaxHandler
+     */
     private $ajaxHandler;
 
-    /** @var string */
+    /**
+     * @var string
+     */
     private $moduleKey;
 
     /**
      * ResourceBookingWeekcalendarController constructor.
-     * @param ContaoFramework $framework
-     * @param RequestStack $requestStack
-     * @param Initialize $appInitializer
-     * @param AjaxHandler $ajaxHandler
      */
     public function __construct(ContaoFramework $framework, RequestStack $requestStack, Initialize $appInitializer, AjaxHandler $ajaxHandler)
     {
@@ -68,29 +69,16 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
     }
 
     /**
-     * @param Request $request
-     * @param ModuleModel $model
-     * @param string $section
-     * @param array|null $classes
-     * @param PageModel|null $page
-     * @return Response
      * @throws \Exception
      */
     public function __invoke(Request $request, ModuleModel $model, string $section, array $classes = null, PageModel $page = null): Response
     {
         // Is frontend
-        if ($page instanceof PageModel && $this->get('contao.routing.scope_matcher')->isFrontendRequest($request))
-        {
-            /** @var Controller $controllerAdapter */
-            $controllerAdapter = $this->framework->getAdapter(Controller::class);
-
-            /** @var System $systemAdapter */
-            $systemAdapter = $this->framework->getAdapter(System::class);
-
+        if ($page instanceof PageModel && $this->get('contao.routing.scope_matcher')->isFrontendRequest($request)) {
             /** @var Environment $environmentAdapter */
             $environmentAdapter = $this->framework->getAdapter(Environment::class);
 
-            /**
+            /*
              * The module key is necessary to run several rbb applications on the same page
              * and is sent as a post parameter in every xhr request
              *
@@ -99,26 +87,22 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
              * The module index is 2, if the current module is the first rbb module on the current page, etc.
              *
              */
-            if (!isset($GLOBALS['rbb_moduleIndex']))
-            {
+            if (!isset($GLOBALS['rbb_moduleIndex'])) {
                 $GLOBALS['rbb_moduleIndex'] = 1;
-            }
-            else
-            {
-                $GLOBALS['rbb_moduleIndex']++;
+            } else {
+                ++$GLOBALS['rbb_moduleIndex'];
             }
 
-            $this->moduleKey = $model->id . '_' . $GLOBALS['rbb_moduleIndex'];
+            $this->moduleKey = $model->id.'_'.$GLOBALS['rbb_moduleIndex'];
             $GLOBALS['rbb_moduleKey'] = $this->moduleKey;
 
             // Initialize application
             $this->appInitializer->initialize((int) $model->id, (int) $page->id);
 
-            if ($environmentAdapter->get('isAjaxRequest'))
-            {
+            if ($environmentAdapter->get('isAjaxRequest')) {
                 $request = $this->requestStack->getCurrentRequest();
-                if ($request->request->get('moduleKey') === $this->moduleKey)
-                {
+
+                if ($request->request->get('moduleKey') === $this->moduleKey) {
                     $this->getAjaxResponse($request)->send();
                     exit;
                 }
@@ -130,10 +114,6 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
     }
 
     /**
-     * @param Template $template
-     * @param ModuleModel $model
-     * @param Request $request
-     * @return null|Response
      * @throws \Exception
      */
     protected function getResponse(Template $template, ModuleModel $model, Request $request): ?Response
@@ -146,8 +126,6 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
     }
 
     /**
-     * @param Request $request
-     * @return JsonResponse
      * @throws \Exception
      */
     protected function getAjaxResponse(Request $request): JsonResponse
@@ -157,16 +135,13 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
         /** @var System $systemAdapter */
         $systemAdapter = $this->framework->getAdapter(System::class);
 
-        if (is_callable([AjaxHandler::class, $action]))
-        {
+        if (\is_callable([AjaxHandler::class, $action])) {
             /** @var AjaxResponse $xhrResponse */
             $xhrResponse = $this->ajaxHandler->{$action}();
 
             // HOOK: add custom logic
-            if (isset($GLOBALS['TL_HOOKS']['resourceBookingAjaxResponse']) && \is_array($GLOBALS['TL_HOOKS']['resourceBookingAjaxResponse']))
-            {
-                foreach ($GLOBALS['TL_HOOKS']['resourceBookingAjaxResponse'] as $callback)
-                {
+            if (isset($GLOBALS['TL_HOOKS']['resourceBookingAjaxResponse']) && \is_array($GLOBALS['TL_HOOKS']['resourceBookingAjaxResponse'])) {
+                foreach ($GLOBALS['TL_HOOKS']['resourceBookingAjaxResponse'] as $callback) {
                     /** @var AjaxResponse $xhrResponse */
                     $systemAdapter->importStatic($callback[0])->{$callback[1]}($action, $xhrResponse, $this);
                 }
@@ -182,11 +157,6 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
         return $this->createJsonResponse($xhrResponse->getAll(), 501);
     }
 
-    /**
-     * @param array $arrData
-     * @param int $statusCode
-     * @return JsonResponse
-     */
     protected function createJsonResponse(array $arrData, int $statusCode): JsonResponse
     {
         $response = new JsonResponse();
@@ -201,6 +171,4 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
 
         return $response;
     }
-
 }
-

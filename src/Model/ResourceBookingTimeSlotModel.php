@@ -1,51 +1,51 @@
 <?php
 
-/**
- * Resource Booking Module for Contao CMS
- * Copyright (c) 2008-2020 Marko Cupic
- * @package resource-booking-bundle
- * @author Marko Cupic m.cupic@gmx.ch, 2020
+declare(strict_types=1);
+
+/*
+ * This file is part of Resource Booking Bundle.
+ *
+ * (c) Marko Cupic 2020 <m.cupic@gmx.ch>
+ * @license MIT
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
 namespace Markocupic\ResourceBookingBundle\Model;
 
 use Contao\Model;
+use Contao\Model\Collection;
 
 /**
- * Class ResourceBookingTimeSlotModel
- * @package Markocupic\ResourceBookingBundle\Model
+ * Class ResourceBookingTimeSlotModel.
  */
 class ResourceBookingTimeSlotModel extends Model
 {
-
     /**
-     * Table name
+     * Table name.
+     *
      * @var string
      */
     protected static $strTable = 'tl_resource_booking_time_slot';
 
     /**
      * @param $intPid
-     * @return Model\Collection|null
+     *
+     * @return Collection|null
      */
     public static function findPublishedByPid($intPid)
     {
         $arrIds = [];
 
         $objDb = static::findByPid($intPid);
-        if ($objDb !== null)
-        {
-            while ($objDb->next())
-            {
-                if ($objDb->published)
-                {
+
+        if (null !== $objDb) {
+            while ($objDb->next()) {
+                if ($objDb->published) {
                     // Return if parent is published too
                     $objParent = $objDb->getRelated('pid');
-                    if ($objParent !== null)
-                    {
-                        if ($objParent->published)
-                        {
+
+                    if (null !== $objParent) {
+                        if ($objParent->published) {
                             $arrIds[] = $objDb->id;
                         }
                     }
@@ -59,5 +59,4 @@ class ResourceBookingTimeSlotModel extends Model
 
         return static::findMultipleByIds($arrIds, $arrOptions);
     }
-
 }

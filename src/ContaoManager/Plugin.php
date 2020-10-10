@@ -1,49 +1,50 @@
 <?php
 
-/**
- * Resource Booking Module for Contao CMS
- * Copyright (c) 2008-2020 Marko Cupic
- * @package resource-booking-bundle
- * @author Marko Cupic m.cupic@gmx.ch, 2020
+declare(strict_types=1);
+
+/*
+ * This file is part of Resource Booking Bundle.
+ *
+ * (c) Marko Cupic 2020 <m.cupic@gmx.ch>
+ * @license MIT
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
 namespace Markocupic\ResourceBookingBundle\ContaoManager;
 
-use Contao\ManagerPlugin\Bundle\Config\BundleConfig;
 use Contao\ManagerPlugin\Bundle\BundlePluginInterface;
+use Contao\ManagerPlugin\Bundle\Config\BundleConfig;
 use Contao\ManagerPlugin\Bundle\Parser\ParserInterface;
-use Contao\ManagerPlugin\Routing\RoutingPluginInterface;
-use Symfony\Component\Config\Loader\LoaderResolverInterface;
 use Contao\ManagerPlugin\Config\ConfigPluginInterface;
-use Symfony\Component\HttpKernel\KernelInterface;
-use Symfony\Component\Config\Loader\LoaderInterface;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Contao\ManagerPlugin\Routing\RoutingPluginInterface;
 use Markocupic\ResourceBookingBundle\DependencyInjection\Compiler\AddSessionBagsPass;
+use Symfony\Component\Config\Loader\LoaderInterface;
+use Symfony\Component\Config\Loader\LoaderResolverInterface;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\HttpKernel\KernelInterface;
 
 /**
- * Class Plugin
- * @package Markocupic\ResourceBookingBundle\ContaoManager
+ * Class Plugin.
  */
 class Plugin implements BundlePluginInterface, RoutingPluginInterface, ConfigPluginInterface
 {
     /**
-     * @param LoaderInterface $loader
-     * @param array $managerConfig
      * @throws \Exception
      */
-    public function registerContainerConfiguration(LoaderInterface $loader, array $managerConfig)
+    public function registerContainerConfiguration(LoaderInterface $loader, array $managerConfig): void
     {
-        $loader->load(__DIR__ . '/../Resources/config/parameters.yml');
-        $loader->load(__DIR__ . '/../Resources/config/listener.yml');
-        $loader->load(__DIR__ . '/../Resources/config/cron.yml');
-        $loader->load(__DIR__ . '/../Resources/config/migration.yml');
-        $loader->load(__DIR__ . '/../Resources/config/services.yml');
+        $loader->load(__DIR__.'/../Resources/config/parameters.yml');
+        $loader->load(__DIR__.'/../Resources/config/listener.yml');
+        $loader->load(__DIR__.'/../Resources/config/cron.yml');
+        $loader->load(__DIR__.'/../Resources/config/migration.yml');
+        $loader->load(__DIR__.'/../Resources/config/services.yml');
 
         // Register session bag
-        $loader->load(static function (ContainerBuilder $container) {
-            $container->addCompilerPass(new AddSessionBagsPass());
-        });
+        $loader->load(
+            static function (ContainerBuilder $container): void {
+                $container->addCompilerPass(new AddSessionBagsPass());
+            }
+        );
     }
 
     /**
@@ -53,7 +54,7 @@ class Plugin implements BundlePluginInterface, RoutingPluginInterface, ConfigPlu
     {
         return [
             BundleConfig::create('Markocupic\ResourceBookingBundle\MarkocupicResourceBookingBundle')
-                ->setLoadAfter(['Contao\CoreBundle\ContaoCoreBundle'])
+                ->setLoadAfter(['Contao\CoreBundle\ContaoCoreBundle']),
         ];
     }
 
@@ -63,9 +64,8 @@ class Plugin implements BundlePluginInterface, RoutingPluginInterface, ConfigPlu
     public function getRouteCollection(LoaderResolverInterface $resolver, KernelInterface $kernel)
     {
         return $resolver
-            ->resolve(__DIR__ . '/../Resources/config/routing.yml')
-            ->load(__DIR__ . '/../Resources/config/routing.yml');
+            ->resolve(__DIR__.'/../Resources/config/routing.yml')
+            ->load(__DIR__.'/../Resources/config/routing.yml')
+        ;
     }
-
 }
-

@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-/**
- * Resource Booking Module for Contao CMS
- * Copyright (c) 2008-2020 Marko Cupic
- * @package resource-booking-bundle
- * @author Marko Cupic m.cupic@gmx.ch, 2020
+/*
+ * This file is part of Resource Booking Bundle.
+ *
+ * (c) Marko Cupic 2020 <m.cupic@gmx.ch>
+ * @license MIT
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
@@ -17,34 +17,36 @@ use Contao\Environment;
 use Contao\FrontendUser;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\Attribute\AttributeBag;
-use Symfony\Component\Security\Core\Security;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Component\Security\Core\Security;
 
 /**
- * Class ArrayAttributeBag
- * @package Markocupic\ResourceBookingBundle\Session\Attribute
+ * Class ArrayAttributeBag.
  */
 class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
 {
-    /** @var ContaoFramework */
+    /**
+     * @var ContaoFramework
+     */
     private $framework;
 
-    /** @var RequestStack */
+    /**
+     * @var RequestStack
+     */
     private $requestStack;
 
-    /** @var SessionInterface */
+    /**
+     * @var SessionInterface
+     */
     private $session;
 
-    /** @var Security */
+    /**
+     * @var Security
+     */
     private $security;
 
     /**
      * ArrayAttributeBag constructor.
-     * @param ContaoFramework $framework
-     * @param RequestStack $requestStack
-     * @param SessionInterface $session
-     * @param Security $security
-     * @param string $storageKey
      */
     public function __construct(ContaoFramework $framework, RequestStack $requestStack, SessionInterface $session, Security $security, string $storageKey = '_sf2_attributes')
     {
@@ -58,7 +60,7 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
 
     /**
      * @param mixed $key
-     * @return bool
+     *
      * @throws \Exception
      */
     public function offsetExists($key): bool
@@ -68,6 +70,7 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
 
     /**
      * @param mixed $key
+     *
      * @return mixed
      */
     public function &offsetGet($key)
@@ -78,6 +81,7 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
     /**
      * @param mixed $key
      * @param mixed $value
+     *
      * @throws \Exception
      */
     public function offsetSet($key, $value): void
@@ -87,6 +91,7 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
 
     /**
      * @param mixed $key
+     *
      * @throws \Exception
      */
     public function offsetUnset($key): void
@@ -96,32 +101,39 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
 
     /**
      * @param $key
-     * @return bool
+     *
      * @throws \Exception
+     *
+     * @return bool
      */
     public function has($key)
     {
         $sessKey = $this->getSessionBagSubkey();
         $arrSession = parent::get($sessKey, []);
+
         return isset($arrSession[$key]) ? true : false;
     }
 
     /**
      * @param $key
      * @param null $mixed
-     * @return mixed|null
+     *
      * @throws \Exception
+     *
+     * @return mixed|null
      */
     public function get($key, $mixed = null)
     {
         $sessKey = $this->getSessionBagSubkey();
         $arrSession = parent::get($sessKey, []);
-        return isset($arrSession[$key]) ? $arrSession[$key] : null;
+
+        return $arrSession[$key] ?? null;
     }
 
     /**
      * @param $key
      * @param $value
+     *
      * @throws \Exception
      */
     public function set($key, $value)
@@ -134,10 +146,9 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
     }
 
     /**
-     * @param array $arrAttributes
      * @throws \Exception
      */
-    public function replace(array $arrAttributes)
+    public function replace(array $arrAttributes): void
     {
         $sessKey = $this->getSessionBagSubkey();
         $arrSession = parent::get($sessKey, []);
@@ -147,52 +158,55 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
 
     /**
      * @param $key
-     * @return mixed|null|void
+     *
      * @throws \Exception
+     *
+     * @return mixed|void|null
      */
     public function remove($key)
     {
         $sessKey = $this->getSessionBagSubkey();
         $arrSession = parent::get($sessKey, []);
-        if (isset($arrSession[$key]))
-        {
+
+        if (isset($arrSession[$key])) {
             unset($arrSession[$key]);
             parent::set($sessKey, $arrSession);
         }
     }
 
     /**
-     * @return array|mixed|void
      * @throws \Exception
+     *
+     * @return array|mixed|void
      */
     public function clear()
     {
         $sessKey = $this->getSessionBagSubkey();
         $arrSessionAll = parent::all();
 
-        if (isset($arrSessionAll[$sessKey]))
-        {
+        if (isset($arrSessionAll[$sessKey])) {
             unset($arrSessionAll[$sessKey]);
-            foreach ($arrSessionAll as $k => $v)
-            {
+
+            foreach ($arrSessionAll as $k => $v) {
                 parent::set($k, $v);
             }
         }
     }
 
     /**
-     * @return int
      * @throws \Exception
+     *
+     * @return int
      */
     public function count()
     {
         $sessKey = $this->getSessionBagSubkey();
         $arrSessionAll = parent::all();
 
-        if (isset($arrSessionAll[$sessKey]) && is_array($arrSessionAll))
-        {
-            return count($arrSessionAll[$sessKey]);
+        if (isset($arrSessionAll[$sessKey]) && \is_array($arrSessionAll)) {
+            return \count($arrSessionAll[$sessKey]);
         }
+
         return 0;
     }
 
@@ -208,44 +222,37 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
 
         /**
          * The module key is necessary to run several rbb applications on the same page
-         * and is sent as a post parameter in every xhr request
+         * and is sent as a post parameter in every xhr request.
          *
          * The module key (#moduleId_#moduleIndex f.ex. 33_2) contains the module id and the module index
          * The module index is 1, if the current module is the first rbb module on the current page
          * The module index is 2, if the current module is the first rbb module on the current page, etc.
-         *
          */
         $moduleKey = '';
         $sessionId = '';
         $userId = '';
-        if ($this->session->isStarted())
-        {
+
+        if ($this->session->isStarted()) {
             $sessionId = $this->session->getId();
         }
 
-        if ($this->security->getUser() instanceof FrontendUser)
-        {
+        if ($this->security->getUser() instanceof FrontendUser) {
             /** @var FrontendUser $objUser */
             $objUser = $this->security->getUser();
-            if ($objUser->id > 0)
-            {
+
+            if ($objUser->id > 0) {
                 $userId = $objUser->id;
             }
         }
 
-        if ($environmentAdapter->get('isAjaxRequest'))
-        {
+        if ($environmentAdapter->get('isAjaxRequest')) {
             $moduleKey = $this->requestStack->getCurrentRequest()->request->get('moduleKey');
-        }
-        else
-        {
-            if (isset($GLOBALS['rbb_moduleKey']))
-            {
+        } else {
+            if (isset($GLOBALS['rbb_moduleKey'])) {
                 $moduleKey = $GLOBALS['rbb_moduleKey'];
             }
         }
 
-        return sha1($sessionId . '_' . $userId . '_' . $moduleKey);
+        return sha1($sessionId.'_'.$userId.'_'.$moduleKey);
     }
-
 }

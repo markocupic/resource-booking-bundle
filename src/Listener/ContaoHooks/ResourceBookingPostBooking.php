@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-/**
- * Resource Booking Module for Contao CMS
- * Copyright (c) 2008-2020 Marko Cupic
- * @package resource-booking-bundle
- * @author Marko Cupic m.cupic@gmx.ch, 2020
+/*
+ * This file is part of Resource Booking Bundle.
+ *
+ * (c) Marko Cupic 2020 <m.cupic@gmx.ch>
+ * @license MIT
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
@@ -19,24 +19,15 @@ use Model\Collection;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
- * Class ResourceBookingPostBooking
- * @package Markocupic\ResourceBookingBundle\Listener\ContaoHooks
+ * Class ResourceBookingPostBooking.
  */
 class ResourceBookingPostBooking
 {
-
-    /**
-     * @param Collection $objBookingCollection
-     * @param Request $request
-     * @param FrontendUser|null $objUser
-     * @param AjaxHandler $objAjaxHandler
-     */
     public function onPostBooking(Collection $objBookingCollection, Request $request, ?FrontendUser $objUser, AjaxHandler $objAjaxHandler): void
     {
         // For demo usage only
-        return;
 
-        /**
+        /*
         while ($objBookingCollection->next())
         {
             if ($objUser !== null)
@@ -59,6 +50,6 @@ class ResourceBookingPostBooking
                 );
             }
         }
-         **/
+         */
     }
 }

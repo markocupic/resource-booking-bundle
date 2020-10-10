@@ -1,32 +1,35 @@
 <?php
 
-/**
- * Resource Booking Module for Contao CMS
- * Copyright (c) 2008-2020 Marko Cupic
- * @package resource-booking-bundle
- * @author Marko Cupic m.cupic@gmx.ch, 2020
+declare(strict_types=1);
+
+/*
+ * This file is part of Resource Booking Bundle.
+ *
+ * (c) Marko Cupic 2020 <m.cupic@gmx.ch>
+ * @license MIT
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
 namespace Markocupic\ResourceBookingBundle\Model;
 
 use Contao\Model;
+use Contao\Model\Collection;
 
 /**
- * Class ResourceBookingResourceTypeModel
- * @package Markocupic\ResourceBookingBundle\Model
+ * Class ResourceBookingResourceTypeModel.
  */
 class ResourceBookingResourceTypeModel extends Model
 {
-
     /**
-     * Table name
+     * Table name.
+     *
      * @var string
      */
     protected static $strTable = 'tl_resource_booking_resource_type';
 
     /**
      * @param $intId
+     *
      * @return ResourceBookingResourceTypeModel
      */
     public static function findPublishedByPk($intId)
@@ -39,17 +42,16 @@ class ResourceBookingResourceTypeModel extends Model
 
     /**
      * @param $arrIds
-     * @return Model\Collection|null
+     *
+     * @return Collection|null
      */
     public static function findPublishedByIds($arrIds)
     {
         $arrIdsNew = [];
-        if (($objDb = static::findMultipleByIds($arrIds)) !== null)
-        {
-            while ($objDb->next())
-            {
-                if ($objDb->published)
-                {
+
+        if (null !== ($objDb = static::findMultipleByIds($arrIds))) {
+            while ($objDb->next()) {
+                if ($objDb->published) {
                     $arrIdsNew[] = $objDb->id;
                 }
             }
@@ -57,5 +59,4 @@ class ResourceBookingResourceTypeModel extends Model
 
         return static::findMultipleByIds($arrIdsNew);
     }
-
 }

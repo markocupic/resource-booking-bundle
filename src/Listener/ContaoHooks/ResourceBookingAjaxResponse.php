@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-/**
- * Resource Booking Module for Contao CMS
- * Copyright (c) 2008-2020 Marko Cupic
- * @package resource-booking-bundle
- * @author Marko Cupic m.cupic@gmx.ch, 2020
+/*
+ * This file is part of Resource Booking Bundle.
+ *
+ * (c) Marko Cupic 2020 <m.cupic@gmx.ch>
+ * @license MIT
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
@@ -16,45 +16,33 @@ use Markocupic\ResourceBookingBundle\Ajax\AjaxResponse;
 use Markocupic\ResourceBookingBundle\Controller\FrontendModule\ResourceBookingWeekcalendarController;
 
 /**
- * Class ResourceBookingAjaxResponse
- * @package Markocupic\ResourceBookingBundle\Listener\ContaoHooks
+ * Class ResourceBookingAjaxResponse.
  */
 class ResourceBookingAjaxResponse
 {
-    /**
-     * @param string $action
-     * @param AjaxResponse $xhrResponse
-     * @param ResourceBookingWeekcalendarController $objController
-     */
     public function onBeforeSend(string $action, AjaxResponse &$xhrResponse, ResourceBookingWeekcalendarController $objController): void
     {
-        if($action === 'fetchDataRequest')
-        {
+        if ('fetchDataRequest' === $action) {
             // Do some stuff
         }
 
-        if($action === 'applyFilterRequest')
-        {
+        if ('applyFilterRequest' === $action) {
             // Do some stuff
         }
 
-        if($action === 'jumpWeekRequest')
-        {
+        if ('jumpWeekRequest' === $action) {
             // Do some stuff
         }
 
-        if($action === 'bookingRequest')
-        {
+        if ('bookingRequest' === $action) {
             // Do some stuff
         }
 
-        if($action === 'bookingFormValidationRequest')
-        {
+        if ('bookingFormValidationRequest' === $action) {
             // Do some stuff
         }
 
-        if($action === 'cancelBookingRequest')
-        {
+        if ('cancelBookingRequest' === $action) {
             // Do some stuff
         }
     }
