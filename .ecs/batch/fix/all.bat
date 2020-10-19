@@ -7,12 +7,12 @@ cd..
 cd..
 cd..
 :: src
-vendor\bin\ecs check vendor/markocupic/resource-booking-bundle/src --fix --config vendor/markocupic/resource-booking-bundle/.ecs/config/default.php
+start vendor\bin\ecs check vendor/markocupic/resource-booking-bundle/src --fix --config vendor/markocupic/resource-booking-bundle/.ecs/config/default.php
 :: tests
-vendor\bin\ecs check vendor/markocupic/resource-booking-bundle/tests --fix --config vendor/markocupic/resource-booking-bundle/.ecs/config/default.php
+:: start vendor\bin\ecs check vendor/markocupic/resource-booking-bundle/tests --fix --config vendor/markocupic/resource-booking-bundle/.ecs/config/default.php
 :: legacy
-vendor\bin\ecs check vendor/markocupic/resource-booking-bundle/src/Resources/contao --fix --config vendor/markocupic/resource-booking-bundle/.ecs/config/legacy.php
+start vendor\bin\ecs check vendor/markocupic/resource-booking-bundle/src/Resources/contao --fix --config vendor/markocupic/resource-booking-bundle/.ecs/config/legacy.php
 :: templates
-vendor\bin\ecs check vendor/markocupic/resource-booking-bundle/src/Resources/contao/templates --fix --config vendor/markocupic/resource-booking-bundle/.ecs/config/template.php
+start vendor\bin\ecs check vendor/markocupic/resource-booking-bundle/src/Resources/contao/templates --fix --config vendor/markocupic/resource-booking-bundle/.ecs/config/template.php
 ::
 cd vendor/markocupic/resource-booking-bundle/.ecs./batch/fix

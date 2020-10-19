@@ -1,32 +1,39 @@
 <?php
 
-/**
- * Resource Booking Module for Contao CMS
- * Copyright (c) 2008-2020 Marko Cupic
- * @package resource-booking-bundle
- * @author Marko Cupic m.cupic@gmx.ch, 2020
+/*
+ * This file is part of Resource Booking Bundle.
+ *
+ * (c) Marko Cupic 2020 <m.cupic@gmx.ch>
+ * @license MIT
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
+use Contao\Config;
+use Markocupic\ResourceBookingBundle\Config\RbbConfig;
+use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
+use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
+use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceTypeModel;
+use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotModel;
+use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotTypeModel;
+
 // Register back end modules
-$GLOBALS['BE_MOD']['resourceBookingTool'] = [
-    'resource'     => [
-        'tables' => ['tl_resource_booking_resource_type', 'tl_resource_booking_resource', 'tl_resource_booking'],
-        'stylesheet' => [\Markocupic\ResourceBookingBundle\Config\Config::MOD_RESOURCE_BOOKING_ASSET_PATH . '/css/backend.css'],
-    ],
-    'timeSlotType' => [
-        'tables' => ['tl_resource_booking_time_slot_type', 'tl_resource_booking_time_slot'],
-    ]
-];
+$GLOBALS['BE_MOD']['resourceBookingTool'] = array(
+	'resource'     => array(
+		'tables' => array('tl_resource_booking_resource_type', 'tl_resource_booking_resource', 'tl_resource_booking'),
+		'stylesheet' => array(RbbConfig::MOD_RESOURCE_BOOKING_ASSET_PATH . '/css/backend.css'),
+	),
+	'timeSlotType' => array(
+		'tables' => array('tl_resource_booking_time_slot_type', 'tl_resource_booking_time_slot'),
+	)
+);
 
 // Register contao models
-$GLOBALS['TL_MODELS']['tl_resource_booking'] = \Markocupic\ResourceBookingBundle\Model\ResourceBookingModel::class;
-$GLOBALS['TL_MODELS']['tl_resource_booking_resource'] = \Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel::class;
-$GLOBALS['TL_MODELS']['tl_resource_booking_resource_type'] = \Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceTypeModel::class;
-$GLOBALS['TL_MODELS']['tl_resource_booking_time_slot'] = \Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotModel::class;
-$GLOBALS['TL_MODELS']['tl_resource_booking_time_slot_type'] = \Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotTypeModel::class;
+$GLOBALS['TL_MODELS']['tl_resource_booking'] = ResourceBookingModel::class;
+$GLOBALS['TL_MODELS']['tl_resource_booking_resource'] = ResourceBookingResourceModel::class;
+$GLOBALS['TL_MODELS']['tl_resource_booking_resource_type'] = ResourceBookingResourceTypeModel::class;
+$GLOBALS['TL_MODELS']['tl_resource_booking_time_slot'] = ResourceBookingTimeSlotModel::class;
+$GLOBALS['TL_MODELS']['tl_resource_booking_time_slot_type'] = ResourceBookingTimeSlotTypeModel::class;
 
 // Set backWeeks and aheadWeeks
-\Contao\Config::set('rbb_intBackWeeks', -10);
-\Contao\Config::set('rbb_intAheadWeeks', 51);
-
+Config::set('rbb_intBackWeeks', -10);
+Config::set('rbb_intAheadWeeks', 51);

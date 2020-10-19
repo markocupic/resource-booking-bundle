@@ -13,9 +13,9 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\Config;
 
 /**
- * Class Config.
+ * Class RbbConfig.
  */
-class Config
+class RbbConfig
 {
     public const MOD_RESOURCE_BOOKING_ASSET_PATH = 'bundles/markocupicresourcebooking';
 }

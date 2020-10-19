@@ -111,6 +111,7 @@ class resourceBookingApp {
                     //
                 },
                 activeResourceTypeId: function activeResourceTypeId(newObj, oldObj) {
+                    this.activeResourceId = 0;
                     this.applyFilterRequest(newObj, this.activeResourceId, this.activeWeekTstamp);
                 },
                 activeResourceId: function activeResourceId(newObj, oldObj) {
