@@ -139,9 +139,19 @@ class AjaxHandler
             $intRes = 0;
         }
 
-        if (null !== $resourceBookingResourceModelAdapter->findByPk($intRes)) {
-            $this->sessionBag->set('res', $intRes);
-        } else {
+        // Check if res exists
+        $invalidRes = true;
+
+        if (null !== ($objRes = $resourceBookingResourceModelAdapter->findByPk($intRes))) {
+            // ... and if res is in the current resType container
+            if ((int) $objRes->pid === (int) $intResType) {
+                $this->sessionBag->set('res', $intRes);
+                $invalidRes = false;
+            }
+        }
+
+        // Set res to 0, if the res is invalid
+        if ($invalidRes) {
             $this->sessionBag->set('res', 0);
         }
 
@@ -411,8 +421,6 @@ class AjaxHandler
 
                     if ($intAffected) {
                         // Log
-                        $resourceTitle = $objResource->title;
-
                         $logger = $systemAdapter->getContainer()->get('monolog.logger.contao');
                         $logger->log(LogLevel::INFO, $strLog, ['contao' => new ContaoContext(__METHOD__, 'INFO')]);
                     }
