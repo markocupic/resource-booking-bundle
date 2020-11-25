@@ -641,6 +641,8 @@ class AjaxHelper
                 'daySpan' => $dateMonday.' - '.$dateSunday,
                 'calWeek' => (int) $calWeek,
                 'year' => $yearMonday,
+                'optionDateStart' => $dateMonday,
+                'optionDateEnd' => $dateSunday,
                 'optionText' => sprintf($GLOBALS['TL_LANG']['MSC']['weekSelectOptionText'], $calWeek, $yearMonday, $dateMonday, $dateSunday),
             ];
 
