@@ -142,9 +142,6 @@ class AjaxHelper
         /** @var System $systemAdapter */
         $systemAdapter = $this->framework->getAdapter(System::class);
 
-        /** @var Controller $controllerAdapter */
-        $controllerAdapter = $this->framework->getAdapter(Controller::class);
-
         /** @var Message $messageAdapter */
         $messageAdapter = $this->framework->getAdapter(Message::class);
 
@@ -161,13 +158,6 @@ class AjaxHelper
 
         // Get module data
         $arrData['opt'] = $this->moduleModel->row();
-        $arrData['opt']['resourceBooking_autologoutRedirect_autologout'] = '';
-        $arrData['opt']['resourceBooking_autologoutRedirect'] = $controllerAdapter->replaceInsertTags(sprintf('{{link_url::%s}}', $this->moduleModel->resourceBooking_autologoutRedirect));
-
-        // Handle autologout
-        if ($this->objUser && $this->moduleModel->resourceBooking_autologoutRedirect_autologout) {
-            $arrData['opt']['resourceBooking_autologoutRedirect_autologout'] = '1';
-        }
 
         // Convert binary uuids to string uuids
         $arrData['opt'] = array_map(
