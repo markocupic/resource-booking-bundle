@@ -19,28 +19,18 @@ Anm: Bei der Installation wird neben den oben erwähnten Erweiterungen auch [cod
 ![Alt text](src/Resources/public/screenshot/screenshot2.png?raw=true "Buchungstool im Frontend-Ansicht")
 
 ## Hooks
-Mit verschiedenen Hooks kann das Modul erweitert werden.
+Mit event subscribern kann die Applikation erweitert werden.
 
 ### ResourceBookingPostBookingHook
-Der *ResourceBookingPostBookingHook* wird nach dem Buchungsrequest getriggert. 
+Der *rbb.event.post_booking* Event Subscriber wird nach dem Buchungsrequest getriggert. 
 
-Hook in der listener.yml registrieren
+Klasse in der listener.yml registrieren
 
 ```
 services:
-  Markocupic\ResourceBookingBundle\EventListener\ContaoHooks\ResourceBookingPostBooking:
+  App\EventSubscriber\PostBookingEventSubscriber:
     tags:
-    - { name: contao.hook, hook: resourceBookingPostBooking, method: onPostBooking, priority: 0 }
-```
-
-oder klassisch in der config.php:
-
-```php
-// Hooks
-$GLOBALS['TL_HOOKS']['resourceBookingPostBooking'][] = [
-    'Markocupic\ResourceBookingBundle\EventListener\ContaoHooks\ResourceBookingPostBooking',
-    'onPostBooking'
-    ];
+    - { name: kernel.event_listener, event: rbb.event.post_booking, method: onPostBooking, priority: 10 }
 ```
 
 Die eigentliche Klasse:
@@ -50,30 +40,22 @@ Die eigentliche Klasse:
 
 declare(strict_types=1);
 
-/*
- * This file is part of Resource Booking Bundle.
- *
- * (c) Marko Cupic 2020 <m.cupic@gmx.ch>
- * @license MIT
- * @link https://github.com/markocupic/resource-booking-bundle
- */
-
-namespace Markocupic\ResourceBookingBundle\EventListener\ContaoHooks;
+namespace App\EventSubscriber;
 
 use Contao\Date;
-use Contao\FrontendUser;
-use Markocupic\ResourceBookingBundle\EventSubscriber\AjaxRequestEventSubscriber;
-use Model\Collection;
-use Symfony\Component\HttpFoundation\Request;
+use Markocupic\ResourceBookingBundle\Event\PostBookingEvent;
 
 /**
- * Class ResourceBookingPostBooking.
+ * Class PostBookingEventSubscriber.
  */
-class ResourceBookingPostBooking
+class PostBookingEventSubscriber
 {
-    public function onPostBooking(Collection $objBookingCollection, Request $request, ?FrontendUser $objUser, AjaxRequestEventSubscriber $objAjaxRequestEventSubscriber): void
+    public function onPostBooking(PostBookingEvent $objPostBookingEvent): void
     {
         // For demo usage only
+        $objBookingCollection = $objPostBookingEvent->getBookingCollection();
+        $objUser = $objPostBookingEvent->getUser();
+        // $sessionBag = $objPostBookingEvent->getSessionBag();
 
         while ($objBookingCollection->next()) {
             if (null !== $objUser) {
@@ -101,25 +83,20 @@ class ResourceBookingPostBooking
 ```
 
 ### ResourceBookingAjaxResponse
-Der *ResourceBookingAjaxResponse* wird vor dem Absenden der Response bei Ajax Anfragen getriggert. 
+Der *rbb.event.XXX_request* werden vor dem Absenden der Response zurück an den Browser bei Ajax Anfragen getriggert. 
 
-Hook in der listener.yml registrieren
+Klasse in der listener.yml registrieren
 
 ```
 services:
-  Markocupic\ResourceBookingBundle\EventListener\ContaoHooks\ResourceBookingAjaxResponse:
-    tags:
-    - { name: contao.hook, hook: resourceBookingAjaxResponse, method: onBeforeSend, priority: 0 }
-```
-
-oder klassisch in der config.php:
-
-```php
-// Hooks
-$GLOBALS['TL_HOOKS']['resourceBookingAjaxResponse'][] = [
-    'Markocupic\ResourceBookingBundle\EventListener\ContaoHooks\ResourceBookingAjaxResponse',
-    'onBeforeSend'
-    ];
+  App\EventSubscriber\AjaxRequestEventSubscriber:
+     tags:
+     - { name: kernel.event_listener, event: rbb.event.fetch_data_request, method: onFetchDataRequest, priority: 10 }
+     - { name: kernel.event_listener, event: rbb.event.apply_filter_request, method: onApplyFilterRequest, priority: 10 }
+     - { name: kernel.event_listener, event: rbb.event.jump_week_request, method: onJumpWeekRequest, priority: 10 }
+     - { name: kernel.event_listener, event: rbb.event.booking_request, method: onBookingRequest, priority: 10 }
+     - { name: kernel.event_listener, event: rbb.event.booking_form_validation_request, method: onBookingFormValidationRequest, priority: 10 }
+     - { name: kernel.event_listener, event: rbb.event.cancel_booking_request, method: onCancelBookingRequest, priority: 10 }
 ```
 
 Die eigentliche Klasse:
@@ -129,61 +106,47 @@ Die eigentliche Klasse:
 
 declare(strict_types=1);
 
-/**
- * Resource Booking Module for Contao CMS
- * Copyright (c) 2008-2020 Marko Cupic
- * @package resource-booking-bundle
- * @author Marko Cupic m.cupic@gmx.ch, 2020
- * @link https://github.com/markocupic/resource-booking-bundle
- */
+namespace App\EventSubscriber;
 
-namespace Markocupic\ResourceBookingBundle\EventListener\ContaoHooks;
-
-use Markocupic\ResourceBookingBundle\Ajax\AjaxResponse;
-use Markocupic\ResourceBookingBundle\Controller\FrontendModule\ResourceBookingWeekcalendarController;
+use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
 
 /**
- * Class ResourceBookingAjaxResponse
- * @package Markocupic\ResourceBookingBundle\EventListener\ContaoHooks
+ * Class AjaxRequestEventSubscriber.
  */
-class ResourceBookingAjaxResponse
+class AjaxRequestEventSubscriber
 {
     /**
-     * @param string $action
-     * @param AjaxResponse $xhrResponse
-     * @param ResourceBookingWeekcalendarController $objController
+     * @throws \Exception
      */
-    public function onBeforeSend(string $action, AjaxResponse &$xhrResponse, ResourceBookingWeekcalendarController $objController): void
+    public function onFetchDataRequest(AjaxRequestEvent $ajaxRequestEvent): void
     {
-        if($action === 'fetchDataRequest')
-        {
-            // Do some stuff
-        }
+        // Do some stuff here
+    }
 
-        if($action === 'applyFilterRequest')
-        {
-            // Do some stuff
-        }
+    public function onApplyFilterRequest(AjaxRequestEvent $ajaxRequestEvent): void
+    {
+        // Do some stuff here
+    }
 
-        if($action === 'jumpWeekRequest')
-        {
-            // Do some stuff
-        }
+    public function onJumpWeekRequest(AjaxRequestEvent $ajaxRequestEvent): void
+    {
+        // Do some stuff here
+    }
 
-        if($action === 'bookingRequest')
-        {
-            // Do some stuff
-        }
+    public function onBookingRequest(AjaxRequestEvent $ajaxRequestEvent): void
+    {
+        // Do some stuff here
+    }
 
-        if($action === 'bookingFormValidationRequest')
-        {
-            // Do some stuff
-        }
+    public function onBookingFormValidationRequest(AjaxRequestEvent $ajaxRequestEvent): void
+    {
+        // Do some stuff here
+    }
 
-        if($action === 'cancelBookingRequest')
-        {
-            // Do some stuff
-        }
+    public function onCancelBookingRequest(AjaxRequestEvent $ajaxRequestEvent): void
+    {
+        // Do some stuff here
     }
 }
+
 ```

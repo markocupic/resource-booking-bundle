@@ -17,10 +17,10 @@ use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Environment;
 use Contao\ModuleModel;
 use Contao\PageModel;
-use Contao\System;
 use Contao\Template;
 use Markocupic\ResourceBookingBundle\Ajax\AjaxResponse;
 use Markocupic\ResourceBookingBundle\AppInitialization\Initialize;
+use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -138,19 +138,11 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
     {
         $action = $request->request->get('action', null);
 
-        /** @var System $systemAdapter */
-        $systemAdapter = $this->framework->getAdapter(System::class);
+        $objAjaxRequestEvent = new AjaxRequestEvent();
+        $objAjaxRequestEvent->setAjaxResponse($this->ajaxResponse);
 
-        // Dispatch subscribed events
-        $this->eventDispatcher->dispatch($this->ajaxResponse, 'rbb.event.'.$this->toSnakeCase($action));
-
-        // HOOK: add custom logic
-        if (isset($GLOBALS['TL_HOOKS']['resourceBookingAjaxResponse']) && \is_array($GLOBALS['TL_HOOKS']['resourceBookingAjaxResponse'])) {
-            foreach ($GLOBALS['TL_HOOKS']['resourceBookingAjaxResponse'] as $callback) {
-                /** @var AjaxResponse $xhrResponse */
-                $systemAdapter->importStatic($callback[0])->{$callback[1]}($action, $this->ajaxResponse, $this);
-            }
-        }
+        // Trigger subscribed event listeners
+        $this->eventDispatcher->dispatch($objAjaxRequestEvent, 'rbb.event.'.$this->toSnakeCase($action));
 
         return $this->createJsonResponse($this->ajaxResponse->getAll(), 200);
     }
