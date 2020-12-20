@@ -1,17 +1,17 @@
 # listener.yml
 services:
-  Markocupic\ResourceBookingBundle\Listener\ContaoHooks\ResourceBookingPostBooking:
+  Markocupic\ResourceBookingBundle\EventListener\ContaoHooks\ResourceBookingPostBooking:
     tags:
     - { name: contao.hook, hook: resourceBookingPostBooking, method: onPostBooking, priority: 0 }
 
-  Markocupic\ResourceBookingBundle\Listener\ContaoHooks\ResourceBookingAjaxResponse:
+  Markocupic\ResourceBookingBundle\EventListener\ContaoHooks\ResourceBookingAjaxResponse:
     tags:
     - { name: contao.hook, hook: resourceBookingAjaxResponse, method: onBeforeSend, priority: 0 }
 
-  Markocupic\ResourceBookingBundle\Listener\ContaoHooks\Regexp:
+  Markocupic\ResourceBookingBundle\EventListener\ContaoHooks\Regexp:
     tags:
     - { name: contao.hook, hook: addCustomRegexp, method: onCustomRegexp, priority: 0 }
 
-  Markocupic\ResourceBookingBundle\Listener\ContaoHooks\ReplaceInsertTags:
+  Markocupic\ResourceBookingBundle\EventListener\ContaoHooks\ReplaceInsertTags:
     tags:
     - { name: contao.hook, hook: replaceInsertTags, method: onReplaceInsertTags, priority: 0 }

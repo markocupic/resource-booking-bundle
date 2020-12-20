@@ -10,7 +10,7 @@ declare(strict_types=1);
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
-namespace Markocupic\ResourceBookingBundle\Listener\ContaoHooks;
+namespace Markocupic\ResourceBookingBundle\EventListener\ContaoHooks;
 
 use Contao\Controller;
 

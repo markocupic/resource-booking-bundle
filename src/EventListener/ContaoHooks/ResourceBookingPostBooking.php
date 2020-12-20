@@ -10,11 +10,11 @@ declare(strict_types=1);
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
-namespace Markocupic\ResourceBookingBundle\Listener\ContaoHooks;
+namespace Markocupic\ResourceBookingBundle\EventListener\ContaoHooks;
 
 use Contao\Date;
 use Contao\FrontendUser;
-use Markocupic\ResourceBookingBundle\Ajax\AjaxHandler;
+use Markocupic\ResourceBookingBundle\EventSubscriber\AjaxRequestEventSubscriber;
 use Model\Collection;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -23,19 +23,16 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class ResourceBookingPostBooking
 {
-    public function onPostBooking(Collection $objBookingCollection, Request $request, ?FrontendUser $objUser, AjaxHandler $objAjaxHandler): void
+    public function onPostBooking(Collection $objBookingCollection, Request $request, ?FrontendUser $objUser, AjaxRequestEventSubscriber $objAjaxRequestEventSubscriber): void
     {
         // For demo usage only
-
         /*
-        while ($objBookingCollection->next())
-        {
-            if ($objUser !== null)
-            {
+        while ($objBookingCollection->next()) {
+            if (null !== $objUser) {
                 // Send notifications, manipulate database
                 // or do some other insane stuff
                 $strMessage = sprintf(
-                    'Dear %s %s' ."\n". 'You have successfully booked %s on %s from %s to %s.',
+                    'Dear %s %s'."\n".'You have successfully booked %s on %s from %s to %s.',
                     $objUser->firstname,
                     $objUser->lastname,
                     $objBookingCollection->getRelated('pid')->title,
@@ -50,6 +47,6 @@ class ResourceBookingPostBooking
                 );
             }
         }
-         */
+        */
     }
 }

@@ -28,7 +28,7 @@ Hook in der listener.yml registrieren
 
 ```
 services:
-  Markocupic\ResourceBookingBundle\Listener\ContaoHooks\ResourceBookingPostBooking:
+  Markocupic\ResourceBookingBundle\EventListener\ContaoHooks\ResourceBookingPostBooking:
     tags:
     - { name: contao.hook, hook: resourceBookingPostBooking, method: onPostBooking, priority: 0 }
 ```
@@ -38,7 +38,7 @@ oder klassisch in der config.php:
 ```php
 // Hooks
 $GLOBALS['TL_HOOKS']['resourceBookingPostBooking'][] = [
-    'Markocupic\ResourceBookingBundle\Listener\ContaoHooks\ResourceBookingPostBooking',
+    'Markocupic\ResourceBookingBundle\EventListener\ContaoHooks\ResourceBookingPostBooking',
     'onPostBooking'
     ];
 ```
@@ -50,45 +50,37 @@ Die eigentliche Klasse:
 
 declare(strict_types=1);
 
-/**
- * Resource Booking Module for Contao CMS
- * Copyright (c) 2008-2020 Marko Cupic
- * @package resource-booking-bundle
- * @author Marko Cupic m.cupic@gmx.ch, 2020
+/*
+ * This file is part of Resource Booking Bundle.
+ *
+ * (c) Marko Cupic 2020 <m.cupic@gmx.ch>
+ * @license MIT
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
-namespace Markocupic\ResourceBookingBundle\Listener\ContaoHooks;
+namespace Markocupic\ResourceBookingBundle\EventListener\ContaoHooks;
 
 use Contao\Date;
 use Contao\FrontendUser;
-use Markocupic\ResourceBookingBundle\Ajax\AjaxHandler;
+use Markocupic\ResourceBookingBundle\EventSubscriber\AjaxRequestEventSubscriber;
 use Model\Collection;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
- * Class ResourceBookingPostBooking
- * @package Markocupic\ResourceBookingBundle\Listener\ContaoHooks
+ * Class ResourceBookingPostBooking.
  */
 class ResourceBookingPostBooking
 {
-
-    /**
-     * @param Collection $objBookingCollection
-     * @param Request $request
-     * @param FrontendUser|null $objUser
-     * @param AjaxHandler $objAjaxHandler
-     */
-    public function onPostBooking(Collection $objBookingCollection, Request $request, ?FrontendUser $objUser, AjaxHandler $objAjaxHandler): void
+    public function onPostBooking(Collection $objBookingCollection, Request $request, ?FrontendUser $objUser, AjaxRequestEventSubscriber $objAjaxRequestEventSubscriber): void
     {
-        while ($objBookingCollection->next())
-        {
-            if ($objUser !== null)
-            {
+        // For demo usage only
+
+        while ($objBookingCollection->next()) {
+            if (null !== $objUser) {
                 // Send notifications, manipulate database
                 // or do some other insane stuff
                 $strMessage = sprintf(
-                    'Dear %s %s' ."\n". 'You have successfully booked %s on %s from %s to %s.',
+                    'Dear %s %s'."\n".'You have successfully booked %s on %s from %s to %s.',
                     $objUser->firstname,
                     $objUser->lastname,
                     $objBookingCollection->getRelated('pid')->title,
@@ -105,16 +97,17 @@ class ResourceBookingPostBooking
         }
     }
 }
+
 ```
 
 ### ResourceBookingAjaxResponse
-Der *ResourceBookingAjaxResponse* wird vor dem Absenden der Response bei AJax Anfragen getriggert. 
+Der *ResourceBookingAjaxResponse* wird vor dem Absenden der Response bei Ajax Anfragen getriggert. 
 
 Hook in der listener.yml registrieren
 
 ```
 services:
-  Markocupic\ResourceBookingBundle\Listener\ContaoHooks\ResourceBookingAjaxResponse:
+  Markocupic\ResourceBookingBundle\EventListener\ContaoHooks\ResourceBookingAjaxResponse:
     tags:
     - { name: contao.hook, hook: resourceBookingAjaxResponse, method: onBeforeSend, priority: 0 }
 ```
@@ -124,7 +117,7 @@ oder klassisch in der config.php:
 ```php
 // Hooks
 $GLOBALS['TL_HOOKS']['resourceBookingAjaxResponse'][] = [
-    'Markocupic\ResourceBookingBundle\Listener\ContaoHooks\ResourceBookingAjaxResponse',
+    'Markocupic\ResourceBookingBundle\EventListener\ContaoHooks\ResourceBookingAjaxResponse',
     'onBeforeSend'
     ];
 ```
@@ -144,14 +137,14 @@ declare(strict_types=1);
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
-namespace Markocupic\ResourceBookingBundle\Listener\ContaoHooks;
+namespace Markocupic\ResourceBookingBundle\EventListener\ContaoHooks;
 
 use Markocupic\ResourceBookingBundle\Ajax\AjaxResponse;
 use Markocupic\ResourceBookingBundle\Controller\FrontendModule\ResourceBookingWeekcalendarController;
 
 /**
  * Class ResourceBookingAjaxResponse
- * @package Markocupic\ResourceBookingBundle\Listener\ContaoHooks
+ * @package Markocupic\ResourceBookingBundle\EventListener\ContaoHooks
  */
 class ResourceBookingAjaxResponse
 {

@@ -19,9 +19,9 @@ use Contao\ModuleModel;
 use Contao\PageModel;
 use Contao\System;
 use Contao\Template;
-use Markocupic\ResourceBookingBundle\Ajax\AjaxHandler;
 use Markocupic\ResourceBookingBundle\Ajax\AjaxResponse;
 use Markocupic\ResourceBookingBundle\AppInitialization\Initialize;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -43,14 +43,19 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
     private $requestStack;
 
     /**
+     * @var EventDispatcherInterface
+     */
+    private $eventDispatcher;
+
+    /**
      * @var Initialize
      */
     private $appInitializer;
 
     /**
-     * @var AjaxHandler
+     * @var AjaxResponse
      */
-    private $ajaxHandler;
+    private $ajaxResponse;
 
     /**
      * @var string
@@ -60,12 +65,13 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
     /**
      * ResourceBookingWeekcalendarController constructor.
      */
-    public function __construct(ContaoFramework $framework, RequestStack $requestStack, Initialize $appInitializer, AjaxHandler $ajaxHandler)
+    public function __construct(ContaoFramework $framework, RequestStack $requestStack, EventDispatcherInterface $eventDispatcher, Initialize $appInitializer, AjaxResponse $ajaxResponse)
     {
         $this->framework = $framework;
         $this->requestStack = $requestStack;
+        $this->eventDispatcher = $eventDispatcher;
         $this->appInitializer = $appInitializer;
-        $this->ajaxHandler = $ajaxHandler;
+        $this->ajaxResponse = $ajaxResponse;
     }
 
     /**
@@ -135,26 +141,18 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
         /** @var System $systemAdapter */
         $systemAdapter = $this->framework->getAdapter(System::class);
 
-        if (\is_callable([AjaxHandler::class, $action])) {
-            /** @var AjaxResponse $xhrResponse */
-            $xhrResponse = $this->ajaxHandler->{$action}();
+        // Dispatch subscribed events
+        $this->eventDispatcher->dispatch($this->ajaxResponse, 'rbb.event.'.$this->toSnakeCase($action));
 
-            // HOOK: add custom logic
-            if (isset($GLOBALS['TL_HOOKS']['resourceBookingAjaxResponse']) && \is_array($GLOBALS['TL_HOOKS']['resourceBookingAjaxResponse'])) {
-                foreach ($GLOBALS['TL_HOOKS']['resourceBookingAjaxResponse'] as $callback) {
-                    /** @var AjaxResponse $xhrResponse */
-                    $systemAdapter->importStatic($callback[0])->{$callback[1]}($action, $xhrResponse, $this);
-                }
+        // HOOK: add custom logic
+        if (isset($GLOBALS['TL_HOOKS']['resourceBookingAjaxResponse']) && \is_array($GLOBALS['TL_HOOKS']['resourceBookingAjaxResponse'])) {
+            foreach ($GLOBALS['TL_HOOKS']['resourceBookingAjaxResponse'] as $callback) {
+                /** @var AjaxResponse $xhrResponse */
+                $systemAdapter->importStatic($callback[0])->{$callback[1]}($action, $this->ajaxResponse, $this);
             }
-
-            return $this->createJsonResponse($xhrResponse->getAll(), 200);
         }
 
-        $xhrResponse = new AjaxResponse();
-        $xhrResponse->setStatus(AjaxResponse::STATUS_ERROR);
-        $xhrResponse->setErrorMessage(sprintf('Action "%s" not found.', $action));
-
-        return $this->createJsonResponse($xhrResponse->getAll(), 501);
+        return $this->createJsonResponse($this->ajaxResponse->getAll(), 200);
     }
 
     protected function createJsonResponse(array $arrData, int $statusCode): JsonResponse
@@ -170,5 +168,22 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
         $response->headers->addCacheControlDirective('no-store', true);
 
         return $response;
+    }
+
+    /**
+     * @param $str
+     * @param string $glue
+     *
+     * @return string|array<string>|null
+     */
+    private function toSnakeCase($str, $glue = '_')
+    {
+        return preg_replace_callback(
+            '/[A-Z]/',
+            static function ($matches) use ($glue) {
+                return $glue.strtolower($matches[0]);
+            },
+            $str
+        );
     }
 }

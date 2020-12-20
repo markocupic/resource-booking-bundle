@@ -1,18 +1,6 @@
 # services.yml
 services:
 
-  # Ajax handler
-  Markocupic\ResourceBookingBundle\Ajax\AjaxHandler:
-    arguments:
-    - '@contao.framework'
-    - '@Markocupic\ResourceBookingBundle\Ajax\AjaxHelper'
-    - '@session'
-    - '@request_stack'
-    - '@Markocupic\ResourceBookingBundle\Ajax\AjaxResponse'
-    - '%resource_booking_bundle.session.attribute_bag_name%'
-    - '@security.helper'
-    public: true
-
   # Ajax helper
   Markocupic\ResourceBookingBundle\Ajax\AjaxHelper:
     arguments:
@@ -40,8 +28,9 @@ services:
     arguments:
     - '@contao.framework'
     - '@request_stack'
+    - '@event_dispatcher'
     - '@Markocupic\ResourceBookingBundle\AppInitialization\Initialize'
-    - '@Markocupic\ResourceBookingBundle\Ajax\AjaxHandler'
+    - '@Markocupic\ResourceBookingBundle\Ajax\AjaxResponse'
     calls:
     - ['setContainer', ['@Psr\Container\ContainerInterface']]
     tags:
