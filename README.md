@@ -120,7 +120,8 @@ class AjaxRequestEventSubscriber
      */
     public function onFetchDataRequest(AjaxRequestEvent $ajaxRequestEvent): void
     {
-        // Do some stuff here
+        $response = $ajaxRequestEvent->getAjaxResponse();
+        $response->setData('foo', 'bla');
     }
 
     public function onApplyFilterRequest(AjaxRequestEvent $ajaxRequestEvent): void
