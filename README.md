@@ -33,7 +33,7 @@ services:
     - { name: kernel.event_listener, event: rbb.event.post_booking, method: onPostBooking, priority: 10 }
 ```
 
-Die Event-Subscriber-Klasse:
+Weiter muss eine entsprechende Event-Subscriber-Klasse erstellt werden:
 
 ```php
 <?php
@@ -99,7 +99,7 @@ services:
      - { name: kernel.event_listener, event: rbb.event.cancel_booking_request, method: onCancelBookingRequest, priority: 10 }
 ```
 
-Die Event-Subscriber-Klasse:
+Weiter muss eine entsprechende Event-Subscriber-Klasse erstellt werden:
 
 ```php
 <?php
