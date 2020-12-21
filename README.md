@@ -18,13 +18,13 @@ Anm: Bei der Installation wird neben den oben erwähnten Erweiterungen auch [cod
 
 ![Alt text](src/Resources/public/screenshot/screenshot2.png?raw=true "Buchungstool im Frontend-Ansicht")
 
-## Hooks
-Mit event subscribern kann die Applikation erweitert werden.
+## Event Subscriber
+Mit event subscribern kann die Applikation an mehreren Stellen erweitert werden.
 
-### ResourceBookingPostBookingHook
-Der *rbb.event.post_booking* Event Subscriber wird nach dem Buchungsrequest getriggert. 
+### Post booking event subscriber
+Der *rbb.event.post_booking* Event Subscriber wird nach dem Buchungsrequest getriggert. Hiermit können unmittelbar nach der Buchung Aktionen durchgeführt werden. Beispielsweise kann eine Benachrichtigung gesendet werden oder es können weitere Einträge in der Datenbank getätigt werden.
 
-Klasse in der listener.yml registrieren
+Dazu muss die Subscriber-Klasse in der listener.yml registriert werden:
 
 ```
 services:
@@ -33,7 +33,7 @@ services:
     - { name: kernel.event_listener, event: rbb.event.post_booking, method: onPostBooking, priority: 10 }
 ```
 
-Die eigentliche Klasse:
+Die Event-Subscriber-Klasse:
 
 ```php
 <?php
@@ -82,10 +82,10 @@ class PostBookingEventSubscriber
 
 ```
 
-### ResourceBookingAjaxResponse
-Der *rbb.event.XXX_request* werden vor dem Absenden der Response zurück an den Browser bei Ajax Anfragen getriggert. 
+### Request event subscriber
+Die *rbb.event.XXX_request* werden bei Ajax-Anfragen vor dem Absenden der Response zurück an den Browser getriggert. Mit event subscribern kann die Response angepasst/erweitert werden. 
 
-Klasse in der listener.yml registrieren
+Dazu muss die Subscriber-Klasse in der listener.yml registriert werden:
 
 ```
 services:
@@ -99,7 +99,7 @@ services:
      - { name: kernel.event_listener, event: rbb.event.cancel_booking_request, method: onCancelBookingRequest, priority: 10 }
 ```
 
-Die eigentliche Klasse:
+Die Event-Subscriber-Klasse:
 
 ```php
 <?php
