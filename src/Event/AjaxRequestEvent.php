@@ -12,24 +12,18 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\Event;
 
-use Contao\FrontendUser;
-use Contao\Model\Collection;
-use Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag;
+use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Symfony\Contracts\EventDispatcher\Event;
-use Markocupic\ResourceBookingBundle\Ajax\AjaxResponse;
+
 /**
  * Class AjaxRequestEvent.
  */
 class AjaxRequestEvent extends Event
 {
-
-
     /**
      * @var AjaxResponse
      */
     private $ajaxResponse;
-
-
 
     public function setAjaxResponse(AjaxResponse $ajaxResponse): void
     {
@@ -40,6 +34,4 @@ class AjaxRequestEvent extends Event
     {
         return $this->ajaxResponse;
     }
-
-
 }

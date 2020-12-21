@@ -18,9 +18,10 @@ use Contao\Environment;
 use Contao\ModuleModel;
 use Contao\PageModel;
 use Contao\Template;
-use Markocupic\ResourceBookingBundle\Ajax\AjaxResponse;
 use Markocupic\ResourceBookingBundle\AppInitialization\Initialize;
 use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
+use Markocupic\ResourceBookingBundle\Helper\StringHelper;
+use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -58,6 +59,11 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
     private $ajaxResponse;
 
     /**
+     * @var StringHelper
+     */
+    private $stringHelper;
+
+    /**
      * @var string
      */
     private $moduleKey;
@@ -65,13 +71,14 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
     /**
      * ResourceBookingWeekcalendarController constructor.
      */
-    public function __construct(ContaoFramework $framework, RequestStack $requestStack, EventDispatcherInterface $eventDispatcher, Initialize $appInitializer, AjaxResponse $ajaxResponse)
+    public function __construct(ContaoFramework $framework, RequestStack $requestStack, EventDispatcherInterface $eventDispatcher, Initialize $appInitializer, AjaxResponse $ajaxResponse, StringHelper $stringHelper)
     {
         $this->framework = $framework;
         $this->requestStack = $requestStack;
         $this->eventDispatcher = $eventDispatcher;
         $this->appInitializer = $appInitializer;
         $this->ajaxResponse = $ajaxResponse;
+        $this->stringHelper = $stringHelper;
     }
 
     /**
@@ -85,7 +92,7 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
             $environmentAdapter = $this->framework->getAdapter(Environment::class);
 
             /*
-             * The module key is necessary to run several rbb applications on the same page
+             * The module key is necessary to run multiple rbb applications on the same page
              * and is sent as a post parameter in every xhr request
              *
              * The module key (#moduleId_#moduleIndex f.ex. 33_2) contains the module id and the module index
@@ -142,7 +149,7 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
         $objAjaxRequestEvent->setAjaxResponse($this->ajaxResponse);
 
         // Trigger subscribed event listeners
-        $this->eventDispatcher->dispatch($objAjaxRequestEvent, 'rbb.event.'.$this->toSnakeCase($action));
+        $this->eventDispatcher->dispatch($objAjaxRequestEvent, 'rbb.event.'.$this->stringHelper->toSnakeCase($action));
 
         return $this->createJsonResponse($this->ajaxResponse->getAll(), 200);
     }
@@ -160,22 +167,5 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
         $response->headers->addCacheControlDirective('no-store', true);
 
         return $response;
-    }
-
-    /**
-     * @param $str
-     * @param string $glue
-     *
-     * @return string|array<string>|null
-     */
-    private function toSnakeCase($str, $glue = '_')
-    {
-        return preg_replace_callback(
-            '/[A-Z]/',
-            static function ($matches) use ($glue) {
-                return $glue.strtolower($matches[0]);
-            },
-            $str
-        );
     }
 }

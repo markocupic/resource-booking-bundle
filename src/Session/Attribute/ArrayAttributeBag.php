@@ -221,7 +221,7 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
         // Add session id to url
 
         /**
-         * The module key is necessary to run several rbb applications on the same page
+         * The module key is necessary to run multiple rbb applications on the same page
          * and is sent as a post parameter in every xhr request.
          *
          * The module key (#moduleId_#moduleIndex f.ex. 33_2) contains the module id and the module index

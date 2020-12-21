@@ -10,13 +10,14 @@ declare(strict_types=1);
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
-namespace Markocupic\ResourceBookingBundle\Date;
+namespace Markocupic\ResourceBookingBundle\Helper;
 
 use Contao\Config;
 use Contao\Date;
 
 /**
- * Class DateHelper.
+ * Class DateHelper
+ * @package Markocupic\ResourceBookingBundle\Helper
  */
 class DateHelper
 {
