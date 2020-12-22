@@ -10,9 +10,4 @@ services:
     - '@security.helper'
     - '@event_dispatcher'
     tags:
-    - { name: kernel.event_listener, event: rbb.event.fetch_data_request, method: onFetchDataRequest, priority: 10 }
-    - { name: kernel.event_listener, event: rbb.event.apply_filter_request, method: onApplyFilterRequest, priority: 10 }
-    - { name: kernel.event_listener, event: rbb.event.jump_week_request, method: onJumpWeekRequest, priority: 10 }
-    - { name: kernel.event_listener, event: rbb.event.booking_request, method: onBookingRequest, priority: 10 }
-    - { name: kernel.event_listener, event: rbb.event.booking_form_validation_request, method: onBookingFormValidationRequest, priority: 10 }
-    - { name: kernel.event_listener, event: rbb.event.cancel_booking_request, method: onCancelBookingRequest, priority: 10 }
+    - { name: kernel.event_listener, event: rbb.event.xml_http_request, method: onXmlHttpRequest, priority: 10 }

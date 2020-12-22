@@ -31,7 +31,6 @@ services:
     - '@event_dispatcher'
     - '@Markocupic\ResourceBookingBundle\AppInitialization\Initialize'
     - '@Markocupic\ResourceBookingBundle\Response\AjaxResponse'
-    - '@Markocupic\ResourceBookingBundle\Helper\StringHelper'
     calls:
     - ['setContainer', ['@Psr\Container\ContainerInterface']]
     tags:
@@ -55,9 +54,4 @@ services:
     - '%resource_booking_bundle.session.attribute_bag_key%'
     calls:
     - ['setName', ['%resource_booking_bundle.session.attribute_bag_name%']]
-
-  # String helper class
-  Markocupic\ResourceBookingBundle\Helper\StringHelper:
-    class: Markocupic\ResourceBookingBundle\Helper\StringHelper
-    public: true
 

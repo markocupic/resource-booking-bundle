@@ -22,9 +22,9 @@ Anm: Bei der Installation wird neben den oben erwähnten Erweiterungen auch [cod
 Mit event subscribern kann die Applikation an mehreren Stellen erweitert werden.
 
 ### Post booking event subscriber
-Der *rbb.event.post_booking* Event Subscriber wird nach dem Buchungsrequest getriggert. Hiermit können unmittelbar nach der Buchung Aktionen durchgeführt werden. Beispielsweise kann eine Benachrichtigung gesendet werden oder es können weitere Einträge in der Datenbank getätigt werden.
+Der *rbb.event.post_booking* Event wird nach dem Buchungs-Request ausgelöst. Mit einer Event-Subscriber-Klasse die auf den Event hört, können unmittelbar nach der Buchung Aktionen durchgeführt werden. Beispielsweise kann eine Benachrichtigung gesendet werden oder es können weitere Einträge in der Datenbank getätigt werden.
 
-Dazu muss die Subscriber-Klasse in der listener.yml registriert werden:
+Dazu muss die Subscriber-Klasse, die auf den *rbb.event.post_booking* Event hört, in der listener.yml registriert werden:
 
 ```
 services:
@@ -83,20 +83,18 @@ class PostBookingEventSubscriber
 ```
 
 ### Request event subscriber
-Die *rbb.event.XXX_request* werden bei Ajax-Anfragen vor dem Absenden der Response zurück an den Browser getriggert. Mit event subscribern kann die Response angepasst/erweitert werden. 
+Der *rbb.event.xml_http_request* Event wird bei Ajax-Anfragen vor dem Absenden der Response zurück an den Browser getriggert. Mit event subscribern kann die Response angepasst/erweitert werden. 
 
-Dazu muss die Subscriber-Klasse in der listener.yml registriert werden:
+Dazu muss die Subscriber-Klasse, die auf den *rbb.event.xml_http_request* Event hört, in der listener.yml registriert werden:
 
 ```
 services:
   App\EventSubscriber\AjaxRequestEventSubscriber:
-     tags:
-     - { name: kernel.event_listener, event: rbb.event.fetch_data_request, method: onFetchDataRequest, priority: 10 }
-     - { name: kernel.event_listener, event: rbb.event.apply_filter_request, method: onApplyFilterRequest, priority: 10 }
-     - { name: kernel.event_listener, event: rbb.event.jump_week_request, method: onJumpWeekRequest, priority: 10 }
-     - { name: kernel.event_listener, event: rbb.event.booking_request, method: onBookingRequest, priority: 10 }
-     - { name: kernel.event_listener, event: rbb.event.booking_form_validation_request, method: onBookingFormValidationRequest, priority: 10 }
-     - { name: kernel.event_listener, event: rbb.event.cancel_booking_request, method: onCancelBookingRequest, priority: 10 }
+    arguments:
+    '@request_stack'
+    tags:
+    - { name: kernel.event_listener, event: rbb.event.on_xml_http_request, method: onXmlHttpRequest, priority: 10 }
+
 ```
 
 Weiter muss eine entsprechende Event-Subscriber-Klasse erstellt werden:
@@ -109,6 +107,7 @@ declare(strict_types=1);
 namespace App\EventSubscriber;
 
 use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * Class AjaxRequestEventSubscriber.
@@ -116,25 +115,58 @@ use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
 class AjaxRequestEventSubscriber
 {
     /**
+     * @var RequestStack
+     */
+    private $requestStack;
+
+    /**
+     * AjaxRequestEventSubscriber constructor.
+     */
+    public function __construct(RequestStack $requestStack)
+    {
+        $this->requestStack = $requestStack;
+    }
+
+    public function onXmlHttpRequest(AjaxRequestEvent $ajaxRequestEvent): void
+    {
+        $request = $this->requestStack->getCurrentRequest();
+
+        if ($request->isXmlHttpRequest()) {
+            $action = $request->request->get('action', null);
+
+            if (null !== $action) {
+                if (\is_callable([self::class, 'on'.ucfirst($action)])) {
+                    $this->{'on'.ucfirst($action)}($ajaxRequestEvent);
+                }
+            }
+        }
+    }
+
+    /**
      * @throws \Exception
      */
-    public function onFetchDataRequest(AjaxRequestEvent $ajaxRequestEvent): void
+    protected function onFetchDataRequest(AjaxRequestEvent $ajaxRequestEvent): void
     {
         $response = $ajaxRequestEvent->getAjaxResponse();
         $response->setData('foo', 'bla');
     }
 
-    public function onApplyFilterRequest(AjaxRequestEvent $ajaxRequestEvent): void
+    protected function onMyCustomRequest(AjaxRequestEvent $ajaxRequestEvent): void
+    {
+        // Respond to custom ajax requests
+    }
+
+    protected function onApplyFilterRequest(AjaxRequestEvent $ajaxRequestEvent): void
     {
         // Do some stuff here
     }
 
-    public function onJumpWeekRequest(AjaxRequestEvent $ajaxRequestEvent): void
+    protected function onJumpWeekRequest(AjaxRequestEvent $ajaxRequestEvent): void
     {
         // Do some stuff here
     }
 
-    public function onBookingRequest(AjaxRequestEvent $ajaxRequestEvent): void
+    protected function onBookingRequest(AjaxRequestEvent $ajaxRequestEvent): void
     {
         // Do some stuff here
     }
@@ -144,10 +176,9 @@ class AjaxRequestEventSubscriber
         // Do some stuff here
     }
 
-    public function onCancelBookingRequest(AjaxRequestEvent $ajaxRequestEvent): void
+    protected function onCancelBookingRequest(AjaxRequestEvent $ajaxRequestEvent): void
     {
         // Do some stuff here
     }
 }
-
 ```

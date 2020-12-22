@@ -20,9 +20,9 @@ use Contao\Date;
 use Contao\FrontendUser;
 use Contao\StringUtil;
 use Contao\System;
-use Markocupic\ResourceBookingBundle\Helper\AjaxHelper;
 use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
 use Markocupic\ResourceBookingBundle\Event\PostBookingEvent;
+use Markocupic\ResourceBookingBundle\Helper\AjaxHelper;
 use Markocupic\ResourceBookingBundle\Helper\DateHelper;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
@@ -100,10 +100,25 @@ class AjaxRequestEventSubscriber
         }
     }
 
+    public function onXmlHttpRequest(AjaxRequestEvent $ajaxRequestEvent): void
+    {
+        $request = $this->requestStack->getCurrentRequest();
+
+        if ($request->isXmlHttpRequest()) {
+            $action = $request->request->get('action', null);
+
+            if (null !== $action) {
+                if (\is_callable([self::class, 'on'.ucfirst($action)])) {
+                    $this->{'on'.ucfirst($action)}($ajaxRequestEvent);
+                }
+            }
+        }
+    }
+
     /**
      * @throws \Exception
      */
-    public function onFetchDataRequest(AjaxRequestEvent $ajaxRequestEvent): void
+    protected function onFetchDataRequest(AjaxRequestEvent $ajaxRequestEvent): void
     {
         $ajaxResponse = $ajaxRequestEvent->getAjaxResponse();
         $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
@@ -113,7 +128,7 @@ class AjaxRequestEventSubscriber
     /**
      * @throws \Exception
      */
-    public function onApplyFilterRequest(AjaxRequestEvent $ajaxRequestEvent): void
+    protected function onApplyFilterRequest(AjaxRequestEvent $ajaxRequestEvent): void
     {
         $ajaxResponse = $ajaxRequestEvent->getAjaxResponse();
 
@@ -188,7 +203,7 @@ class AjaxRequestEventSubscriber
     /**
      * @throws \Exception
      */
-    public function onJumpWeekRequest(AjaxRequestEvent $ajaxRequestEvent): void
+    protected function onJumpWeekRequest(AjaxRequestEvent $ajaxRequestEvent): void
     {
         $this->onApplyFilterRequest($ajaxRequestEvent);
     }
@@ -196,7 +211,7 @@ class AjaxRequestEventSubscriber
     /**
      * @throws \Exception
      */
-    public function onBookingRequest(AjaxRequestEvent $ajaxRequestEvent): void
+    protected function onBookingRequest(AjaxRequestEvent $ajaxRequestEvent): void
     {
         $ajaxResponse = $ajaxRequestEvent->getAjaxResponse();
 
@@ -321,7 +336,7 @@ class AjaxRequestEventSubscriber
     /**
      * @throws \Exception
      */
-    public function onBookingFormValidationRequest(AjaxRequestEvent $ajaxRequestEvent): void
+    protected function onBookingFormValidationRequest(AjaxRequestEvent $ajaxRequestEvent): void
     {
         $ajaxResponse = $ajaxRequestEvent->getAjaxResponse();
 
@@ -385,7 +400,7 @@ class AjaxRequestEventSubscriber
     /**
      * @throws \Exception
      */
-    public function onCancelBookingRequest(AjaxRequestEvent $ajaxRequestEvent): void
+    protected function onCancelBookingRequest(AjaxRequestEvent $ajaxRequestEvent): void
     {
         $ajaxResponse = $ajaxRequestEvent->getAjaxResponse();
 

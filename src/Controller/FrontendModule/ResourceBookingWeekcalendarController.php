@@ -20,7 +20,6 @@ use Contao\PageModel;
 use Contao\Template;
 use Markocupic\ResourceBookingBundle\AppInitialization\Initialize;
 use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
-use Markocupic\ResourceBookingBundle\Helper\StringHelper;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -59,11 +58,6 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
     private $ajaxResponse;
 
     /**
-     * @var StringHelper
-     */
-    private $stringHelper;
-
-    /**
      * @var string
      */
     private $moduleKey;
@@ -71,14 +65,13 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
     /**
      * ResourceBookingWeekcalendarController constructor.
      */
-    public function __construct(ContaoFramework $framework, RequestStack $requestStack, EventDispatcherInterface $eventDispatcher, Initialize $appInitializer, AjaxResponse $ajaxResponse, StringHelper $stringHelper)
+    public function __construct(ContaoFramework $framework, RequestStack $requestStack, EventDispatcherInterface $eventDispatcher, Initialize $appInitializer, AjaxResponse $ajaxResponse)
     {
         $this->framework = $framework;
         $this->requestStack = $requestStack;
         $this->eventDispatcher = $eventDispatcher;
         $this->appInitializer = $appInitializer;
         $this->ajaxResponse = $ajaxResponse;
-        $this->stringHelper = $stringHelper;
     }
 
     /**
@@ -143,13 +136,11 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
      */
     protected function getAjaxResponse(Request $request): JsonResponse
     {
-        $action = $request->request->get('action', null);
-
         $objAjaxRequestEvent = new AjaxRequestEvent();
         $objAjaxRequestEvent->setAjaxResponse($this->ajaxResponse);
 
-        // Trigger subscribed event listeners
-        $this->eventDispatcher->dispatch($objAjaxRequestEvent, 'rbb.event.'.$this->stringHelper->toSnakeCase($action));
+        // Dispatch Trigger subscribed event listeners
+        $this->eventDispatcher->dispatch($objAjaxRequestEvent, 'rbb.event.xml_http_request');
 
         return $this->createJsonResponse($this->ajaxResponse->getAll(), 200);
     }
