@@ -18,6 +18,15 @@ Anm: Bei der Installation wird neben den oben erwähnten Erweiterungen auch [cod
 
 ![Alt text](src/Resources/public/screenshot/screenshot2.png?raw=true "Buchungstool im Frontend-Ansicht")
 
+## Template mit zusätzlichen Mitgliederdaten erweitern
+Sollen zusätzliche Mitgliederdaten in der Buchungsübersicht angezeigt weden, müssen zwei Dinge angepasst werden.
+
+Erstens muss in der Moduleinstellung das Feld, welches zusätzlich angezeigt werden soll ausgewählt werden. 
+![Alt text](src/Resources/public/screenshot/screenshot3.png?raw=true "Weitere Mitgliederfelder anzeigen")
+
+Zweitens muss zusätzlich das Template angepasst werden. Mit *{{ eventBox.bookedByCompany }}* kann der Firmenname mitangezeigt werden. Achtung! Hierbei handelt es sich um keine Contao Inserttags, sondern um die "vue.js Mustache" Syntax. Das Leerzeichen nach bzw. vor der geschweiften Klammer ist nötig. 
+![Alt text](src/Resources/public/screenshot/screenshot4.png?raw=true "Weitere Mitgliederfelder anzeigen")
+
 ## Event Subscriber
 Mit event subscribern kann die Applikation an mehreren Stellen erweitert werden.
 
