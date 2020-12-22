@@ -28,7 +28,6 @@ use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceTypeModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotModel;
 use Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag;
-use Markocupic\ResourceBookingBundle\Helper\UtcTimeHelper;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Security\Core\Security;
@@ -352,25 +351,25 @@ class AjaxHelper
                                     // Do not transmit and display sensitive data if user is not holder
                                     if (!$objTs->isHolder && $this->moduleModel->resourceBooking_displayClientPersonalData && !empty($arrFields)) {
                                         foreach ($arrFields as $fieldname) {
-                                            $objTs->{'bookedBy'.ucfirst($fieldname)} = $objMember->$fieldname;
+                                            $objTs->{'bookedBy'.ucfirst($fieldname)} = StringUtil::decodeEntities($objMember->$fieldname);
                                         }
 
                                         if (\in_array('firstname', $arrFields, true) && \in_array('lastname', $arrFields, true)) {
-                                            $objTs->bookedByFullname = $objMember->firstname.' '.$objMember->lastname;
+                                            $objTs->bookedByFullname = StringUtil::decodeEntities($objMember->firstname.' '.$objMember->lastname);
                                         }
                                     } else {
                                         foreach (array_keys($objMember->row()) as $fieldname) {
                                             if ('id' === $fieldname || 'password' === $fieldname) {
                                                 continue;
                                             }
-                                            $objTs->{'bookedBy'.ucfirst($fieldname)} = $objMember->$fieldname;
-                                            $objTs->{'bookedBy'.ucfirst($fieldname)} = $objMember->$fieldname;
+                                            $objTs->{'bookedBy'.ucfirst($fieldname)} = StringUtil::decodeEntities($objMember->$fieldname);
+                                            $objTs->{'bookedBy'.ucfirst($fieldname)} = StringUtil::decodeEntities($objMember->$fieldname);
                                         }
-                                        $objTs->bookedByFullname = $objMember->firstname.' '.$objMember->lastname;
+                                        $objTs->bookedByFullname = StringUtil::decodeEntities($objMember->firstname.' '.$objMember->lastname);
                                     }
                                 }
 
-                                $objTs->bookingDescription = $objBooking->description;
+                                $objTs->bookingDescription = StringUtil::decodeEntities($objBooking->description);
                                 $objTs->bookingId = $objBooking->id;
                                 $objTs->bookingUuid = $objBooking->bookingUuid;
                             }
