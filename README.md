@@ -172,7 +172,7 @@ class AjaxRequestEventSubscriber
         // Do some stuff here
     }
 
-    public function onBookingFormValidationRequest(AjaxRequestEvent $ajaxRequestEvent): void
+    protected function onBookingFormValidationRequest(AjaxRequestEvent $ajaxRequestEvent): void
     {
         // Do some stuff here
     }
