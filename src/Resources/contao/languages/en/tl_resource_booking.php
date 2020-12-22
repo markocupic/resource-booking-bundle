@@ -23,8 +23,8 @@ $GLOBALS['TL_LANG']['tl_resource_booking']['firstname'] = array('Firstname');
 $GLOBALS['TL_LANG']['tl_resource_booking']['lastname'] = array('Lastname');
 $GLOBALS['TL_LANG']['tl_resource_booking']['title'] = array('Title');
 $GLOBALS['TL_LANG']['tl_resource_booking']['description'] = array('Description');
-$GLOBALS['TL_LANG']['tl_resource_booking']['startTime'] = array('Starttime');
-$GLOBALS['TL_LANG']['tl_resource_booking']['endTime'] = array('Endtime');
+$GLOBALS['TL_LANG']['tl_resource_booking']['startTime'] = array('Start time');
+$GLOBALS['TL_LANG']['tl_resource_booking']['endTime'] = array('End time');
 $GLOBALS['TL_LANG']['tl_resource_booking']['bookingUuid'] = array('Booking Id');
 
 

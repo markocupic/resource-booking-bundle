@@ -9,7 +9,7 @@
  */
 
 // Legends
-$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['title_legend'] = 'Title setiings';
+$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['title_legend'] = 'Title settings';
 $GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['time_legend'] = 'Time settings';
 $GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['expert_legend'] = 'Expert settings';
 
@@ -21,7 +21,7 @@ $GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['new'] = array('New', 'Add 
 $GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['published'] = array('Publish');
 $GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['title'] = array('Title');
 $GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['description'] = array('Description');
-$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['startTime'] = array('Starttime');
-$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['endTime'] = array('Endtime');
+$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['startTime'] = array('Start time');
+$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['endTime'] = array('End time');
 $GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['cssID'] = array('CSS-ID/Class', 'Define an element ID ore one or more CSS classes.');
 
