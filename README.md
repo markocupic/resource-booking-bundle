@@ -22,7 +22,7 @@ Anm: Bei der Installation wird neben den oben erwähnten Erweiterungen auch [cod
 Mit event subscribern kann die Applikation an mehreren Stellen erweitert werden.
 
 ### Post booking event subscriber
-Der *rbb.event.post_booking* Event wird nach dem Buchungs-Request ausgelöst. Mit einer Event-Subscriber-Klasse die auf den Event hört, können unmittelbar nach der Buchung Aktionen durchgeführt werden. Beispielsweise kann eine Benachrichtigung gesendet werden oder es können weitere Einträge in der Datenbank getätigt werden.
+Der *rbb.event.post_booking* Event wird nach dem Buchungs-Request ausgelöst. Mit einer Event-Subscriber-Klasse, die auf den Event hört, können unmittelbar nach der Buchung Aktionen durchgeführt werden. Beispielsweise kann eine Benachrichtigung gesendet werden oder es können weitere Einträge in der Datenbank getätigt werden.
 
 Dazu muss die Subscriber-Klasse, die auf den *rbb.event.post_booking* Event hört, in der listener.yml registriert werden:
 
@@ -82,8 +82,9 @@ class PostBookingEventSubscriber
 
 ```
 
-### Request event subscriber
-Der *rbb.event.xml_http_request* Event wird bei Ajax-Anfragen vor dem Absenden der Response zurück an den Browser getriggert. Mit event subscribern kann die Response angepasst/erweitert werden. 
+### XmlHttp event subscriber
+Das Buchungstool basiert fast vollständig auf Ajax Requests. Mit einer eigenen Event Subscriber Klasse können die Responses auf diese Ajax Anfragen angepasst werden oder es lassen sich auch custom Anfragen implementieren.
+Der *rbb.event.xml_http_request* Event wird bei Ajax-Anfragen vor dem Absenden der Response zurück an den Browser getriggert. 
 
 Dazu muss die Subscriber-Klasse, die auf den *rbb.event.xml_http_request* Event hört, in der listener.yml registriert werden:
 
@@ -93,7 +94,7 @@ services:
     arguments:
     '@request_stack'
     tags:
-    - { name: kernel.event_listener, event: rbb.event.on_xml_http_request, method: onXmlHttpRequest, priority: 10 }
+    - { name: kernel.event_listener, event: rbb.event.xml_http_request, method: onXmlHttpRequest, priority: 10 }
 
 ```
 
