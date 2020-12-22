@@ -32,19 +32,22 @@ Weiter muss zusätzlich das Template angepasst werden. Mit *{{ eventBox.bookedBy
 ## Event Subscriber
 Mit event subscribern kann die Applikation an mehreren Stellen erweitert werden.
 
-### Post booking event subscriber
+### Post booking & pre booking event subscriber
+Der *rbb.event.pre_booking* Event wird unmittelbar vor dem Datenbank-Insert ausgelöst. Mit einer Event-Subscriber-Klasse lassen sich beispielsweise die Datenbankeinträge manipulieren.
+
 Der *rbb.event.post_booking* Event wird nach dem Buchungs-Request ausgelöst. Mit einer Event-Subscriber-Klasse, die auf den Event hört, können unmittelbar nach der Buchung Aktionen durchgeführt werden. Beispielsweise kann eine Benachrichtigung gesendet werden oder es können weitere Einträge in der Datenbank getätigt werden.
 
-Dazu muss die Subscriber-Klasse, die auf den *rbb.event.post_booking* Event hört, in der listener.yml registriert werden:
+In beiden Fällen muss die Subscriber-Klasse, die auf den *rbb.event.pre_booking* bzw. *rbb.event.post_booking*  Event hört, in der listener.yml registriert werden:
 
 ```
+# Registrierung anhand des rbb.event.post_booking Events  in listener.yml
 services:
   App\EventSubscriber\PostBookingEventSubscriber:
     tags:
     - { name: kernel.event_listener, event: rbb.event.post_booking, method: onPostBooking, priority: 10 }
 ```
 
-Weiter muss eine entsprechende Event-Subscriber-Klasse erstellt werden:
+Weiter muss eine entsprechende Event-Subscriber-Klasse erstellt werden (hier anhand rbb.event.post_booking):
 
 ```php
 <?php
@@ -105,9 +108,10 @@ services:
     arguments:
     '@request_stack'
     tags:
-    - { name: kernel.event_listener, event: rbb.event.xml_http_request, method: onXmlHttpRequest, priority: 10 }
+    - { name: kernel.event_listener, event: rbb.event.xml_http_request, method: onXmlHttpRequest, priority: 20 }
 
 ```
+Mit dem Parameter "priority" kann die Reihenfolge eingestellt werden. Je grösser der Wert, umso eher wird der Subscriber aufgerufen. Der Originalsubscriber hat als Priorität den Wert 10 zugewiesen. 
 
 Weiter muss eine entsprechende Event-Subscriber-Klasse erstellt werden:
 
@@ -159,8 +163,16 @@ class AjaxRequestEventSubscriber
      */
     protected function onFetchDataRequest(AjaxRequestEvent $ajaxRequestEvent): void
     {
-        $response = $ajaxRequestEvent->getAjaxResponse();
-        $response->setData('foo', 'bla');
+        // Stop propagation and do not run original event handler
+        // Works only if the priority is > 10
+        $ajaxRequestEvent->stopPropagation();
+        
+        // Get response object
+        $ajaxResponse = $ajaxRequestEvent->getAjaxResponse();
+        
+        // Add some custom data to the response object
+        $ajaxResponse->setData('foo', 'bar');
+        $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
     }
 
     protected function onMyCustomRequest(AjaxRequestEvent $ajaxRequestEvent): void

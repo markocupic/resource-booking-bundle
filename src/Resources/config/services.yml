@@ -55,3 +55,12 @@ services:
     calls:
     - ['setName', ['%resource_booking_bundle.session.attribute_bag_name%']]
 
+  # Booking: Booking helper class
+  Markocupic\ResourceBookingBundle\Booking\Booking:
+    arguments:
+    - '@contao.framework'
+    - '@session'
+    - '@request_stack'
+    - '%resource_booking_bundle.session.attribute_bag_name%'
+    - '@security.helper'
+    public: true
