@@ -194,6 +194,12 @@
                             <div v-if="bookingFormValidation.resourceBlocked" class="alert alert-danger" role="alert">
                                 {{ activeResource.title }} {{rbb_lang::isNoMoreAvailable}}
                             </div>
+                            <div v-if="bookingFormValidation.resourceBlocked" class="alert alert-danger" role="alert">
+                                {{ activeResource.title }} {{rbb_lang::isNoMoreAvailable}}
+                            </div>
+                            <div v-if="bookingFormValidation.noBookingRepeatStopWeekTstampSelected" class="alert alert-danger" role="alert">
+                                Wählen Sie eine Woche aus!
+                            </div>
                         </div>
                         <!-- End alert -->
 

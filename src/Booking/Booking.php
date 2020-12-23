@@ -55,7 +55,7 @@ class Booking
     /**
      * @var array
      */
-    public $arrBookingDateSelection = [];
+    public $arrDateSelection = [];
 
     /**
      * @var int
@@ -63,19 +63,9 @@ class Booking
     public $bookingRepeatStopWeekTstamp = 0;
 
     /**
-     * @var int
-     */
-    public $selectedSlots = 0;
-
-    /**
-     * @var Collection
-     */
-    public $bookingCollection;
-
-    /**
      * @var array
      */
-    public $arrBookingCollection = [];
+    private $bookingArray = [];
 
     /**
      * @var ContaoFramework
@@ -108,16 +98,6 @@ class Booking
     private $objUser;
 
     /**
-     * @var int
-     */
-    private $intError = 0;
-
-    /**
-     * @var string|null
-     */
-    private $errorMessage;
-
-    /**
      * Booking constructor.
      *
      * @throws \Exception
@@ -130,98 +110,11 @@ class Booking
         $this->sessionBag = $session->getBag($bagName);
         $this->security = $security;
 
-        /** @var StringUtil $stringUtilAdapter */
-        $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
-
-        /** @var Database $databaseAdapter */
-        $databaseAdapter = $this->framework->getAdapter(Database::class);
-
-        /** @var ModuleModel $moduleModelAdapter */
-        $moduleModelAdapter = $this->framework->getAdapter(ModuleModel::class);
-
-        if ($this->security->getUser() instanceof FrontendUser) {
-            /** @var FrontendUser $user */
-            $this->objUser = $this->security->getUser();
-        } else {
-            throw new \Exception('No logged in user found.');
-        }
-
-        // Set module model
-        $this->moduleModel = $moduleModelAdapter->findByPk($this->sessionBag->get('moduleModelId'));
-
-        if (null === $this->moduleModel) {
-            throw new \Exception('Module model not found.');
-        }
-
-        $this->bookingUuid = $stringUtilAdapter->binToUuid($databaseAdapter->getInstance()->getUuid());
-    }
-
-    public function hasErrors(): bool
-    {
-        return $this->intError > 0;
-    }
-
-    public function getErrorMessage(): ?string
-    {
-        return $this->errorMessage;
-    }
-
-    /**
-     * @throws \Exception
-     */
-    public function buildBookingCollection(): bool
-    {
-        /** @var System $systemAdapter */
-        $systemAdapter = $this->framework->getAdapter(System::class);
-
-        /** @var ResourceBookingResourceModel $resourceBookingResourceModelAdapter */
-        $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
-
         $request = $this->requestStack->getCurrentRequest();
 
-        // Load language file
-        $systemAdapter->loadLanguageFile('default', $this->sessionBag->get('language'));
-
-        $this->objResource = $resourceBookingResourceModelAdapter->findPublishedByPk($request->request->get('resourceId'));
-
-        if (null === $this->objResource) {
-            ++$this->intError;
-            $this->setErrorMessage('No resource found');
-
-            return false;
+        if ('bookingFormValidationRequest' === $request->request->get('action') || 'bookingRequest' === $request->request->get('action')) {
+            $this->initialize();
         }
-
-        $this->arrBookingDateSelection = !empty($request->request->get('bookingDateSelection')) ? $request->request->get('bookingDateSelection') : [];
-
-        if (!\is_array($this->arrBookingDateSelection) || empty($this->arrBookingDateSelection)) {
-            ++$this->intError;
-            $this->setErrorMessage($GLOBALS['TL_LANG']['MSG']['selectBookingDatesPlease']);
-
-            return false;
-        }
-
-        $this->bookingRepeatStopWeekTstamp = $request->request->get('bookingRepeatStopWeekTstamp');
-
-        if (!$this->bookingRepeatStopWeekTstamp > 0) {
-            ++$this->intError;
-            $this->setErrorMessage('Booking repeat stop week timestamp must be greater then 0.');
-
-            return false;
-        }
-
-        if (null === $this->objUser || null === $this->objResource || !$this->bookingRepeatStopWeekTstamp > 0 || !\is_array($this->arrBookingDateSelection)) {
-            ++$this->intError;
-            $this->setErrorMessage($GLOBALS['TL_LANG']['MSG']['generalBookingError']);
-
-            return false;
-        }
-
-        // Prepare $arrBookings with the helper method
-        if (!$this->_buildBookingCollection()) {
-            return false;
-        }
-
-        return true;
     }
 
     public function isResourceBooked(ResourceBookingResourceModel $objResource, int $slotStartTime, int $slotEndTime): bool
@@ -236,16 +129,12 @@ class Booking
         return true;
     }
 
-    protected function setErrorMessage(string $msg): void
+    public function getBookingArray(): array
     {
-        $this->errorMessage = $msg;
-    }
+        if ($this->bookingArray) {
+            //return $this->bookingArray;
+        }
 
-    /**
-     * @throws \Exception
-     */
-    protected function _buildBookingCollection(): bool
-    {
         /** @var StringUtil $stringUtilAdapter */
         $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
 
@@ -272,7 +161,14 @@ class Booking
 
         $arrBookings = [];
 
-        foreach ($this->arrBookingDateSelection as $strTimeSlot) {
+        $request = $this->requestStack->getCurrentRequest();
+        $this->arrDateSelection = !empty($request->request->get('bookingDateSelection')) ? $request->request->get('bookingDateSelection') : [];
+
+        if (!\is_array($this->arrDateSelection) || empty($this->arrDateSelection)) {
+            return $arrBookings;
+        }
+
+        foreach ($this->arrDateSelection as $strTimeSlot) {
             // slotId-startTime-endTime-mondayTimestampSelectedWeek
             $arrTimeSlot = explode('-', $strTimeSlot);
             // Defaults
@@ -367,19 +263,9 @@ class Booking
             }
         }
 
-        foreach ($arrBookings as $arrBooking) {
-            if ($arrBooking['resourceIsAlreadyBooked'] && false === $arrBooking['resourceIsAlreadyBookedByLoggedInUser']) {
-                ++$this->intError;
-                $this->setErrorMessage($GLOBALS['TL_LANG']['MSG']['resourceIsAlreadyBooked']);
-            }
-        }
-
-        // Build collection
-        $bookingCollection = [];
-
-        foreach ($arrBookings as $i => $arrBooking) {
+        foreach ($arrBookings as $index => $arrBooking) {
             // Set title
-            $arrBooking['title'] = sprintf(
+            $arrBookings[$index]['title'] = sprintf(
                 '%s : %s %s %s [%s - %s]',
                 $this->objResource->title,
                 $GLOBALS['TL_LANG']['MSC']['bookingFor'],
@@ -388,7 +274,50 @@ class Booking
                 $dateAdapter->parse($configAdapter->get('datimFormat'), $arrBooking['startTime']),
                 $dateAdapter->parse($configAdapter->get('datimFormat'), $arrBooking['endTime'])
             );
+            $arrBookings[$index]['bookingUuid'] = $this->bookingUuid;
 
+            if (!$arrBookings[$index]['id']) {
+                $arrBookings[$index]['newEntry'] = true;
+            }
+        }
+
+        return $arrBookings;
+    }
+
+    public function isBookingPossible(): bool
+    {
+        $arrBookings = $this->getBookingArray();
+
+        if (!\is_array($arrBookings) || empty($arrBookings)) {
+            return false;
+        }
+
+        foreach ($arrBookings as $arrBooking) {
+            if (true === $arrBooking['invalidDate']) {
+                return false;
+            }
+
+            if ($arrBooking['resourceIsAlreadyBooked'] && false === $arrBooking['resourceIsAlreadyBookedByLoggedInUser']) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Get model collection from $this->.
+     */
+    public function getBookingCollection(): Collection
+    {
+        /** @var ResourceBookingModel $resourceBookingModelAdapter */
+        $resourceBookingModelAdapter = $this->framework->getAdapter(ResourceBookingModel::class);
+
+        $arrBookings = $this->getBookingArray();
+
+        $bookingCollection = [];
+
+        foreach ($arrBookings as $arrBooking) {
             if (true === $arrBooking['resourceIsAlreadyBookedByLoggedInUser'] && null !== $arrBooking['id']) {
                 $objBooking = $resourceBookingModelAdapter->findByPk($arrBooking['id']);
             } else {
@@ -396,32 +325,70 @@ class Booking
             }
 
             if (null !== $objBooking) {
-                $arrBooking['bookingUuid'] = $this->bookingUuid;
-
                 foreach ($arrBooking as $k => $v) {
                     $objBooking->{$k} = $v;
                 }
                 $bookingCollection[] = $objBooking;
-                $arrBookings[$i]['newEntry'] = true;
             }
-
-            ++$this->selectedSlots;
         }
 
-        if (0 === $this->selectedSlots) {
-            ++$this->intError;
-            $this->setErrorMessage($GLOBALS['TL_LANG']['MSG']['noItemsBooked']);
+        return new Collection($bookingCollection, 'tl_resource_booking');
+    }
 
-            return false;
+    /**
+     * @throws \Exception
+     */
+    protected function initialize(): void
+    {
+        /** @var StringUtil $stringUtilAdapter */
+        $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
+
+        /** @var Database $databaseAdapter */
+        $databaseAdapter = $this->framework->getAdapter(Database::class);
+
+        /** @var ModuleModel $moduleModelAdapter */
+        $moduleModelAdapter = $this->framework->getAdapter(ModuleModel::class);
+        /** @var System $systemAdapter */
+        $systemAdapter = $this->framework->getAdapter(System::class);
+
+        /** @var ResourceBookingResourceModel $resourceBookingResourceModelAdapter */
+        $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
+
+        if ($this->security->getUser() instanceof FrontendUser) {
+            /** @var FrontendUser $user */
+            $this->objUser = $this->security->getUser();
+        } else {
+            throw new \Exception('No logged in user found.');
         }
 
-        $this->arrBookingCollection = $arrBookings;
-        $this->bookingCollection = new Collection($bookingCollection, 'tl_resource_booking');
+        // Set module model
+        $this->moduleModel = $moduleModelAdapter->findByPk($this->sessionBag->get('moduleModelId'));
 
-        if ($this->hasErrors()) {
-            return false;
+        if (null === $this->moduleModel) {
+            throw new \Exception('Module model not found.');
         }
 
-        return true;
+        $request = $this->requestStack->getCurrentRequest();
+        $this->objResource = $resourceBookingResourceModelAdapter->findPublishedByPk($request->request->get('resourceId'));
+
+        if (null === $this->objResource) {
+            throw new \Exception(sprintf('Resource with Id %s not found.', $request->request->get('resourceId')));
+        }
+
+        $this->bookingRepeatStopWeekTstamp = $request->request->get('bookingRepeatStopWeekTstamp', 0);
+
+        if (!$this->bookingRepeatStopWeekTstamp > 0) {
+            throw new \Exception('No booking repeat stop week timestamp found.');
+        }
+
+        $this->bookingUuid = $stringUtilAdapter->binToUuid($databaseAdapter->getInstance()->getUuid());
+
+        // Load language file
+        $systemAdapter->loadLanguageFile('default', $this->sessionBag->get('language'));
+    }
+
+    protected function setErrorMessage(string $msg): void
+    {
+        $this->errorMessage = $msg;
     }
 }
