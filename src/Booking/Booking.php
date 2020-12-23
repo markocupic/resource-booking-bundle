@@ -132,7 +132,7 @@ class Booking
     public function getBookingArray(): array
     {
         if ($this->bookingArray) {
-            //return $this->bookingArray;
+            return $this->bookingArray;
         }
 
         /** @var StringUtil $stringUtilAdapter */
@@ -247,7 +247,6 @@ class Booking
             } else { // This case normally should not happen
                 $arrBookings[$index]['resourceBlocked'] = true;
                 $arrBookings[$index]['resourceIsAlreadyBooked'] = true;
-
                 $arrBookings[$index]['holder'] = '';
 
                 $objRes = $resourceBookingModelAdapter->findOneByResourceIdStarttimeAndEndtime($this->objResource, $arrData['startTime'], $arrData['endTime']);
@@ -348,6 +347,7 @@ class Booking
 
         /** @var ModuleModel $moduleModelAdapter */
         $moduleModelAdapter = $this->framework->getAdapter(ModuleModel::class);
+        
         /** @var System $systemAdapter */
         $systemAdapter = $this->framework->getAdapter(System::class);
 
@@ -386,9 +386,5 @@ class Booking
         // Load language file
         $systemAdapter->loadLanguageFile('default', $this->sessionBag->get('language'));
     }
-
-    protected function setErrorMessage(string $msg): void
-    {
-        $this->errorMessage = $msg;
-    }
+    
 }
