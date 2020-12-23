@@ -223,6 +223,8 @@ class AjaxRequestEventSubscriber
 
         /** @var System $systemAdapter */
         $systemAdapter = $this->framework->getAdapter(System::class);
+        
+        $this->booking->initialize();
 
         $ajaxResponse = $ajaxRequestEvent->getAjaxResponse();
 
