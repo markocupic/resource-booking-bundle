@@ -223,15 +223,19 @@ class AjaxRequestEventSubscriber
 
         /** @var System $systemAdapter */
         $systemAdapter = $this->framework->getAdapter(System::class);
-        
+
+        // Load language file
+        $systemAdapter->loadLanguageFile('default', $this->sessionBag->get('language'));
+
         $this->booking->initialize();
 
         $ajaxResponse = $ajaxRequestEvent->getAjaxResponse();
 
-        // First check if booking is possible!
+        // First we check, if booking is possible!
         if (!$this->booking->isBookingPossible()) {
             $ajaxResponse->setErrorMessage($this->booking->getErrorMessage());
             $ajaxResponse->setStatus(AjaxResponse::STATUS_ERROR);
+
             return;
         }
 
@@ -251,13 +255,13 @@ class AjaxRequestEventSubscriber
 
                 // Log
                 $logger = $systemAdapter->getContainer()->get('monolog.logger.contao');
-                $strLog = sprintf('New resource "%s" (with ID %s) has been booked.', $this->booking->objResource->title, $objBooking->id);
+                $strLog = sprintf('New resource "%s" (with ID %s) has been booked.', $this->booking->getResource()->title, $objBooking->id);
                 $logger->log(LogLevel::INFO, $strLog, ['contao' => new ContaoContext(__METHOD__, 'INFO')]);
             }
         }
 
         // Dispatch post booking event
-        $objBookings = $resourceBookingModelAdapter->findByBookingUuid($this->booking->bookingUuid);
+        $objBookings = $resourceBookingModelAdapter->findByBookingUuid($this->booking->getBookingUuid());
 
         if (null !== $objBookings) {
             $objPostBookingEvent = new PostBookingEvent();
@@ -271,7 +275,7 @@ class AjaxRequestEventSubscriber
         $ajaxResponse->setSuccessMessage(
             sprintf(
                 $GLOBALS['TL_LANG']['MSG']['successfullyBookedXItems'],
-                $this->booking->objResource->title,
+                $this->booking->getResource()->title,
                 \count($this->booking->getBookingArray())
             )
         );
@@ -287,11 +291,6 @@ class AjaxRequestEventSubscriber
     {
         $ajaxResponse = $ajaxRequestEvent->getAjaxResponse();
 
-        /** @var System $systemAdapter */
-        $systemAdapter = $this->framework->getAdapter(System::class);
-        
-        $request = $this->requestStack->getCurrentRequest();
-        
         $this->booking->initialize();
 
         $hasError = false;
@@ -303,7 +302,7 @@ class AjaxRequestEventSubscriber
         $ajaxResponse->setData('passedValidation', false);
         $ajaxResponse->setData('noBookingRepeatStopWeekTstampSelected', false);
         $ajaxResponse->setData('message', null);
-            
+
         if (!$hasError) {
             $ajaxResponse->setData('passedValidation', true);
 
@@ -340,19 +339,19 @@ class AjaxRequestEventSubscriber
     {
         $ajaxResponse = $ajaxRequestEvent->getAjaxResponse();
 
-        /** @var System $systemAdapter */
-        $systemAdapter = $this->framework->getAdapter(System::class);
-
         /** @var ResourceBookingModel $resourceBookingModelAdapter */
         $resourceBookingModelAdapter = $this->framework->getAdapter(ResourceBookingModel::class);
 
         /** @var Date $dateAdapter */
         $dateAdapter = $this->framework->getAdapter(Date::class);
 
-        $request = $this->requestStack->getCurrentRequest();
+        /** @var System $systemAdapter */
+        $systemAdapter = $this->framework->getAdapter(System::class);
 
         // Load language file
         $systemAdapter->loadLanguageFile('default', $this->sessionBag->get('language'));
+
+        $request = $this->requestStack->getCurrentRequest();
 
         $ajaxResponse->setStatus(AjaxResponse::STATUS_ERROR);
 
