@@ -287,10 +287,10 @@ class AjaxRequestEventSubscriber
 
         /** @var System $systemAdapter */
         $systemAdapter = $this->framework->getAdapter(System::class);
-
-        // Load language file
-        $systemAdapter->loadLanguageFile('default', $this->sessionBag->get('language'));
+        
         $request = $this->requestStack->getCurrentRequest();
+        
+        $this->booking->initialize();
 
         $hasError = false;
         $arrBookings = [];
@@ -301,12 +301,7 @@ class AjaxRequestEventSubscriber
         $ajaxResponse->setData('passedValidation', false);
         $ajaxResponse->setData('noBookingRepeatStopWeekTstampSelected', false);
         $ajaxResponse->setData('message', null);
-
-        if (!$request->request->get('bookingRepeatStopWeekTstamp', 0) > 0) {
-            $ajaxResponse->setData('noBookingRepeatStopWeekTstampSelected', true);
-            $hasError = true;
-        }
-
+            
         if (!$hasError) {
             $ajaxResponse->setData('passedValidation', true);
 
