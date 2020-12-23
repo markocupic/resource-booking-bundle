@@ -230,7 +230,6 @@ class AjaxRequestEventSubscriber
         if (!$this->booking->isBookingPossible()) {
             $ajaxResponse->setErrorMessage($this->booking->getErrorMessage());
             $ajaxResponse->setStatus(AjaxResponse::STATUS_ERROR);
-
             return;
         }
 
@@ -312,7 +311,8 @@ class AjaxRequestEventSubscriber
             $ajaxResponse->setData('passedValidation', true);
 
             $arrBookings = $this->booking->getBookingArray();
-            if(!$this->booking->isBookingPossible()) {
+
+            if (!$this->booking->isBookingPossible()) {
                 if (empty($arrBookings)) {
                     $ajaxResponse->setData('passedValidation', false);
                     $ajaxResponse->setData('noDatesSelected', true);
