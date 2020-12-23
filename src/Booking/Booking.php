@@ -109,12 +109,7 @@ class Booking
         $this->requestStack = $requestStack;
         $this->sessionBag = $session->getBag($bagName);
         $this->security = $security;
-
-        $request = $this->requestStack->getCurrentRequest();
-
-        if ('bookingFormValidationRequest' === $request->request->get('action') || 'bookingRequest' === $request->request->get('action')) {
-            $this->initialize();
-        }
+        
     }
 
     public function isResourceBooked(ResourceBookingResourceModel $objResource, int $slotStartTime, int $slotEndTime): bool
