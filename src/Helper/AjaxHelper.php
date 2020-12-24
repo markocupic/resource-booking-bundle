@@ -16,7 +16,6 @@ use Contao\Config;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Date;
 use Contao\FrontendUser;
-use Contao\Input;
 use Contao\MemberModel;
 use Contao\Message;
 use Contao\ModuleModel;
@@ -84,6 +83,11 @@ class AjaxHelper
 
     /**
      * AjaxHelper constructor.
+     * @param ContaoFramework $framework
+     * @param Security $security
+     * @param SessionInterface $session
+     * @param RequestStack $requestStack
+     * @param string $bagName
      */
     public function __construct(ContaoFramework $framework, Security $security, SessionInterface $session, RequestStack $requestStack, string $bagName)
     {
@@ -130,6 +134,7 @@ class AjaxHelper
     }
 
     /**
+     * @return array
      * @throws \Exception
      */
     public function fetchData(): array
@@ -241,7 +246,7 @@ class AjaxHelper
         $arrWeek = [];
         $arrWeekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
-        for ($i = 0; $i < 7; ++$i) {
+        for ($i = 0; $i < \count($arrWeekdays); ++$i) {
             // Skip days
             if ($this->moduleModel->resourceBooking_hideDays && !\in_array($i, StringUtil::deserialize($this->moduleModel->resourceBooking_hideDaysSelection, true), false)) {
                 continue;
@@ -323,7 +328,6 @@ class AjaxHelper
                         $objTs->validDate = true;
                         $objTs->resourceId = $this->objSelectedResource->id;
                         $objTs->cssClass = $cssCellClass;
-                        //$objTs->isEditable = true;
                         // slotId-startTime-endTime-mondayTimestampSelectedWeek
                         $objTs->bookingCheckboxValue = sprintf('%s-%s-%s-%s', $objTimeslots->id, $startTimestamp, $endTimestamp, $this->sessionBag->get('activeWeekTstamp'));
                         $objTs->bookingCheckboxId = sprintf('bookingCheckbox_modId_%s_%s_%s', $this->moduleModel->id, $rowCount, $colCount);
@@ -445,6 +449,12 @@ class AjaxHelper
         return $arrData;
     }
 
+    /**
+     * @param ResourceBookingResourceModel $objResource
+     * @param int $slotStartTime
+     * @param int $slotEndTime
+     * @return bool
+     */
     public function isResourceBooked(ResourceBookingResourceModel $objResource, int $slotStartTime, int $slotEndTime): bool
     {
         if (null === ResourceBookingModel::findOneByResourceIdStarttimeAndEndtime($objResource, $slotStartTime, $slotEndTime)) {
@@ -454,6 +464,13 @@ class AjaxHelper
         return true;
     }
 
+    /**
+     * @param int $startTstamp
+     * @param int $endTstamp
+     * @param bool $injectEmptyLine
+     * @return array
+     * @throws \Exception
+     */
     public function getWeekSelection(int $startTstamp, int $endTstamp, bool $injectEmptyLine = false): array
     {
         /** @var System $systemAdapter */
@@ -520,6 +537,8 @@ class AjaxHelper
     }
 
     /**
+     * @param int $intJumpWeek
+     * @return array
      * @throws \Exception
      */
     public function getJumpWeekDate(int $intJumpWeek): array
@@ -550,21 +569,5 @@ class AjaxHelper
         $arrReturn['tstamp'] = (int) $jumpTime;
 
         return $arrReturn;
-    }
-
-    public function getActiveResourceTypeModel(): ?ResourceBookingResourceTypeModel
-    {
-        /** @var ResourceBookingResourceTypeModel $resourceBookingResourceTypeModelAdapter */
-        $resourceBookingResourceTypeModelAdapter = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class);
-
-        return $resourceBookingResourceTypeModelAdapter->findByPk($this->sessionBag->get('resType'));
-    }
-
-    public function getActiveResourceModel(): ?ResourceBookingResourceModel
-    {
-        /** @var ResourceBookingResourceModel $resourceBookingResourceModelAdapter */
-        $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
-
-        return $resourceBookingResourceModelAdapter->findByPk($this->sessionBag->get('res'));
     }
 }

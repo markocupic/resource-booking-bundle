@@ -255,7 +255,7 @@ class AjaxRequestEventSubscriber
 
                 // Log
                 $logger = $systemAdapter->getContainer()->get('monolog.logger.contao');
-                $strLog = sprintf('New resource "%s" (with ID %s) has been booked.', $this->booking->getResource()->title, $objBooking->id);
+                $strLog = sprintf('New resource "%s" (with ID %s) has been booked.', $this->booking->getActiveResource()->title, $objBooking->id);
                 $logger->log(LogLevel::INFO, $strLog, ['contao' => new ContaoContext(__METHOD__, 'INFO')]);
             }
         }
@@ -275,7 +275,7 @@ class AjaxRequestEventSubscriber
         $ajaxResponse->setSuccessMessage(
             sprintf(
                 $GLOBALS['TL_LANG']['MSG']['successfullyBookedXItems'],
-                $this->booking->getResource()->title,
+                $this->booking->getActiveResource()->title,
                 \count($this->booking->getBookingArray())
             )
         );

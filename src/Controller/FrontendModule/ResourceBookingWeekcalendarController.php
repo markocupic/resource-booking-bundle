@@ -139,7 +139,7 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
         $objAjaxRequestEvent = new AjaxRequestEvent();
         $objAjaxRequestEvent->setAjaxResponse($this->ajaxResponse);
 
-        // Dispatch Trigger subscribed event listeners
+        // Dispatch event "rbb.event.xml_http_request"
         $this->eventDispatcher->dispatch($objAjaxRequestEvent, 'rbb.event.xml_http_request');
 
         return $this->createJsonResponse($this->ajaxResponse->getAll(), 200);
