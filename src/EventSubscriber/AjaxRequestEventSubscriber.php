@@ -18,10 +18,10 @@ use Contao\Date;
 use Contao\FrontendUser;
 use Contao\System;
 use Markocupic\ResourceBookingBundle\Booking\Booking;
+use Markocupic\ResourceBookingBundle\Booking\BookingTable;
 use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
 use Markocupic\ResourceBookingBundle\Event\PostBookingEvent;
 use Markocupic\ResourceBookingBundle\Event\PreBookingEvent;
-use Markocupic\ResourceBookingBundle\Booking\BookingTable;
 use Markocupic\ResourceBookingBundle\Helper\DateHelper;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
@@ -47,7 +47,7 @@ class AjaxRequestEventSubscriber
     /**
      * @var Security
      */
-    private $ajaxHelper;
+    private $bookingTableHelper;
 
     /**
      * @var Booking
@@ -87,10 +87,10 @@ class AjaxRequestEventSubscriber
     /**
      * AjaxRequestEventSubscriber constructor.
      */
-    public function __construct(ContaoFramework $framework, BookingTable $ajaxHelper, Booking $booking, SessionInterface $session, RequestStack $requestStack, string $bagName, Security $security, EventDispatcherInterface $eventDispatcher)
+    public function __construct(ContaoFramework $framework, BookingTable $bookingTableHelper, Booking $booking, SessionInterface $session, RequestStack $requestStack, string $bagName, Security $security, EventDispatcherInterface $eventDispatcher)
     {
         $this->framework = $framework;
-        $this->ajaxHelper = $ajaxHelper;
+        $this->bookingTableHelper = $bookingTableHelper;
         $this->booking = $booking;
         $this->session = $session;
         $this->requestStack = $requestStack;
@@ -127,7 +127,7 @@ class AjaxRequestEventSubscriber
     {
         $ajaxResponse = $ajaxRequestEvent->getAjaxResponse();
         $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
-        $ajaxResponse->setDataFromArray($this->ajaxHelper->fetchData());
+        $ajaxResponse->setDataFromArray($this->bookingTableHelper->fetchData());
     }
 
     /**
@@ -202,7 +202,7 @@ class AjaxRequestEventSubscriber
 
         // Fetch data and send it to the browser
         $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
-        $ajaxResponse->setDataFromArray($this->ajaxHelper->fetchData());
+        $ajaxResponse->setDataFromArray($this->bookingTableHelper->fetchData());
     }
 
     /**
