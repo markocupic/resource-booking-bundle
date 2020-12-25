@@ -97,7 +97,6 @@ class BookingTable
         $this->sessionBag = $session->getBag($bagName);
         $this->requestStack = $requestStack;
 
-        $this->initialize();
     }
 
     /**
@@ -140,6 +139,8 @@ class BookingTable
      */
     public function fetchData(): array
     {
+        $this->initialize();
+
         /** @var System $systemAdapter */
         $systemAdapter = $this->framework->getAdapter(System::class);
 
