@@ -9,13 +9,13 @@
  */
 
 // Days
-$GLOBALS['TL_LANG']['DAYS_SHORTED'][0] = 'Mon';
-$GLOBALS['TL_LANG']['DAYS_SHORTED'][1] = 'Tue';
-$GLOBALS['TL_LANG']['DAYS_SHORTED'][2] = 'Wed';
-$GLOBALS['TL_LANG']['DAYS_SHORTED'][3] = 'Thu';
-$GLOBALS['TL_LANG']['DAYS_SHORTED'][4] = 'Fri';
-$GLOBALS['TL_LANG']['DAYS_SHORTED'][5] = 'Sat';
-$GLOBALS['TL_LANG']['DAYS_SHORTED'][6] = 'Sun';
+$GLOBALS['TL_LANG']['DAYS_SHORTENED'][0] = 'Mon';
+$GLOBALS['TL_LANG']['DAYS_SHORTENED'][1] = 'Tue';
+$GLOBALS['TL_LANG']['DAYS_SHORTENED'][2] = 'Wed';
+$GLOBALS['TL_LANG']['DAYS_SHORTENED'][3] = 'Thu';
+$GLOBALS['TL_LANG']['DAYS_SHORTENED'][4] = 'Fri';
+$GLOBALS['TL_LANG']['DAYS_SHORTENED'][5] = 'Sat';
+$GLOBALS['TL_LANG']['DAYS_SHORTENED'][6] = 'Sun';
 
 $GLOBALS['TL_LANG']['DAYS_LONG'][0] = 'Monday';
 $GLOBALS['TL_LANG']['DAYS_LONG'][1] = 'Tuesday';
@@ -63,7 +63,7 @@ $GLOBALS['TL_LANG']['RBB']['windowIsClosingAutomatically'] = 'This window will c
 $GLOBALS['TL_LANG']['RBB']['resource'] = 'resource';
 $GLOBALS['TL_LANG']['RBB']['cancel'] = 'cancel';
 $GLOBALS['TL_LANG']['RBB']['bookResource'] = 'book resource';
-$GLOBALS['TL_LANG']['RBB']['cancelResource'] = 'cancel resource';
+$GLOBALS['TL_LANG']['RBB']['cancelResource'] = 'cancel booking';
 $GLOBALS['TL_LANG']['RBB']['book'] = 'book';
 $GLOBALS['TL_LANG']['RBB']['selectResource'] = 'Select resource';
 $GLOBALS['TL_LANG']['RBB']['loading'] = 'loading...';

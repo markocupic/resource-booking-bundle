@@ -3,7 +3,7 @@ services:
   Markocupic\ResourceBookingBundle\EventSubscriber\AjaxRequestEventSubscriber:
     arguments:
     - '@contao.framework'
-    - '@Markocupic\ResourceBookingBundle\Helper\AjaxHelper'
+    - '@Markocupic\ResourceBookingBundle\Booking\BookingTable'
     - '@Markocupic\ResourceBookingBundle\Booking\Booking'
     - '@session'
     - '@request_stack'

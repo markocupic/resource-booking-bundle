@@ -21,7 +21,7 @@ use Markocupic\ResourceBookingBundle\Booking\Booking;
 use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
 use Markocupic\ResourceBookingBundle\Event\PostBookingEvent;
 use Markocupic\ResourceBookingBundle\Event\PreBookingEvent;
-use Markocupic\ResourceBookingBundle\Helper\AjaxHelper;
+use Markocupic\ResourceBookingBundle\Booking\BookingTable;
 use Markocupic\ResourceBookingBundle\Helper\DateHelper;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
@@ -87,7 +87,7 @@ class AjaxRequestEventSubscriber
     /**
      * AjaxRequestEventSubscriber constructor.
      */
-    public function __construct(ContaoFramework $framework, AjaxHelper $ajaxHelper, Booking $booking, SessionInterface $session, RequestStack $requestStack, string $bagName, Security $security, EventDispatcherInterface $eventDispatcher)
+    public function __construct(ContaoFramework $framework, BookingTable $ajaxHelper, Booking $booking, SessionInterface $session, RequestStack $requestStack, string $bagName, Security $security, EventDispatcherInterface $eventDispatcher)
     {
         $this->framework = $framework;
         $this->ajaxHelper = $ajaxHelper;

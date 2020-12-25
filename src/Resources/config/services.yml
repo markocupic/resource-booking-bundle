@@ -2,7 +2,7 @@
 services:
 
   # Ajax helper
-  Markocupic\ResourceBookingBundle\Helper\AjaxHelper:
+  Markocupic\ResourceBookingBundle\Booking\BookingTable:
     arguments:
     - '@contao.framework'
     - '@security.helper'

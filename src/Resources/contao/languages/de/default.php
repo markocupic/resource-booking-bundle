@@ -9,13 +9,13 @@
  */
 
 // Days
-$GLOBALS['TL_LANG']['DAYS_SHORTED'][0] = 'Mo';
-$GLOBALS['TL_LANG']['DAYS_SHORTED'][1] = 'Di';
-$GLOBALS['TL_LANG']['DAYS_SHORTED'][2] = 'Mi';
-$GLOBALS['TL_LANG']['DAYS_SHORTED'][3] = 'Do';
-$GLOBALS['TL_LANG']['DAYS_SHORTED'][4] = 'Fr';
-$GLOBALS['TL_LANG']['DAYS_SHORTED'][5] = 'Sa';
-$GLOBALS['TL_LANG']['DAYS_SHORTED'][6] = 'So';
+$GLOBALS['TL_LANG']['DAYS_SHORTENED'][0] = 'Mo';
+$GLOBALS['TL_LANG']['DAYS_SHORTENED'][1] = 'Di';
+$GLOBALS['TL_LANG']['DAYS_SHORTENED'][2] = 'Mi';
+$GLOBALS['TL_LANG']['DAYS_SHORTENED'][3] = 'Do';
+$GLOBALS['TL_LANG']['DAYS_SHORTENED'][4] = 'Fr';
+$GLOBALS['TL_LANG']['DAYS_SHORTENED'][5] = 'Sa';
+$GLOBALS['TL_LANG']['DAYS_SHORTENED'][6] = 'So';
 
 $GLOBALS['TL_LANG']['DAYS_LONG'][0] = 'Montag';
 $GLOBALS['TL_LANG']['DAYS_LONG'][1] = 'Dienstag';
@@ -63,7 +63,7 @@ $GLOBALS['TL_LANG']['RBB']['windowIsClosingAutomatically'] = 'Dieses Fenster sch
 $GLOBALS['TL_LANG']['RBB']['resource'] = 'Ressource';
 $GLOBALS['TL_LANG']['RBB']['cancel'] = 'stornieren';
 $GLOBALS['TL_LANG']['RBB']['bookResource'] = 'Ressource buchen';
-$GLOBALS['TL_LANG']['RBB']['cancelResource'] = 'Ressource stornieren';
+$GLOBALS['TL_LANG']['RBB']['cancelResource'] = 'Buchung stornieren';
 $GLOBALS['TL_LANG']['RBB']['book'] = 'buchen';
 $GLOBALS['TL_LANG']['RBB']['selectResource'] = 'Ressource auswählen';
 $GLOBALS['TL_LANG']['RBB']['loading'] = 'Lade...';

@@ -10,7 +10,7 @@ declare(strict_types=1);
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
-namespace Markocupic\ResourceBookingBundle\Helper;
+namespace Markocupic\ResourceBookingBundle\Booking;
 
 use Contao\Config;
 use Contao\CoreBundle\Framework\ContaoFramework;
@@ -22,6 +22,8 @@ use Contao\ModuleModel;
 use Contao\StringUtil;
 use Contao\System;
 use Contao\Validator;
+use Markocupic\ResourceBookingBundle\Helper\DateHelper;
+use Markocupic\ResourceBookingBundle\Helper\UtcTimeHelper;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceTypeModel;
@@ -32,9 +34,12 @@ use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Security\Core\Security;
 
 /**
- * Class AjaxHelper.
+ * Class BookingTable.
+ *
+ * This is a helper class, which will generate the json response array
+ * when calling the "fetchDataRequest" post ajax request from the frontend.
  */
-class AjaxHelper
+class BookingTable
 {
     /**
      * @var ContaoFramework
@@ -82,12 +87,7 @@ class AjaxHelper
     private $objUser;
 
     /**
-     * AjaxHelper constructor.
-     * @param ContaoFramework $framework
-     * @param Security $security
-     * @param SessionInterface $session
-     * @param RequestStack $requestStack
-     * @param string $bagName
+     * BookingTable constructor.
      */
     public function __construct(ContaoFramework $framework, Security $security, SessionInterface $session, RequestStack $requestStack, string $bagName)
     {
@@ -96,6 +96,8 @@ class AjaxHelper
         $this->session = $session;
         $this->sessionBag = $session->getBag($bagName);
         $this->requestStack = $requestStack;
+
+        $this->initialize();
     }
 
     /**
@@ -134,24 +136,48 @@ class AjaxHelper
     }
 
     /**
-     * @return array
      * @throws \Exception
      */
     public function fetchData(): array
     {
-        $this->initialize();
-
         /** @var System $systemAdapter */
         $systemAdapter = $this->framework->getAdapter(System::class);
 
         /** @var Message $messageAdapter */
         $messageAdapter = $this->framework->getAdapter(Message::class);
 
+        /** @var MemberModel $memberModelAdapter */
+        $memberModelAdapter = $this->framework->getAdapter(MemberModel::class);
+
         /** @var DateHelper $dateHelperAdapter */
         $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
 
         /** @var Date $dateAdapter */
         $dateAdapter = $this->framework->getAdapter(Date::class);
+
+        /** @var StringUtil $stringUtilAdapter */
+        $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
+
+        /** @var UtcTimeHelper $stringUtilAdapter */
+        $utcTimeHelperAdapter = $this->framework->getAdapter(UtcTimeHelper::class);
+
+        /** @var Validator $validatorAdapter */
+        $validatorAdapter = $this->framework->getAdapter(Validator::class);
+
+        /** @var ResourceBookingModel $resourceBookingModelAdapter */
+        $resourceBookingModelAdapter = $this->framework->getAdapter(ResourceBookingModel::class);
+
+        /** @var ResourceBookingResourceTypeModel $resourceBookingResourceTypeModelAdapter */
+        $resourceBookingResourceTypeModelAdapter = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class);
+
+        /** @var ResourceBookingTimeSlotModel $resourceBookingTimeSlotModelAdapter */
+        $resourceBookingTimeSlotModelAdapter = $this->framework->getAdapter(ResourceBookingTimeSlotModel::class);
+
+        /** @var ResourceBookingResourceModel $resourceBookingResourceModelAdapter */
+        $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
+
+        /** @var Config $configAdapter */
+        $configAdapter = $this->framework->getAdapter(Config::class);
 
         $arrData = [];
 
@@ -163,10 +189,10 @@ class AjaxHelper
 
         // Convert binary uuids to string uuids
         $arrData['opt'] = array_map(
-            static function ($v) {
+            static function ($v) use ($stringUtilAdapter, $validatorAdapter) {
                 if (!empty($v)) {
-                    if (!\is_array($v) && Validator::isBinaryUuid((string) $v)) {
-                        $v = StringUtil::binToUuid($v);
+                    if (!\is_array($v) && $validatorAdapter->isBinaryUuid((string) $v)) {
+                        $v = $stringUtilAdapter->binToUuid($v);
                     }
                 }
 
@@ -186,9 +212,9 @@ class AjaxHelper
 
         // Filter form: get resource types dropdown
         $rows = [];
-        $arrResTypesIds = StringUtil::deserialize($this->moduleModel->resourceBooking_resourceTypes, true);
+        $arrResTypesIds = $stringUtilAdapter->deserialize($this->moduleModel->resourceBooking_resourceTypes, true);
 
-        if (null !== ($objResourceTypes = ResourceBookingResourceTypeModel::findPublishedByIds($arrResTypesIds))) {
+        if (null !== ($objResourceTypes = $resourceBookingResourceTypeModelAdapter->findPublishedByIds($arrResTypesIds))) {
             while ($objResourceTypes->next()) {
                 $rows[] = $objResourceTypes->row();
             }
@@ -199,7 +225,7 @@ class AjaxHelper
         // Filter form: get resource dropdown
         $rows = [];
 
-        if (null !== ($objResources = ResourceBookingResourceModel::findPublishedByPid($this->objSelectedResourceType->id))) {
+        if (null !== ($objResources = $resourceBookingResourceModelAdapter->findPublishedByPid($this->objSelectedResourceType->id))) {
             while ($objResources->next()) {
                 $rows[] = $objResources->row();
             }
@@ -233,8 +259,8 @@ class AjaxHelper
         $arrData['activeWeek'] = [
             'tstampStart' => $this->sessionBag->get('activeWeekTstamp'),
             'tstampEnd' => $dateHelperAdapter->addDaysToTime(6, $this->sessionBag->get('activeWeekTstamp')),
-            'dateStart' => $dateAdapter->parse(Config::get('dateFormat'), $this->sessionBag->get('activeWeekTstamp')),
-            'dateEnd' => $dateAdapter->parse(Config::get('dateFormat'), $dateHelperAdapter->addDaysToTime(6, $this->sessionBag->get('activeWeekTstamp'))),
+            'dateStart' => $dateAdapter->parse($configAdapter->get('dateFormat'), $this->sessionBag->get('activeWeekTstamp')),
+            'dateEnd' => $dateAdapter->parse($configAdapter->get('dateFormat'), $dateHelperAdapter->addDaysToTime(6, $this->sessionBag->get('activeWeekTstamp'))),
             'weekNumber' => $dateAdapter->parse('W', $this->sessionBag->get('activeWeekTstamp')),
             'year' => $dateAdapter->parse('Y', $this->sessionBag->get('activeWeekTstamp')),
         ];
@@ -248,13 +274,13 @@ class AjaxHelper
 
         for ($i = 0; $i < \count($arrWeekdays); ++$i) {
             // Skip days
-            if ($this->moduleModel->resourceBooking_hideDays && !\in_array($i, StringUtil::deserialize($this->moduleModel->resourceBooking_hideDaysSelection, true), false)) {
+            if ($this->moduleModel->resourceBooking_hideDays && !\in_array($i, $stringUtilAdapter->deserialize($this->moduleModel->resourceBooking_hideDaysSelection, true), false)) {
                 continue;
             }
             $arrWeek[] = [
                 'index' => $i,
                 'title' => '' !== $GLOBALS['TL_LANG']['DAYS_LONG'][$i] ? $GLOBALS['TL_LANG']['DAYS_LONG'][$i] : $arrWeekdays[$i],
-                'titleShort' => '' !== $GLOBALS['TL_LANG']['DAYS_SHORTED'][$i] ? $GLOBALS['TL_LANG']['DAYS_SHORTED'][$i] : $arrWeekdays[$i],
+                'titleShort' => '' !== $GLOBALS['TL_LANG']['DAYS_SHORTENED'][$i] ? $GLOBALS['TL_LANG']['DAYS_SHORTENED'][$i] : $arrWeekdays[$i],
                 'date' => $dateAdapter->parse('d.m.Y', strtotime($dateAdapter->parse('Y-m-d', $this->sessionBag->get('activeWeekTstamp')).' +'.$i.' day')),
             ];
         }
@@ -276,7 +302,7 @@ class AjaxHelper
             $arrData['activeResourceId'] = $this->objSelectedResource->id;
             $arrData['activeResource'] = $this->objSelectedResource->row();
 
-            $objTimeslots = ResourceBookingTimeSlotModel::findPublishedByPid($this->objSelectedResource->timeSlotType);
+            $objTimeslots = $resourceBookingTimeSlotModelAdapter->findPublishedByPid($this->objSelectedResource->timeSlotType);
             $rowCount = 0;
 
             if (null !== $objTimeslots) {
@@ -288,7 +314,7 @@ class AjaxHelper
                     $cssRowClass = 'time-slot-'.$objTimeslots->id;
 
                     // Get the CSS ID
-                    $arrCssCellID = StringUtil::deserialize($objTimeslots->cssID, true);
+                    $arrCssCellID = $stringUtilAdapter->deserialize($objTimeslots->cssID, true);
 
                     // Override the CSS ID
                     if (!empty($arrCssCellID[0])) {
@@ -307,7 +333,7 @@ class AjaxHelper
 
                     for ($colCount = 0; $colCount < 7; ++$colCount) {
                         // Skip days
-                        if ($this->moduleModel->resourceBooking_hideDays && !\in_array($colCount, StringUtil::deserialize($this->moduleModel->resourceBooking_hideDaysSelection, true), false)) {
+                        if ($this->moduleModel->resourceBooking_hideDays && !\in_array($colCount, $stringUtilAdapter->deserialize($this->moduleModel->resourceBooking_hideDaysSelection, true), false)) {
                             continue;
                         }
 
@@ -334,7 +360,7 @@ class AjaxHelper
 
                         if ($objTs->isBooked) {
                             $objTs->isEditable = false;
-                            $objBooking = ResourceBookingModel::findOneByResourceIdStarttimeAndEndtime($this->objSelectedResource, $startTimestamp, $endTimestamp);
+                            $objBooking = $resourceBookingModelAdapter->findOneByResourceIdStarttimeAndEndtime($this->objSelectedResource, $startTimestamp, $endTimestamp);
 
                             if (null !== $objBooking) {
                                 if ($objBooking->member === $this->objUser->id) {
@@ -347,33 +373,33 @@ class AjaxHelper
                                 $objTs->bookedByLastname = '';
                                 $objTs->bookedByFullname = '';
 
-                                $arrFields = StringUtil::deserialize($this->moduleModel->resourceBooking_clientPersonalData, true);
+                                $arrFields = $stringUtilAdapter->deserialize($this->moduleModel->resourceBooking_clientPersonalData, true);
 
-                                $objMember = MemberModel::findByPk($objBooking->member);
+                                $objMember = $memberModelAdapter->findByPk($objBooking->member);
 
                                 if (null !== $objMember) {
                                     // Do not transmit and display sensitive data if user is not holder
                                     if (!$objTs->isHolder && $this->moduleModel->resourceBooking_displayClientPersonalData && !empty($arrFields)) {
                                         foreach ($arrFields as $fieldname) {
-                                            $objTs->{'bookedBy'.ucfirst($fieldname)} = StringUtil::decodeEntities($objMember->$fieldname);
+                                            $objTs->{'bookedBy'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($objMember->$fieldname);
                                         }
 
                                         if (\in_array('firstname', $arrFields, true) && \in_array('lastname', $arrFields, true)) {
-                                            $objTs->bookedByFullname = StringUtil::decodeEntities($objMember->firstname.' '.$objMember->lastname);
+                                            $objTs->bookedByFullname = $stringUtilAdapter->decodeEntities($objMember->firstname.' '.$objMember->lastname);
                                         }
                                     } else {
                                         foreach (array_keys($objMember->row()) as $fieldname) {
                                             if ('id' === $fieldname || 'password' === $fieldname) {
                                                 continue;
                                             }
-                                            $objTs->{'bookedBy'.ucfirst($fieldname)} = StringUtil::decodeEntities($objMember->$fieldname);
-                                            $objTs->{'bookedBy'.ucfirst($fieldname)} = StringUtil::decodeEntities($objMember->$fieldname);
+                                            $objTs->{'bookedBy'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($objMember->$fieldname);
+                                            $objTs->{'bookedBy'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($objMember->$fieldname);
                                         }
-                                        $objTs->bookedByFullname = StringUtil::decodeEntities($objMember->firstname.' '.$objMember->lastname);
+                                        $objTs->bookedByFullname = $stringUtilAdapter->decodeEntities($objMember->firstname.' '.$objMember->lastname);
                                     }
                                 }
 
-                                $objTs->bookingDescription = StringUtil::decodeEntities($objBooking->description);
+                                $objTs->bookingDescription = $stringUtilAdapter->decodeEntities($objBooking->description);
                                 $objTs->bookingId = $objBooking->id;
                                 $objTs->bookingUuid = $objBooking->bookingUuid;
                             }
@@ -403,13 +429,13 @@ class AjaxHelper
         $arrData['rows'] = $rows;
 
         // Get time slots
-        $objTimeslots = ResourceBookingTimeSlotModel::findPublishedByPid($this->objSelectedResource->timeSlotType);
+        $objTimeslots = $resourceBookingTimeSlotModelAdapter->findPublishedByPid($this->objSelectedResource->timeSlotType);
         $timeSlots = [];
 
         if (null !== $objTimeslots) {
             while ($objTimeslots->next()) {
                 // Get the CSS ID
-                $arrCssCellID = StringUtil::deserialize($objTimeslots->cssID, true);
+                $arrCssCellID = $stringUtilAdapter->deserialize($objTimeslots->cssID, true);
 
                 // Override the CSS ID
                 $cssCellClass = null;
@@ -421,10 +447,10 @@ class AjaxHelper
                 $endTimestamp = (int) $objTimeslots->endTime;
                 $objTs = new \stdClass();
                 $objTs->cssClass = $cssCellClass;
-                $objTs->startTimeString = UtcTimeHelper::parse('H:i', $startTimestamp);
+                $objTs->startTimeString = $utcTimeHelperAdapter->parse('H:i', $startTimestamp);
                 $objTs->startTimestamp = (int) $startTimestamp;
-                $objTs->endTimeString = UtcTimeHelper::parse('H:i', $endTimestamp);
-                $objTs->timeSpanString = UtcTimeHelper::parse('H:i', $startTimestamp).' - '.UtcTimeHelper::parse('H:i', $endTimestamp);
+                $objTs->endTimeString = $utcTimeHelperAdapter->parse('H:i', $endTimestamp);
+                $objTs->timeSpanString = $utcTimeHelperAdapter->parse('H:i', $startTimestamp).' - '.$utcTimeHelperAdapter->parse('H:i', $endTimestamp);
                 $objTs->endTimestamp = (int) $endTimestamp;
                 $timeSlots[] = $objTs;
             }
@@ -449,15 +475,12 @@ class AjaxHelper
         return $arrData;
     }
 
-    /**
-     * @param ResourceBookingResourceModel $objResource
-     * @param int $slotStartTime
-     * @param int $slotEndTime
-     * @return bool
-     */
-    public function isResourceBooked(ResourceBookingResourceModel $objResource, int $slotStartTime, int $slotEndTime): bool
+    protected function isResourceBooked(ResourceBookingResourceModel $objResource, int $slotStartTime, int $slotEndTime): bool
     {
-        if (null === ResourceBookingModel::findOneByResourceIdStarttimeAndEndtime($objResource, $slotStartTime, $slotEndTime)) {
+        /** @var ResourceBookingModel $resourceBookingModelAdapter */
+        $resourceBookingModelAdapter = $this->framework->getAdapter(ResourceBookingModel::class);
+
+        if (null === $resourceBookingModelAdapter->findOneByResourceIdStarttimeAndEndtime($objResource, $slotStartTime, $slotEndTime)) {
             return false;
         }
 
@@ -465,13 +488,9 @@ class AjaxHelper
     }
 
     /**
-     * @param int $startTstamp
-     * @param int $endTstamp
-     * @param bool $injectEmptyLine
-     * @return array
      * @throws \Exception
      */
-    public function getWeekSelection(int $startTstamp, int $endTstamp, bool $injectEmptyLine = false): array
+    protected function getWeekSelection(int $startTstamp, int $endTstamp, bool $injectEmptyLine = false): array
     {
         /** @var System $systemAdapter */
         $systemAdapter = $this->framework->getAdapter(System::class);
@@ -537,14 +556,10 @@ class AjaxHelper
     }
 
     /**
-     * @param int $intJumpWeek
-     * @return array
      * @throws \Exception
      */
-    public function getJumpWeekDate(int $intJumpWeek): array
+    protected function getJumpWeekDate(int $intJumpWeek): array
     {
-        $this->initialize();
-
         /** @var DateHelper $dateHelperAdapter */
         $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
 

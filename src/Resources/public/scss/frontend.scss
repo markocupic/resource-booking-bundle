@@ -2,7 +2,10 @@ $notBookableBg: rgba(255, 200, 196, 0.66);
 $bookableBg: rgba(115, 207, 97, 0.42);
 $loggedInUserIsHolderBg: rgba(3, 169, 244, 0.32);
 $iconBookingColor: #ffffff;
+$iconCancelBookingColor: #ffffff;
+$iconCancelBookingHoverColor: #98777e;
 $tableBorderColor: #ccc;
+$transitionSpeed: .8s;
 
 .resource-booking-backdrop-layer {
   position: fixed;
@@ -33,6 +36,7 @@ $tableBorderColor: #ccc;
       color: #d8d8d8;
     }
   }
+
   // filter form (restype-, res- and week selector
   .resource-booking-form {
     .week-select {
@@ -100,14 +104,33 @@ $tableBorderColor: #ccc;
       min-width: 180px;
       max-width: 250px;
       word-break: break-all;
+      position: relative;
 
-      .btn-cancel-booking, .icon-cancel-booking {
-        color: red;
+      .btn-link {
+        position: absolute;
+        margin: auto;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 10;
+        opacity: 0.6;
+        transition: opacity $transitionSpeed;
+      }
+
+      .btn-link > .icon-cancel-booking {
+        font-size: 2rem;
+        color: $iconCancelBookingColor;
       }
 
       .btn-booking, .icon-booking {
         font-size: 2rem;
         color: $iconBookingColor;
+      }
+
+      .btn-booking .icon-cancel-booking {
+        font-size: 2rem;
+        color: $iconCancelBookingColor;
       }
 
       .btn-booking .icon-cancel-booking {
@@ -127,13 +150,40 @@ $tableBorderColor: #ccc;
 
       &.time-slot-cell[data-is-holder="true"] {
         background-color: $loggedInUserIsHolderBg;
+      }
+
+      &.time-slot-cell {
         .holder-box {
           font-weight: bold;
         }
+
+        .holder-box, .description-box {
+          position: relative;
+          z-index: 20;
+        }
+      }
+    }
+
+    // Change buttons z-index and opacity, when hovering
+    .layout-cell[data-iscancelable]:hover, .layout-cell[data-isbookable]:hover {
+      .btn-link {
+        z-index: 30;
+        opacity: 1;
+      }
+
+      .btn-link > .icon-cancel-booking {
+        color: $iconCancelBookingHoverColor !important;
+        transition: color $transitionSpeed;
+      }
+
+      .description-box, .holder-box {
+        opacity: 0.3;
       }
     }
   }
 
+
+  /** Booking table **/
   .resource-booking-table-window {
     .layout-cell {
       height: auto !important;
@@ -145,6 +195,7 @@ $tableBorderColor: #ccc;
       min-width: 100px;
       width: 100px;
       max-width: 100px;
+
       &.time-slot-indicator {
         justify-content: left;
         background-color: #ffffff;
@@ -178,18 +229,21 @@ $tableBorderColor: #ccc;
     .info-table, .booking-preview {
       .layout-row {
         border-top: 1px solid $tableBorderColor;
+
         &.row-last {
           border-bottom: 1px solid $tableBorderColor;
         }
 
         .layout-cell {
           padding: .35rem .25rem;
+
           &.column-first {
             width: 150px;
           }
         }
       }
     }
+
     .booking-preview {
       .bookable {
         background-color: $bookableBg;
