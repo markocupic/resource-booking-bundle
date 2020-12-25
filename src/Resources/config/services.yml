@@ -8,6 +8,7 @@ services:
     - '@security.helper'
     - '@session'
     - '@request_stack'
+    - '@Markocupic\ResourceBookingBundle\User\LoggedInFrontendUser'
     - '%resource_booking_bundle.session.attribute_bag_name%'
     public: true
 
@@ -61,6 +62,13 @@ services:
     - '@contao.framework'
     - '@session'
     - '@request_stack'
+    - '@Markocupic\ResourceBookingBundle\User\LoggedInFrontendUser'
     - '%resource_booking_bundle.session.attribute_bag_name%'
+    - '@security.helper'
+    public: true
+
+  # LoggedInFrontendUser: User class
+  Markocupic\ResourceBookingBundle\User\LoggedInFrontendUser:
+    arguments:
     - '@security.helper'
     public: true

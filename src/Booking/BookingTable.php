@@ -29,6 +29,7 @@ use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceTypeModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotModel;
 use Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag;
+use Markocupic\ResourceBookingBundle\User\LoggedInFrontendUser;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Security\Core\Security;
@@ -67,70 +68,27 @@ class BookingTable
     private $requestStack;
 
     /**
-     * @var ResourceBookingResourceTypeModel
+     * @var LoggedInFrontendUser
      */
-    private $objSelectedResourceType;
-
-    /**
-     * @var ResourceBookingResourceModel
-     */
-    private $objSelectedResource;
-
-    /**
-     * @var ModuleModel
-     */
-    private $moduleModel;
-
-    /**
-     * @var FrontendUser
-     */
-    private $objUser;
+    private $user;
 
     /**
      * BookingTable constructor.
+     *
+     * @throws \Exception
      */
-    public function __construct(ContaoFramework $framework, Security $security, SessionInterface $session, RequestStack $requestStack, string $bagName)
+    public function __construct(ContaoFramework $framework, Security $security, SessionInterface $session, RequestStack $requestStack, LoggedInFrontendUser $user,string $bagName)
     {
         $this->framework = $framework;
         $this->security = $security;
         $this->session = $session;
         $this->sessionBag = $session->getBag($bagName);
         $this->requestStack = $requestStack;
+        $this->user = $user;
 
-    }
 
-    /**
-     * @throws \Exception
-     */
-    public function initialize(): void
-    {
-        /** @var ResourceBookingResourceTypeModel $resourceBookingResourceTypeModelAdapter */
-        $resourceBookingResourceTypeModelAdapter = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class);
-
-        /** @var ResourceBookingResourceModel $resourceBookingResourceModelAdapter */
-        $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
-
-        /** @var ModuleModel $moduleModelAdapter */
-        $moduleModelAdapter = $this->framework->getAdapter(ModuleModel::class);
-
-        // Set resource type
-        $this->objSelectedResourceType = $resourceBookingResourceTypeModelAdapter->findByPk($this->sessionBag->get('resType'));
-
-        // Set resource
-        $this->objSelectedResource = $resourceBookingResourceModelAdapter->findByPk($this->sessionBag->get('res'));
-
-        // Set module model
-        $this->moduleModel = $moduleModelAdapter->findByPk($this->sessionBag->get('moduleModelId'));
-
-        if (null === $this->moduleModel) {
+        if (null === $this->getModuleModel()) {
             throw new \Exception('Module model not found.');
-        }
-
-        $this->objUser = null;
-
-        if ($this->security->getUser() instanceof FrontendUser) {
-            /** @var FrontendUser $user */
-            $this->objUser = $this->security->getUser();
         }
     }
 
@@ -139,8 +97,6 @@ class BookingTable
      */
     public function fetchData(): array
     {
-        $this->initialize();
-
         /** @var System $systemAdapter */
         $systemAdapter = $this->framework->getAdapter(System::class);
 
@@ -186,7 +142,7 @@ class BookingTable
         $systemAdapter->loadLanguageFile('default', $this->sessionBag->get('language'));
 
         // Get module data
-        $arrData['opt'] = $this->moduleModel->row();
+        $arrData['opt'] = $this->getModuleModel()->row();
 
         // Convert binary uuids to string uuids
         $arrData['opt'] = array_map(
@@ -203,17 +159,17 @@ class BookingTable
         );
 
         // Messages
-        if (null === $this->objSelectedResourceType && !$messageAdapter->hasMessages()) {
+        if (null === $this->getActiveResourceType() && !$messageAdapter->hasMessages()) {
             $messageAdapter->addInfo($GLOBALS['TL_LANG']['MSG']['selectResourceTypePlease']);
         }
 
-        if (null === $this->objSelectedResource && !$messageAdapter->hasMessages()) {
+        if (null === $this->getActiveResource() && !$messageAdapter->hasMessages()) {
             $messageAdapter->addInfo($GLOBALS['TL_LANG']['MSG']['selectResourcePlease']);
         }
 
         // Filter form: get resource types dropdown
         $rows = [];
-        $arrResTypesIds = $stringUtilAdapter->deserialize($this->moduleModel->resourceBooking_resourceTypes, true);
+        $arrResTypesIds = $stringUtilAdapter->deserialize($this->getModuleModel()->resourceBooking_resourceTypes, true);
 
         if (null !== ($objResourceTypes = $resourceBookingResourceTypeModelAdapter->findPublishedByIds($arrResTypesIds))) {
             while ($objResourceTypes->next()) {
@@ -226,7 +182,7 @@ class BookingTable
         // Filter form: get resource dropdown
         $rows = [];
 
-        if (null !== ($objResources = $resourceBookingResourceModelAdapter->findPublishedByPid($this->objSelectedResourceType->id))) {
+        if (null !== ($objResources = $resourceBookingResourceModelAdapter->findPublishedByPid($this->getActiveResourceType()->id))) {
             while ($objResources->next()) {
                 $rows[] = $objResources->row();
             }
@@ -244,14 +200,14 @@ class BookingTable
         // Logged in user
         $arrData['userIsLoggedIn'] = false;
 
-        if (null !== $this->objUser) {
+        if (null !== $this->user->getLoggedInUser()) {
             $arrData['userIsLoggedIn'] = true;
             $arrData['loggedInUser'] = [
-                'firstname' => $this->objUser->firstname,
-                'lastname' => $this->objUser->lastname,
-                'gender' => '' !== $GLOBALS['TL_LANG'][$this->objUser->gender] ? $GLOBALS['TL_LANG'][$this->objUser->gender] : $this->objUser->gender,
-                'email' => $this->objUser->email,
-                'id' => $this->objUser->id,
+                'firstname' => $this->user->getLoggedInUser()->firstname,
+                'lastname' => $this->user->getLoggedInUser()->lastname,
+                'gender' => '' !== $GLOBALS['TL_LANG'][$this->user->getLoggedInUser()->gender] ? $GLOBALS['TL_LANG'][$this->user->getLoggedInUser()->gender] : $this->user->getLoggedInUser()->gender,
+                'email' => $this->user->getLoggedInUser()->email,
+                'id' => $this->user->getLoggedInUser()->id,
             ];
         }
 
@@ -275,7 +231,7 @@ class BookingTable
 
         for ($i = 0; $i < \count($arrWeekdays); ++$i) {
             // Skip days
-            if ($this->moduleModel->resourceBooking_hideDays && !\in_array($i, $stringUtilAdapter->deserialize($this->moduleModel->resourceBooking_hideDaysSelection, true), false)) {
+            if ($this->getModuleModel()->resourceBooking_hideDays && !\in_array($i, $stringUtilAdapter->deserialize($this->getModuleModel()->resourceBooking_hideDaysSelection, true), false)) {
                 continue;
             }
             $arrWeek[] = [
@@ -290,20 +246,20 @@ class BookingTable
 
         $arrData['activeResourceTypeId'] = 'undefined';
 
-        if (null !== $this->objSelectedResourceType) {
-            $arrData['activeResourceType'] = $this->objSelectedResourceType->row();
-            $arrData['activeResourceTypeId'] = $this->objSelectedResourceType->id;
+        if (null !== $this->getActiveResourceType()) {
+            $arrData['activeResourceType'] = $this->getActiveResourceType()->row();
+            $arrData['activeResourceTypeId'] = $this->getActiveResourceType()->id;
         }
 
         // Get rows
         $arrData['activeResourceId'] = 'undefined';
         $rows = [];
 
-        if (null !== $this->objSelectedResource && null !== $this->objSelectedResourceType) {
-            $arrData['activeResourceId'] = $this->objSelectedResource->id;
-            $arrData['activeResource'] = $this->objSelectedResource->row();
+        if (null !== $this->getActiveResource() && null !== $this->getActiveResourceType()) {
+            $arrData['activeResourceId'] = $this->getActiveResource()->id;
+            $arrData['activeResource'] = $this->getActiveResource()->row();
 
-            $objTimeslots = $resourceBookingTimeSlotModelAdapter->findPublishedByPid($this->objSelectedResource->timeSlotType);
+            $objTimeslots = $resourceBookingTimeSlotModelAdapter->findPublishedByPid($this->getActiveResource()->timeSlotType);
             $rowCount = 0;
 
             if (null !== $objTimeslots) {
@@ -311,7 +267,7 @@ class BookingTable
                     $cells = [];
                     $objRow = new \stdClass();
 
-                    $cssRowId = sprintf('timeSlotModId_%s_%s', $this->moduleModel->id, $objTimeslots->id);
+                    $cssRowId = sprintf('timeSlotModId_%s_%s', $this->getModuleModel()->id, $objTimeslots->id);
                     $cssRowClass = 'time-slot-'.$objTimeslots->id;
 
                     // Get the CSS ID
@@ -334,7 +290,7 @@ class BookingTable
 
                     for ($colCount = 0; $colCount < 7; ++$colCount) {
                         // Skip days
-                        if ($this->moduleModel->resourceBooking_hideDays && !\in_array($colCount, $stringUtilAdapter->deserialize($this->moduleModel->resourceBooking_hideDaysSelection, true), false)) {
+                        if ($this->getModuleModel()->resourceBooking_hideDays && !\in_array($colCount, $stringUtilAdapter->deserialize($this->getModuleModel()->resourceBooking_hideDaysSelection, true), false)) {
                             continue;
                         }
 
@@ -349,22 +305,22 @@ class BookingTable
                         $objTs->endTimestamp = (int) $endTimestamp;
                         $objTs->timeSpanString = $dateAdapter->parse('H:i', $startTimestamp).' - '.$dateAdapter->parse('H:i', $endTimestamp);
                         $objTs->mondayTimestampSelectedWeek = (int) $this->sessionBag->get('activeWeekTstamp');
-                        $objTs->isBooked = $this->isResourceBooked($this->objSelectedResource, $startTimestamp, $endTimestamp);
+                        $objTs->isBooked = $this->isResourceBooked($this->getActiveResource(), $startTimestamp, $endTimestamp);
                         $objTs->isEditable = $objTs->isBooked ? false : true;
                         $objTs->timeSlotId = $objTimeslots->id;
                         $objTs->validDate = true;
-                        $objTs->resourceId = $this->objSelectedResource->id;
+                        $objTs->resourceId = $this->getActiveResource()->id;
                         $objTs->cssClass = $cssCellClass;
                         // slotId-startTime-endTime-mondayTimestampSelectedWeek
                         $objTs->bookingCheckboxValue = sprintf('%s-%s-%s-%s', $objTimeslots->id, $startTimestamp, $endTimestamp, $this->sessionBag->get('activeWeekTstamp'));
-                        $objTs->bookingCheckboxId = sprintf('bookingCheckbox_modId_%s_%s_%s', $this->moduleModel->id, $rowCount, $colCount);
+                        $objTs->bookingCheckboxId = sprintf('bookingCheckbox_modId_%s_%s_%s', $this->getModuleModel()->id, $rowCount, $colCount);
 
                         if ($objTs->isBooked) {
                             $objTs->isEditable = false;
-                            $objBooking = $resourceBookingModelAdapter->findOneByResourceIdStarttimeAndEndtime($this->objSelectedResource, $startTimestamp, $endTimestamp);
+                            $objBooking = $resourceBookingModelAdapter->findOneByResourceIdStarttimeAndEndtime($this->getActiveResource(), $startTimestamp, $endTimestamp);
 
                             if (null !== $objBooking) {
-                                if ($objBooking->member === $this->objUser->id) {
+                                if ($objBooking->member === $this->user->getLoggedInUser()->id) {
                                     $objTs->isEditable = true;
                                     $objTs->isHolder = true;
                                 }
@@ -374,13 +330,13 @@ class BookingTable
                                 $objTs->bookedByLastname = '';
                                 $objTs->bookedByFullname = '';
 
-                                $arrFields = $stringUtilAdapter->deserialize($this->moduleModel->resourceBooking_clientPersonalData, true);
+                                $arrFields = $stringUtilAdapter->deserialize($this->getModuleModel()->resourceBooking_clientPersonalData, true);
 
                                 $objMember = $memberModelAdapter->findByPk($objBooking->member);
 
                                 if (null !== $objMember) {
                                     // Do not transmit and display sensitive data if user is not holder
-                                    if (!$objTs->isHolder && $this->moduleModel->resourceBooking_displayClientPersonalData && !empty($arrFields)) {
+                                    if (!$objTs->isHolder && $this->getModuleModel()->resourceBooking_displayClientPersonalData && !empty($arrFields)) {
                                         foreach ($arrFields as $fieldname) {
                                             $objTs->{'bookedBy'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($objMember->$fieldname);
                                         }
@@ -407,8 +363,8 @@ class BookingTable
                         }
 
                         // Do not allow editing if resourceBooking_addDateStop is set and resourceBooking_dateStop < time()
-                        if ($this->moduleModel->resourceBooking_addDateStop) {
-                            if ($objTs->endTimestamp > $this->moduleModel->resourceBooking_dateStop + 24 * 3600) {
+                        if ($this->getModuleModel()->resourceBooking_addDateStop) {
+                            if ($objTs->endTimestamp > $this->getModuleModel()->resourceBooking_dateStop + 24 * 3600) {
                                 $objTs->isEditable = false;
                                 $objTs->validDate = false;
                             }
@@ -430,7 +386,7 @@ class BookingTable
         $arrData['rows'] = $rows;
 
         // Get time slots
-        $objTimeslots = $resourceBookingTimeSlotModelAdapter->findPublishedByPid($this->objSelectedResource->timeSlotType);
+        $objTimeslots = $resourceBookingTimeSlotModelAdapter->findPublishedByPid($this->getActiveResource()->timeSlotType);
         $timeSlots = [];
 
         if (null !== $objTimeslots) {
@@ -578,7 +534,7 @@ class BookingTable
             $arrReturn['disabled'] = true;
         }
 
-        if (!$this->sessionBag->get('activeWeekTstamp') > 0 || null === $this->objSelectedResourceType || null === $this->objSelectedResource) {
+        if (!$this->sessionBag->get('activeWeekTstamp') > 0 || null === $this->getActiveResourceType() || null === $this->getActiveResource()) {
             $arrReturn['disabled'] = true;
         }
 
@@ -586,4 +542,39 @@ class BookingTable
 
         return $arrReturn;
     }
+
+    /**
+     * @throws \Exception
+     */
+    protected function getActiveResource(): ?ResourceBookingResourceModel
+    {
+        /** @var ResourceBookingResourceModel $resourceBookingResourceModelAdapter */
+        $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
+
+        return $resourceBookingResourceModelAdapter->findByPk($this->sessionBag->get('res'));
+    }
+
+    /**
+     * @throws \Exception
+     */
+    protected function getActiveResourceType(): ?ResourceBookingResourceTypeModel
+    {
+        /** @var ResourceBookingResourceTypeModel $resourceBookingResourceTypeModelAdapter */
+        $resourceBookingResourceTypeModelAdapter = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class);
+
+        return $resourceBookingResourceTypeModelAdapter->findByPk($this->sessionBag->get('resType'));
+    }
+
+    /**
+     * @throws \Exception
+     */
+    protected function getModuleModel(): ?ModuleModel
+    {
+        /** @var ModuleModel $moduleModelAdapter */
+        $moduleModelAdapter = $this->framework->getAdapter(ModuleModel::class);
+
+        return $moduleModelAdapter->findByPk($this->sessionBag->get('moduleModelId'));
+    }
+
+
 }

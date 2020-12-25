@@ -15,7 +15,6 @@ namespace Markocupic\ResourceBookingBundle\EventSubscriber;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Monolog\ContaoContext;
 use Contao\Date;
-use Contao\FrontendUser;
 use Contao\System;
 use Markocupic\ResourceBookingBundle\Booking\Booking;
 use Markocupic\ResourceBookingBundle\Booking\BookingTable;
@@ -28,6 +27,7 @@ use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceTypeModel;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag;
+use Markocupic\ResourceBookingBundle\User\LoggedInFrontendUser;
 use Psr\Log\LogLevel;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -55,6 +55,11 @@ class AjaxRequestEventSubscriber
     private $booking;
 
     /**
+     * @var LoggedInFrontendUser
+     */
+    private $user;
+
+    /**
      * @var SessionInterface
      */
     private $session;
@@ -80,29 +85,19 @@ class AjaxRequestEventSubscriber
     private $eventDispatcher;
 
     /**
-     * @var FrontendUser
-     */
-    private $objUser;
-
-    /**
      * AjaxRequestEventSubscriber constructor.
      */
-    public function __construct(ContaoFramework $framework, BookingTable $bookingTableHelper, Booking $booking, SessionInterface $session, RequestStack $requestStack, string $bagName, Security $security, EventDispatcherInterface $eventDispatcher)
+    public function __construct(ContaoFramework $framework, BookingTable $bookingTableHelper, Booking $booking, LoggedInFrontendUser $user, SessionInterface $session, RequestStack $requestStack, string $bagName, Security $security, EventDispatcherInterface $eventDispatcher)
     {
         $this->framework = $framework;
         $this->bookingTableHelper = $bookingTableHelper;
         $this->booking = $booking;
+        $this->user = $user;
         $this->session = $session;
         $this->requestStack = $requestStack;
         $this->sessionBag = $session->getBag($bagName);
         $this->security = $security;
         $this->eventDispatcher = $eventDispatcher;
-        $this->objUser = null;
-
-        if ($this->security->getUser() instanceof FrontendUser) {
-            /** @var FrontendUser $user */
-            $this->objUser = $this->security->getUser();
-        }
     }
 
     public function onXmlHttpRequest(AjaxRequestEvent $ajaxRequestEvent): void
@@ -242,10 +237,11 @@ class AjaxRequestEventSubscriber
         $objBookings = $this->booking->getBookingCollection();
 
         // Dispatch pre booking event
-        $objPreBookingEvent = new PreBookingEvent();
-        $objPreBookingEvent->setUser($this->objUser);
-        $objPreBookingEvent->setBookingCollection($objBookings);
-        $objPreBookingEvent->setSessionBag($this->sessionBag);
+        $eventData = new \stdClass();
+        $eventData->user = $this->user->getLoggedInUser();
+        $eventData->bookingCollection = $objBookings;
+        $eventData->sessionBag = $this->sessionBag;
+        $objPreBookingEvent = new PreBookingEvent($eventData);
         $this->eventDispatcher->dispatch($objPreBookingEvent, 'rbb.event.pre_booking');
 
         if (null !== $objBookings) {
@@ -264,10 +260,11 @@ class AjaxRequestEventSubscriber
         $objBookings = $resourceBookingModelAdapter->findByBookingUuid($this->booking->getBookingUuid());
 
         if (null !== $objBookings) {
-            $objPostBookingEvent = new PostBookingEvent();
-            $objPostBookingEvent->setUser($this->objUser);
-            $objPostBookingEvent->setBookingCollection($objBookings);
-            $objPostBookingEvent->setSessionBag($this->sessionBag);
+            $eventData = new \stdClass();
+            $eventData->user = $this->user->getLoggedInUser();
+            $eventData->bookingCollection = $objBookings;
+            $eventData->sessionBag = $this->sessionBag;
+            $objPostBookingEvent = new PostBookingEvent($eventData);
             $this->eventDispatcher->dispatch($objPostBookingEvent, 'rbb.event.post_booking');
         }
 
@@ -355,12 +352,12 @@ class AjaxRequestEventSubscriber
 
         $ajaxResponse->setStatus(AjaxResponse::STATUS_ERROR);
 
-        if (null !== $this->objUser && $request->request->get('bookingId') > 0) {
+        if (null !== $this->user->getLoggedInUser() && $request->request->get('bookingId') > 0) {
             $bookingId = $request->request->get('bookingId');
             $objBooking = $resourceBookingModelAdapter->findByPk($bookingId);
 
             if (null !== $objBooking) {
-                if ($objBooking->member === $this->objUser->id) {
+                if ($objBooking->member === $this->user->getLoggedInUser()->id) {
                     $intId = $objBooking->id;
                     $bookingUuid = $objBooking->bookingUuid;
                     $timeSlotId = $objBooking->timeSlotId;

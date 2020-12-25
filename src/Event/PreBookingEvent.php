@@ -38,34 +38,24 @@ class PreBookingEvent extends Event
     private $sessionBag;
 
     /**
-     * @param Collection|null $bookingCollection
+     * PreBookingEvent constructor.
+     * @param \stdClass $event
      */
-    public function setBookingCollection(?Collection $bookingCollection): void
+    public function __construct(\stdClass $event)
     {
-        $this->bookingCollection = $bookingCollection;
+        $this->bookingCollection = $event->bookingCollection;
+        $this->user = $event->user;
+        $this->sessionBag = $event->sessionBag;
     }
 
-    /**
-     * @return Collection|null
-     */
     public function getBookingCollection(): ?Collection
     {
         return $this->bookingCollection;
     }
 
-    public function setUser(FrontendUser $user): void
-    {
-        $this->user = $user;
-    }
-
     public function getUser(): FrontendUser
     {
         return $this->user;
-    }
-
-    public function setSessionBag(ArrayAttributeBag $sessionBag): void
-    {
-        $this->sessionBag = $sessionBag;
     }
 
     public function getSessionBag(): ArrayAttributeBag
