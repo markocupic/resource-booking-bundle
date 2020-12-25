@@ -28,6 +28,7 @@ use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotModel;
 use Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag;
+use Markocupic\ResourceBookingBundle\User\LoggedInFrontendUser;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Security\Core\Security;
@@ -83,6 +84,11 @@ class Booking
     private $requestStack;
 
     /**
+     * @var LoggedInFrontendUser
+     */
+    private $user;
+
+    /**
      * @var ArrayAttributeBag
      */
     private $sessionBag;
@@ -92,19 +98,17 @@ class Booking
      */
     private $security;
 
-    /**
-     * @var FrontendUser
-     */
-    private $objUser;
+
 
     /**
      * Booking constructor.
      */
-    public function __construct(ContaoFramework $framework, SessionInterface $session, RequestStack $requestStack, string $bagName, Security $security)
+    public function __construct(ContaoFramework $framework, SessionInterface $session, RequestStack $requestStack, LoggedInFrontendUser $user,string $bagName, Security $security)
     {
         $this->framework = $framework;
         $this->session = $session;
         $this->requestStack = $requestStack;
+        $this->user = $user;
         $this->sessionBag = $session->getBag($bagName);
         $this->security = $security;
     }
@@ -196,7 +200,7 @@ class Booking
                 'pid' => $inputAdapter->post('resourceId'),
                 'bookingUuid' => '',
                 'description' => $inputAdapter->post('description'),
-                'member' => $this->objUser->id,
+                'member' => $this->user->getLoggedInUser()->id,
                 'tstamp' => time(),
                 'resourceIsAlreadyBooked' => true,
                 'resourceBlocked' => true,
@@ -249,8 +253,8 @@ class Booking
                 '%s : %s %s %s [%s - %s]',
                 $this->getActiveResource()->title,
                 $GLOBALS['TL_LANG']['MSC']['bookingFor'],
-                $this->objUser->firstname,
-                $this->objUser->lastname,
+                $this->user->getLoggedInUser()->firstname,
+                $this->user->getLoggedInUser()->lastname,
                 $dateAdapter->parse($configAdapter->get('datimFormat'), $arrData['startTime']),
                 $dateAdapter->parse($configAdapter->get('datimFormat'), $arrData['endTime'])
             );
@@ -382,13 +386,10 @@ class Booking
         /** @var ModuleModel $moduleModelAdapter */
         $moduleModelAdapter = $this->framework->getAdapter(ModuleModel::class);
 
-        if ($this->security->getUser() instanceof FrontendUser) {
-            /** @var FrontendUser $user */
-            $this->objUser = $this->security->getUser();
-        } else {
+        if (null === $this->user->getLoggedInUser()) {
             throw new \Exception('No logged in user found.');
         }
-
+        
         // Set module model
         $this->moduleModel = $moduleModelAdapter->findByPk($this->sessionBag->get('moduleModelId'));
 

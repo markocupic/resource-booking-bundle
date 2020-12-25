@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\Event;
 
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Contracts\EventDispatcher\Event;
 
 /**
@@ -25,13 +26,30 @@ class AjaxRequestEvent extends Event
      */
     private $ajaxResponse;
 
-    public function setAjaxResponse(AjaxResponse $ajaxResponse): void
+    /**
+     * @var Request
+     */
+    private $request;
+
+    /**
+     * AjaxRequestEvent constructor.
+     */
+    public function __construct(\stdClass $event)
     {
-        $this->ajaxResponse = $ajaxResponse;
+        $this->ajaxResponse = $event->ajaxResponse;
+        $this->request = $event->request;
     }
 
     public function getAjaxResponse(): AjaxResponse
     {
         return $this->ajaxResponse;
+    }
+
+    /**
+     * @return Request
+     */
+    public function getRequest(): Request
+    {
+        return $this->request;
     }
 }
