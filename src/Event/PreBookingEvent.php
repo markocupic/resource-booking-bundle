@@ -39,7 +39,6 @@ class PreBookingEvent extends Event
 
     /**
      * PreBookingEvent constructor.
-     * @param \stdClass $event
      */
     public function __construct(\stdClass $event)
     {
