@@ -2,7 +2,7 @@
  * Resource Booking Module for Contao CMS
  * Copyright (c) 2008-2020 Marko Cupic
  * @package resource-booking-bundle
- * @author Marko Cupic m.cupic@gmx.ch, 2020
+ * @author Marko Cupic m.cupic@gmx.ch, 2021
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 "use strict";
@@ -145,27 +145,27 @@ class resourceBookingApp {
                             'x-requested-with': 'XMLHttpRequest'
                         },
                     })
-                        .then(function (res) {
-                            self.checkResponse(res);
-                            return res.json();
-                        })
-                        .then(function (response) {
-                            if (response.status === 'success') {
-                                for (let key in response['data']) {
-                                    self[key] = response['data'][key];
-                                }
+                    .then(function (res) {
+                        self.checkResponse(res);
+                        return res.json();
+                    })
+                    .then(function (response) {
+                        if (response.status === 'success') {
+                            for (let key in response['data']) {
+                                self[key] = response['data'][key];
                             }
-                            return response;
-                        })
-                        .then(function (response) {
-                            self.isReady = true;
-                            self.isBusy = false;
+                        }
+                        return response;
+                    })
+                    .then(function (response) {
+                        self.isReady = true;
+                        self.isBusy = false;
 
-                        })
-                        .catch(function (error) {
-                            self.isReady = false;
-                            self.isBusy = false;
-                        });
+                    })
+                    .catch(function (error) {
+                        self.isReady = false;
+                        self.isBusy = false;
+                    });
                 },
 
                 /**
@@ -194,26 +194,26 @@ class resourceBookingApp {
                             'x-requested-with': 'XMLHttpRequest'
                         },
                     })
-                        .then(function (res) {
-                            self.checkResponse(res);
-                            return res.json();
-                        })
-                        .then(function (response) {
-                            if (response.status === 'success') {
-                                for (let key in response.data) {
-                                    self[key] = response.data[key];
-                                }
+                    .then(function (res) {
+                        self.checkResponse(res);
+                        return res.json();
+                    })
+                    .then(function (response) {
+                        if (response.status === 'success') {
+                            for (let key in response.data) {
+                                self[key] = response.data[key];
                             }
-                            return response;
-                        })
-                        .then(function (response) {
-                            self.toggleBackdrop(false);
-                            self.isBusy = false;
-                        })
-                        .catch(function (response) {
-                            self.toggleBackdrop(false);
-                            self.isBusy = false;
-                        });
+                        }
+                        return response;
+                    })
+                    .then(function (response) {
+                        self.toggleBackdrop(false);
+                        self.isBusy = false;
+                    })
+                    .catch(function (response) {
+                        self.toggleBackdrop(false);
+                        self.isBusy = false;
+                    });
                 },
 
                 /**
@@ -228,8 +228,8 @@ class resourceBookingApp {
                     data.append('REQUEST_TOKEN', self.requestToken);
                     data.append('action', action);
                     data.append('resourceId', self.bookingWindow.activeTimeSlot.resourceId);
-                    data.append('description', $(self.$el).find('.booking-window [name="bookingDescription"]').first().val());
-                    data.append('bookingRepeatStopWeekTstamp', $(self.$el).find('.booking-repeat-stop-week-tstamp').first().val());
+                    data.append('description', self.$el.querySelectorAll('.booking-window [name="bookingDescription"]')[0].value);
+                    data.append('bookingRepeatStopWeekTstamp', self.$el.querySelectorAll('.booking-repeat-stop-week-tstamp')[0].value);
                     data.append('moduleKey', self.moduleKey);
 
                     let i;
@@ -245,29 +245,29 @@ class resourceBookingApp {
                                 'x-requested-with': 'XMLHttpRequest'
                             },
                         })
-                        .then(function (res) {
-                            self.checkResponse(res);
-                            return res.json();
-                        })
-                        .then(function (response) {
-                            if (response.status === 'success') {
-                                self.bookingWindow.message.success = response.message.success;
-                                window.setTimeout(function () {
-                                    self.mode = 'main-window';
-                                }, 2500);
-                            } else {
-                                self.bookingWindow.message.error = response.message.error;
-                            }
-                            // Always
-                            self.bookingWindow.showConfirmationMsg = true;
-                            self.fetchDataRequest();
-                        })
-                        .catch(function (response) {
-                            self.isReady = false;
-                            // Always
-                            self.bookingWindow.showConfirmationMsg = true;
-                            self.fetchDataRequest();
-                        });
+                    .then(function (res) {
+                        self.checkResponse(res);
+                        return res.json();
+                    })
+                    .then(function (response) {
+                        if (response.status === 'success') {
+                            self.bookingWindow.message.success = response.message.success;
+                            window.setTimeout(function () {
+                                self.mode = 'main-window';
+                            }, 2500);
+                        } else {
+                            self.bookingWindow.message.error = response.message.error;
+                        }
+                        // Always
+                        self.bookingWindow.showConfirmationMsg = true;
+                        self.fetchDataRequest();
+                    })
+                    .catch(function (response) {
+                        self.isReady = false;
+                        // Always
+                        self.bookingWindow.showConfirmationMsg = true;
+                        self.fetchDataRequest();
+                    });
                 },
 
                 /**
@@ -281,7 +281,7 @@ class resourceBookingApp {
                     data.append('REQUEST_TOKEN', self.requestToken);
                     data.append('action', action);
                     data.append('resourceId', self.bookingWindow.activeTimeSlot.resourceId);
-                    data.append('bookingRepeatStopWeekTstamp', $(self.$el).find('.booking-repeat-stop-week-tstamp').first().val());
+                    data.append('bookingRepeatStopWeekTstamp', self.$el.querySelectorAll('.booking-repeat-stop-week-tstamp')[0].value);
                     data.append('moduleKey', self.moduleKey);
 
                     let i;
@@ -297,19 +297,19 @@ class resourceBookingApp {
                                 'x-requested-with': 'XMLHttpRequest'
                             },
                         })
-                        .then(function (res) {
-                            self.checkResponse(res);
-                            return res.json();
-                        })
-                        .then(function (response) {
-                            if (response.status === 'success') {
-                                self.bookingFormValidation = response.data;
-                                self.isReady = true;
-                            }
-                        })
-                        .catch(function (response) {
-                            self.isReady = false;
-                        });
+                    .then(function (res) {
+                        self.checkResponse(res);
+                        return res.json();
+                    })
+                    .then(function (response) {
+                        if (response.status === 'success') {
+                            self.bookingFormValidation = response.data;
+                            self.isReady = true;
+                        }
+                    })
+                    .catch(function (response) {
+                        self.isReady = false;
+                    });
 
                 },
 
@@ -334,31 +334,31 @@ class resourceBookingApp {
                             'x-requested-with': 'XMLHttpRequest'
                         },
                     })
-                        .then(function (res) {
-                            self.checkResponse(res);
-                            return res.json();
-                        })
-                        .then(function (response) {
-                            if (response.status === 'success') {
-                                self.bookingWindow.message.success = response.message.success;
-                                window.setTimeout(function () {
-                                    self.mode = 'main-window';
-                                }, 2500);
-                            } else {
-                                self.bookingWindow.message.error = response.message.error;
-                            }
-                            // Always
-                            self.bookingWindow.deleteBookingsWithSameBookingUuid = false;
-                            self.bookingWindow.showConfirmationMsg = true;
-                            self.fetchDataRequest();
-                        })
-                        .catch(function (response) {
-                            self.isReady = false;
-                            // Always
-                            self.bookingWindow.showConfirmationMsg = true;
-                            self.fetchDataRequest();
-                            self.bookingWindow.deleteBookingsWithSameBookingUuid = false;
-                        });
+                    .then(function (res) {
+                        self.checkResponse(res);
+                        return res.json();
+                    })
+                    .then(function (response) {
+                        if (response.status === 'success') {
+                            self.bookingWindow.message.success = response.message.success;
+                            window.setTimeout(function () {
+                                self.mode = 'main-window';
+                            }, 2500);
+                        } else {
+                            self.bookingWindow.message.error = response.message.error;
+                        }
+                        // Always
+                        self.bookingWindow.deleteBookingsWithSameBookingUuid = false;
+                        self.bookingWindow.showConfirmationMsg = true;
+                        self.fetchDataRequest();
+                    })
+                    .catch(function (response) {
+                        self.isReady = false;
+                        // Always
+                        self.bookingWindow.showConfirmationMsg = true;
+                        self.fetchDataRequest();
+                        self.bookingWindow.deleteBookingsWithSameBookingUuid = false;
+                    });
                 },
 
                 /**
@@ -409,16 +409,26 @@ class resourceBookingApp {
                     self.bookingWindow.selectedTimeSlots.push(objActiveTimeSlot.bookingCheckboxValue);
                     self.bookingFormValidation = [];
 
-                    // Hide booking preview
-                    $(self.$el).find('.booking-preview').first().collapse('hide');
-                    window.setTimeout(function () {
-                        self.bookingFormValidationRequest();
-                    }, 500);
+                    if (action === 'showBookingForm') {
+                        window.setTimeout(function () {
+                            self.bookingFormValidationRequest();
+                        }, 500);
+                    }
 
-                    // Switch window
-                    self.mode = 'booking-window';
-                    $(self.$el).find('.booking-window [name="bookingDescription"]').first().val('');
-                    $(self.$el).find('.booking-window .booking-repeat-stop-week-tstamp option').prop('selected', false);
+
+                    // Wrap this code, otherwise it querySelector will not find dom elements
+                    window.setTimeout(function () {
+
+                        let inputBookingDescription = self.$el.querySelector('.booking-window input[name="bookingDescription"]');
+                        if (inputBookingDescription !== null) {
+                            inputBookingDescription.setAttribute('value', '');
+                        }
+
+                        let weekRepeatOptions = self.$el.querySelectorAll('.booking-window .booking-repeat-stop-week-tstamp option');
+                        if (weekRepeatOptions.length > 0) {
+                            weekRepeatOptions.forEach(option => option.removeAttribute('selected'));
+                        }
+                    }, 20);
 
                 },
 
@@ -436,12 +446,25 @@ class resourceBookingApp {
                  */
                 toggleBackdrop: function toggleBackdrop(blnAdd = true) {
                     if (blnAdd) {
-                        $('.resource-booking-backdrop-layer').remove();
-                        let backdrop = '<div class="resource-booking-backdrop-layer show"></div>';
-                        $("body").append(backdrop);
+                        // Remove backdrop layer
+                        let backDrops = document.querySelectorAll('.resource-booking-backdrop-layer');
+                        if (backDrops.length > 0) {
+                            backDrops.forEach(backDrop => backDrop.parentNode.removeChild(backDrop));
+                        }
+
+                        // Add backdrop layer
+                        let backDrop = document.createElement("div");
+                        backDrop.classList.add("resource-booking-backdrop-layer");
+                        backDrop.classList.add("show");
+                        document.querySelector('body').append(backDrop);
+
                     } else {
+                        // Remove backdrop layer
                         window.setTimeout(function () {
-                            $('.resource-booking-backdrop-layer').remove();
+                            let backDrops = document.querySelectorAll('.resource-booking-backdrop-layer');
+                            if (backDrops.length > 0) {
+                                backDrops.forEach(backDrop => backDrop.parentNode.removeChild(backDrop));
+                            }
                         }, 100);
                     }
                 },

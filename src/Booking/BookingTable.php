@@ -15,7 +15,6 @@ namespace Markocupic\ResourceBookingBundle\Booking;
 use Contao\Config;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Date;
-use Contao\FrontendUser;
 use Contao\MemberModel;
 use Contao\Message;
 use Contao\ModuleModel;
@@ -77,7 +76,7 @@ class BookingTable
      *
      * @throws \Exception
      */
-    public function __construct(ContaoFramework $framework, Security $security, SessionInterface $session, RequestStack $requestStack, LoggedInFrontendUser $user,string $bagName)
+    public function __construct(ContaoFramework $framework, Security $security, SessionInterface $session, RequestStack $requestStack, LoggedInFrontendUser $user, string $bagName)
     {
         $this->framework = $framework;
         $this->security = $security;
@@ -85,7 +84,6 @@ class BookingTable
         $this->sessionBag = $session->getBag($bagName);
         $this->requestStack = $requestStack;
         $this->user = $user;
-
 
         if (null === $this->getModuleModel()) {
             throw new \Exception('Module model not found.');
@@ -575,6 +573,4 @@ class BookingTable
 
         return $moduleModelAdapter->findByPk($this->sessionBag->get('moduleModelId'));
     }
-
-
 }
