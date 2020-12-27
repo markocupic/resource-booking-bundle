@@ -91,10 +91,10 @@ class resourceBookingApp {
                 }, 15000);
 
                 // Initialize idle detector
-                // Idle after 5 min
-                let idleAfter = 300000;
+                // Idle after 5 min (30000 ms)
+                let idleAfter = 30000;
                 window.setTimeout(function () {
-                    self.initializeIdleDetector(idleAfter);
+                    self.initializeIdleDetector(document, idleAfter);
                 }, 10000);
 
                 document.addEventListener('keyup', function (evt) {
@@ -471,7 +471,7 @@ class resourceBookingApp {
 
                 /**
                  * Check json response
-                 * @param status
+                 * @param res
                  */
                 checkResponse: function checkResponse(res) {
                     this.lastResponseStatus = res.status;
@@ -485,7 +485,7 @@ class resourceBookingApp {
                 /**
                  * Initialize idle detector
                  */
-                initializeIdleDetector: function initializeIdleDetector(idleAfter) {
+                initializeIdleDetectorOld: function initializeIdleDetectorOld(idleAfter) {
                     let self = this;
                     $(document).idle({
                         onIdle: function onIdle() {
@@ -497,8 +497,43 @@ class resourceBookingApp {
                         },
                         idle: idleAfter,
                     });
-                }
+                },
 
+                /**
+                 * Initialize idle detector
+                 * @param el
+                 * @param idleTimeout
+                 */
+                initializeIdleDetector: function initializeIdleDetector(el, idleTimeout) {
+                    let self = this;
+                    let idleSecondsCounter = idleTimeout;
+                    let listenerType = ['keydown', 'mousemove', 'mousedown', 'touchstart'];
+
+                    listenerType.forEach(type => {
+
+                        el.addEventListener(type, function () {
+                            if (self.isIdle) {
+                                // On active again
+                                self.isIdle = false;
+                                self.fetchDataRequest();
+                            }
+
+                            idleSecondsCounter = idleTimeout;
+                        }, false);
+                    });
+
+                    window.setInterval(function () {
+                        if (self.isIdle) {
+                            return;
+                        }
+
+                        idleSecondsCounter -= 1000;
+                        if (idleSecondsCounter <= 0) {
+                            // On idle
+                            self.isIdle = true;
+                        }
+                    }, 1000);
+                }
             }
         });
     }
