@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\Booking;
 
 use Contao\Config;
+use Contao\Controller;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Database;
 use Contao\Date;
@@ -167,11 +168,9 @@ class Booking
         /** @var ResourceBookingTimeSlotModel $resourceBookingTimeSlotModelAdapter */
         $resourceBookingTimeSlotModelAdapter = $this->framework->getAdapter(ResourceBookingTimeSlotModel::class);
 
-        /** @var System $systemAdapter */
-        $systemAdapter = $this->framework->getAdapter(System::class);
-
-        // Load language file
-        $systemAdapter->loadLanguageFile('default', $this->sessionBag->get('language'));
+       
+        /** @var Controller $controllerAdapter */
+        $controllerAdapter = $this->framework->getAdapter(Controller::class);
 
         $arrBookings = [];
 
@@ -196,7 +195,6 @@ class Booking
                 'mondayTimestampSelectedWeek' => (int) $arrTimeSlot[3],
                 'pid' => $inputAdapter->post('resourceId'),
                 'bookingUuid' => '',
-                'description' => $inputAdapter->post('description'),
                 'member' => $this->user->getLoggedInUser()->id,
                 'tstamp' => time(),
                 'resourceIsAlreadyBooked' => true,
@@ -207,10 +205,14 @@ class Booking
                 'holder' => '',
             ];
 
+            // Load dca
+            $controllerAdapter->loadDataContainer('tl_resource_booking');
+            $arrDca = $GLOBALS['TL_DCA']['tl_resource_booking'];
+
             // Get data from POST, thus the extension can easily be extended
             foreach (array_keys($_POST) as $k) {
                 if (!isset($arrData[$k])) {
-                    $arrData[$k] = $inputAdapter->post($k);
+                    $arrData[$k] = true === $arrDca['fields'][$k]['eval']['decodeEntities'] ? $stringUtilAdapter->decodeEntities($inputAdapter->post('description')) : $inputAdapter->post($k);
                 }
             }
 

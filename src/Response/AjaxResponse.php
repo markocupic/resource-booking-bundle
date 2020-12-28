@@ -25,6 +25,11 @@ class AjaxResponse
     /**
      * @var string
      */
+    public const STATUS_INFO = 'info';
+
+    /**
+     * @var string
+     */
     public const STATUS_ERROR = 'error';
 
     /**
@@ -39,12 +44,13 @@ class AjaxResponse
     {
         $this->arrData = [
             'status' => null,
-            'message' => [
-                'error' => null,
-                'success' => null,
-                'info' => null,
+            'data' => [
+                'messages' => [
+                    static::STATUS_ERROR   => null,
+                    static::STATUS_SUCCESS => null,
+                    static::STATUS_INFO    => null,
+                ]
             ],
-            'data' => [],
         ];
     }
 
@@ -58,8 +64,8 @@ class AjaxResponse
      */
     public function setStatus(string $strStatus): void
     {
-        if ($strStatus !== static::STATUS_SUCCESS && $strStatus !== static::STATUS_ERROR) {
-            throw new \Exception(sprintf('Status must be either %s or %s and can not be "%s"', static::STATUS_SUCCESS, static::STATUS_ERROR, $strStatus));
+        if ($strStatus !== static::STATUS_SUCCESS && $strStatus !== static::STATUS_INFO && $strStatus !== static::STATUS_ERROR) {
+            throw new \Exception(sprintf('Status must be either %s, %s or %s and can not be "%s"', static::STATUS_SUCCESS, static::STATUS_INFO, static::STATUS_ERROR, $strStatus));
         }
         $this->arrData['status'] = $strStatus;
     }
@@ -71,32 +77,32 @@ class AjaxResponse
 
     public function setSuccessMessage(string $strMessage): void
     {
-        $this->arrData['message']['success'] = $strMessage;
+        $this->arrData['data']['messages'][static::STATUS_SUCCESS] = $strMessage;
     }
 
     public function getSuccessMessage(): ?string
     {
-        return $this->arrData['message']['success'];
+        return $this->arrData['data']['messages'][static::STATUS_SUCCESS];
     }
 
     public function setInfoMessage(string $strMessage): void
     {
-        $this->arrData['message']['info'] = $strMessage;
+        $this->arrData['data']['messages'][static::STATUS_INFO] = $strMessage;
     }
 
     public function getInfoMessage(): ?string
     {
-        return $this->arrData['message']['info'];
+        return $this->arrData['data']['messages'][static::STATUS_INFO];
     }
 
     public function setErrorMessage(string $strMessage): void
     {
-        $this->arrData['message']['error'] = $strMessage;
+        $this->arrData['data']['messages'][static::STATUS_ERROR] = $strMessage;
     }
 
     public function getErrorMessage(): ?string
     {
-        return $this->arrData['message']['error'];
+        return $this->arrData['data']['messages'][static::STATUS_ERROR];
     }
 
     /**

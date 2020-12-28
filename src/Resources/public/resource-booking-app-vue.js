@@ -264,12 +264,12 @@ class resourceBookingApp {
                         })
                         .then(function (response) {
                             if (response.status === 'success') {
-                                self.bookingWindow.message.success = response.message.success;
+                                self.bookingWindow.messages = response.data.messages;
                                 window.setTimeout(function () {
                                     self.mode = 'main-window';
                                 }, 2500);
                             } else {
-                                self.bookingWindow.message.error = response.message.error;
+                                self.bookingWindow.messages = response.data.messages;
                             }
                             // Always
                             self.bookingWindow.showConfirmationMsg = true;
@@ -358,12 +358,12 @@ class resourceBookingApp {
                     })
                     .then(function (response) {
                         if (response.status === 'success') {
-                            self.bookingWindow.message.success = response.message.success;
+                            self.bookingWindow.messages = response.data.messages;
                             window.setTimeout(function () {
                                 self.mode = 'main-window';
                             }, 2500);
                         } else {
-                            self.bookingWindow.message.error = response.message.error;
+                            self.bookingWindow.messages = response.data.messages;
                         }
                         // Always
                         self.bookingWindow.deleteBookingsWithSameBookingUuid = false;
@@ -420,7 +420,7 @@ class resourceBookingApp {
                     self.bookingWindow.action = action;
                     self.bookingWindow.showConfirmationMsg = false;
                     self.bookingWindow.activeTimeSlot = objActiveTimeSlot;
-                    self.bookingWindow.message = {
+                    self.bookingWindow.messages = {
                         success: null,
                         error: null,
                     };

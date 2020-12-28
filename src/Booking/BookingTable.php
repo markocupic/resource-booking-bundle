@@ -20,7 +20,6 @@ use Contao\Message;
 use Contao\ModuleModel;
 use Contao\StringUtil;
 use Contao\System;
-use Contao\Validator;
 use Markocupic\ResourceBookingBundle\Helper\DateHelper;
 use Markocupic\ResourceBookingBundle\Helper\UtcTimeHelper;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
@@ -116,9 +115,6 @@ class BookingTable
         /** @var UtcTimeHelper $stringUtilAdapter */
         $utcTimeHelperAdapter = $this->framework->getAdapter(UtcTimeHelper::class);
 
-        /** @var Validator $validatorAdapter */
-        $validatorAdapter = $this->framework->getAdapter(Validator::class);
-
         /** @var ResourceBookingModel $resourceBookingModelAdapter */
         $resourceBookingModelAdapter = $this->framework->getAdapter(ResourceBookingModel::class);
 
@@ -138,23 +134,6 @@ class BookingTable
 
         // Load language file
         $systemAdapter->loadLanguageFile('default', $this->sessionBag->get('language'));
-
-        // Get module data
-        $arrData['opt'] = $this->getModuleModel()->row();
-
-        // Convert binary uuids to string uuids
-        $arrData['opt'] = array_map(
-            static function ($v) use ($stringUtilAdapter, $validatorAdapter) {
-                if (!empty($v)) {
-                    if (!\is_array($v) && $validatorAdapter->isBinaryUuid((string) $v)) {
-                        $v = $stringUtilAdapter->binToUuid($v);
-                    }
-                }
-
-                return $v;
-            },
-            $arrData['opt']
-        );
 
         // Messages
         if (null === $this->getActiveResourceType() && !$messageAdapter->hasMessages()) {
