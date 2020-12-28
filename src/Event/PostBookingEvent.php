@@ -39,7 +39,6 @@ class PostBookingEvent extends Event
 
     /**
      * PostBookingEvent constructor.
-     * @param \stdClass $event
      */
     public function __construct(\stdClass $event)
     {

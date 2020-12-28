@@ -16,7 +16,6 @@ use Contao\Config;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Database;
 use Contao\Date;
-use Contao\FrontendUser;
 use Contao\Input;
 use Contao\MemberModel;
 use Contao\Model\Collection;
@@ -98,12 +97,10 @@ class Booking
      */
     private $security;
 
-
-
     /**
      * Booking constructor.
      */
-    public function __construct(ContaoFramework $framework, SessionInterface $session, RequestStack $requestStack, LoggedInFrontendUser $user,string $bagName, Security $security)
+    public function __construct(ContaoFramework $framework, SessionInterface $session, RequestStack $requestStack, LoggedInFrontendUser $user, string $bagName, Security $security)
     {
         $this->framework = $framework;
         $this->session = $session;
@@ -209,6 +206,14 @@ class Booking
                 'newInsert' => false,
                 'holder' => '',
             ];
+
+            // Get data from POST, thus the extension can easily be extended
+            foreach (array_keys($_POST) as $k) {
+                if (!isset($arrData[$k])) {
+                    $arrData[$k] = $inputAdapter->post($k);
+                }
+            }
+
             $arrBookings[] = $arrData;
 
             // Handle repetitions
@@ -389,7 +394,7 @@ class Booking
         if (null === $this->user->getLoggedInUser()) {
             throw new \Exception('No logged in user found.');
         }
-        
+
         // Set module model
         $this->moduleModel = $moduleModelAdapter->findByPk($this->sessionBag->get('moduleModelId'));
 

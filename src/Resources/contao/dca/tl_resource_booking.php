@@ -83,9 +83,9 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = array(
 			'sql'        => "int(10) unsigned NOT NULL default '0'",
 		),
 		'tstamp'      => array(
-            'sorting'   => true,
-            'flag'      => 6,
-            'sql' => "int(10) unsigned NOT NULL default '0'"
+			'sorting'   => true,
+			'flag'      => 6,
+			'sql' => "int(10) unsigned NOT NULL default '0'"
 		),
 		'timeSlotId'  => array(
 			'sql' => "int(10) unsigned NOT NULL default '0'",

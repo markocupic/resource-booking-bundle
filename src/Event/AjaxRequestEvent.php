@@ -45,9 +45,6 @@ class AjaxRequestEvent extends Event
         return $this->ajaxResponse;
     }
 
-    /**
-     * @return Request
-     */
     public function getRequest(): Request
     {
         return $this->request;

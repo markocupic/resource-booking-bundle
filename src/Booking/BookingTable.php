@@ -354,7 +354,17 @@ class BookingTable
                                     }
                                 }
 
-                                $objTs->bookingDescription = $stringUtilAdapter->decodeEntities($objBooking->description);
+                                // Send sensitive data if it has been permitted in tl_module
+                                if ($this->getModuleModel()->resourceBooking_setBookingSubmittedFields) {
+                                    $arrFields = $stringUtilAdapter->deserialize($this->getModuleModel()->resourceBooking_bookingSubmittedFields, true);
+
+                                    foreach ($arrFields as $fieldname) {
+                                        if (\in_array($fieldname, $arrFields, true)) {
+                                            $objTs->{'booking'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($objBooking->$fieldname);
+                                        }
+                                    }
+                                }
+
                                 $objTs->bookingId = $objBooking->id;
                                 $objTs->bookingUuid = $objBooking->bookingUuid;
                             }

@@ -8,13 +8,25 @@
 "use strict";
 
 class resourceBookingApp {
-    constructor(vueElement, params) {
+    constructor(vueElement, options) {
         new Vue({
             el: vueElement,
             data: {
 
                 // Module options
-                opt: [],
+                options: {
+                    requestToken: '',
+                    moduleKey: '',
+                    // Callback functions
+                    callbacks:{
+                        // Callback function to be executed before booking request is fired
+                        onBeforeBookingRequest: function (objFormData) {
+                            return true;
+                        },
+                        // Callback function to be executed after booking request was fired
+                        onAfterBookingRequest: function () {},
+                    }
+                },
                 // indicates if application is initialized, switches to true, when fetchData request was fired first time
                 // and the request status is 200
                 isReady: false,
@@ -28,10 +40,6 @@ class resourceBookingApp {
                 userIsLoggedIn: false,
                 // Contains the logged in user data
                 loggedInUser: [],
-                // The request token
-                requestToken: '',
-                // The module key
-                moduleKey: '',
                 // Contains the weekdays
                 weekdays: [],
                 // Contains the time slots (first col in the booking table)
@@ -59,7 +67,6 @@ class resourceBookingApp {
                 isIdle: false,
                 // Do not run fetchDataRequest() if there is a pending request
                 isBusy: false,
-
             },
 
             created: function created() {
@@ -72,11 +79,8 @@ class resourceBookingApp {
                     alert('This plugin is not compatible with your browser. Please use a current browser (like Opera, Firefox, Safari or Google Chrome), that is not out of date.')
                 }
 
-                // Post requests require a request token
-                self.requestToken = params.requestToken;
-
-                // Post requests require moduleKey
-                self.moduleKey = params.moduleKey;
+                // Override defaults
+                self.options = {...self.options, ...options}
 
                 // Show the loading spinner for 2s
                 window.setTimeout(function () {
@@ -133,9 +137,9 @@ class resourceBookingApp {
                     self.isBusy = true;
 
                     let data = new FormData();
-                    data.append('REQUEST_TOKEN', self.requestToken);
+                    data.append('REQUEST_TOKEN', self.options.requestToken);
                     data.append('action', action);
-                    data.append('moduleKey', self.moduleKey);
+                    data.append('moduleKey', self.options.moduleKey);
 
                     // Fetch
                     fetch(window.location.href, {
@@ -180,12 +184,12 @@ class resourceBookingApp {
                     self.toggleBackdrop(true);
 
                     let data = new FormData();
-                    data.append('REQUEST_TOKEN', self.requestToken);
+                    data.append('REQUEST_TOKEN', self.options.requestToken);
                     data.append('action', action);
                     data.append('resType', activeResourceTypeId);
                     data.append('res', activeResourceId);
                     data.append('date', activeWeekTstamp);
-                    data.append('moduleKey', self.moduleKey);
+                    data.append('moduleKey', self.options.moduleKey);
 
                     fetch(window.location.href, {
                         method: "POST",
@@ -224,50 +228,64 @@ class resourceBookingApp {
                     let self = this;
                     let action = 'bookingRequest';
 
-                    let data = new FormData();
-                    data.append('REQUEST_TOKEN', self.requestToken);
+                    let form = self.$el.querySelector('.booking-window form');
+                    if(!form)
+                    {
+                        console.error('Form not found');
+                    }
+
+                    let data = new FormData(form);
+                    data.append('REQUEST_TOKEN', self.options.requestToken);
                     data.append('action', action);
                     data.append('resourceId', self.bookingWindow.activeTimeSlot.resourceId);
                     data.append('description', self.$el.querySelectorAll('.booking-window [name="bookingDescription"]')[0].value);
                     data.append('bookingRepeatStopWeekTstamp', self.$el.querySelectorAll('.booking-repeat-stop-week-tstamp')[0].value);
-                    data.append('moduleKey', self.moduleKey);
+                    data.append('moduleKey', self.options.moduleKey);
 
                     let i;
                     for (i = 0; i < self.bookingWindow.selectedTimeSlots.length; i++) {
                         data.append('bookingDateSelection[]', self.bookingWindow.selectedTimeSlots[i]);
                     }
 
-                    fetch(window.location.href,
-                        {
-                            method: "POST",
-                            body: data,
-                            headers: {
-                                'x-requested-with': 'XMLHttpRequest'
-                            },
+                    // Call onBeforeBookingRequest callback
+                    if(self.options.callbacks.onBeforeBookingRequest.call(self, data) === true)
+                    {
+                        fetch(window.location.href,
+                            {
+                                method: "POST",
+                                body: data,
+                                headers: {
+                                    'x-requested-with': 'XMLHttpRequest'
+                                },
+                            })
+                        .then(function (res) {
+                            self.checkResponse(res);
+                            return res.json();
                         })
-                    .then(function (res) {
-                        self.checkResponse(res);
-                        return res.json();
-                    })
-                    .then(function (response) {
-                        if (response.status === 'success') {
-                            self.bookingWindow.message.success = response.message.success;
-                            window.setTimeout(function () {
-                                self.mode = 'main-window';
-                            }, 2500);
-                        } else {
-                            self.bookingWindow.message.error = response.message.error;
-                        }
-                        // Always
-                        self.bookingWindow.showConfirmationMsg = true;
-                        self.fetchDataRequest();
-                    })
-                    .catch(function (response) {
-                        self.isReady = false;
-                        // Always
-                        self.bookingWindow.showConfirmationMsg = true;
-                        self.fetchDataRequest();
-                    });
+                        .then(function (response) {
+                            if (response.status === 'success') {
+                                self.bookingWindow.message.success = response.message.success;
+                                window.setTimeout(function () {
+                                    self.mode = 'main-window';
+                                }, 2500);
+                            } else {
+                                self.bookingWindow.message.error = response.message.error;
+                            }
+                            // Always
+                            self.bookingWindow.showConfirmationMsg = true;
+                            self.fetchDataRequest();
+                        })
+                        .then(function (response) {
+                            // Call onAfterBookingRequest callback
+                            self.options.callbacks.onAfterBookingRequest.call(self, data);
+                        })
+                        .catch(function (response) {
+                            self.isReady = false;
+                            // Always
+                            self.bookingWindow.showConfirmationMsg = true;
+                            self.fetchDataRequest();
+                        });
+                    }
                 },
 
                 /**
@@ -278,11 +296,11 @@ class resourceBookingApp {
                     let action = 'bookingFormValidationRequest';
 
                     let data = new FormData();
-                    data.append('REQUEST_TOKEN', self.requestToken);
+                    data.append('REQUEST_TOKEN', self.options.requestToken);
                     data.append('action', action);
                     data.append('resourceId', self.bookingWindow.activeTimeSlot.resourceId);
                     data.append('bookingRepeatStopWeekTstamp', self.$el.querySelectorAll('.booking-repeat-stop-week-tstamp')[0].value);
-                    data.append('moduleKey', self.moduleKey);
+                    data.append('moduleKey', self.options.moduleKey);
 
                     let i;
                     for (i = 0; i < self.bookingWindow.selectedTimeSlots.length; i++) {
@@ -321,11 +339,11 @@ class resourceBookingApp {
                     let action = 'cancelBookingRequest';
 
                     let data = new FormData();
-                    data.append('REQUEST_TOKEN', self.requestToken);
+                    data.append('REQUEST_TOKEN', self.options.requestToken);
                     data.append('action', action);
                     data.append('bookingId', self.bookingWindow.activeTimeSlot.bookingId);
                     data.append('deleteBookingsWithSameBookingUuid', self.bookingWindow.deleteBookingsWithSameBookingUuid);
-                    data.append('moduleKey', self.moduleKey);
+                    data.append('moduleKey', self.options.moduleKey);
 
                     fetch(window.location.href, {
                         method: "POST",
@@ -426,7 +444,7 @@ class resourceBookingApp {
 
                         let weekRepeatOptions = self.$el.querySelectorAll('.booking-window .booking-repeat-stop-week-tstamp option');
                         if (weekRepeatOptions.length > 0) {
-                            weekRepeatOptions.forEach(option => option.removeAttribute('selected'));
+                            weekRepeatOptions.forEach(elOption => elOption.removeAttribute('selected'));
                         }
                     }, 20);
 

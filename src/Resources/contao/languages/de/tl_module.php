@@ -17,5 +17,7 @@ $GLOBALS['TL_LANG']['tl_module']['resourceBooking_addDateStop'] = ['Buchungsstop
 $GLOBALS['TL_LANG']['tl_module']['resourceBooking_dateStop'] = ['Buchungsstop-Datum wählen', 'Wählen Sie ein Datum aus, bis wann Buchungen möglich sind.'];
 $GLOBALS['TL_LANG']['tl_module']['resourceBooking_displayClientPersonalData'] = ['Personaldaten der Gäste in der Tabelle anzeigen', 'Personaldaten der Gäste in der Tabelle anzeigen.'];
 $GLOBALS['TL_LANG']['tl_module']['resourceBooking_clientPersonalData'] = ['Felder auswählen', 'Felder auswählen.'];
+$GLOBALS['TL_LANG']['tl_module']['resourceBooking_setBookingSubmittedFields'] = ['Buchungsdetails in der Tabelle anzeigen', 'Buchungsdetails in der Tabelle anzeigen.'];
+$GLOBALS['TL_LANG']['tl_module']['resourceBooking_bookingSubmittedFields'] = ['Felder auswählen', 'Felder auswählen.'];
 
 

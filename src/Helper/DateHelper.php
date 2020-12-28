@@ -16,8 +16,7 @@ use Contao\Config;
 use Contao\Date;
 
 /**
- * Class DateHelper
- * @package Markocupic\ResourceBookingBundle\Helper
+ * Class DateHelper.
  */
 class DateHelper
 {

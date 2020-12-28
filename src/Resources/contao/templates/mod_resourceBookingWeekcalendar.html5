@@ -286,6 +286,15 @@
         new resourceBookingApp('#resourceBookingApp_<?= $this->moduleKey ?>', {
             'requestToken': '{{REQUEST_TOKEN}}',
             'moduleKey': '<?= $this->moduleKey ?>',
+            'callbacks': {
+                // Callback function to be executed before a booking request is fired
+                onBeforeBookingRequest: function (objFormData) {
+                    // return false will prevent submitting
+                    return true;
+                },
+                // Callback function to be executed after a booking request was fired
+                onAfterBookingRequest: function () {},
+            }
         });
     });
 </script>

@@ -15,19 +15,19 @@ use Contao\System;
 /**
  * Add palettes to tl_module
  */
-$GLOBALS['TL_DCA']['tl_module']['palettes']['resourceBookingWeekcalendar'] = '{title_legend},name,headline,type;{config_legend},resourceBooking_resourceTypes,resourceBooking_hideDays,resourceBooking_intAheadWeek,resourceBooking_addDateStop,resourceBooking_displayClientPersonalData;{template_legend:hide},customTpl;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['resourceBookingWeekcalendar'] = '{title_legend},name,headline,type;{config_legend},resourceBooking_resourceTypes,resourceBooking_hideDays,resourceBooking_intAheadWeek,resourceBooking_addDateStop,resourceBooking_displayClientPersonalData,resourceBooking_setBookingSubmittedFields;{template_legend:hide},customTpl;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 $GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'resourceBooking_hideDays';
 $GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'resourceBooking_addDateStop';
 $GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'resourceBooking_displayClientPersonalData';
-
-// Subpalettes
-$GLOBALS['TL_DCA']['tl_module']['subpalettes']['resourceBooking_addDateStop'] = 'resourceBooking_dateStop';
-$GLOBALS['TL_DCA']['tl_module']['subpalettes']['resourceBooking_displayClientPersonalData'] = 'resourceBooking_clientPersonalData';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'resourceBooking_setBookingSubmittedFields';
 
 /**
  * Add subpalettes to tl_module
  */
 $GLOBALS['TL_DCA']['tl_module']['subpalettes']['resourceBooking_hideDays'] = 'resourceBooking_hideDaysSelection';
+$GLOBALS['TL_DCA']['tl_module']['subpalettes']['resourceBooking_addDateStop'] = 'resourceBooking_dateStop';
+$GLOBALS['TL_DCA']['tl_module']['subpalettes']['resourceBooking_displayClientPersonalData'] = 'resourceBooking_clientPersonalData';
+$GLOBALS['TL_DCA']['tl_module']['subpalettes']['resourceBooking_setBookingSubmittedFields'] = 'resourceBooking_bookingSubmittedFields';
 
 /**
  * Add fields to tl_module
@@ -111,6 +111,24 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_clientPersonalData'] 
 	'sql'              => "varchar(1024) NOT NULL default 'a:2:{i:0;s:9:\"firstname\";i:1;s:8:\"lastname\";}'"
 );
 
+$GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_setBookingSubmittedFields'] = array(
+	'label'     => &$GLOBALS['TL_LANG']['tl_module']['resourceBooking_setBookingSubmittedFields'],
+	'exclude'   => true,
+	'inputType' => 'checkbox',
+	'eval'      => array('submitOnChange' => true, 'tl_class' => 'clr'),
+	'sql'       => "char(1) NOT NULL default '1'"
+);
+
+$GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_bookingSubmittedFields'] = array(
+	'label'            => &$GLOBALS['TL_LANG']['tl_module']['resourceBooking_bookingSubmittedFields'],
+	'exclude'          => true,
+	'reference'        => &$GLOBALS['TL_LANG']['tl_resource_booking'],
+	'inputType'        => 'select',
+	'options_callback' => array('tl_module_resource_booking', 'getTlResourceBookingFields'),
+	'eval'             => array('mandatory' => true, 'chosen' => true, 'multiple' => true, 'tl_class' => 'clr'),
+	'sql'              => "varchar(1024) NOT NULL default 'a:2:{i:0;s:5:\"title\";i:1;s:11:\"description\";}'"
+);
+
 /**
  * Class tl_module_resource_booking
  */
@@ -172,5 +190,17 @@ class tl_module_resource_booking extends Backend
 		unset($arrOpt['id'], $arrOpt['password']);
 
 		return $arrOpt;
+	}
+
+	/**
+	 * Options callback
+	 * @return array
+	 */
+	public function getTlResourceBookingFields(): array
+	{
+		$arrFieldnames = Database::getInstance()->getFieldNames('tl_resource_booking');
+		System::loadLanguageFile('tl_resource_booking');
+
+		return $arrFieldnames;
 	}
 }
