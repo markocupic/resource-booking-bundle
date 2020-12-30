@@ -25,12 +25,22 @@ class AjaxResponse
     /**
      * @var string
      */
-    public const STATUS_INFO = 'info';
+    public const STATUS_ERROR = 'error';
 
     /**
      * @var string
      */
-    public const STATUS_ERROR = 'error';
+    public const MESSAGE_CONFIRMATION = 'confirmation';
+
+    /**
+     * @var string
+     */
+    public const MESSAGE_INFO = 'info';
+
+    /**
+     * @var string
+     */
+    public const MESSAGE_ERROR = 'error';
 
     /**
      * @var array
@@ -46,10 +56,10 @@ class AjaxResponse
             'status' => null,
             'data' => [
                 'messages' => [
-                    static::STATUS_ERROR   => null,
-                    static::STATUS_SUCCESS => null,
-                    static::STATUS_INFO    => null,
-                ]
+                    static::MESSAGE_ERROR => null,
+                    static::MESSAGE_CONFIRMATION => null,
+                    static::MESSAGE_INFO => null,
+                ],
             ],
         ];
     }
@@ -64,8 +74,8 @@ class AjaxResponse
      */
     public function setStatus(string $strStatus): void
     {
-        if ($strStatus !== static::STATUS_SUCCESS && $strStatus !== static::STATUS_INFO && $strStatus !== static::STATUS_ERROR) {
-            throw new \Exception(sprintf('Status must be either %s, %s or %s and can not be "%s"', static::STATUS_SUCCESS, static::STATUS_INFO, static::STATUS_ERROR, $strStatus));
+        if ($strStatus !== static::STATUS_ERROR && $strStatus !== static::STATUS_SUCCESS) {
+            throw new \Exception(sprintf('Status must be either %s or %s and can not be "%s"', static::STATUS_ERROR, static::STATUS_SUCCESS, $strStatus));
         }
         $this->arrData['status'] = $strStatus;
     }
@@ -75,34 +85,34 @@ class AjaxResponse
         return $this->arrData['status'];
     }
 
-    public function setSuccessMessage(string $strMessage): void
+    public function setConfirmationMessage(string $strMessage): void
     {
-        $this->arrData['data']['messages'][static::STATUS_SUCCESS] = $strMessage;
+        $this->arrData['data']['messages'][static::MESSAGE_CONFIRMATION] = $strMessage;
     }
 
-    public function getSuccessMessage(): ?string
+    public function getConfirmationMessage(): ?string
     {
-        return $this->arrData['data']['messages'][static::STATUS_SUCCESS];
+        return $this->arrData['data']['messages'][static::MESSAGE_CONFIRMATION];
     }
 
     public function setInfoMessage(string $strMessage): void
     {
-        $this->arrData['data']['messages'][static::STATUS_INFO] = $strMessage;
+        $this->arrData['data']['messages'][static::MESSAGE_INFO] = $strMessage;
     }
 
     public function getInfoMessage(): ?string
     {
-        return $this->arrData['data']['messages'][static::STATUS_INFO];
+        return $this->arrData['data']['messages'][static::MESSAGE_INFO];
     }
 
     public function setErrorMessage(string $strMessage): void
     {
-        $this->arrData['data']['messages'][static::STATUS_ERROR] = $strMessage;
+        $this->arrData['data']['messages'][static::MESSAGE_ERROR] = $strMessage;
     }
 
     public function getErrorMessage(): ?string
     {
-        return $this->arrData['data']['messages'][static::STATUS_ERROR];
+        return $this->arrData['data']['messages'][static::MESSAGE_ERROR];
     }
 
     /**
@@ -114,9 +124,10 @@ class AjaxResponse
     }
 
     /**
-     * @return mixed|null
+     * @param string $key
+     * @return array|null
      */
-    public function getData(string $key)
+    public function getData(string $key): ?array
     {
         if (isset($this->arrData['data'][$key])) {
             return $this->arrData['data'][$key];

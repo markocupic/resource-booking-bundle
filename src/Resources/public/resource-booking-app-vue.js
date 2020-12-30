@@ -17,15 +17,20 @@ class resourceBookingApp {
                 options: {
                     requestToken: '',
                     moduleKey: '',
+                    audio: {
+                        notifyOnNewBookingsAudio: 'bundles/markocupicresourcebooking/audio/bell.mp3'
+                    },
+                    enableAudio: true,
                     // Callback functions
-                    callbacks:{
+                    callbacks: {
                         // Callback function to be executed before booking request is fired
                         onBeforeBookingRequest: function (objFormData) {
                             return true;
                         },
                         // Callback function to be executed after booking request was fired
-                        onAfterBookingRequest: function () {},
-                    }
+                        onAfterBookingRequest: function () {
+                        },
+                    },
                 },
                 // indicates if application is initialized, switches to true, when fetchData request was fired first time
                 // and the request status is 200
@@ -79,6 +84,7 @@ class resourceBookingApp {
                     alert('This plugin is not compatible with your browser. Please use a current browser (like Opera, Firefox, Safari or Google Chrome), that is not out of date.')
                 }
 
+
                 // Override defaults
                 self.options = {...self.options, ...options}
 
@@ -95,8 +101,8 @@ class resourceBookingApp {
                 }, 15000);
 
                 // Initialize idle detector
-                // Idle after 5 min (30000 ms)
-                let idleAfter = 30000;
+                // Idle after 5 min (300000 ms)
+                let idleAfter = 300000;
                 window.setTimeout(function () {
                     self.initializeIdleDetector(document, idleAfter);
                 }, 10000);
@@ -122,6 +128,40 @@ class resourceBookingApp {
                 },
                 activeWeekTstamp: function activeWeekTstamp(newObj, oldObj) {
                     this.applyFilterRequest(this.activeResourceTypeId, this.activeResourceId, newObj);
+                },
+                rows: function (newObj, oldObj) {
+                    let self = this;
+
+                    if (newObj.length === 0) {
+                        return;
+                    }
+
+                    if (oldObj.length === 0) {
+                        return;
+                    }
+
+                    let newBooking = false;
+                    let i = 0;
+
+                    for (let row in newObj) {
+                        let ii = 0;
+                        for (let cell in newObj[i]['cellData']) {
+                            if (newObj[i]['cellData'][ii]['isBooked'] === true && oldObj[i]['cellData'][ii]['isBooked'] === false) {
+                                if (newObj[i]['cellData'][ii]['mondayTimestampSelectedWeek'] === oldObj[i]['cellData'][ii]['mondayTimestampSelectedWeek']) {
+                                    if (newObj[i]['cellData'][ii]['resourceId'] === oldObj[i]['cellData'][ii]['resourceId']) {
+                                        newBooking = true;
+                                    }
+                                }
+                            }
+                            ii++;
+                        }
+                        i++;
+                    }
+                    if (newBooking === true) {
+                        if (self.options.enableAudio) {
+                            self.ringTheBell();
+                        }
+                    }
                 }
             },
 
@@ -164,7 +204,6 @@ class resourceBookingApp {
                     .then(function (response) {
                         self.isReady = true;
                         self.isBusy = false;
-
                     })
                     .catch(function (error) {
                         self.isReady = false;
@@ -229,8 +268,7 @@ class resourceBookingApp {
                     let action = 'bookingRequest';
 
                     let form = self.$el.querySelector('.booking-window form');
-                    if(!form)
-                    {
+                    if (!form) {
                         console.error('Form not found');
                     }
 
@@ -248,8 +286,7 @@ class resourceBookingApp {
                     }
 
                     // Call onBeforeBookingRequest callback
-                    if(self.options.callbacks.onBeforeBookingRequest.call(self, data) === true)
-                    {
+                    if (self.options.callbacks.onBeforeBookingRequest.call(self, data) === true) {
                         fetch(window.location.href,
                             {
                                 method: "POST",
@@ -421,7 +458,8 @@ class resourceBookingApp {
                     self.bookingWindow.showConfirmationMsg = false;
                     self.bookingWindow.activeTimeSlot = objActiveTimeSlot;
                     self.bookingWindow.messages = {
-                        success: null,
+                        confirmation: null,
+                        info: null,
                         error: null,
                     };
                     self.bookingWindow.selectedTimeSlots.push(objActiveTimeSlot.bookingCheckboxValue);
@@ -551,6 +589,18 @@ class resourceBookingApp {
                             self.isIdle = true;
                         }
                     }, 1000);
+                },
+                /**
+                 * Ring the bell
+                 */
+                ringTheBell: function ringTheBell() {
+                    let self = this;
+                    let audio = new Audio(self.options.audio.notifyOnNewBookingsAudio);
+                    audio.setAttribute('id', 'rbbBellRingtone');
+                    if (document.querySelector('body audio') === null) {
+                        document.querySelector('body').appendChild(audio);
+                    }
+                    audio.play();
                 }
             }
         });
