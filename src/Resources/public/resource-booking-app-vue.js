@@ -23,11 +23,11 @@ class resourceBookingApp {
                     // Callback functions
                     callbacks: {
                         // Callback function to be executed before booking request is fired
-                        onBeforeBookingRequest: function (objFormData) {
+                        onBeforeBookingRequest: objFormData => {
                             return true;
                         },
                         // Callback function to be executed after booking request was fired
-                        onAfterBookingRequest: function () {
+                        onAfterBookingRequest: () => {
                         },
                     },
                 },
@@ -87,12 +87,12 @@ class resourceBookingApp {
                 self.options = {...self.options, ...options}
 
                 // Show the loading spinner for 2s
-                window.setTimeout(function () {
+                window.setTimeout(() => {
                     self.fetchDataRequest();
                 }, 2000);
 
                 // Fetch data from server each 15s
-                self.intervals.fetchDataRequest = window.setInterval(function () {
+                self.intervals.fetchDataRequest = window.setInterval(() => {
                     if (!self.isIdle && !self.isBusy) {
                         self.fetchDataRequest();
                     }
@@ -101,11 +101,11 @@ class resourceBookingApp {
                 // Initialize idle detector
                 // Idle after 5 min (300000 ms)
                 let idleAfter = 300000;
-                window.setTimeout(function () {
+                window.setTimeout(() => {
                     self.initializeIdleDetector(document, idleAfter);
                 }, 10000);
 
-                document.addEventListener('keyup', function (evt) {
+                document.addEventListener('keyup', evt => {
                     if (evt.keyCode === 27 && self.mode === 'booking-window') {
                         self.hideBookingWindow();
                     }
@@ -180,11 +180,11 @@ class resourceBookingApp {
                             'x-requested-with': 'XMLHttpRequest'
                         },
                     })
-                    .then(function (res) {
+                    .then(res => {
                         self.checkResponse(res);
                         return res.json();
                     })
-                    .then(function (response) {
+                    .then(response => {
                         if (response.status === 'success') {
                             for (let key in response['data']) {
                                 self[key] = response['data'][key];
@@ -192,11 +192,11 @@ class resourceBookingApp {
                         }
                         return response;
                     })
-                    .then(function (response) {
+                    .then(response => {
                         self.isReady = true;
                         self.isBusy = false;
                     })
-                    .catch(function (error) {
+                    .catch(error => {
                         self.isReady = false;
                         self.isBusy = false;
                     });
@@ -228,11 +228,11 @@ class resourceBookingApp {
                             'x-requested-with': 'XMLHttpRequest'
                         },
                     })
-                    .then(function (res) {
+                    .then(res => {
                         self.checkResponse(res);
                         return res.json();
                     })
-                    .then(function (response) {
+                    .then(response => {
                         if (response.status === 'success') {
                             Object.keys(response.data).forEach(key => {
                                 self[key] = response.data[key];
@@ -240,11 +240,11 @@ class resourceBookingApp {
                         }
                         return response;
                     })
-                    .then(function (response) {
+                    .then(response => {
                         self.toggleBackdrop(false);
                         self.isBusy = false;
                     })
-                    .catch(function (response) {
+                    .catch(response => {
                         self.toggleBackdrop(false);
                         self.isBusy = false;
                     });
@@ -285,14 +285,14 @@ class resourceBookingApp {
                                     'x-requested-with': 'XMLHttpRequest'
                                 },
                             })
-                        .then(function (res) {
+                        .then(res => {
                             self.checkResponse(res);
                             return res.json();
                         })
-                        .then(function (response) {
+                        .then(response => {
                             if (response.status === 'success') {
                                 self.bookingWindow.messages = response.data.messages;
-                                window.setTimeout(function () {
+                                window.setTimeout(() => {
                                     self.mode = 'main-window';
                                 }, 2500);
                             } else {
@@ -302,11 +302,11 @@ class resourceBookingApp {
                             self.bookingWindow.showConfirmationMsg = true;
                             self.fetchDataRequest();
                         })
-                        .then(function (response) {
+                        .then(response => {
                             // Call onAfterBookingRequest callback
                             self.options.callbacks.onAfterBookingRequest.call(self, data);
                         })
-                        .catch(function (response) {
+                        .catch(response => {
                             self.isReady = false;
                             // Always
                             self.bookingWindow.showConfirmationMsg = true;
@@ -341,17 +341,17 @@ class resourceBookingApp {
                                 'x-requested-with': 'XMLHttpRequest'
                             },
                         })
-                    .then(function (res) {
+                    .then(res => {
                         self.checkResponse(res);
                         return res.json();
                     })
-                    .then(function (response) {
+                    .then(response => {
                         if (response.status === 'success') {
                             self.bookingFormValidation = response.data;
                             self.isReady = true;
                         }
                     })
-                    .catch(function (response) {
+                    .catch(response => {
                         self.isReady = false;
                     });
                 },
@@ -377,14 +377,14 @@ class resourceBookingApp {
                             'x-requested-with': 'XMLHttpRequest'
                         },
                     })
-                    .then(function (res) {
+                    .then(res => {
                         self.checkResponse(res);
                         return res.json();
                     })
-                    .then(function (response) {
+                    .then(response => {
                         if (response.status === 'success') {
                             self.bookingWindow.messages = response.data.messages;
-                            window.setTimeout(function () {
+                            window.setTimeout(() => {
                                 self.mode = 'main-window';
                             }, 2500);
                         } else {
@@ -395,7 +395,7 @@ class resourceBookingApp {
                         self.bookingWindow.showConfirmationMsg = true;
                         self.fetchDataRequest();
                     })
-                    .catch(function (response) {
+                    .catch(response => {
                         self.isReady = false;
                         // Always
                         self.bookingWindow.showConfirmationMsg = true;
@@ -407,13 +407,13 @@ class resourceBookingApp {
                 /**
                  * Jump to next/previous week
                  * @param tstamp
-                 * @param event
+                 * @param evt
                  */
-                jumpWeekRequest: function jumpWeekRequest(tstamp, event) {
+                jumpWeekRequest: function jumpWeekRequest(tstamp, evt) {
 
                     let self = this;
-                    event.preventDefault();
-                    event.stopPropagation();
+                    evt.preventDefault();
+                    evt.stopPropagation();
 
                     if (self.isBusy) {
                         return false;
@@ -434,7 +434,7 @@ class resourceBookingApp {
                  * @param objActiveTimeSlot
                  * @param action
                  */
-                openBookingWindow: function openBookingWindow(objActiveTimeSlot, action) {
+                openBookingWindow: function openBookingWindow (objActiveTimeSlot, action) {
                     let self = this;
 
                     self.mode = 'booking-window';
@@ -453,14 +453,13 @@ class resourceBookingApp {
                     self.bookingFormValidation = [];
 
                     if (action === 'showBookingForm') {
-                        window.setTimeout(function () {
+                        window.setTimeout(() => {
                             self.bookingFormValidationRequest();
                         }, 500);
                     }
 
-                    // Wrap this code, otherwise it querySelector will not find dom elements
-                    window.setTimeout(function () {
-
+                    // Wrap this code, otherwise querySelector will not find dom elements
+                    window.setTimeout(() => {
                         let inputBookingDescription = self.$el.querySelector('.booking-window input[name="bookingDescription"]');
                         if (inputBookingDescription !== null) {
                             inputBookingDescription.setAttribute('value', '');
@@ -500,7 +499,7 @@ class resourceBookingApp {
 
                     } else {
                         // Remove backdrop layer
-                        window.setTimeout(function () {
+                        window.setTimeout(() => {
                             let backDrops = document.querySelectorAll('.resource-booking-backdrop-layer');
                             if (backDrops.length > 0) {
                                 backDrops.forEach(backDrop => backDrop.parentNode.removeChild(backDrop));
@@ -528,10 +527,10 @@ class resourceBookingApp {
                 initializeIdleDetectorOld: function initializeIdleDetectorOld(idleAfter) {
                     let self = this;
                     $(document).idle({
-                        onIdle: function onIdle() {
+                        onIdle:  () => {
                             self.isIdle = true;
                         },
-                        onActive: function () {
+                        onActive: () => {
                             self.isIdle = false;
                             self.fetchDataRequest();
                         },
@@ -551,7 +550,7 @@ class resourceBookingApp {
 
                     listenerType.forEach(type => {
 
-                        el.addEventListener(type, function () {
+                        el.addEventListener(type, () => {
                             if (self.isIdle) {
                                 // On active again
                                 self.isIdle = false;
@@ -562,7 +561,7 @@ class resourceBookingApp {
                         }, false);
                     });
 
-                    window.setInterval(function () {
+                    window.setInterval(() => {
                         if (self.isIdle) {
                             return;
                         }
