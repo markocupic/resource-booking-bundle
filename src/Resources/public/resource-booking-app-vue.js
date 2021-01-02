@@ -12,7 +12,6 @@ class resourceBookingApp {
         new Vue({
             el: vueElement,
             data: {
-
                 // Module options
                 options: {
                     requestToken: '',
@@ -84,7 +83,6 @@ class resourceBookingApp {
                     alert('This plugin is not compatible with your browser. Please use a current browser (like Opera, Firefox, Safari or Google Chrome), that is not out of date.')
                 }
 
-
                 // Override defaults
                 self.options = {...self.options, ...options}
 
@@ -132,20 +130,14 @@ class resourceBookingApp {
                 rows: function (newObj, oldObj) {
                     let self = this;
 
-                    if (newObj.length === 0) {
-                        return;
-                    }
-
-                    if (oldObj.length === 0) {
+                    if (newObj.length === 0 || oldObj.length === 0) {
                         return;
                     }
 
                     let newBooking = false;
-                    let i = 0;
 
-                    for (let row in newObj) {
-                        let ii = 0;
-                        for (let cell in newObj[i]['cellData']) {
+                    Object.keys(newObj).forEach(i => {
+                        Object.keys(newObj[i]['cellData']).forEach(ii => {
                             if (newObj[i]['cellData'][ii]['isBooked'] === true && oldObj[i]['cellData'][ii]['isBooked'] === false) {
                                 if (newObj[i]['cellData'][ii]['mondayTimestampSelectedWeek'] === oldObj[i]['cellData'][ii]['mondayTimestampSelectedWeek']) {
                                     if (newObj[i]['cellData'][ii]['resourceId'] === oldObj[i]['cellData'][ii]['resourceId']) {
@@ -153,13 +145,12 @@ class resourceBookingApp {
                                     }
                                 }
                             }
-                            ii++;
-                        }
-                        i++;
-                    }
+                        });
+                    });
+
                     if (newBooking === true) {
                         if (self.options.enableAudio) {
-                            self.ringTheBell();
+                            self.playAudio(self.options.audio.notifyOnNewBookingsAudio);
                         }
                     }
                 }
@@ -243,9 +234,9 @@ class resourceBookingApp {
                     })
                     .then(function (response) {
                         if (response.status === 'success') {
-                            for (let key in response.data) {
+                            Object.keys(response.data).forEach(key => {
                                 self[key] = response.data[key];
-                            }
+                            });
                         }
                         return response;
                     })
@@ -280,10 +271,9 @@ class resourceBookingApp {
                     data.append('bookingRepeatStopWeekTstamp', self.$el.querySelectorAll('.booking-repeat-stop-week-tstamp')[0].value);
                     data.append('moduleKey', self.options.moduleKey);
 
-                    let i;
-                    for (i = 0; i < self.bookingWindow.selectedTimeSlots.length; i++) {
-                        data.append('bookingDateSelection[]', self.bookingWindow.selectedTimeSlots[i]);
-                    }
+                    Object.keys(self.bookingWindow.selectedTimeSlots).forEach(key => {
+                        data.append('bookingDateSelection[]', self.bookingWindow.selectedTimeSlots[key]);
+                    });
 
                     // Call onBeforeBookingRequest callback
                     if (self.options.callbacks.onBeforeBookingRequest.call(self, data) === true) {
@@ -339,10 +329,9 @@ class resourceBookingApp {
                     data.append('bookingRepeatStopWeekTstamp', self.$el.querySelectorAll('.booking-repeat-stop-week-tstamp')[0].value);
                     data.append('moduleKey', self.options.moduleKey);
 
-                    let i;
-                    for (i = 0; i < self.bookingWindow.selectedTimeSlots.length; i++) {
-                        data.append('bookingDateSelection[]', self.bookingWindow.selectedTimeSlots[i]);
-                    }
+                    Object.keys(self.bookingWindow.selectedTimeSlots).forEach(key => {
+                        data.append('bookingDateSelection[]', self.bookingWindow.selectedTimeSlots[key]);
+                    });
 
                     fetch(window.location.href,
                         {
@@ -365,7 +354,6 @@ class resourceBookingApp {
                     .catch(function (response) {
                         self.isReady = false;
                     });
-
                 },
 
                 /**
@@ -431,7 +419,6 @@ class resourceBookingApp {
                         return false;
                     }
 
-
                     // Prevent bubbling invalid requests
                     if (tstamp === self.activeWeekTstamp || tstamp < self.filterBoard.tstampFirstPossibleWeek || tstamp > self.filterBoard.tstampLastPossibleWeek) {
                         return false;
@@ -471,7 +458,6 @@ class resourceBookingApp {
                         }, 500);
                     }
 
-
                     // Wrap this code, otherwise it querySelector will not find dom elements
                     window.setTimeout(function () {
 
@@ -485,7 +471,6 @@ class resourceBookingApp {
                             weekRepeatOptions.forEach(elOption => elOption.removeAttribute('selected'));
                         }
                     }, 20);
-
                 },
 
                 /**
@@ -494,7 +479,6 @@ class resourceBookingApp {
                 hideBookingWindow: function hideBookingWindow() {
                     this.mode = 'main-window';
                 },
-
 
                 /**
                  * Add or remove the backdrop
@@ -590,12 +574,14 @@ class resourceBookingApp {
                         }
                     }, 1000);
                 },
+
                 /**
-                 * Ring the bell
+                 * Play audio file
+                 * @param src
                  */
-                ringTheBell: function ringTheBell() {
+                playAudio: function playAudio(src) {
                     let self = this;
-                    let audio = new Audio(self.options.audio.notifyOnNewBookingsAudio);
+                    let audio = new Audio(src);
                     audio.setAttribute('id', 'rbbBellRingtone');
                     if (document.querySelector('body audio') === null) {
                         document.querySelector('body').appendChild(audio);
