@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2020 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2021 <m.cupic@gmx.ch>
  * @license MIT
  * @link https://github.com/markocupic/resource-booking-bundle
  */
@@ -18,6 +18,8 @@ use Contao\Environment;
 use Contao\ModuleModel;
 use Contao\PageModel;
 use Contao\Template;
+use Markocupic\ResourceBookingBundle\AppInitialization\Helper\ModuleIndex;
+use Markocupic\ResourceBookingBundle\AppInitialization\Helper\ModuleKey;
 use Markocupic\ResourceBookingBundle\AppInitialization\Initialize;
 use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
@@ -84,23 +86,21 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
             /** @var Environment $environmentAdapter */
             $environmentAdapter = $this->framework->getAdapter(Environment::class);
 
-            /*
+            /**
              * The module key is necessary to run multiple rbb applications on the same page
-             * and is sent as a post parameter in every xhr request
+             * and is sent as a post parameter in every xhr request.
              *
-             * The module key (#moduleId_#moduleIndex f.ex. 33_2) contains the module id and the module index
-             * The module index is 1, if the current module is the first rbb module on the current page
-             * The module index is 2, if the current module is the first rbb module on the current page, etc.
+             * The session data of each rbb instance is stored under $_SESSION[_resource_booking_bundle_attributes][#moduleKey#]
              *
+             * The module key (#moduleId_#moduleIndex f.ex. 33_0) contains the module id and the module index
+             * The module index is 0, if the current module is the first rbb module on the current page
+             * The module index is 1, if the current module is the first rbb module on the current page, etc.
+             *
+             * Do only run once ModuleIndex::setModuleIndex() per module instance;
              */
-            if (!isset($GLOBALS['rbb_moduleIndex'])) {
-                $GLOBALS['rbb_moduleIndex'] = 1;
-            } else {
-                ++$GLOBALS['rbb_moduleIndex'];
-            }
-
-            $this->moduleKey = $model->id.'_'.$GLOBALS['rbb_moduleIndex'];
-            $GLOBALS['rbb_moduleKey'] = $this->moduleKey;
+            ModuleIndex::setModuleIndex();
+            ModuleKey::setModuleKey($model->id.'_'.ModuleIndex::getModuleIndex());
+            $this->moduleKey = ModuleKey::getModuleKey();
 
             // Initialize application
             $this->appInitializer->initialize((int) $model->id, (int) $page->id);
