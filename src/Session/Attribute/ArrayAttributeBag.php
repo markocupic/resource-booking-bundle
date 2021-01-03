@@ -30,7 +30,7 @@ use Symfony\Component\Security\Core\Security;
  * The session data of each rbb instance is stored under $_SESSION[_resource_booking_bundle_attributes][#moduleKey#]
  *
  * The module key (#moduleId_#moduleIndex f.ex. 33_0) contains the module id and the module index
-* The module index is 0, if the current module is the first rbb module on the current page
+ * The module index is 0, if the current module is the first rbb module on the current page
  * The module index is 1, if the current module is the first rbb module on the current page, etc.
  *
  * Do only run once ModuleIndex::setModuleIndex() per module instance;
@@ -234,7 +234,7 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
          * The session data of each rbb instance is stored under $_SESSION[_resource_booking_bundle_attributes][#moduleKey#]
          *
          * The module key (#moduleId_#moduleIndex f.ex. 33_0) contains the module id and the module index
-* The module index is 0, if the current module is the first rbb module on the current page
+         * The module index is 0, if the current module is the first rbb module on the current page
          * The module index is 1, if the current module is the first rbb module on the current page, etc.
          *
          * Do only run once ModuleIndex::setModuleIndex() per module instance;
