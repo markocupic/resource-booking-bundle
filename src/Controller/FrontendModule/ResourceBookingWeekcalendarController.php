@@ -77,6 +77,12 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
     }
 
     /**
+     * @param Request $request
+     * @param ModuleModel $model
+     * @param string $section
+     * @param array|null $classes
+     * @param PageModel|null $page
+     * @return Response
      * @throws \Exception
      */
     public function __invoke(Request $request, ModuleModel $model, string $section, array $classes = null, PageModel $page = null): Response
@@ -86,7 +92,7 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
             /** @var Environment $environmentAdapter */
             $environmentAdapter = $this->framework->getAdapter(Environment::class);
 
-            /**
+            /*
              * The module key is necessary to run multiple rbb applications on the same page
              * and is sent as a post parameter in every xhr request.
              *
@@ -109,7 +115,8 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
                 $request = $this->requestStack->getCurrentRequest();
 
                 if ($request->request->get('moduleKey') === $this->moduleKey) {
-                    $this->getAjaxResponse($request)->send();
+                    // Send JSON response on xhr requests
+                    $this->getAjaxResponse()->send();
                     exit;
                 }
             }
@@ -119,9 +126,6 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
         return parent::__invoke($request, $model, $section, $classes);
     }
 
-    /**
-     * @throws \Exception
-     */
     protected function getResponse(Template $template, ModuleModel $model, Request $request): ?Response
     {
         // Used, if multiple rbb modules are used on the same page
@@ -131,28 +135,20 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
         return $template->getResponse();
     }
 
-    /**
-     * @throws \Exception
-     */
-    protected function getAjaxResponse(Request $request): JsonResponse
+    protected function getAjaxResponse(): JsonResponse
     {
         $data = new \stdClass();
         $data->ajaxResponse = $this->ajaxResponse;
-        $data->request = $request;
+        $data->request = $this->requestStack->getCurrentRequest();
         $objAjaxRequestEvent = new AjaxRequestEvent($data);
 
         // Dispatch event "rbb.event.xml_http_request"
         $this->eventDispatcher->dispatch($objAjaxRequestEvent, 'rbb.event.xml_http_request');
 
-        return $this->createJsonResponse($this->ajaxResponse->getAll(), 200);
-    }
-
-    protected function createJsonResponse(array $arrData, int $statusCode): JsonResponse
-    {
         $response = new JsonResponse();
 
-        $response->setData($arrData);
-        $response->setStatusCode($statusCode);
+        $response->setData($this->ajaxResponse->getAll());
+        $response->setStatusCode(200);
         $response->setPrivate();
         $response->setMaxAge(0);
         $response->setSharedMaxAge(0);
