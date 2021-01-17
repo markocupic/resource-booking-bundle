@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2020 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2021 <m.cupic@gmx.ch>
  * @license MIT
  * @link https://github.com/markocupic/resource-booking-bundle
  */
@@ -15,13 +15,11 @@ namespace Markocupic\ResourceBookingBundle\Booking;
 use Contao\Config;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Date;
-use Contao\FrontendUser;
 use Contao\MemberModel;
 use Contao\Message;
 use Contao\ModuleModel;
 use Contao\StringUtil;
 use Contao\System;
-use Contao\Validator;
 use Markocupic\ResourceBookingBundle\Helper\DateHelper;
 use Markocupic\ResourceBookingBundle\Helper\UtcTimeHelper;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
@@ -77,7 +75,7 @@ class BookingTable
      *
      * @throws \Exception
      */
-    public function __construct(ContaoFramework $framework, Security $security, SessionInterface $session, RequestStack $requestStack, LoggedInFrontendUser $user,string $bagName)
+    public function __construct(ContaoFramework $framework, Security $security, SessionInterface $session, RequestStack $requestStack, LoggedInFrontendUser $user, string $bagName)
     {
         $this->framework = $framework;
         $this->security = $security;
@@ -85,7 +83,6 @@ class BookingTable
         $this->sessionBag = $session->getBag($bagName);
         $this->requestStack = $requestStack;
         $this->user = $user;
-
 
         if (null === $this->getModuleModel()) {
             throw new \Exception('Module model not found.');
@@ -118,9 +115,6 @@ class BookingTable
         /** @var UtcTimeHelper $stringUtilAdapter */
         $utcTimeHelperAdapter = $this->framework->getAdapter(UtcTimeHelper::class);
 
-        /** @var Validator $validatorAdapter */
-        $validatorAdapter = $this->framework->getAdapter(Validator::class);
-
         /** @var ResourceBookingModel $resourceBookingModelAdapter */
         $resourceBookingModelAdapter = $this->framework->getAdapter(ResourceBookingModel::class);
 
@@ -140,23 +134,6 @@ class BookingTable
 
         // Load language file
         $systemAdapter->loadLanguageFile('default', $this->sessionBag->get('language'));
-
-        // Get module data
-        $arrData['opt'] = $this->getModuleModel()->row();
-
-        // Convert binary uuids to string uuids
-        $arrData['opt'] = array_map(
-            static function ($v) use ($stringUtilAdapter, $validatorAdapter) {
-                if (!empty($v)) {
-                    if (!\is_array($v) && $validatorAdapter->isBinaryUuid((string) $v)) {
-                        $v = $stringUtilAdapter->binToUuid($v);
-                    }
-                }
-
-                return $v;
-            },
-            $arrData['opt']
-        );
 
         // Messages
         if (null === $this->getActiveResourceType() && !$messageAdapter->hasMessages()) {
@@ -356,7 +333,17 @@ class BookingTable
                                     }
                                 }
 
-                                $objTs->bookingDescription = $stringUtilAdapter->decodeEntities($objBooking->description);
+                                // Send sensitive data if it has been permitted in tl_module
+                                if ($this->getModuleModel()->resourceBooking_setBookingSubmittedFields) {
+                                    $arrFields = $stringUtilAdapter->deserialize($this->getModuleModel()->resourceBooking_bookingSubmittedFields, true);
+
+                                    foreach ($arrFields as $fieldname) {
+                                        if (\in_array($fieldname, $arrFields, true)) {
+                                            $objTs->{'booking'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($objBooking->$fieldname);
+                                        }
+                                    }
+                                }
+
                                 $objTs->bookingId = $objBooking->id;
                                 $objTs->bookingUuid = $objBooking->bookingUuid;
                             }
@@ -575,6 +562,4 @@ class BookingTable
 
         return $moduleModelAdapter->findByPk($this->sessionBag->get('moduleModelId'));
     }
-
-
 }

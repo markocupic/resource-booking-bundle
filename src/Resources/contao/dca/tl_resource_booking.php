@@ -3,7 +3,7 @@
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2020 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2021 <m.cupic@gmx.ch>
  * @license MIT
  * @link https://github.com/markocupic/resource-booking-bundle
  */
@@ -83,6 +83,8 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = array(
 			'sql'        => "int(10) unsigned NOT NULL default '0'",
 		),
 		'tstamp'      => array(
+			'sorting'   => true,
+			'flag'      => 6,
 			'sql' => "int(10) unsigned NOT NULL default '0'"
 		),
 		'timeSlotId'  => array(

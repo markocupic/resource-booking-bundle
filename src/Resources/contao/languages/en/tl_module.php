@@ -1,10 +1,10 @@
 <?php
 
-/**
- * Resource Booking Module for Contao CMS
- * Copyright (c) 2008-2020 Marko Cupic
- * @package resource-booking-bundle
- * @author Marko Cupic m.cupic@gmx.ch, 2020
+/*
+ * This file is part of Resource Booking Bundle.
+ *
+ * (c) Marko Cupic 2021 <m.cupic@gmx.ch>
+ * @license MIT
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
@@ -15,6 +15,8 @@ $GLOBALS['TL_LANG']['tl_module']['resourceBooking_hideDaysSelection'] = ['Select
 $GLOBALS['TL_LANG']['tl_module']['resourceBooking_intAheadWeek'] = ['Week selector: Weeks ahead', 'Select number of weeks.'];
 $GLOBALS['TL_LANG']['tl_module']['resourceBooking_addDateStop'] = ['Activate booking stop date', 'Activate booking stop date.'];
 $GLOBALS['TL_LANG']['tl_module']['resourceBooking_dateStop'] = ['Booking stop date', 'Select a booking stop date please.'];
-$GLOBALS['TL_LANG']['tl_module']['resourceBooking_displayClientPersonalData'] = ['Display personal data in the booking table', 'Display personal ddata in the booking table.'];
+$GLOBALS['TL_LANG']['tl_module']['resourceBooking_displayClientPersonalData'] = ['Display personal data in the booking table', 'Display personal data in the booking table.'];
 $GLOBALS['TL_LANG']['tl_module']['resourceBooking_clientPersonalData'] = ['Select fields', 'Select fields.'];
+$GLOBALS['TL_LANG']['tl_module']['resourceBooking_setBookingSubmittedFields'] = ['Display booking details in the booking table', 'Display booking details in the booking table.'];
+$GLOBALS['TL_LANG']['tl_module']['resourceBooking_bookingSubmittedFields'] = ['Select fields', 'Select fields.'];
 

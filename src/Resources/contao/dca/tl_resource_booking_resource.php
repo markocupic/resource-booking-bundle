@@ -3,7 +3,7 @@
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2020 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2021 <m.cupic@gmx.ch>
  * @license MIT
  * @link https://github.com/markocupic/resource-booking-bundle
  */

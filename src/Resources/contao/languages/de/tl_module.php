@@ -1,10 +1,10 @@
 <?php
 
-/**
- * Resource Booking Module for Contao CMS
- * Copyright (c) 2008-2020 Marko Cupic
- * @package resource-booking-bundle
- * @author Marko Cupic m.cupic@gmx.ch, 2020
+/*
+ * This file is part of Resource Booking Bundle.
+ *
+ * (c) Marko Cupic 2021 <m.cupic@gmx.ch>
+ * @license MIT
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
@@ -17,5 +17,7 @@ $GLOBALS['TL_LANG']['tl_module']['resourceBooking_addDateStop'] = ['Buchungsstop
 $GLOBALS['TL_LANG']['tl_module']['resourceBooking_dateStop'] = ['Buchungsstop-Datum wählen', 'Wählen Sie ein Datum aus, bis wann Buchungen möglich sind.'];
 $GLOBALS['TL_LANG']['tl_module']['resourceBooking_displayClientPersonalData'] = ['Personaldaten der Gäste in der Tabelle anzeigen', 'Personaldaten der Gäste in der Tabelle anzeigen.'];
 $GLOBALS['TL_LANG']['tl_module']['resourceBooking_clientPersonalData'] = ['Felder auswählen', 'Felder auswählen.'];
+$GLOBALS['TL_LANG']['tl_module']['resourceBooking_setBookingSubmittedFields'] = ['Buchungsdetails in der Tabelle anzeigen', 'Buchungsdetails in der Tabelle anzeigen.'];
+$GLOBALS['TL_LANG']['tl_module']['resourceBooking_bookingSubmittedFields'] = ['Felder auswählen', 'Felder auswählen.'];
 
 

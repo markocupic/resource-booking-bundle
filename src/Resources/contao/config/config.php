@@ -3,7 +3,7 @@
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2020 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2021 <m.cupic@gmx.ch>
  * @license MIT
  * @link https://github.com/markocupic/resource-booking-bundle
  */
@@ -20,7 +20,6 @@ use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotTypeModel;
 $GLOBALS['BE_MOD']['resourceBookingTool'] = array(
 	'resource'     => array(
 		'tables' => array('tl_resource_booking_resource_type', 'tl_resource_booking_resource', 'tl_resource_booking'),
-		'stylesheet' => array(RbbConfig::MOD_RESOURCE_BOOKING_ASSET_PATH . '/css/backend.css'),
 	),
 	'timeSlotType' => array(
 		'tables' => array('tl_resource_booking_time_slot_type', 'tl_resource_booking_time_slot'),
@@ -33,6 +32,12 @@ $GLOBALS['TL_MODELS']['tl_resource_booking_resource'] = ResourceBookingResourceM
 $GLOBALS['TL_MODELS']['tl_resource_booking_resource_type'] = ResourceBookingResourceTypeModel::class;
 $GLOBALS['TL_MODELS']['tl_resource_booking_time_slot'] = ResourceBookingTimeSlotModel::class;
 $GLOBALS['TL_MODELS']['tl_resource_booking_time_slot_type'] = ResourceBookingTimeSlotTypeModel::class;
+
+// Backend Stylesheets
+if (TL_MODE === 'BE')
+{
+	$GLOBALS['TL_CSS'][] = RbbConfig::MOD_RESOURCE_BOOKING_ASSET_PATH . '/css/backend.css';
+}
 
 // Set backWeeks and aheadWeeks
 Config::set('rbb_intBackWeeks', -10);

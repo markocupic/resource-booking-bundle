@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2020 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2021 <m.cupic@gmx.ch>
  * @license MIT
  * @link https://github.com/markocupic/resource-booking-bundle
  */
@@ -16,8 +16,7 @@ use Contao\Config;
 use Contao\Date;
 
 /**
- * Class DateHelper
- * @package Markocupic\ResourceBookingBundle\Helper
+ * Class DateHelper.
  */
 class DateHelper
 {

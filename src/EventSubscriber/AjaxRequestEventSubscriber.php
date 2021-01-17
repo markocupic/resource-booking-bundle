@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2020 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2021 <m.cupic@gmx.ch>
  * @license MIT
  * @link https://github.com/markocupic/resource-booking-bundle
  */
@@ -269,7 +269,7 @@ class AjaxRequestEventSubscriber
         }
 
         $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
-        $ajaxResponse->setSuccessMessage(
+        $ajaxResponse->setConfirmationMessage(
             sprintf(
                 $GLOBALS['TL_LANG']['MSG']['successfullyBookedXItems'],
                 $this->booking->getActiveResource()->title,
@@ -314,11 +314,13 @@ class AjaxRequestEventSubscriber
                         if (true === $arrBooking['invalidDate']) {
                             $ajaxResponse->setData('passedValidation', false);
                             $ajaxResponse->setData('dateNotInAllowedTimeSpan', true);
+                            break;
                         }
-
-                        if (true === $arrBooking['resourceIsAlreadyBooked'] && false === $arrBooking['resourceIsAlreadyBookedByLoggedInUser']) {
+                        elseif (true === $arrBooking['resourceIsAlreadyBooked'] && false === $arrBooking['resourceIsAlreadyBookedByLoggedInUser']) {
                             $ajaxResponse->setData('passedValidation', false);
                             $ajaxResponse->setData('resourceIsAlreadyBooked', true);
+                            $ajaxResponse->setData('resourceBlocked', true);
+                            break;
                         }
                     }
                 }
@@ -423,9 +425,9 @@ class AjaxRequestEventSubscriber
                     $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
 
                     if ('true' === $request->request->get('deleteBookingsWithSameBookingUuid')) {
-                        $ajaxResponse->setSuccessMessage(sprintf($GLOBALS['TL_LANG']['MSG']['successfullyCanceledBookingAndItsRepetitions'], $intId, $countRepetitionsToDelete));
+                        $ajaxResponse->setConfirmationMessage(sprintf($GLOBALS['TL_LANG']['MSG']['successfullyCanceledBookingAndItsRepetitions'], $intId, $countRepetitionsToDelete));
                     } else {
-                        $ajaxResponse->setSuccessMessage(sprintf($GLOBALS['TL_LANG']['MSG']['successfullyCanceledBooking'], $intId));
+                        $ajaxResponse->setConfirmationMessage(sprintf($GLOBALS['TL_LANG']['MSG']['successfullyCanceledBooking'], $intId));
                     }
                 } else {
                     $ajaxResponse->setErrorMessage($GLOBALS['TL_LANG']['MSG']['notAllowedToCancelBooking']);

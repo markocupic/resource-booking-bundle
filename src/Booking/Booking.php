@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2020 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2021 <m.cupic@gmx.ch>
  * @license MIT
  * @link https://github.com/markocupic/resource-booking-bundle
  */
@@ -13,16 +13,15 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\Booking;
 
 use Contao\Config;
+use Contao\Controller;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Database;
 use Contao\Date;
-use Contao\FrontendUser;
 use Contao\Input;
 use Contao\MemberModel;
 use Contao\Model\Collection;
 use Contao\ModuleModel;
 use Contao\StringUtil;
-use Contao\System;
 use Markocupic\ResourceBookingBundle\Helper\DateHelper;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
@@ -98,12 +97,10 @@ class Booking
      */
     private $security;
 
-
-
     /**
      * Booking constructor.
      */
-    public function __construct(ContaoFramework $framework, SessionInterface $session, RequestStack $requestStack, LoggedInFrontendUser $user,string $bagName, Security $security)
+    public function __construct(ContaoFramework $framework, SessionInterface $session, RequestStack $requestStack, LoggedInFrontendUser $user, string $bagName, Security $security)
     {
         $this->framework = $framework;
         $this->session = $session;
@@ -170,11 +167,8 @@ class Booking
         /** @var ResourceBookingTimeSlotModel $resourceBookingTimeSlotModelAdapter */
         $resourceBookingTimeSlotModelAdapter = $this->framework->getAdapter(ResourceBookingTimeSlotModel::class);
 
-        /** @var System $systemAdapter */
-        $systemAdapter = $this->framework->getAdapter(System::class);
-
-        // Load language file
-        $systemAdapter->loadLanguageFile('default', $this->sessionBag->get('language'));
+        /** @var Controller $controllerAdapter */
+        $controllerAdapter = $this->framework->getAdapter(Controller::class);
 
         $arrBookings = [];
 
@@ -199,7 +193,6 @@ class Booking
                 'mondayTimestampSelectedWeek' => (int) $arrTimeSlot[3],
                 'pid' => $inputAdapter->post('resourceId'),
                 'bookingUuid' => '',
-                'description' => $inputAdapter->post('description'),
                 'member' => $this->user->getLoggedInUser()->id,
                 'tstamp' => time(),
                 'resourceIsAlreadyBooked' => true,
@@ -209,6 +202,18 @@ class Booking
                 'newInsert' => false,
                 'holder' => '',
             ];
+
+            // Load dca
+            $controllerAdapter->loadDataContainer('tl_resource_booking');
+            $arrDca = $GLOBALS['TL_DCA']['tl_resource_booking'];
+
+            // Get data from POST, thus the extension can easily be extended
+            foreach (array_keys($_POST) as $k) {
+                if (!isset($arrData[$k])) {
+                    $arrData[$k] = true === $arrDca['fields'][$k]['eval']['decodeEntities'] ? $stringUtilAdapter->decodeEntities($inputAdapter->post('description')) : $inputAdapter->post($k);
+                }
+            }
+
             $arrBookings[] = $arrData;
 
             // Handle repetitions
@@ -389,7 +394,7 @@ class Booking
         if (null === $this->user->getLoggedInUser()) {
             throw new \Exception('No logged in user found.');
         }
-        
+
         // Set module model
         $this->moduleModel = $moduleModelAdapter->findByPk($this->sessionBag->get('moduleModelId'));
 
