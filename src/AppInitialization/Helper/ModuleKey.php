@@ -42,11 +42,8 @@ class ModuleKey
     /**
      * @throws \Exception
      */
-    public static function getModuleKey(): string
+    public static function getModuleKey(): ?string
     {
-        if (null === static::$moduleKey) {
-            throw new \Exception('Module key not set. Please use ModuleKey::setModuleKey() first.');
-        }
 
         return static::$moduleKey;
     }

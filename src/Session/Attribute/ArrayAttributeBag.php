@@ -257,10 +257,10 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
 
         if ($environmentAdapter->get('isAjaxRequest')) {
             $moduleKey = $this->requestStack->getCurrentRequest()->request->get('moduleKey');
-        } elseif (!$environmentAdapter->get('isAjaxRequest') && \strlen(ModuleKey::getModuleKey())) {
+        } elseif (!$environmentAdapter->get('isAjaxRequest') && \strlen((string) ModuleKey::getModuleKey())) {
             $moduleKey = ModuleKey::getModuleKey();
         } else {
-            throw new \Exception('Module key not set.');
+            return '';
         }
 
         return sha1($sessionId.'_'.$userId.'_'.$moduleKey);

@@ -20,6 +20,7 @@ use Contao\ModuleModel;
 use Contao\PageModel;
 use Contao\StringUtil;
 use Haste\Util\Url;
+use Markocupic\ResourceBookingBundle\AppInitialization\Helper\ModuleKey;
 use Markocupic\ResourceBookingBundle\Helper\DateHelper;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceTypeModel;
@@ -100,11 +101,20 @@ class Initialize
         /** @var Controller $controllerAdapter */
         $controllerAdapter = $this->framework->getAdapter(Controller::class);
 
+        /** @var $moduleKeyAdapter */
+        $moduleKeyAdapter = $this->framework->getAdapter(ModuleKey::class);
+
+
         /** @var Request $request */
         $request = $this->requestStack->getCurrentRequest();
 
         // Get $moduleModelId from parameter or session
         $moduleModelId = null !== $moduleModelId ? $moduleModelId : ($this->sessionBag->has('moduleModelId') ? $this->sessionBag->get('moduleModelId') : null);
+
+        if(null === $moduleKeyAdapter->getModuleKey())
+        {
+            throw new \Exception('Module key not set.');
+        }
 
         $objModuleModel = ModuleModel::findByPk($moduleModelId);
 
