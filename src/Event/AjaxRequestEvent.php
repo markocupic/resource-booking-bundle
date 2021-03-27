@@ -21,6 +21,8 @@ use Symfony\Contracts\EventDispatcher\Event;
  */
 class AjaxRequestEvent extends Event
 {
+    const NAME = 'xml_http_request';
+
     /**
      * @var AjaxResponse
      */

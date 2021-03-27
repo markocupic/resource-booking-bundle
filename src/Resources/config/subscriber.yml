@@ -12,4 +12,4 @@ services:
     - '@security.helper'
     - '@event_dispatcher'
     tags:
-    - { name: kernel.event_listener, event: rbb.event.xml_http_request, method: onXmlHttpRequest, priority: 10 }
+    - { name: kernel.event_subscriber }

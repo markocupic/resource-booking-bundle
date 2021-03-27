@@ -22,6 +22,7 @@ use Symfony\Contracts\EventDispatcher\Event;
  */
 class PostBookingEvent extends Event
 {
+    const NAME = 'rbb.event.ppost_booking';
     /**
      * @var Collection
      */

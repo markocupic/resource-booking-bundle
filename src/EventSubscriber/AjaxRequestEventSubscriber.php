@@ -30,6 +30,7 @@ use Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag;
 use Markocupic\ResourceBookingBundle\User\LoggedInFrontendUser;
 use Psr\Log\LogLevel;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Security\Core\Security;
@@ -37,8 +38,10 @@ use Symfony\Component\Security\Core\Security;
 /**
  * Class AjaxRequestEventSubscriber.
  */
-class AjaxRequestEventSubscriber
+final class AjaxRequestEventSubscriber implements EventSubscriberInterface
 {
+    const PRIORITY = 1000;
+
     /**
      * @var ContaoFramework
      */
@@ -100,6 +103,13 @@ class AjaxRequestEventSubscriber
         $this->eventDispatcher = $eventDispatcher;
     }
 
+    public static function getSubscribedEvents(): array
+    {
+        return [
+            AjaxRequestEvent::NAME => ['onXmlHttpRequest', self::PRIORITY],
+        ];
+    }
+
     public function onXmlHttpRequest(AjaxRequestEvent $ajaxRequestEvent): void
     {
         $request = $this->requestStack->getCurrentRequest();
@@ -118,7 +128,7 @@ class AjaxRequestEventSubscriber
     /**
      * @throws \Exception
      */
-    protected function onFetchDataRequest(AjaxRequestEvent $ajaxRequestEvent): void
+    private function onFetchDataRequest(AjaxRequestEvent $ajaxRequestEvent): void
     {
         $ajaxResponse = $ajaxRequestEvent->getAjaxResponse();
         $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
@@ -128,7 +138,7 @@ class AjaxRequestEventSubscriber
     /**
      * @throws \Exception
      */
-    protected function onApplyFilterRequest(AjaxRequestEvent $ajaxRequestEvent): void
+    private function onApplyFilterRequest(AjaxRequestEvent $ajaxRequestEvent): void
     {
         $ajaxResponse = $ajaxRequestEvent->getAjaxResponse();
 
@@ -203,7 +213,7 @@ class AjaxRequestEventSubscriber
     /**
      * @throws \Exception
      */
-    protected function onJumpWeekRequest(AjaxRequestEvent $ajaxRequestEvent): void
+    private function onJumpWeekRequest(AjaxRequestEvent $ajaxRequestEvent): void
     {
         $this->onApplyFilterRequest($ajaxRequestEvent);
     }
@@ -211,7 +221,7 @@ class AjaxRequestEventSubscriber
     /**
      * @throws \Exception
      */
-    protected function onBookingRequest(AjaxRequestEvent $ajaxRequestEvent): void
+    private function onBookingRequest(AjaxRequestEvent $ajaxRequestEvent): void
     {
         /** @var ResourceBookingModel $resourceBookingModelAdapter */
         $resourceBookingModelAdapter = $this->framework->getAdapter(ResourceBookingModel::class);
@@ -241,8 +251,9 @@ class AjaxRequestEventSubscriber
         $eventData->user = $this->user->getLoggedInUser();
         $eventData->bookingCollection = $objBookings;
         $eventData->sessionBag = $this->sessionBag;
+        // Dispatch "rbb.event.pre_booking" event
         $objPreBookingEvent = new PreBookingEvent($eventData);
-        $this->eventDispatcher->dispatch($objPreBookingEvent, 'rbb.event.pre_booking');
+        $this->eventDispatcher->dispatch($objPreBookingEvent, PreBookingEvent::NAME);
 
         if (null !== $objBookings) {
             while ($objBookings->next()) {
@@ -264,6 +275,7 @@ class AjaxRequestEventSubscriber
             $eventData->user = $this->user->getLoggedInUser();
             $eventData->bookingCollection = $objBookings;
             $eventData->sessionBag = $this->sessionBag;
+            // Dispatch "rbb.event.post_booking" event
             $objPostBookingEvent = new PostBookingEvent($eventData);
             $this->eventDispatcher->dispatch($objPostBookingEvent, 'rbb.event.post_booking');
         }
@@ -284,7 +296,7 @@ class AjaxRequestEventSubscriber
     /**
      * @throws \Exception
      */
-    protected function onBookingFormValidationRequest(AjaxRequestEvent $ajaxRequestEvent): void
+    private function onBookingFormValidationRequest(AjaxRequestEvent $ajaxRequestEvent): void
     {
         $ajaxResponse = $ajaxRequestEvent->getAjaxResponse();
 
@@ -316,7 +328,8 @@ class AjaxRequestEventSubscriber
                             $ajaxResponse->setData('dateNotInAllowedTimeSpan', true);
                             break;
                         }
-                        elseif (true === $arrBooking['resourceIsAlreadyBooked'] && false === $arrBooking['resourceIsAlreadyBookedByLoggedInUser']) {
+
+                        if (true === $arrBooking['resourceIsAlreadyBooked'] && false === $arrBooking['resourceIsAlreadyBookedByLoggedInUser']) {
                             $ajaxResponse->setData('passedValidation', false);
                             $ajaxResponse->setData('resourceIsAlreadyBooked', true);
                             $ajaxResponse->setData('resourceBlocked', true);
@@ -334,7 +347,7 @@ class AjaxRequestEventSubscriber
     /**
      * @throws \Exception
      */
-    protected function onCancelBookingRequest(AjaxRequestEvent $ajaxRequestEvent): void
+    private function onCancelBookingRequest(AjaxRequestEvent $ajaxRequestEvent): void
     {
         $ajaxResponse = $ajaxRequestEvent->getAjaxResponse();
 

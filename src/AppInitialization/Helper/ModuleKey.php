@@ -32,7 +32,6 @@ class ModuleKey
      * @var string
      */
     private static $moduleKey;
-    
 
     public static function setModuleKey(string $str): void
     {
@@ -44,7 +43,6 @@ class ModuleKey
      */
     public static function getModuleKey(): ?string
     {
-
         return static::$moduleKey;
     }
 }

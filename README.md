@@ -57,12 +57,23 @@ namespace App\EventSubscriber;
 
 use Contao\Date;
 use Markocupic\ResourceBookingBundle\Event\PostBookingEvent;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+
 
 /**
  * Class PostBookingEventSubscriber.
  */
-class PostBookingEventSubscriber
+final class PostBookingEventSubscriber implements EventSubscriberInterface
 {
+   const priority = 10000;
+ 
+   public static function getSubscribedEvents(): array
+    {
+        return [
+            PostBookingEvent::NAME => ['onPostBooking', self::PRIORITY],
+        ];
+    }
+
     public function onPostBooking(PostBookingEvent $objPostBookingEvent): void
     {
         // For demo usage only
@@ -107,12 +118,12 @@ services:
     arguments:
     '@request_stack'
     tags:
-    - { name: kernel.event_listener, event: rbb.event.xml_http_request, method: onXmlHttpRequest, priority: 20 }
+    - { name: kernel.event_subscriber }
 
 ```
-Mit dem Parameter "priority" kann die Reihenfolge eingestellt werden. Je grösser der Wert, umso eher wird der Subscriber aufgerufen. Der Originalsubscriber hat als Priorität den Wert 10 zugewiesen. 
 
-Weiter muss eine entsprechende Event-Subscriber-Klasse erstellt werden:
+Weiter muss eine entsprechende Event-Subscriber-Klasse erstellt werden. 
+Mit der Konstante "priority" kann die Reihenfolge eingestellt werden. Je grösser der Wert, umso eher wird der Subscriber aufgerufen. Der Originalsubscriber hat als Priorität den Wert 1000 zugewiesen. 
 
 ```php
 <?php
@@ -122,13 +133,17 @@ declare(strict_types=1);
 namespace App\EventSubscriber;
 
 use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
+
 
 /**
  * Class AjaxRequestEventSubscriber.
  */
-class AjaxRequestEventSubscriber
+final class AjaxRequestEventSubscriber implements EventSubscriberInterface
 {
+    const priority = 1010;
+
     /**
      * @var RequestStack
      */
@@ -140,6 +155,13 @@ class AjaxRequestEventSubscriber
     public function __construct(RequestStack $requestStack)
     {
         $this->requestStack = $requestStack;
+    }
+
+    public static function getSubscribedEvents(): array
+    {
+        return [
+            AjaxRequestEvent::NAME => ['onXmlHttpRequest', self::PRIORITY],
+        ];
     }
 
     public function onXmlHttpRequest(AjaxRequestEvent $ajaxRequestEvent): void

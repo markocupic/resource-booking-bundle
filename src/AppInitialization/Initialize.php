@@ -104,15 +104,13 @@ class Initialize
         /** @var $moduleKeyAdapter */
         $moduleKeyAdapter = $this->framework->getAdapter(ModuleKey::class);
 
-
         /** @var Request $request */
         $request = $this->requestStack->getCurrentRequest();
 
         // Get $moduleModelId from parameter or session
         $moduleModelId = null !== $moduleModelId ? $moduleModelId : ($this->sessionBag->has('moduleModelId') ? $this->sessionBag->get('moduleModelId') : null);
 
-        if(null === $moduleKeyAdapter->getModuleKey())
-        {
+        if (null === $moduleKeyAdapter->getModuleKey()) {
             throw new \Exception('Module key not set.');
         }
 

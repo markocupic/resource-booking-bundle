@@ -77,12 +77,6 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
     }
 
     /**
-     * @param Request $request
-     * @param ModuleModel $model
-     * @param string $section
-     * @param array|null $classes
-     * @param PageModel|null $page
-     * @return Response
      * @throws \Exception
      */
     public function __invoke(Request $request, ModuleModel $model, string $section, array $classes = null, PageModel $page = null): Response
@@ -142,8 +136,8 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
         $data->request = $this->requestStack->getCurrentRequest();
         $objAjaxRequestEvent = new AjaxRequestEvent($data);
 
-        // Dispatch event "rbb.event.xml_http_request"
-        $this->eventDispatcher->dispatch($objAjaxRequestEvent, 'rbb.event.xml_http_request');
+        // Dispatch "rbb.event.xml_http_request" event
+        $this->eventDispatcher->dispatch($objAjaxRequestEvent, AjaxRequestEvent::NAME);
 
         $response = new JsonResponse();
 

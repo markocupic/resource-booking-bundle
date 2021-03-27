@@ -33,7 +33,6 @@ class ModuleIndex
      */
     private static $moduleIndex;
 
-
     public static function setModuleIndex(): void
     {
         if (null === static::$moduleIndex) {
