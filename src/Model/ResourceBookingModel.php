@@ -26,6 +26,18 @@ class ResourceBookingModel extends Model
      */
     protected static $strTable = 'tl_resource_booking';
 
+    public static function findByIds(array $arrIds, array $arrOptions = [])
+    {
+        if (empty($arrIds))
+        {
+            return null;
+        }
+
+        $t = static::$strTable;
+
+        return static::findBy(array("$t.id IN(" . implode(',', array_map('\intval', $arrIds)) . ")"), null, $arrOptions);
+    }
+
     /**
      * @param $objResource
      * @param $starttime

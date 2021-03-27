@@ -20,7 +20,9 @@ use Markocupic\ResourceBookingBundle\Booking\Booking;
 use Markocupic\ResourceBookingBundle\Booking\BookingTable;
 use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
 use Markocupic\ResourceBookingBundle\Event\PostBookingEvent;
+use Markocupic\ResourceBookingBundle\Event\PostCancelingEvent;
 use Markocupic\ResourceBookingBundle\Event\PreBookingEvent;
+use Markocupic\ResourceBookingBundle\Event\PreCancelingEvent;
 use Markocupic\ResourceBookingBundle\Helper\DateHelper;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
@@ -367,6 +369,8 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
 
         $ajaxResponse->setStatus(AjaxResponse::STATUS_ERROR);
 
+        $arrIds = [];
+
         if (null !== $this->user->getLoggedInUser() && $request->request->get('bookingId') > 0) {
             $bookingId = $request->request->get('bookingId');
             $objBooking = $resourceBookingModelAdapter->findByPk($bookingId);
@@ -383,16 +387,7 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
                         $resourceTitle = $objBookingResource->title;
                     }
 
-                    $strLog = sprintf('Resource booking for "%s" (with ID %s) has been deleted.', $resourceTitle, $intId);
-
-                    // Delete entry
-                    $intAffected = $objBooking->delete();
-
-                    if ($intAffected) {
-                        // Log
-                        $logger = $systemAdapter->getContainer()->get('monolog.logger.contao');
-                        $logger->log(LogLevel::INFO, $strLog, ['contao' => new ContaoContext(__METHOD__, 'INFO')]);
-                    }
+                    $arrIds[] = $objBooking->id;
 
                     $countRepetitionsToDelete = 0;
 
@@ -401,39 +396,60 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
                         $arrColumns = [
                             'tl_resource_booking.bookingUuid=?',
                             'tl_resource_booking.timeSlotId=?',
+                            'tl_resource_booking.id!=?',
                         ];
+
                         $arrValues = [
                             $bookingUuid,
                             $timeSlotId,
+                            $objBooking->id,
                         ];
+
                         $objRepetitions = $resourceBookingModelAdapter->findBy($arrColumns, $arrValues);
 
                         if (null !== $objRepetitions) {
                             while ($objRepetitions->next()) {
                                 if ($dateAdapter->parse('D', $objRepetitions->startTime) === $weekday) {
-                                    $intIdRepetition = $objRepetitions->id;
-
-                                    $resourceTitle = '';
-
-                                    if (null !== ($objBookingResource = $objRepetitions->getRelated('pid'))) {
-                                        $resourceTitle = $objBookingResource->title;
-                                    }
-
-                                    $strLog = sprintf('Resource Booking for "%s" (with ID %s) has been deleted.', $resourceTitle, $intIdRepetition);
-                                    $objRepetitions->delete();
-
-                                    // Log
-                                    $logger = $systemAdapter->getContainer()->get('monolog.logger.contao');
-
-                                    if ($logger) {
-                                        $logger->log(LogLevel::INFO, $strLog, ['contao' => new ContaoContext(__METHOD__, 'INFO')]);
-                                    }
+                                    $arrIds[] = $objRepetitions->id;
                                     ++$countRepetitionsToDelete;
                                 }
                             }
                         }
                     }
-                    // End delete repetitions
+
+                    if (null !== ($objBookingRemove = $resourceBookingModelAdapter->findByIds($arrIds))) {
+                        // Dispatch pre canceling event
+                        $eventData = new \stdClass();
+                        $eventData->user = $this->user->getLoggedInUser();
+                        $eventData->deleteCollection = $objBookingRemove;
+                        $eventData->sessionBag = $this->sessionBag;
+                        // Dispatch "rbb.event.pre_canceling" event
+                        $objPreCancelingEvent = new PreCancelingEvent($eventData);
+                        $this->eventDispatcher->dispatch($objPreCancelingEvent, PreCancelingEvent::NAME);
+
+                        while ($objBookingRemove->next()) {
+                            $intAffected = $objBookingRemove->delete();
+
+                            if ($intAffected) {
+                                // Log
+                                $strLog = sprintf('Resource Booking for "%s" (with ID %s) has been deleted.', $resourceTitle, $objBookingRemove->id);
+                                $logger = $systemAdapter->getContainer()->get('monolog.logger.contao');
+
+                                if ($logger) {
+                                    $logger->log(LogLevel::INFO, $strLog, ['contao' => new ContaoContext(__METHOD__, 'INFO')]);
+                                }
+                            }
+                        }
+
+                        // Dispatch post canceling event
+                        $eventData = new \stdClass();
+                        $eventData->user = $this->user->getLoggedInUser();
+                        $eventData->deleteCollection = $objBookingRemove;
+                        $eventData->sessionBag = $this->sessionBag;
+                        // Dispatch "rbb.event.pre_canceling" event
+                        $objPostCancelingEvent = new PostCancelingEvent($eventData);
+                        $this->eventDispatcher->dispatch($objPostCancelingEvent, PostCancelingEvent::NAME);
+                    }
 
                     $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
 

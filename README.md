@@ -28,22 +28,26 @@ Weiter muss zusätzlich das Template angepasst werden. Mit *{{ eventBox.bookedBy
 
 ![Alt text](src/Resources/public/screenshot/screenshot4.png?raw=true "Weitere Mitgliederfelder anzeigen")
 
-## Event Subscriber
-Mit event subscribern kann die Applikation an mehreren Stellen erweitert werden.
 
-### Post booking & pre booking event subscriber
+
+## Events
 Der *rbb.event.pre_booking* Event wird unmittelbar vor dem Datenbank-Insert ausgelöst. Mit einer Event-Subscriber-Klasse lassen sich beispielsweise die Datenbankeinträge manipulieren.
 
 Der *rbb.event.post_booking* Event wird nach dem Buchungs-Request ausgelöst. Mit einer Event-Subscriber-Klasse, die auf den Event hört, können unmittelbar nach der Buchung Aktionen durchgeführt werden. Beispielsweise kann eine Benachrichtigung gesendet werden oder es können weitere Einträge in der Datenbank getätigt werden.
 
-In beiden Fällen muss die Subscriber-Klasse, die auf den *rbb.event.pre_booking* bzw. *rbb.event.post_booking*  Event hört, in der listener.yml registriert werden:
+Der *rbb.event.pre_canceling* Event wird unmittelbar vor dem Stornieren einer Buchung ausgelöst.
+
+Der *rbb.event.post_canceling* Event wird unmittelbar nach dem Stornieren einer Buchung ausgelöst.
+
+## Event Subscriber
+Mit event subscribern kann die Applikation an mehreren Stellen erweitert werden. Dazu muss eine Subscriber Klasse erstellt werden und diese registriert werden.
 
 ```
-# Registrierung anhand des rbb.event.post_booking Events  in listener.yml
+# Registrierung anhand des rbb.event.post_booking Events in listener.yml
 services:
   App\EventSubscriber\PostBookingEventSubscriber:
     tags:
-    - { name: kernel.event_listener, event: rbb.event.post_booking, method: onPostBooking, priority: 10 }
+    - { name: kernel.event_subscriber }
 ```
 
 Weiter muss eine entsprechende Event-Subscriber-Klasse erstellt werden (hier anhand rbb.event.post_booking):
