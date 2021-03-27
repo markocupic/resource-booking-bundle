@@ -31,13 +31,13 @@ Weiter muss zusätzlich das Template angepasst werden. Mit *{{ eventBox.bookedBy
 
 
 ## Events
-Der *rbb.event.pre_booking* Event wird unmittelbar vor dem Datenbank-Insert ausgelöst. Mit einer Event-Subscriber-Klasse lassen sich beispielsweise die Datenbankeinträge manipulieren.
+Der ***rbb.event.pre_booking*** Event wird unmittelbar vor dem Datenbank-Insert ausgelöst. Mit einer Event-Subscriber-Klasse lassen sich beispielsweise die Datenbankeinträge manipulieren.
 
-Der *rbb.event.post_booking* Event wird nach dem Buchungs-Request ausgelöst. Mit einer Event-Subscriber-Klasse, die auf den Event hört, können unmittelbar nach der Buchung Aktionen durchgeführt werden. Beispielsweise kann eine Benachrichtigung gesendet werden oder es können weitere Einträge in der Datenbank getätigt werden.
+Der ***rbb.event.post_booking*** Event wird nach dem Buchungs-Request ausgelöst. Mit einer Event-Subscriber-Klasse, die auf den Event hört, können unmittelbar nach der Buchung Aktionen durchgeführt werden. Beispielsweise kann eine Benachrichtigung gesendet werden oder es können weitere Einträge in der Datenbank getätigt werden.
 
-Der *rbb.event.pre_canceling* Event wird unmittelbar vor dem Stornieren einer Buchung ausgelöst.
+Der ***rbb.event.pre_canceling*** Event wird unmittelbar vor dem Stornieren einer Buchung ausgelöst.
 
-Der *rbb.event.post_canceling* Event wird unmittelbar nach dem Stornieren einer Buchung ausgelöst.
+Der ***rbb.event.post_canceling*** Event wird unmittelbar nach dem Stornieren einer Buchung ausgelöst.
 
 ## Event Subscriber
 Mit event subscribern kann die Applikation an mehreren Stellen erweitert werden. Dazu muss eine Subscriber Klasse erstellt werden und diese registriert werden.
