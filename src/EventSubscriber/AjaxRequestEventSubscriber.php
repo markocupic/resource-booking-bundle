@@ -50,7 +50,7 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
     private $framework;
 
     /**
-     * @var Security
+     * @var BookingTable
      */
     private $bookingTableHelper;
 
@@ -279,7 +279,7 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
             $eventData->sessionBag = $this->sessionBag;
             // Dispatch "rbb.event.post_booking" event
             $objPostBookingEvent = new PostBookingEvent($eventData);
-            $this->eventDispatcher->dispatch($objPostBookingEvent, 'rbb.event.post_booking');
+            $this->eventDispatcher->dispatch($objPostBookingEvent, PostBookingEvent::NAME);
         }
 
         $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
@@ -421,7 +421,7 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
                         // Dispatch pre canceling event
                         $eventData = new \stdClass();
                         $eventData->user = $this->user->getLoggedInUser();
-                        $eventData->deleteCollection = $objBookingRemove;
+                        $eventData->bookingCollection = $objBookingRemove;
                         $eventData->sessionBag = $this->sessionBag;
                         // Dispatch "rbb.event.pre_canceling" event
                         $objPreCancelingEvent = new PreCancelingEvent($eventData);
@@ -444,9 +444,9 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
                         // Dispatch post canceling event
                         $eventData = new \stdClass();
                         $eventData->user = $this->user->getLoggedInUser();
-                        $eventData->deleteCollection = $objBookingRemove;
+                        $eventData->bookingCollection = $objBookingRemove;
                         $eventData->sessionBag = $this->sessionBag;
-                        // Dispatch "rbb.event.pre_canceling" event
+                        // Dispatch "rbb.event.post_canceling" event
                         $objPostCancelingEvent = new PostCancelingEvent($eventData);
                         $this->eventDispatcher->dispatch($objPostCancelingEvent, PostCancelingEvent::NAME);
                     }

@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\Model;
 
 use Contao\Model;
+use Model\Collection;
 
 /**
  * Class ResourceBookingModel.
@@ -26,16 +27,15 @@ class ResourceBookingModel extends Model
      */
     protected static $strTable = 'tl_resource_booking';
 
-    public static function findByIds(array $arrIds, array $arrOptions = [])
+    public static function findByIds(array $arrIds, array $arrOptions = []): ?Collection
     {
-        if (empty($arrIds))
-        {
+        if (empty($arrIds)) {
             return null;
         }
 
         $t = static::$strTable;
 
-        return static::findBy(array("$t.id IN(" . implode(',', array_map('\intval', $arrIds)) . ")"), null, $arrOptions);
+        return static::findBy(["$t.id IN(".implode(',', array_map('\intval', $arrIds)).')'], null, $arrOptions);
     }
 
     /**

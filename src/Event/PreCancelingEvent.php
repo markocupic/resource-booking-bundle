@@ -27,7 +27,7 @@ class PreCancelingEvent extends Event
     /**
      * @var Collection
      */
-    private $cancelingCollection;
+    private $bookingCollection;
 
     /**
      * @var FrontendUser
@@ -41,18 +41,17 @@ class PreCancelingEvent extends Event
 
     /**
      * PreCancelingEvent constructor.
-     * @param \stdClass $event
      */
     public function __construct(\stdClass $event)
     {
-        $this->cancelingCollection = $event->cancelingCollection;
+        $this->bookingCollection = $event->bookingCollection;
         $this->user = $event->user;
         $this->sessionBag = $event->sessionBag;
     }
 
-    public function getCancelingCollection(): ?Collection
+    public function getBookingCollection(): ?Collection
     {
-        return $this->cancelingCollection;
+        return $this->bookingCollection;
     }
 
     public function getUser(): FrontendUser
