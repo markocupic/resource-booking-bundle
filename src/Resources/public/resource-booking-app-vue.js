@@ -17,10 +17,12 @@ class resourceBookingApp {
                 options: {
                     requestToken: '',
                     moduleKey: '',
+                    // The settings below are optional
                     audio: {
                         notifyOnNewBookingsAudio: 'bundles/markocupicresourcebooking/audio/bell.mp3'
                     },
                     enableAudio: true,
+                    autocloseWindowsAfter: 2500,
                     // Callback functions
                     callbacks: {
                         // Callback function to be executed before booking request is fired
@@ -289,7 +291,7 @@ class resourceBookingApp {
                                 this.bookingWindow.messages = response.data.messages;
                                 window.setTimeout(() => {
                                     this.mode = 'main-window';
-                                }, 2500);
+                                }, this.options.autocloseWindowsAfter);
                             } else {
                                 this.bookingWindow.messages = response.data.messages;
                             }
@@ -381,7 +383,7 @@ class resourceBookingApp {
                             this.bookingWindow.messages = response.data.messages;
                             window.setTimeout(() => {
                                 this.mode = 'main-window';
-                            }, 2500);
+                            }, this.options.autocloseWindowsAfter);
                         } else {
                             this.bookingWindow.messages = response.data.messages;
                         }

@@ -286,6 +286,7 @@
             'audio': {
                 'notifyOnNewBookingsAudio': 'bundles/markocupicresourcebooking/audio/bell.mp3'
             },
+						'autocloseWindowsAfter': 2500,
             'enableAudio': true,
             'callbacks': {
                 // Callback function to be executed before a booking request is fired

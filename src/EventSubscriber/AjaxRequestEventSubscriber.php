@@ -248,18 +248,20 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
 
         $objBookings = $this->booking->getBookingCollection();
 
-        // Dispatch pre booking event
+        // Dispatch pre booking event "rbb.event.pre_booking"
         $eventData = new \stdClass();
         $eventData->user = $this->user->getLoggedInUser();
         $eventData->bookingCollection = $objBookings;
         $eventData->sessionBag = $this->sessionBag;
-        // Dispatch "rbb.event.pre_booking" event
+        // Dispatch event
         $objPreBookingEvent = new PreBookingEvent($eventData);
         $this->eventDispatcher->dispatch($objPreBookingEvent, PreBookingEvent::NAME);
 
         if (null !== $objBookings) {
             while ($objBookings->next()) {
                 $objBooking = $objBookings->current();
+
+                // Save booking
                 $objBooking->save();
 
                 // Log
@@ -269,7 +271,7 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
             }
         }
 
-        // Dispatch post booking event
+        // Dispatch post booking event "rbb.event.post_booking"
         $objBookings = $resourceBookingModelAdapter->findByBookingUuid($this->booking->getBookingUuid());
 
         if (null !== $objBookings) {
@@ -277,7 +279,7 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
             $eventData->user = $this->user->getLoggedInUser();
             $eventData->bookingCollection = $objBookings;
             $eventData->sessionBag = $this->sessionBag;
-            // Dispatch "rbb.event.post_booking" event
+            // Dispatch event
             $objPostBookingEvent = new PostBookingEvent($eventData);
             $this->eventDispatcher->dispatch($objPostBookingEvent, PostBookingEvent::NAME);
         }
@@ -418,12 +420,13 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
                     }
 
                     if (null !== ($objBookingRemove = $resourceBookingModelAdapter->findByIds($arrIds))) {
-                        // Dispatch pre canceling event
+
+                        // Dispatch pre canceling event "rbb.event.pre_canceling"
                         $eventData = new \stdClass();
                         $eventData->user = $this->user->getLoggedInUser();
                         $eventData->bookingCollection = $objBookingRemove;
                         $eventData->sessionBag = $this->sessionBag;
-                        // Dispatch "rbb.event.pre_canceling" event
+                        // Dispatch event
                         $objPreCancelingEvent = new PreCancelingEvent($eventData);
                         $this->eventDispatcher->dispatch($objPreCancelingEvent, PreCancelingEvent::NAME);
 
@@ -441,12 +444,12 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
                             }
                         }
 
-                        // Dispatch post canceling event
+                        // Dispatch post canceling event "rbb.event.post_canceling"
                         $eventData = new \stdClass();
                         $eventData->user = $this->user->getLoggedInUser();
                         $eventData->bookingCollection = $objBookingRemove;
                         $eventData->sessionBag = $this->sessionBag;
-                        // Dispatch "rbb.event.post_canceling" event
+                        // Dispatch event
                         $objPostCancelingEvent = new PostCancelingEvent($eventData);
                         $this->eventDispatcher->dispatch($objPostCancelingEvent, PostCancelingEvent::NAME);
                     }
