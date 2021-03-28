@@ -40,6 +40,7 @@ $GLOBALS['TL_LANG']['MSG']['selectResourceTypePlease'] = 'Select a resource type
 $GLOBALS['TL_LANG']['MSG']['selectResourcePlease'] = 'Select a resource please.';
 $GLOBALS['TL_LANG']['MSG']['selectValidResourcePlease'] = 'Select a valid resource please.';
 $GLOBALS['TL_LANG']['MSG']['successfullyBookedXItems'] = 'Successfully booked for %s %s items.';
+$GLOBALS['TL_LANG']['MSG']['generalBookingError'] = 'An unexpected error has occurred. No booking could be made.';
 $GLOBALS['TL_LANG']['MSG']['successfullyCanceledBooking'] = 'Booking with ID %s has been successfully canceled.';
 $GLOBALS['TL_LANG']['MSG']['successfullyCanceledBookingAndItsRepetitions'] = 'Successfully canceled booking with ID %s and %s of its repetitions.';
 

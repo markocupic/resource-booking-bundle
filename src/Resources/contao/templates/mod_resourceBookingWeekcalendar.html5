@@ -161,12 +161,18 @@
 					<!-- End switch delete siblings with same booking id -->
 
 					<!-- alerts -->
-					<template v-if="bookingWindow.messages && bookingWindow.messages.confirmation">
+					<template v-if="bookingWindow.messages">
 						<div class="message-box mt-5">
-							<div class="alert alert-success pt-3 pb-3">
+							<div v-if="bookingWindow.messages.confirmation" class="alert alert-success pt-3 pb-3">
 								{{ bookingWindow.messages.confirmation }}
 							</div>
-							<p>
+							<div v-if="bookingWindow.messages.error" class="alert alert-danger pt-3 pb-3">
+								{{ bookingWindow.messages.error }}
+							</div>
+							<div v-if="bookingWindow.messages.info" class="alert alert-info pt-3 pb-3">
+								{{ bookingWindow.messages.info }}
+							</div>
+							<p v-if="bookingWindow.messages.confirmation">
 								<small>{{rbb_lang::windowIsClosingAutomatically}}</small>
 							</p>
 						</div>

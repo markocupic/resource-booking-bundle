@@ -15,6 +15,7 @@ namespace Markocupic\ResourceBookingBundle\EventSubscriber;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Monolog\ContaoContext;
 use Contao\Date;
+use Contao\Model\Collection;
 use Contao\System;
 use Markocupic\ResourceBookingBundle\Booking\Booking;
 use Markocupic\ResourceBookingBundle\Booking\BookingTable;
@@ -248,53 +249,81 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
 
         $objBookings = $this->booking->getBookingCollection();
 
+        if (null !== $objBookings) {
+            $objBookings->reset();
+        }
+
         // Dispatch pre booking event "rbb.event.pre_booking"
         $eventData = new \stdClass();
         $eventData->user = $this->user->getLoggedInUser();
         $eventData->bookingCollection = $objBookings;
+        $eventData->ajaxResponse = $ajaxResponse;
         $eventData->sessionBag = $this->sessionBag;
         // Dispatch event
         $objPreBookingEvent = new PreBookingEvent($eventData);
         $this->eventDispatcher->dispatch($objPreBookingEvent, PreBookingEvent::NAME);
 
         if (null !== $objBookings) {
+            $objBookings->reset();
+        }
+
+        if (null !== $objBookings) {
             while ($objBookings->next()) {
                 $objBooking = $objBookings->current();
 
                 // Save booking
-                $objBooking->save();
+                if (!$objBooking->doNotSave) {
+                    $objBooking->save();
 
-                // Log
-                $logger = $systemAdapter->getContainer()->get('monolog.logger.contao');
-                $strLog = sprintf('New resource "%s" (with ID %s) has been booked.', $this->booking->getActiveResource()->title, $objBooking->id);
-                $logger->log(LogLevel::INFO, $strLog, ['contao' => new ContaoContext(__METHOD__, 'INFO')]);
+                    // Log
+                    $logger = $systemAdapter->getContainer()->get('monolog.logger.contao');
+                    $strLog = sprintf('New resource "%s" (with ID %s) has been booked.', $this->booking->getActiveResource()->title, $objBooking->id);
+                    $logger->log(LogLevel::INFO, $strLog, ['contao' => new ContaoContext(__METHOD__, 'INFO')]);
+                }
             }
         }
 
         // Dispatch post booking event "rbb.event.post_booking"
+        /** @var Collection $objBookings */
         $objBookings = $resourceBookingModelAdapter->findByBookingUuid($this->booking->getBookingUuid());
 
         if (null !== $objBookings) {
             $eventData = new \stdClass();
             $eventData->user = $this->user->getLoggedInUser();
             $eventData->bookingCollection = $objBookings;
+            $eventData->ajaxResponse = $ajaxResponse;
             $eventData->sessionBag = $this->sessionBag;
             // Dispatch event
             $objPostBookingEvent = new PostBookingEvent($eventData);
             $this->eventDispatcher->dispatch($objPostBookingEvent, PostBookingEvent::NAME);
         }
 
-        $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
-        $ajaxResponse->setConfirmationMessage(
-            sprintf(
-                $GLOBALS['TL_LANG']['MSG']['successfullyBookedXItems'],
-                $this->booking->getActiveResource()->title,
-                \count($this->booking->getBookingArray())
-            )
-        );
+        if (null !== $objBookings) {
+            $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
+
+            if (null === $ajaxResponse->getConfirmationMessage()) {
+                $ajaxResponse->setConfirmationMessage(
+                    sprintf(
+                        $GLOBALS['TL_LANG']['MSG']['successfullyBookedXItems'],
+                        $this->booking->getActiveResource()->title,
+                        $objBookings->count()
+                    )
+                );
+            }
+        } else {
+            $ajaxResponse->setStatus(AjaxResponse::STATUS_ERROR);
+
+            if (null === $ajaxResponse->getErrorMessage()) {
+                $ajaxResponse->setErrorMessage($GLOBALS['TL_LANG']['MSG']['generalBookingError']);
+            }
+        }
 
         // Add booking selection to response
-        $ajaxResponse->setData('bookingSelection', $this->booking->getBookingArray());
+        if (null !== $objBookings) {
+            $objBookings->reset();
+        }
+
+        $ajaxResponse->setData('bookingSelection', $objBookings ? $objBookings->fetchAll() : []);
     }
 
     /**
@@ -319,7 +348,7 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
         if (!$hasError) {
             $ajaxResponse->setData('passedValidation', true);
 
-            $arrBookings = $this->booking->getBookingArray();
+            $arrBookings = $this->booking->getBookingCollection()->fetchAll();
 
             if (!$this->booking->isBookingPossible()) {
                 if (empty($arrBookings)) {
@@ -420,7 +449,6 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
                     }
 
                     if (null !== ($objBookingRemove = $resourceBookingModelAdapter->findByIds($arrIds))) {
-
                         // Dispatch pre canceling event "rbb.event.pre_canceling"
                         $eventData = new \stdClass();
                         $eventData->user = $this->user->getLoggedInUser();

@@ -40,6 +40,7 @@ $GLOBALS['TL_LANG']['MSG']['selectResourceTypePlease'] = 'Bitte wählen Sie eine
 $GLOBALS['TL_LANG']['MSG']['selectResourcePlease'] = 'Bitte wählen Sie eine Ressource aus.';
 $GLOBALS['TL_LANG']['MSG']['selectValidResourcePlease'] = 'Bitte wählen Sie eine gültige Ressource aus.';
 $GLOBALS['TL_LANG']['MSG']['successfullyBookedXItems'] = 'Für %s konnte(n) erfolgreich %s Buchung(en) angelegt werden.';
+$GLOBALS['TL_LANG']['MSG']['generalBookingError'] = 'Es ist ein unerwarteter Fehler aufgetreten. Es konnte keine Buchung vorgenommen werden.';
 $GLOBALS['TL_LANG']['MSG']['successfullyCanceledBooking'] = 'Ihre Buchung mit ID %s wurde erfolgreich storniert.';
 $GLOBALS['TL_LANG']['MSG']['successfullyCanceledBookingAndItsRepetitions'] = 'Ihre Buchung mit ID %s und weitere %s Wiederholunge(en) wurde(n) erfolgreich storniert.';
 

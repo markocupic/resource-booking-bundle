@@ -69,6 +69,7 @@ class resourceBookingApp {
                 bookingWindow: [],
                 bookingFormValidation: [],
                 intervals: [],
+                autoCloseBookingWindowTimeout: null,
                 messages: null,
                 // Indicates if user is idle
                 isIdle: false,
@@ -289,7 +290,7 @@ class resourceBookingApp {
                         .then(response => {
                             if (response.status === 'success') {
                                 this.bookingWindow.messages = response.data.messages;
-                                window.setTimeout(() => {
+                                this.autoCloseBookingWindowTimeout = window.setTimeout(() => {
                                     this.mode = 'main-window';
                                 }, this.options.autocloseWindowsAfter);
                             } else {
@@ -381,7 +382,7 @@ class resourceBookingApp {
                     .then(response => {
                         if (response.status === 'success') {
                             this.bookingWindow.messages = response.data.messages;
-                            window.setTimeout(() => {
+                            this.autoCloseBookingWindowTimeout = window.setTimeout(() => {
                                 this.mode = 'main-window';
                             }, this.options.autocloseWindowsAfter);
                         } else {
@@ -471,6 +472,7 @@ class resourceBookingApp {
                  * Hide booking window
                  */
                 hideBookingWindow: function hideBookingWindow() {
+                    clearTimeout(this.autoCloseBookingWindowTimeout);
                     this.mode = 'main-window';
                 },
 
