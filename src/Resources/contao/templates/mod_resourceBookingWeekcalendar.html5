@@ -1,4 +1,4 @@
-<?php $GLOBALS['TL_JAVASCRIPT'][] = 'assets/contao-component-bootstrap/bootstrap/dist/js/bootstrap.min.js|static'; ?>
+<?php $GLOBALS['TL_JAVASCRIPT'][] = 'assets/contao-component-bootstrap/bootstrap/dist/js/bootstrap.bundle.min.js|static'; ?>
 <?php $GLOBALS['TL_JAVASCRIPT'][] = 'assets/contao-component-vue-js/vue/dist/vue.min.js'; ?>
 <?php $GLOBALS['TL_JAVASCRIPT'][] = \Markocupic\ResourceBookingBundle\Config\RbbConfig::MOD_RESOURCE_BOOKING_ASSET_PATH.'/resource-booking-app-vue.min.js|static'; ?>
 <?php $GLOBALS['TL_CSS'][] = 'assets/contao-component-bootstrap/bootstrap/dist/css/bootstrap.min.css'; ?>
