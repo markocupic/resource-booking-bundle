@@ -92,22 +92,18 @@ class Booking
      */
     private $sessionBag;
 
-    /**
-     * @var Security
-     */
-    private $security;
+  
 
     /**
      * Booking constructor.
      */
-    public function __construct(ContaoFramework $framework, SessionInterface $session, RequestStack $requestStack, LoggedInFrontendUser $user, string $bagName, Security $security)
+    public function __construct(ContaoFramework $framework, SessionInterface $session, RequestStack $requestStack, LoggedInFrontendUser $user, string $bagName)
     {
         $this->framework = $framework;
         $this->session = $session;
         $this->requestStack = $requestStack;
         $this->user = $user;
         $this->sessionBag = $session->getBag($bagName);
-        $this->security = $security;
     }
 
     /**
@@ -226,8 +222,6 @@ class Booking
 
     /**
      * @throws \Exception
-     *
-     * @return Collection
      */
     private function setBookingCollectionFromRequest(): void
     {
