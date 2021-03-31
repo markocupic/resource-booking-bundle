@@ -30,7 +30,6 @@ use Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag;
 use Markocupic\ResourceBookingBundle\User\LoggedInFrontendUser;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
-use Symfony\Component\Security\Core\Security;
 
 /**
  * Class Booking.
@@ -91,8 +90,6 @@ class Booking
      * @var ArrayAttributeBag
      */
     private $sessionBag;
-
-  
 
     /**
      * Booking constructor.
