@@ -54,7 +54,6 @@ class PreBookingEvent extends Event
         $this->ajaxResponse = $event->ajaxResponse;
         $this->user = $event->user;
         $this->sessionBag = $event->sessionBag;
-
     }
 
     public function getBookingCollection(): ?Collection

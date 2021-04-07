@@ -152,7 +152,7 @@
 					<!-- End info table -->
 
 					<!-- Switch delete siblings with same booking id -->
-					<template v-if="bookingWindow.action === 'showCancelBookingForm'">
+					<template v-if="!bookingWindow.showConfirmationMsg && bookingWindow.action === 'showCancelBookingForm'">
 						<div class="custom-control custom-switch mt-5">
 							<input v-model="bookingWindow.deleteBookingsWithSameBookingUuid" type="checkbox" class="custom-control-input" id="deleteSiblingsWihtSameBookingIdSwitch">
 							<label class="custom-control-label" for="deleteSiblingsWihtSameBookingIdSwitch">{{rbb_lang::deleteRepetitions}}</label>
