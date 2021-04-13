@@ -206,7 +206,7 @@
 
 						<template v-if="bookingFormValidation.resourceIsAlreadyBooked">
 							<div class="mt-4">
-								<button class="btn btn-sm btn-danger" type="button" data-toggle="collapse" data-target="#bookingPreview_<?= $this->moduleKey ?>" aria-expanded="false" aria-controls="bookingPreview">
+								<button class="btn btn-sm btn-danger" type="button" data-bs-toggle="collapse" data-bs-target="#bookingPreview_<?= $this->moduleKey ?>" aria-expanded="false" aria-controls="bookingPreview">
 									{{rbb_lang::showOccupiedResources}}
 								</button>
 							</div>
