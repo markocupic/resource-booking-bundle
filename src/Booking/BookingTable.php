@@ -20,6 +20,7 @@ use Contao\Message;
 use Contao\ModuleModel;
 use Contao\StringUtil;
 use Contao\System;
+use Contao\Validator;
 use Markocupic\ResourceBookingBundle\Helper\DateHelper;
 use Markocupic\ResourceBookingBundle\Helper\UtcTimeHelper;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
@@ -126,6 +127,9 @@ class BookingTable
 
         /** @var ResourceBookingResourceModel $resourceBookingResourceModelAdapter */
         $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
+
+        /** @var Validator $validatorAdapter */
+        $validatorAdapter = $this->framework->getAdapter(Validator::class);
 
         /** @var Config $configAdapter */
         $configAdapter = $this->framework->getAdapter(Config::class);
@@ -323,11 +327,19 @@ class BookingTable
                                         }
                                     } else {
                                         foreach (array_keys($objMember->row()) as $fieldname) {
+                                            $varData = $objMember->$fieldname;
+
                                             if ('id' === $fieldname || 'password' === $fieldname) {
                                                 continue;
                                             }
-                                            $objTs->{'bookedBy'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($objMember->$fieldname);
-                                            $objTs->{'bookedBy'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($objMember->$fieldname);
+
+                                            // Convert bin uuids to string uuids
+                                            if (!empty($varData) && $validatorAdapter->isBinaryUuid($varData)) {
+                                                $varData = $stringUtilAdapter->binToUuid($varData);
+                                            }
+
+                                            $objTs->{'bookedBy'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($varData);
+                                            $objTs->{'bookedBy'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($varData);
                                         }
                                         $objTs->bookedByFullname = $stringUtilAdapter->decodeEntities($objMember->firstname.' '.$objMember->lastname);
                                     }

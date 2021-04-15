@@ -132,7 +132,7 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
     protected function getAjaxResponse(): JsonResponse
     {
         $data = new \stdClass();
-        $data->ajaxResponse = $this->ajaxResponse;
+        !$data->ajaxResponse = $this->ajaxResponse;
         $data->request = $this->requestStack->getCurrentRequest();
         $objAjaxRequestEvent = new AjaxRequestEvent($data);
 
@@ -140,7 +140,7 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
         $this->eventDispatcher->dispatch($objAjaxRequestEvent, AjaxRequestEvent::NAME);
 
         $response = new JsonResponse();
-
+        $arrData = $this->ajaxResponse->getAll();
         $response->setData($this->ajaxResponse->getAll());
         $response->setStatusCode(200);
         $response->setPrivate();
