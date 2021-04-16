@@ -333,9 +333,27 @@ class BookingTable
                                                 continue;
                                             }
 
+                                           
+
                                             // Convert bin uuids to string uuids
-                                            if (!empty($varData) && $validatorAdapter->isBinaryUuid($varData)) {
-                                                $varData = $stringUtilAdapter->binToUuid($varData);
+                                            if (!empty($varData) && !preg_match('//u', $varData)) {
+                                                if (\is_array($stringUtilAdapter->deserialize($varData))) {
+                                                    $arrTemp = [];
+
+                                                    foreach ($stringUtilAdapter->deserialize($varData) as $strUuid) {
+                                                        if ($validatorAdapter->isBinaryUuid($strUuid)) {
+                                                            $arrTemp[] = $stringUtilAdapter->binToUuid($strUuid);
+                                                        }
+                                                    }
+                                                    $varData = serialize($arrTemp);
+                                                } else {
+                                                    $strTemp = '';
+
+                                                    if ($validatorAdapter->isBinaryUuid($varData)) {
+                                                        $strTemp = $stringUtilAdapter->binToUuid($varData);
+                                                    }
+                                                    $varData = $strTemp;
+                                                }
                                             }
 
                                             $objTs->{'bookedBy'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($varData);

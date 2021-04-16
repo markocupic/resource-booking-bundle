@@ -140,7 +140,6 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
         $this->eventDispatcher->dispatch($objAjaxRequestEvent, AjaxRequestEvent::NAME);
 
         $response = new JsonResponse();
-        $arrData = $this->ajaxResponse->getAll();
         $response->setData($this->ajaxResponse->getAll());
         $response->setStatusCode(200);
         $response->setPrivate();
