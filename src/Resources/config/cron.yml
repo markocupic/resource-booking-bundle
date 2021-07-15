@@ -1,5 +1,0 @@
-# config/cron.yaml
-services:
-  Markocupic\ResourceBookingBundle\Cron\Cron:
-    tags:
-    - { name: contao.cron, interval: daily, method: deleteOldBookingsFromDb }

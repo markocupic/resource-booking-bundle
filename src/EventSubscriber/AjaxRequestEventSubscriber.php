@@ -459,15 +459,19 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
                         $this->eventDispatcher->dispatch($objPreCancelingEvent, PreCancelingEvent::NAME);
 
                         while ($objBookingRemove->next()) {
-                            $intAffected = $objBookingRemove->delete();
+                            // Use pre canceling subscriber to prevent canceling
+                            // by setting $objBookingRemove->doNotCancel to true
+                            if (!$objBookingRemove->doNotCancel) {
+                                $intAffected = $objBookingRemove->delete();
 
-                            if ($intAffected) {
-                                // Log
-                                $strLog = sprintf('Resource Booking for "%s" (with ID %s) has been deleted.', $resourceTitle, $objBookingRemove->id);
-                                $logger = $systemAdapter->getContainer()->get('monolog.logger.contao');
+                                if ($intAffected) {
+                                    // Log
+                                    $strLog = sprintf('Resource Booking for "%s" (with ID %s) has been deleted.', $resourceTitle, $objBookingRemove->id);
+                                    $logger = $systemAdapter->getContainer()->get('monolog.logger.contao');
 
-                                if ($logger) {
-                                    $logger->log(LogLevel::INFO, $strLog, ['contao' => new ContaoContext(__METHOD__, 'INFO')]);
+                                    if ($logger) {
+                                        $logger->log(LogLevel::INFO, $strLog, ['contao' => new ContaoContext(__METHOD__, 'INFO')]);
+                                    }
                                 }
                             }
                         }
