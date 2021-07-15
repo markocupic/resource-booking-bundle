@@ -22,7 +22,7 @@ use Symfony\Contracts\EventDispatcher\Event;
  */
 class PreCancelingEvent extends Event
 {
-    const NAME = 'rbb.event.pre_canceling';
+    public const NAME = 'rbb.event.pre_canceling';
 
     /**
      * @var Collection

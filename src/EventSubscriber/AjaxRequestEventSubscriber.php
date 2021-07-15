@@ -43,7 +43,7 @@ use Symfony\Component\Security\Core\Security;
  */
 final class AjaxRequestEventSubscriber implements EventSubscriberInterface
 {
-    const PRIORITY = 1000;
+    public const PRIORITY = 1000;
 
     /**
      * @var ContaoFramework

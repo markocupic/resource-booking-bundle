@@ -86,9 +86,9 @@ $transitionSpeed: .8s;
 
       &.time-slot-cell[data-isbookable="true"] {
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         background-color: $bookableBg;
-        justify-content: center;
+        justify-content: flex-start;
       }
 
       &.time-slot-cell[data-isinvaliddate="true"] {

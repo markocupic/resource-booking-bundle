@@ -17,29 +17,14 @@ namespace Markocupic\ResourceBookingBundle\Response;
  */
 class AjaxResponse
 {
-    /**
-     * @var string
-     */
     public const STATUS_SUCCESS = 'success';
 
-    /**
-     * @var string
-     */
     public const STATUS_ERROR = 'error';
 
-    /**
-     * @var string
-     */
     public const MESSAGE_CONFIRMATION = 'confirmation';
 
-    /**
-     * @var string
-     */
     public const MESSAGE_INFO = 'info';
 
-    /**
-     * @var string
-     */
     public const MESSAGE_ERROR = 'error';
 
     /**

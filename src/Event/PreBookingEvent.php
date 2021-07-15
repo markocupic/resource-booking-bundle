@@ -23,7 +23,7 @@ use Symfony\Contracts\EventDispatcher\Event;
  */
 class PreBookingEvent extends Event
 {
-    const NAME = 'rbb.event.pre_booking';
+    public const NAME = 'rbb.event.pre_booking';
 
     /**
      * @var Collection

@@ -93,7 +93,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = array(
 	),
 	// Palettes
 	'palettes' => array(
-		'default' => '{title_legend},title,description,timeSlotType',
+		'default' => '{title_legend},title,description,itemsAvailable,timeSlotType',
 	),
 	// Fields
 	'fields'   => array(
@@ -136,6 +136,16 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = array(
 			'eval'      => array('tl_class' => 'clr'),
 			'sql'       => "mediumtext NULL"
 		),
+        'itemsAvailable'      => array(
+            'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking_resource']['itemsAvailable'],
+            'exclude'    => true,
+            'search'     => false,
+            'sorting'    => false,
+            'filter'     => true,
+            'inputType' => 'text',
+            'eval'       => array('mandatory' => true, 'rgxp' => 'natural', 'tl_class' => 'w50'),
+            'sql'        => "int(10) unsigned NOT NULL default '1'",
+        ),
 		'timeSlotType' => array(
 			'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking_resource']['timeSlotType'],
 			'inputType'  => 'select',

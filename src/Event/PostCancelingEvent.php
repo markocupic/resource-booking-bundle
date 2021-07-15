@@ -22,7 +22,7 @@ use Symfony\Contracts\EventDispatcher\Event;
  */
 class PostCancelingEvent extends Event
 {
-    const NAME = 'rbb.event.post_canceling';
+    public const NAME = 'rbb.event.post_canceling';
 
     /**
      * @var Collection

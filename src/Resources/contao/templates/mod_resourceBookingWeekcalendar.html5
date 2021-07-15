@@ -1,6 +1,6 @@
 <?php $GLOBALS['TL_JAVASCRIPT'][] = 'assets/contao-component-bootstrap/bootstrap/dist/js/bootstrap.bundle.min.js|static'; ?>
 <?php $GLOBALS['TL_JAVASCRIPT'][] = 'assets/contao-component-vue-js/vue/dist/vue.min.js'; ?>
-<?php $GLOBALS['TL_JAVASCRIPT'][] = \Markocupic\ResourceBookingBundle\Config\RbbConfig::MOD_RESOURCE_BOOKING_ASSET_PATH.'/resource-booking-app-vue.min.js|static'; ?>
+<?php $GLOBALS['TL_JAVASCRIPT'][] = \Markocupic\ResourceBookingBundle\Config\RbbConfig::MOD_RESOURCE_BOOKING_ASSET_PATH.'/resource-booking-app-vue.js'; ?>
 <?php $GLOBALS['TL_CSS'][] = 'assets/contao-component-bootstrap/bootstrap/dist/css/bootstrap.min.css'; ?>
 <?php $GLOBALS['TL_CSS'][] = 'assets/contao-component-fontawesome-free/css/all.min.css|static'; ?>
 <?php $GLOBALS['TL_CSS'][] = \Markocupic\ResourceBookingBundle\Config\RbbConfig::MOD_RESOURCE_BOOKING_ASSET_PATH.'/css/frontend.css|static'; ?>
@@ -97,16 +97,16 @@
 					<div v-for="(row, rowIndex) in rows" v-bind:data-row-index="rowIndex" v-bind:id="row.rowData.cssRowId" class="layout-row" v-bind:class="row.rowData.cssRowClass">
 						<div class="layout-cell time-slot-indicator" v-bind:class="timeSlots[rowIndex].cssClass ? timeSlots[rowIndex].cssClass : ''">{{ timeSlots[rowIndex].timeSpanString }}</div>
 						<div class="layout-cell time-slot-cell" v-for="(eventBox, colIndex) in row.cellData" v-bind:class="eventBox.cssClass ? eventBox.cssClass : ''" v-bind:data-day-index="eventBox.index" v-bind:data-is-holder="eventBox.isHolder ? 'true' : 'false'" v-bind:data-iscancelable="eventBox.isBooked && eventBox.isEditable && eventBox.validDate" v-bind:data-isbookable="!eventBox.isBooked && eventBox.isEditable && eventBox.validDate" v-bind:data-isbooked="eventBox.isBooked" v-bind:data-isinvaliddate="!eventBox.validDate">
-							<div v-if="eventBox.isBooked">
-								<span class="holder-box">{{ eventBox.bookedByFullname }}</span>
-								{{br}}
-								<span class="description-box">{{ eventBox.bookingDescription }}</span>
-							</div>
-							<button class="btn btn-link btn-booking" v-if="userIsLoggedIn && eventBox.isEditable && !eventBox.isBooked" v-on:click="openBookingWindow(eventBox,'showBookingForm')" title="{{rbb_lang::bookResource}}">
+							<div v-if="eventBox.hasBookings" v-for="booking in eventBox.bookings">
+                <span class="holder-box">{{ booking.bookedByFullname }} {{ booking.itemsBooked }}/{{  activeResource.itemsAvailable }}</span>
+                {{br}}
+                <span class="description-box">{{ booking.bookingDescription }}</span>
+              </div>
+							<button class="btn btn-link btn-booking" v-if="userIsLoggedIn && eventBox.isBookable" v-on:click="openBookingWindow(eventBox,'showBookingForm')" title="{{rbb_lang::bookResource}}">
 								<i class="icon-booking far fa-check-circle"></i>
 								<i class="icon-cancel-booking fas fa-times-circle"></i>
 							</button>
-							<button class="btn btn-link btn-cancel-booking" v-if="userIsLoggedIn && eventBox.isEditable && eventBox.isBooked" v-on:click="openBookingWindow(eventBox, 'showCancelBookingForm')" title="{{rbb_lang::cancelResource}}">
+							<button class="btn btn-link btn-cancel-booking" v-if="userIsLoggedIn && eventBox.isCancelable" v-on:click="openBookingWindow(eventBox, 'showCancelBookingForm')" title="{{rbb_lang::cancelResource}}">
 								<i class="icon-booking far fa-check-circle"></i>
 								<i class="icon-cancel-booking fas fa-times-circle"></i>
 							</button>
@@ -249,16 +249,26 @@
 								</div>
 							</div>
 							<!-- end booking table -->
+              <div class="form-group mt-4">
+                <label class="" for="itemsBooked_<?= $this->moduleKey ?>">Anzahl</label>
+
+                <select id="itemsBooked_<?= $this->moduleKey ?>" class="items-booked form-control timeSpanSelect" name="itemsBooked" v-on:change="bookingFormValidationRequest()">
+                  <option value="1"> 1 Stück</option>
+                  <option value="2"> 2 Stück</option>
+                  <option value="3"> 3 Stück</option>
+                  <option value="4"> 4 Stück</option>
+                </select>
+              </div>
 
 							<div class="form-group mt-4">
-								<label class="d-none" for="bookingDescription_<?= $this->moduleKey ?>">{{rbb_lang::abstract}}</label>
-								<input type="text" class="form-control" id="bookingDescription_<?= $this->moduleKey ?>" name="bookingDescription" aria-describedby="bookingDescriptionHelp" maxlength="50" placeholder="Kurzbeschreibung eingeben">
+								<label class="" for="bookingDescription_<?= $this->moduleKey ?>">{{rbb_lang::abstract}}</label>
+								<input type="text" class="form-control" id="ctrlBookingDescription_<?= $this->moduleKey ?>" name="bookingDescription" aria-describedby="bookingDescriptionHelp" maxlength="50" placeholder="Kurzbeschreibung eingeben">
 								<small class="booking-description-help" class="form-text text-muted">{{rbb_lang::enterAbstract}}</small>
 							</div>
 
 							<div class="form-group mt-4">
 								<label for="bookingRepeatStopWeekTstamp_<?= $this->moduleKey ?>">{{rbb_lang::bookResourceRepetitions}}</label>
-								<select id="bookingRepeatStopWeekTstamp_<?= $this->moduleKey ?>" class="booking-repeat-stop-week-tstamp form-control timeSpanSelect" name="bookingRepeatStopWeekTstamp" v-on:change="bookingFormValidationRequest()">
+								<select id="CtrlBookingRepeatStopWeekTstamp_<?= $this->moduleKey ?>" class="booking-repeat-stop-week-tstamp form-control timeSpanSelect" name="bookingRepeatStopWeekTstamp" v-on:change="bookingFormValidationRequest()">
 									<option v-for="(row, rowIndex) in bookingRepeatsSelection" v-bind:value="row.tstamp">{{ row.optionText }}</option>
 								</select>
 							</div>

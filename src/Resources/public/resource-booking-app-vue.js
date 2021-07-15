@@ -265,9 +265,10 @@ class resourceBookingApp {
                     data.append('REQUEST_TOKEN', this.options.requestToken);
                     data.append('action', action);
                     data.append('resourceId', this.bookingWindow.activeTimeSlot.resourceId);
-                    data.append('description', this.$el.querySelectorAll('.booking-window [name="bookingDescription"]')[0].value);
-                    data.append('bookingRepeatStopWeekTstamp', this.$el.querySelectorAll('.booking-repeat-stop-week-tstamp')[0].value);
+                    //data.append('description', this.$el.querySelectorAll('.booking-window [name="bookingDescription"]')[0].value);
+                    //data.append('bookingRepeatStopWeekTstamp', this.$el.querySelectorAll('.booking-repeat-stop-week-tstamp')[0].value);
                     data.append('moduleKey', this.options.moduleKey);
+                    //data.append('itemsBooked', this.$el.querySelector('[name="itemsBooked"]') ? this.$el.querySelector('[name="itemsBooked"]').value : '1');
 
                     Object.keys(this.bookingWindow.selectedTimeSlots).forEach(key => {
                         data.append('bookingDateSelection[]', this.bookingWindow.selectedTimeSlots[key]);
@@ -326,6 +327,7 @@ class resourceBookingApp {
                     data.append('resourceId', this.bookingWindow.activeTimeSlot.resourceId);
                     data.append('bookingRepeatStopWeekTstamp', this.$el.querySelectorAll('.booking-repeat-stop-week-tstamp')[0].value);
                     data.append('moduleKey', this.options.moduleKey);
+                    data.append('itemsBooked', this.$el.querySelector('[name="itemsBooked"].booking-repeat-stop-week-tstamp') ? this.$el.querySelector('[name="itemsBooked"].booking-repeat-stop-week-tstamp').value : '1');
 
                     Object.keys(this.bookingWindow.selectedTimeSlots).forEach(key => {
                         data.append('bookingDateSelection[]', this.bookingWindow.selectedTimeSlots[key]);

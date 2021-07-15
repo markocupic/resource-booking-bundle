@@ -70,7 +70,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = array(
 	),
 	// Palettes
 	'palettes' => array(
-		'default' => '{title_legend},title,description,member,bookingUuid;{time_legend},startTime,endTime',
+		'default' => '{title_legend},title,description,itemsBooked,member,bookingUuid;{time_legend},startTime,endTime',
 	),
 	// Fields
 	'fields'   => array(
@@ -128,6 +128,16 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = array(
 			'eval'      => array('tl_class' => 'clr'),
 			'sql'       => "mediumtext NULL"
 		),
+        'itemsBooked'      => array(
+            'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking']['itemsBooked'],
+            'exclude'    => true,
+            'search'     => false,
+            'sorting'    => false,
+            'filter'     => true,
+            'inputType' => 'text',
+            'eval'       => array('mandatory' => true, 'rgxp' => 'natural', 'tl_class' => 'w50'),
+            'sql'        => "int(10) unsigned NOT NULL default '1'",
+        ),
 		'startTime'   => array(
 			'label'     => &$GLOBALS['TL_LANG']['tl_resource_booking']['startTime'],
 			'default'   => time(),

@@ -30,6 +30,7 @@ use Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag;
 use Markocupic\ResourceBookingBundle\User\LoggedInFrontendUser;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Markocupic\ResourceBookingBundle\Slot\SlotFactory;
 
 /**
  * Class Booking.
@@ -82,6 +83,11 @@ class Booking
     private $requestStack;
 
     /**
+     * @var SlotFactory
+     */
+    private $slotFactory;
+
+    /**
      * @var LoggedInFrontendUser
      */
     private $user;
@@ -94,11 +100,12 @@ class Booking
     /**
      * Booking constructor.
      */
-    public function __construct(ContaoFramework $framework, SessionInterface $session, RequestStack $requestStack, LoggedInFrontendUser $user, string $bagName)
+    public function __construct(ContaoFramework $framework, SessionInterface $session, RequestStack $requestStack, SlotFactory $slotFactory, LoggedInFrontendUser $user, string $bagName)
     {
         $this->framework = $framework;
         $this->session = $session;
         $this->requestStack = $requestStack;
+        $this->slotFactory = $slotFactory;
         $this->user = $user;
         $this->sessionBag = $session->getBag($bagName);
     }
@@ -275,6 +282,7 @@ class Booking
                     'resourceIsAlreadyBooked' => true,
                     'resourceBlocked' => true,
                     'invalidDate' => false,
+                    'description' => $stringUtilAdapter->decodeEntities($inputAdapter->post('bookingDescription')),
                     'resourceIsAlreadyBookedByLoggedInUser' => false,
                     'newInsert' => false,
                     'holder' => '',
@@ -283,11 +291,18 @@ class Booking
                 // Load dca
                 $controllerAdapter->loadDataContainer('tl_resource_booking');
                 $arrDca = $GLOBALS['TL_DCA']['tl_resource_booking'];
+                $arrAllowed = array_keys($arrDca['fields']);
+                $arrAllowed[] = 'bookingDateSelection[]';
+                $arrAllowed[] = 'bookingRepeatStopWeekTstamp';
 
                 // Get data from POST, thus the extension can easily be extended
                 foreach (array_keys($_POST) as $k) {
+                    if (!\in_array($k, $arrAllowed, true)) {
+                        continue;
+                    }
+
                     if (!isset($arrData[$k])) {
-                        $arrData[$k] = true === $arrDca['fields'][$k]['eval']['decodeEntities'] ? $stringUtilAdapter->decodeEntities($inputAdapter->post('description')) : $inputAdapter->post($k);
+                        $arrData[$k] = true === $arrDca['fields'][$k]['eval']['decodeEntities'] ? $stringUtilAdapter->decodeEntities($inputAdapter->post($k)) : $inputAdapter->post($k);
                     }
                 }
 

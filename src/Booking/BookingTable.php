@@ -28,6 +28,7 @@ use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceTypeModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotModel;
 use Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag;
+use Markocupic\ResourceBookingBundle\Slot\SlotFactory;
 use Markocupic\ResourceBookingBundle\User\LoggedInFrontendUser;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
@@ -67,6 +68,11 @@ class BookingTable
     private $requestStack;
 
     /**
+     * @var SlotFactory
+     */
+    private $slotFactory;
+
+    /**
      * @var LoggedInFrontendUser
      */
     private $user;
@@ -76,13 +82,14 @@ class BookingTable
      *
      * @throws \Exception
      */
-    public function __construct(ContaoFramework $framework, Security $security, SessionInterface $session, RequestStack $requestStack, LoggedInFrontendUser $user, string $bagName)
+    public function __construct(ContaoFramework $framework, Security $security, SessionInterface $session, RequestStack $requestStack, SlotFactory $slotFactory, LoggedInFrontendUser $user, string $bagName)
     {
         $this->framework = $framework;
         $this->security = $security;
         $this->session = $session;
         $this->sessionBag = $session->getBag($bagName);
         $this->requestStack = $requestStack;
+        $this->slotFactory = $slotFactory;
         $this->user = $user;
 
         if (null === $this->getModuleModel()) {
@@ -176,7 +183,7 @@ class BookingTable
         $arrData['filterBoard']['jumpPrevWeek'] = $this->getJumpWeekDate(-1);
 
         // Filter form: get date dropdown
-        $arrData['filterBoard']['weekSelection'] = $this->getWeekSelection((int) $this->sessionBag->get('tstampFirstPossibleWeek'), (int) $this->sessionBag->get('tstampLastPossibleWeek'), true);
+        $arrData['filterBoard']['weekSelection'] = $this->getWeekSelection((int)$this->sessionBag->get('tstampFirstPossibleWeek'), (int)$this->sessionBag->get('tstampLastPossibleWeek'), true);
 
         // Logged in user
         $arrData['userIsLoggedIn'] = false;
@@ -185,26 +192,26 @@ class BookingTable
             $arrData['userIsLoggedIn'] = true;
             $arrData['loggedInUser'] = [
                 'firstname' => $this->user->getLoggedInUser()->firstname,
-                'lastname' => $this->user->getLoggedInUser()->lastname,
-                'gender' => '' !== $GLOBALS['TL_LANG'][$this->user->getLoggedInUser()->gender] ? $GLOBALS['TL_LANG'][$this->user->getLoggedInUser()->gender] : $this->user->getLoggedInUser()->gender,
-                'email' => $this->user->getLoggedInUser()->email,
-                'id' => $this->user->getLoggedInUser()->id,
+                'lastname'  => $this->user->getLoggedInUser()->lastname,
+                'gender'    => '' !== $GLOBALS['TL_LANG'][$this->user->getLoggedInUser()->gender] ? $GLOBALS['TL_LANG'][$this->user->getLoggedInUser()->gender] : $this->user->getLoggedInUser()->gender,
+                'email'     => $this->user->getLoggedInUser()->email,
+                'id'        => $this->user->getLoggedInUser()->id,
             ];
         }
 
         // Selected week
-        $arrData['activeWeekTstamp'] = (int) $this->sessionBag->get('activeWeekTstamp');
+        $arrData['activeWeekTstamp'] = (int)$this->sessionBag->get('activeWeekTstamp');
         $arrData['activeWeek'] = [
             'tstampStart' => $this->sessionBag->get('activeWeekTstamp'),
-            'tstampEnd' => $dateHelperAdapter->addDaysToTime(6, $this->sessionBag->get('activeWeekTstamp')),
-            'dateStart' => $dateAdapter->parse($configAdapter->get('dateFormat'), $this->sessionBag->get('activeWeekTstamp')),
-            'dateEnd' => $dateAdapter->parse($configAdapter->get('dateFormat'), $dateHelperAdapter->addDaysToTime(6, $this->sessionBag->get('activeWeekTstamp'))),
-            'weekNumber' => $dateAdapter->parse('W', $this->sessionBag->get('activeWeekTstamp')),
-            'year' => $dateAdapter->parse('Y', $this->sessionBag->get('activeWeekTstamp')),
+            'tstampEnd'   => $dateHelperAdapter->addDaysToTime(6, $this->sessionBag->get('activeWeekTstamp')),
+            'dateStart'   => $dateAdapter->parse($configAdapter->get('dateFormat'), $this->sessionBag->get('activeWeekTstamp')),
+            'dateEnd'     => $dateAdapter->parse($configAdapter->get('dateFormat'), $dateHelperAdapter->addDaysToTime(6, $this->sessionBag->get('activeWeekTstamp'))),
+            'weekNumber'  => $dateAdapter->parse('W', $this->sessionBag->get('activeWeekTstamp')),
+            'year'        => $dateAdapter->parse('Y', $this->sessionBag->get('activeWeekTstamp')),
         ];
 
         // Get booking RepeatsSelection
-        $arrData['bookingRepeatsSelection'] = $this->getWeekSelection((int) $this->sessionBag->get('activeWeekTstamp'), (int) $this->sessionBag->get('tstampLastPossibleWeek'), false);
+        $arrData['bookingRepeatsSelection'] = $this->getWeekSelection((int)$this->sessionBag->get('activeWeekTstamp'), (int)$this->sessionBag->get('tstampLastPossibleWeek'), false);
 
         // Send weekdays, dates and day
         $arrWeek = [];
@@ -216,10 +223,10 @@ class BookingTable
                 continue;
             }
             $arrWeek[] = [
-                'index' => $i,
-                'title' => '' !== $GLOBALS['TL_LANG']['DAYS_LONG'][$i] ? $GLOBALS['TL_LANG']['DAYS_LONG'][$i] : $arrWeekdays[$i],
+                'index'      => $i,
+                'title'      => '' !== $GLOBALS['TL_LANG']['DAYS_LONG'][$i] ? $GLOBALS['TL_LANG']['DAYS_LONG'][$i] : $arrWeekdays[$i],
                 'titleShort' => '' !== $GLOBALS['TL_LANG']['DAYS_SHORTENED'][$i] ? $GLOBALS['TL_LANG']['DAYS_SHORTENED'][$i] : $arrWeekdays[$i],
-                'date' => $dateAdapter->parse('d.m.Y', strtotime($dateAdapter->parse('Y-m-d', $this->sessionBag->get('activeWeekTstamp')).' +'.$i.' day')),
+                'date'       => $dateAdapter->parse('d.m.Y', strtotime($dateAdapter->parse('Y-m-d', $this->sessionBag->get('activeWeekTstamp')).' +'.$i.' day')),
             ];
         }
         // Weekdays
@@ -277,105 +284,118 @@ class BookingTable
 
                         $startTimestamp = strtotime(sprintf('+%s day', $colCount), $this->sessionBag->get('activeWeekTstamp')) + $objTimeslots->startTime;
                         $endTimestamp = strtotime(sprintf('+%s day', $colCount), $this->sessionBag->get('activeWeekTstamp')) + $objTimeslots->endTime;
+
+                        $slot = $this->slotFactory->get($this->getActiveResource(), $startTimestamp, $endTimestamp);
+
                         $objTs = new \stdClass();
                         $objTs->index = $colCount;
                         $objTs->weekday = $arrWeekdays[$colCount];
                         $objTs->startTimeString = $dateAdapter->parse('H:i', $startTimestamp);
-                        $objTs->startTimestamp = (int) $startTimestamp;
+                        $objTs->startTimestamp = $slot->getStartTime();
                         $objTs->endTimeString = $dateAdapter->parse('H:i', $endTimestamp);
-                        $objTs->endTimestamp = (int) $endTimestamp;
+                        $objTs->endTimestamp = $slot->getEndTime();
                         $objTs->timeSpanString = $dateAdapter->parse('H:i', $startTimestamp).' - '.$dateAdapter->parse('H:i', $endTimestamp);
-                        $objTs->mondayTimestampSelectedWeek = (int) $this->sessionBag->get('activeWeekTstamp');
-                        $objTs->isBooked = $this->isResourceBooked($this->getActiveResource(), $startTimestamp, $endTimestamp);
+                        $objTs->mondayTimestampSelectedWeek = (int)$this->sessionBag->get('activeWeekTstamp');
+                        $objTs->hasBookings = $slot->hasBookings();
+                        $objTs->isBookable = $slot->isBookable();
+                        $objTs->isCancelable = $slot->isCancelable();
                         $objTs->isEditable = $objTs->isBooked ? false : true;
                         $objTs->timeSlotId = $objTimeslots->id;
                         $objTs->validDate = true;
                         $objTs->resourceId = $this->getActiveResource()->id;
                         $objTs->cssClass = $cssCellClass;
+                        $objTs->bookings = [];
+
                         // slotId-startTime-endTime-mondayTimestampSelectedWeek
                         $objTs->bookingCheckboxValue = sprintf('%s-%s-%s-%s', $objTimeslots->id, $startTimestamp, $endTimestamp, $this->sessionBag->get('activeWeekTstamp'));
                         $objTs->bookingCheckboxId = sprintf('bookingCheckbox_modId_%s_%s_%s', $this->getModuleModel()->id, $rowCount, $colCount);
 
-                        if ($objTs->isBooked) {
+                        if ($objTs->hasBookings) {
                             $objTs->isEditable = false;
-                            $objBooking = $resourceBookingModelAdapter->findOneByResourceIdStarttimeAndEndtime($this->getActiveResource(), $startTimestamp, $endTimestamp);
+                            $objBooking = $slot->getBookings();
+                            while ($objBooking->next()) {
+                                if (null !== $objBooking) {
+                                    if ($objBooking->member === $this->user->getLoggedInUser()->id) {
+                                        $objTs->isEditable = true;
+                                        $objTs->isHolder = true;
+                                    }
 
-                            if (null !== $objBooking) {
-                                if ($objBooking->member === $this->user->getLoggedInUser()->id) {
-                                    $objTs->isEditable = true;
-                                    $objTs->isHolder = true;
-                                }
+                                    $objBk = new \stdClass();
 
-                                // Presets
-                                $objTs->bookedByFirstname = '';
-                                $objTs->bookedByLastname = '';
-                                $objTs->bookedByFullname = '';
+                                    $objBk->itemsBooked = $objBooking->itemsBooked;
 
-                                $arrFields = $stringUtilAdapter->deserialize($this->getModuleModel()->resourceBooking_clientPersonalData, true);
+                                    // Presets
+                                    $objBk->bookedByFirstname = '';
+                                    $objBk->bookedByLastname = '';
+                                    $objBk->bookedByFullname = '';
 
-                                $objMember = $memberModelAdapter->findByPk($objBooking->member);
+                                    $arrFields = $stringUtilAdapter->deserialize($this->getModuleModel()->resourceBooking_clientPersonalData, true);
 
-                                if (null !== $objMember) {
-                                    // Do not transmit and display sensitive data if user is not holder
-                                    if (!$objTs->isHolder && $this->getModuleModel()->resourceBooking_displayClientPersonalData && !empty($arrFields)) {
-                                        foreach ($arrFields as $fieldname) {
-                                            $objTs->{'bookedBy'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($objMember->$fieldname);
-                                        }
+                                    $objMember = $memberModelAdapter->findByPk($objBooking->member);
 
-                                        if (\in_array('firstname', $arrFields, true) && \in_array('lastname', $arrFields, true)) {
-                                            $objTs->bookedByFullname = $stringUtilAdapter->decodeEntities($objMember->firstname.' '.$objMember->lastname);
-                                        }
-                                    } else {
-                                        foreach (array_keys($objMember->row()) as $fieldname) {
-                                            $varData = $objMember->$fieldname;
-
-                                            if ('id' === $fieldname || 'password' === $fieldname) {
-                                                continue;
+                                    if (null !== $objMember) {
+                                        // Do not transmit and display sensitive data if user is not holder
+                                        if (!$objTs->isHolder && $this->getModuleModel()->resourceBooking_displayClientPersonalData && !empty($arrFields)) {
+                                            foreach ($arrFields as $fieldname) {
+                                                $objBk->{'bookedBy'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($objMember->$fieldname);
                                             }
 
-                                           
+                                            if (\in_array('firstname', $arrFields, true) && \in_array('lastname', $arrFields, true)) {
+                                                $objBk->bookedByFullname = $stringUtilAdapter->decodeEntities($objMember->firstname.' '.$objMember->lastname);
+                                            }
+                                        } else {
+                                            foreach (array_keys($objMember->row()) as $fieldname) {
+                                                $varData = $objMember->$fieldname;
 
-                                            // Convert bin uuids to string uuids
-                                            if (!empty($varData) && !preg_match('//u', $varData)) {
-                                                if (\is_array($stringUtilAdapter->deserialize($varData))) {
-                                                    $arrTemp = [];
-
-                                                    foreach ($stringUtilAdapter->deserialize($varData) as $strUuid) {
-                                                        if ($validatorAdapter->isBinaryUuid($strUuid)) {
-                                                            $arrTemp[] = $stringUtilAdapter->binToUuid($strUuid);
-                                                        }
-                                                    }
-                                                    $varData = serialize($arrTemp);
-                                                } else {
-                                                    $strTemp = '';
-
-                                                    if ($validatorAdapter->isBinaryUuid($varData)) {
-                                                        $strTemp = $stringUtilAdapter->binToUuid($varData);
-                                                    }
-                                                    $varData = $strTemp;
+                                                if ('id' === $fieldname || 'password' === $fieldname) {
+                                                    continue;
                                                 }
+
+                                                // Convert bin uuids to string uuids
+                                                if (!empty($varData) && !preg_match('//u', $varData)) {
+                                                    if (\is_array($stringUtilAdapter->deserialize($varData))) {
+                                                        $arrTemp = [];
+
+                                                        foreach ($stringUtilAdapter->deserialize($varData) as $strUuid) {
+                                                            if ($validatorAdapter->isBinaryUuid($strUuid)) {
+                                                                $arrTemp[] = $stringUtilAdapter->binToUuid($strUuid);
+                                                            }
+                                                        }
+                                                        $varData = serialize($arrTemp);
+                                                    } else {
+                                                        $strTemp = '';
+
+                                                        if ($validatorAdapter->isBinaryUuid($varData)) {
+                                                            $strTemp = $stringUtilAdapter->binToUuid($varData);
+                                                        }
+                                                        $varData = $strTemp;
+                                                    }
+                                                }
+
+                                                $objBk->{'bookedBy'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($varData);
+                                                $objBk->{'bookedBy'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($varData);
                                             }
-
-                                            $objTs->{'bookedBy'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($varData);
-                                            $objTs->{'bookedBy'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($varData);
-                                        }
-                                        $objTs->bookedByFullname = $stringUtilAdapter->decodeEntities($objMember->firstname.' '.$objMember->lastname);
-                                    }
-                                }
-
-                                // Send sensitive data if it has been permitted in tl_module
-                                if ($this->getModuleModel()->resourceBooking_setBookingSubmittedFields) {
-                                    $arrFields = $stringUtilAdapter->deserialize($this->getModuleModel()->resourceBooking_bookingSubmittedFields, true);
-
-                                    foreach ($arrFields as $fieldname) {
-                                        if (\in_array($fieldname, $arrFields, true)) {
-                                            $objTs->{'booking'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($objBooking->$fieldname);
+                                            $objBk->bookedByFullname = $stringUtilAdapter->decodeEntities($objMember->firstname.' '.$objMember->lastname);
                                         }
                                     }
-                                }
 
-                                $objTs->bookingId = $objBooking->id;
-                                $objTs->bookingUuid = $objBooking->bookingUuid;
+                                    // Send sensitive data if it has been permitted in tl_module
+                                    if ($this->getModuleModel()->resourceBooking_setBookingSubmittedFields) {
+                                        $arrFields = $stringUtilAdapter->deserialize($this->getModuleModel()->resourceBooking_bookingSubmittedFields, true);
+
+                                        foreach ($arrFields as $fieldname) {
+                                            if (\in_array($fieldname, $arrFields, true)) {
+                                                $objBk->{'booking'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($objBooking->$fieldname);
+                                            }
+                                        }
+                                    }
+
+                                    $objBk->bookingId = $objBooking->id;
+                                    $objBk->bookingUuid = $objBooking->bookingUuid;
+
+                                    // Add new item to bookings
+                                    $objTs->bookings[] = $objBk;
+                                }
                             }
                         }
 
@@ -417,15 +437,15 @@ class BookingTable
                 if (!empty($arrCssCellID[1])) {
                     $cssCellClass = $arrCssCellID[1];
                 }
-                $startTimestamp = (int) $objTimeslots->startTime;
-                $endTimestamp = (int) $objTimeslots->endTime;
+                $startTimestamp = (int)$objTimeslots->startTime;
+                $endTimestamp = (int)$objTimeslots->endTime;
                 $objTs = new \stdClass();
                 $objTs->cssClass = $cssCellClass;
                 $objTs->startTimeString = $utcTimeHelperAdapter->parse('H:i', $startTimestamp);
-                $objTs->startTimestamp = (int) $startTimestamp;
+                $objTs->startTimestamp = (int)$startTimestamp;
                 $objTs->endTimeString = $utcTimeHelperAdapter->parse('H:i', $endTimestamp);
                 $objTs->timeSpanString = $utcTimeHelperAdapter->parse('H:i', $startTimestamp).' - '.$utcTimeHelperAdapter->parse('H:i', $endTimestamp);
-                $objTs->endTimestamp = (int) $endTimestamp;
+                $objTs->endTimestamp = (int)$endTimestamp;
                 $timeSlots[] = $objTs;
             }
         }
@@ -489,8 +509,8 @@ class BookingTable
             if ($dateHelperAdapter->getMondayOfCurrentWeek() === $currentTstamp) {
                 if ($injectEmptyLine) {
                     $arrWeeks[] = [
-                        'tstamp' => '',
-                        'date' => '',
+                        'tstamp'     => '',
+                        'date'       => '',
                         'optionText' => '-------------',
                     ];
                 }
@@ -509,18 +529,18 @@ class BookingTable
             $calWeek = $dateAdapter->parse('W', $tstampMonday);
             $yearMonday = $dateAdapter->parse('Y', $tstampMonday);
             $arrWeeks[] = [
-                'cssClass' => $cssClass,
-                'tstamp' => (int) $currentTstamp,
-                'tstampMonday' => (int) $tstampMonday,
-                'tstampSunday' => (int) $tstampSunday,
-                'stringMonday' => $dateMonday,
-                'stringSunday' => $dateSunday,
-                'daySpan' => $dateMonday.' - '.$dateSunday,
-                'calWeek' => (int) $calWeek,
-                'year' => $yearMonday,
+                'cssClass'        => $cssClass,
+                'tstamp'          => (int)$currentTstamp,
+                'tstampMonday'    => (int)$tstampMonday,
+                'tstampSunday'    => (int)$tstampSunday,
+                'stringMonday'    => $dateMonday,
+                'stringSunday'    => $dateSunday,
+                'daySpan'         => $dateMonday.' - '.$dateSunday,
+                'calWeek'         => (int)$calWeek,
+                'year'            => $yearMonday,
                 'optionDateStart' => $dateMonday,
-                'optionDateEnd' => $dateSunday,
-                'optionText' => sprintf($GLOBALS['TL_LANG']['MSC']['weekSelectOptionText'], $calWeek, $yearMonday, $dateMonday, $dateSunday),
+                'optionDateEnd'   => $dateSunday,
+                'optionText'      => sprintf($GLOBALS['TL_LANG']['MSC']['weekSelectOptionText'], $calWeek, $yearMonday, $dateMonday, $dateSunday),
             ];
 
             $currentTstamp = $dateHelperAdapter->addDaysToTime(7, $currentTstamp);
@@ -539,7 +559,7 @@ class BookingTable
 
         $arrReturn = [
             'disabled' => false,
-            'tstamp' => null,
+            'tstamp'   => null,
         ];
 
         $intJumpDays = 7 * $intJumpWeek;
@@ -555,7 +575,7 @@ class BookingTable
             $arrReturn['disabled'] = true;
         }
 
-        $arrReturn['tstamp'] = (int) $jumpTime;
+        $arrReturn['tstamp'] = (int)$jumpTime;
 
         return $arrReturn;
     }
