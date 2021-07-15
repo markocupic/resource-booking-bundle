@@ -14,12 +14,13 @@ namespace Markocupic\ResourceBookingBundle\Cron;
 
 use Contao\Config;
 use Contao\CoreBundle\Framework\ContaoFramework;
+use Contao\CoreBundle\ServiceAnnotation\CronJob;
 use Contao\Database;
 use Contao\Date;
 use Contao\System;
 
 /**
- * Class Cron.
+ * @CronJob("daily")
  */
 class Cron
 {
@@ -28,9 +29,6 @@ class Cron
      */
     private $framework;
 
-    /**
-     * Cron constructor.
-     */
     public function __construct(ContaoFramework $framework)
     {
         $this->framework = $framework;
@@ -40,7 +38,7 @@ class Cron
      * Delete old entries
      * Cronjob.
      */
-    public function deleteOldBookingsFromDb(): void
+    public function __invoke(): void
     {
         /** @var Config $configAdapter */
         $configAdapter = $this->framework->getAdapter(Config::class);
@@ -62,7 +60,7 @@ class Cron
                 $objStmt = $databaseAdapter->getInstance()->prepare('DELETE FROM tl_resource_booking WHERE endTime<?')->execute($tstampLimit);
 
                 if (($intRows = $objStmt->affectedRows) > 0) {
-                    $systemAdapter->log(sprintf('CRON: tl_resource_booking has been cleaned from %s old entries.', $intRows), __METHOD__, TL_CRON);
+                    $systemAdapter->log(sprintf('CRON: tl_resource_booking has been cleared from %s old entries.', $intRows), __METHOD__, TL_CRON);
                 }
             }
         }

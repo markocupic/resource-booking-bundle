@@ -19,30 +19,26 @@ services:
   Markocupic\ResourceBookingBundle\Controller\FrontendModule\ResourceBookingWeekcalendarController:
     tags:
     - { name: contao.frontend_module, category: resourceBooking, type: resourceBookingWeekcalendar }
+
   # Subscribers: Handle ajay requests
   Markocupic\ResourceBookingBundle\EventSubscriber\AjaxRequestEventSubscriber:
     tags:
       - { name: kernel.event_subscriber }
 
-  # Cron: Delete daily no more used bookings
-  Markocupic\ResourceBookingBundle\Cron\Cron:
-    public: true
-
   # Register session bag
   Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag:
-    class: Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag
     calls:
-    - ['setName', ['%resource_booking_bundle.session.attribute_bag_name%']]
+      - ['setName', ['%resource_booking_bundle.session.attribute_bag_name%']]
 
-  # Contao hooks
+  # Contao hook: addCustomRegexp
   Markocupic\ResourceBookingBundle\EventListener\ContaoHooks\Regexp:
     tags:
       - { name: contao.hook, hook: addCustomRegexp, method: onCustomRegexp, priority: 0 }
 
+  # Contao hook: replaceInsertTags
   Markocupic\ResourceBookingBundle\EventListener\ContaoHooks\ReplaceInsertTags:
     tags:
       - { name: contao.hook, hook: replaceInsertTags, method: onReplaceInsertTags, priority: 0 }
-
 
   # Migration class: Add booking uuid
   Markocupic\ResourceBookingBundle\Migration\AddBookingUuid\AddBookingUuid:
