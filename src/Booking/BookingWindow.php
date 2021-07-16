@@ -212,6 +212,11 @@ class BookingWindow
         }
     }
 
+    public function hasErrorMessage(): bool
+    {
+        return $this->errorMsg ? true : false;
+    }
+
     public function getErrorMessage(): ?string
     {
         return $this->errorMsg;
@@ -351,7 +356,6 @@ class BookingWindow
 
             // Set booking uuid
             $arrBookedSlots[$i]['bookingUuid'] = $this->getBookingUuid();
-
             $slot = $this->slotFactory->get(
                 SlotBooking::MODE,
                 $this->getActiveResource(),
@@ -362,7 +366,7 @@ class BookingWindow
             );
 
             // Check if slot is fully booked
-            $arrBookedSlots[$i]['sFullyBooked'] = $slot->isFullyBooked();
+            $arrBookedSlots[$i]['isFullyBooked'] = $slot->isFullyBooked();
 
             // Check if booking is possible
             if (!$slot->hasValidDate()) {
@@ -376,7 +380,7 @@ class BookingWindow
             } elseif (!$slot->isBookable()) {
                 // Resource has already been booked by an other user
                 $arrBookedSlots[$i]['isBookable'] = false;
-                $this->setErrorMessage('RBB.ERR.slotNotBookable');
+                $this->setErrorMessage('RBB.ERR.notEnoughItemsAvailable');
             } else {
                 // This case normally should not happen
                 $arrBookedSlots[$i]['isBookable'] = false;

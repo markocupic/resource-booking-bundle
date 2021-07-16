@@ -346,48 +346,58 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
      */
     private function onBookingFormValidationRequest(AjaxRequestEvent $ajaxRequestEvent): void
     {
+        /** @var System $systemAdapter */
+        $systemAdapter = $this->framework->getAdapter(System::class);
+
+        // Load language file
+        $systemAdapter->loadLanguageFile('default', $this->sessionBag->get('language'));
         $ajaxResponse = $ajaxRequestEvent->getAjaxResponse();
 
         $this->bookingWindow->initialize();
 
-        $hasError = false;
-        $arrBookings = [];
-
         $ajaxResponse->setStatus(AjaxResponse::STATUS_ERROR);
         $ajaxResponse->setData('noDatesSelected', false);
-        $ajaxResponse->setData('resourceIsAlreadyBooked', false);
+        $ajaxResponse->setData('resourceIsAlreadyFullyBooked', false);
         $ajaxResponse->setData('passedValidation', false);
         $ajaxResponse->setData('noBookingRepeatStopWeekTstampSelected', false);
-        $ajaxResponse->setData('message', null);
+        $ajaxResponse->setData('passedValidation', true);
 
-        if (!$hasError) {
-            $ajaxResponse->setData('passedValidation', true);
+        $arrBookings = $this->bookingWindow->getBookingCollection()->fetchAll();
 
-            $arrBookings = $this->bookingWindow->getBookingCollection()->fetchAll();
+        if (!$this->bookingWindow->isBookingPossible()) {
+            if ($this->bookingWindow->hasErrorMessage()) {
+                $ajaxResponse->setErrorMessage($this->bookingWindow->getErrorMessage());
+            }
 
-            if (!$this->bookingWindow->isBookingPossible()) {
-                if (empty($arrBookings)) {
-                    $ajaxResponse->setData('passedValidation', false);
-                    $ajaxResponse->setData('noDatesSelected', true);
-                } else {
-                    foreach ($arrBookings as $arrBooking) {
-                        if (true === $arrBooking['invalidDate']) {
-                            $ajaxResponse->setData('passedValidation', false);
-                            $ajaxResponse->setData('dateNotInAllowedTimeSpan', true);
-                            break;
+            if (empty($arrBookings)) {
+                $ajaxResponse->setData('passedValidation', false);
+                $ajaxResponse->setData('noDatesSelected', true);
+                $ajaxResponse->setErrorMessage($this->translator->trans('RBB.ERR.selectBookingDatesPlease', [], 'contao_default'));
+            } else {
+                foreach ($arrBookings as $arrBooking) {
+                    if (true === $arrBooking['invalidDate']) {
+                        $ajaxResponse->setData('passedValidation', false);
+                        $ajaxResponse->setData('dateNotInAllowedTimeSpan', true);
+                        $ajaxResponse->setErrorMessage($this->translator->trans('RBB.ERR.selectBookingDatesPlease', [], 'contao_default'));
+                        break;
+                    }
+
+                    if (!$arrBooking['isBookable']) {
+                        if ($arrBooking['isFullyBooked']) {
+                            $ajaxResponse->setData('resourceIsAlreadyFullyBooked', true);
+                            $ajaxResponse->setErrorMessage($this->translator->trans('RBB.ERR.resourceIsAlreadyFullyBooked', [], 'contao_default'));
+                        } else {
+                            $ajaxResponse->setErrorMessage($this->translator->trans('RBB.ERR.notEnoughItemsAvailable', [], 'contao_default'));
                         }
+                        $ajaxResponse->setData('passedValidation', false);
 
-                        if (true === $arrBooking['resourceIsAlreadyBooked'] && false === $arrBooking['resourceIsAlreadyBookedByLoggedInUser']) {
-                            $ajaxResponse->setData('passedValidation', false);
-                            $ajaxResponse->setData('resourceIsAlreadyBooked', true);
-                            $ajaxResponse->setData('resourceBlocked', true);
-                            break;
-                        }
+                        break;
                     }
                 }
             }
+        } else {
+            $ajaxResponse->setConfirmationMessage($this->translator->trans('RBB.MSG.resourceAvailable', [], 'contao_default'));
         }
-
         $ajaxResponse->setData('bookingSelection', $arrBookings);
         $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
     }

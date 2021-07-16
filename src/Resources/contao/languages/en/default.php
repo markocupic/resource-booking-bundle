@@ -31,9 +31,7 @@ $GLOBALS['TL_LANG']['MSC']['bookingFor'] = 'Booking for';
 
 // Messages & Errors
 $GLOBALS['TL_LANG']['MSG']['pleaseInsertValidBookingTime'] = 'Insert a valid time (format hh:mm) please.';
-$GLOBALS['TL_LANG']['MSG']['selectBookingDatesPlease'] = 'Select one or more booking time slots please.';
 $GLOBALS['TL_LANG']['MSG']['noResourceSelected'] = 'Select a ressource please.';
-$GLOBALS['TL_LANG']['MSG']['resourceIsAlreadyBooked'] = 'Resource already booked.';
 $GLOBALS['TL_LANG']['MSG']['selectResourceTypePlease'] = 'Select a resource type please.';
 $GLOBALS['TL_LANG']['MSG']['selectResourcePlease'] = 'Select a resource please.';
 $GLOBALS['TL_LANG']['MSG']['selectValidResourcePlease'] = 'Select a valid resource please.';
@@ -44,11 +42,10 @@ $GLOBALS['TL_LANG']['RBB']['1WeekAhead'] = '1 week ahead';
 $GLOBALS['TL_LANG']['RBB']['close'] = 'close';
 $GLOBALS['TL_LANG']['RBB']['cancelBooking'] = 'Should the booking be canceled?';
 $GLOBALS['TL_LANG']['RBB']['bookResourceRepetitions'] = 'Repeat booking until ...?';
-$GLOBALS['TL_LANG']['RBB']['enterAbstract'] = 'Enter a short description (max 50 characters).';
+$GLOBALS['TL_LANG']['RBB']['addDescription'] = 'Enter a short description (max 50 characters).';
 $GLOBALS['TL_LANG']['RBB']['abstract'] = 'brief description';
 $GLOBALS['TL_LANG']['RBB']['time'] = 'time';
 $GLOBALS['TL_LANG']['RBB']['timeSpan'] = 'time span';
-$GLOBALS['TL_LANG']['RBB']['available'] = 'available';
 $GLOBALS['TL_LANG']['RBB']['alreadyBooked'] = 'already booked by you';
 $GLOBALS['TL_LANG']['RBB']['showOccupiedResources'] = 'show already booked resources';
 $GLOBALS['TL_LANG']['RBB']['selectBookingTime'] = 'Select at least 1 booking time span please.';
@@ -78,8 +75,12 @@ $GLOBALS['TL_LANG']['RBB']['ERR']['invalidStartOrEndTime'] = 'You\'ve selected a
 $GLOBALS['TL_LANG']['RBB']['ERR']['slotNotBookable'] = 'You\'ve selected a non bookable slot';
 $GLOBALS['TL_LANG']['RBB']['ERR']['generalBookingError'] = 'Error, while trying to book a resource.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['cancelingBookingNotAllowed'] = 'You are not allowed to cancel this booking.';
+$GLOBALS['TL_LANG']['RBB']['ERR']['selectBookingDatesPlease'] = 'Select one or more booking time slots please.';
+$GLOBALS['TL_LANG']['RBB']['ERR']['resourceIsAlreadyFullyBooked'] = 'Resource is already fully booked.';
+$GLOBALS['TL_LANG']['RBB']['ERR']['notEnoughItemsAvailable'] = 'The requested resource(s) are fully booked or there are not enough units available.';
 
 // Messages
 $GLOBALS['TL_LANG']['RBB']['MSG']['successfullyBookedXItems'] = 'Successfully booked for %s %s items.';
 $GLOBALS['TL_LANG']['RBB']['MSG']['successfullyCanceledBookingAndItsRepetitions'] = 'Successfully canceled booking with ID %s and %s of its repetitions.';
 $GLOBALS['TL_LANG']['RBB']['MSG']['successfullyCanceledBooking'] = 'Booking with ID %s has been successfully canceled.';
+$GLOBALS['TL_LANG']['RBB']['MSG']['resourceAvailable'] = 'The resource can still be booked in the desired period.';

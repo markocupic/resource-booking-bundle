@@ -26,9 +26,7 @@ class SlotBooking extends AbstractSlot
      */
     public function isBookable(): bool
     {
-        if (!$this->hasValidDate()) {
-            return false;
-        }
+
 
         $itemsBooked = 0;
 
@@ -47,4 +45,6 @@ class SlotBooking extends AbstractSlot
 
         return false;
     }
+
+
 }
