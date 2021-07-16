@@ -140,6 +140,11 @@ abstract class AbstractSlot implements SlotInterface
         return $this->desiredItems;
     }
 
+    public function getResource(): ?ResourceBookingResourceModel
+    {
+        return $this->resource;
+    }
+
     public function getRepetitionStop(): int
     {
         return $this->repetitionStop;
@@ -153,6 +158,23 @@ abstract class AbstractSlot implements SlotInterface
                     return true;
                 }
             }
+        }
+
+        return false;
+    }
+
+    public function isFullyBooked(): bool
+    {
+        $count = 0;
+
+        if (null !== ($objBookings = $this->getBookings())) {
+            while ($objBookings->next()) {
+                $count += (int) $objBookings->itemsBooked;
+            }
+        }
+
+        if ($count >= (int) $this->getResource()->itemsAvailable) {
+            return true;
         }
 
         return false;

@@ -37,6 +37,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Security\Core\Security;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Class AjaxRequestEventSubscriber.
@@ -76,6 +77,11 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
     private $requestStack;
 
     /**
+     * @var TranslatorInterface
+     */
+    private $translator;
+
+    /**
      * @var ArrayAttributeBag
      */
     private $sessionBag;
@@ -93,7 +99,7 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
     /**
      * AjaxRequestEventSubscriber constructor.
      */
-    public function __construct(ContaoFramework $framework, BookingMain $bookingMain, BookingWindow $bookingWindow, LoggedInFrontendUser $user, SessionInterface $session, RequestStack $requestStack, string $bagName, Security $security, EventDispatcherInterface $eventDispatcher)
+    public function __construct(ContaoFramework $framework, BookingMain $bookingMain, BookingWindow $bookingWindow, LoggedInFrontendUser $user, SessionInterface $session, RequestStack $requestStack, TranslatorInterface $translator, string $bagName, Security $security, EventDispatcherInterface $eventDispatcher)
     {
         $this->framework = $framework;
         $this->bookingMain = $bookingMain;
@@ -101,6 +107,7 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
         $this->user = $user;
         $this->session = $session;
         $this->requestStack = $requestStack;
+        $this->translator = $translator;
         $this->sessionBag = $session->getBag($bagName);
         $this->security = $security;
         $this->eventDispatcher = $eventDispatcher;
@@ -241,7 +248,13 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
 
         // First we check, if booking is possible!
         if (!$this->bookingWindow->isBookingPossible()) {
-            $ajaxResponse->setErrorMessage($this->bookingWindow->getErrorMessage());
+            $ajaxResponse->setErrorMessage(
+                $this->translator->trans(
+                    $this->bookingWindow->getErrorMessage(),
+                    [],
+                    'contao_default'
+                )
+            );
             $ajaxResponse->setStatus(AjaxResponse::STATUS_ERROR);
 
             return;
@@ -303,10 +316,10 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
 
             if (null === $ajaxResponse->getConfirmationMessage()) {
                 $ajaxResponse->setConfirmationMessage(
-                    sprintf(
-                        $GLOBALS['TL_LANG']['MSG']['successfullyBookedXItems'],
-                        $this->bookingWindow->getActiveResource()->title,
-                        $objBookings->count()
+                    $this->translator->trans(
+                        'RBB.MSG.successfullyBookedXItems',
+                        [$this->bookingWindow->getActiveResource()->title, $objBookings->count()],
+                        'contao_default'
                     )
                 );
             }
@@ -314,7 +327,9 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
             $ajaxResponse->setStatus(AjaxResponse::STATUS_ERROR);
 
             if (null === $ajaxResponse->getErrorMessage()) {
-                $ajaxResponse->setErrorMessage($GLOBALS['TL_LANG']['MSG']['generalBookingError']);
+                $ajaxResponse->setErrorMessage(
+                    $this->translator->trans('RBB.ERR.generalBookingError', [], 'contao_default')
+                );
             }
         }
 
@@ -491,15 +506,39 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
                     $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
 
                     if ('true' === $request->request->get('deleteBookingsWithSameBookingUuid')) {
-                        $ajaxResponse->setConfirmationMessage(sprintf($GLOBALS['TL_LANG']['MSG']['successfullyCanceledBookingAndItsRepetitions'], $intId, $countRepetitionsToDelete));
+                        $ajaxResponse->setConfirmationMessage(
+                            $this->translator->trans(
+                                'RBB.MSG.successfullyCanceledBookingAndItsRepetitions',
+                                [$intId, $countRepetitionsToDelete],
+                                'contao_default',
+                            )
+                        );
                     } else {
-                        $ajaxResponse->setConfirmationMessage(sprintf($GLOBALS['TL_LANG']['MSG']['successfullyCanceledBooking'], $intId));
+                        $ajaxResponse->setConfirmationMessage(
+                            $this->translator->trans(
+                                'RBB.MSG.successfullyCanceledBooking',
+                                [$intId],
+                                'contao_default',
+                            )
+                        );
                     }
                 } else {
-                    $ajaxResponse->setErrorMessage($GLOBALS['TL_LANG']['MSG']['notAllowedToCancelBooking']);
+                    $ajaxResponse->setErrorMessage(
+                        $this->translator->trans(
+                            'RBB.ERR.cancelingBookingNotAllowed',
+                            [],
+                            'contao_default',
+                        )
+                    );
                 }
             } else {
-                $ajaxResponse->setErrorMessage($GLOBALS['TL_LANG']['MSG']['notAllowedToCancelBooking']);
+                $ajaxResponse->setErrorMessage(
+                    $this->translator->trans(
+                        'RBB.ERR.cancelingBookingNotAllowed',
+                        [],
+                        'contao_default',
+                    )
+                );
             }
         }
     }

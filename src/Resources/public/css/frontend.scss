@@ -1,11 +1,33 @@
 $notBookableBg: #adb5bd2e;
 $bookableBg: rgba(115, 207, 97, 0.42);
+$fullyBookedBg: rgb(255, 222, 213);
 $loggedInUserIsHolderBg: rgba(3, 169, 244, 0.32);
 $iconBookingColor: #ffffff;
 $iconCancelBookingColor: #ffffff;
 $iconCancelBookingHoverColor: #98777e;
 $tableBorderColor: #ccc;
 $transitionSpeed: .8s;
+.custom-scroll-bar-thin {
+  & {
+    scrollbar-width: auto;
+    scrollbar-color: #000000 #ffffff;
+  }
+
+  /* Chrome, Edge, and Safari */
+  &::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #ffffff;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #000000;
+    border-radius: 10px;
+    border: 3px solid #ffffff;
+  }
+}
 
 .resource-booking-backdrop-layer {
   position: fixed;
@@ -82,7 +104,9 @@ $transitionSpeed: .8s;
       }
 
       &.time-slot-cell[data-isbooked="true"] {
-        background-color: $notBookableBg;
+        background-color: $bookableBg;
+        overflow-y: auto;
+        @extend .custom-scroll-bar-thin;
       }
 
       &.time-slot-cell[data-isbookable="true"] {
@@ -91,6 +115,10 @@ $transitionSpeed: .8s;
 
       &.time-slot-cell[data-isinvaliddate="true"] {
         background-color: $notBookableBg;
+      }
+
+      &.time-slot-cell[data-isfullybooked="true"] {
+        background-color: $fullyBookedBg;
       }
     }
   }
@@ -177,7 +205,7 @@ $transitionSpeed: .8s;
           font-weight: bold;
         }
 
-        .holder-box, .description-box {
+        .holder-box, .description-box, .item-counter-box {
           position: relative;
           z-index: 20;
         }
@@ -196,7 +224,7 @@ $transitionSpeed: .8s;
         transition: color $transitionSpeed;
       }
 
-      .description-box, .holder-box {
+      .description-box, .holder-box, .item-counter-box {
         opacity: 0.3;
       }
     }

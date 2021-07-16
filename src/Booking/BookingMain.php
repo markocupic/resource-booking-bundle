@@ -301,6 +301,7 @@ class BookingMain
                         $objTs->bookingRelatedToLoggedInUser = $slot->getBookingRelatedToLoggedInUser() ? $slot->getBookingRelatedToLoggedInUser()->row() : null;
                         $objTs->timeSlotId = $objTimeslots->id;
                         $objTs->isValidDate = $slot->hasValidDate();
+                        $objTs->isFullyBooked = $slot->isFullyBooked();
                         $objTs->resourceId = $this->getActiveResource()->id;
                         $objTs->cssClass = $cssCellClass;
                         $objTs->bookings = [];

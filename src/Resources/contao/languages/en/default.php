@@ -31,18 +31,12 @@ $GLOBALS['TL_LANG']['MSC']['bookingFor'] = 'Booking for';
 
 // Messages & Errors
 $GLOBALS['TL_LANG']['MSG']['pleaseInsertValidBookingTime'] = 'Insert a valid time (format hh:mm) please.';
-$GLOBALS['TL_LANG']['MSG']['generalBookingError'] = 'Error, while trying to book a resource.';
 $GLOBALS['TL_LANG']['MSG']['selectBookingDatesPlease'] = 'Select one or more booking time slots please.';
 $GLOBALS['TL_LANG']['MSG']['noResourceSelected'] = 'Select a ressource please.';
 $GLOBALS['TL_LANG']['MSG']['resourceIsAlreadyBooked'] = 'Resource already booked.';
-$GLOBALS['TL_LANG']['MSG']['notAllowedToCancelBooking'] = 'You are not allowed to cancel this booking.';
 $GLOBALS['TL_LANG']['MSG']['selectResourceTypePlease'] = 'Select a resource type please.';
 $GLOBALS['TL_LANG']['MSG']['selectResourcePlease'] = 'Select a resource please.';
 $GLOBALS['TL_LANG']['MSG']['selectValidResourcePlease'] = 'Select a valid resource please.';
-$GLOBALS['TL_LANG']['MSG']['successfullyBookedXItems'] = 'Successfully booked for %s %s items.';
-$GLOBALS['TL_LANG']['MSG']['generalBookingError'] = 'An unexpected error has occurred. No booking could be made.';
-$GLOBALS['TL_LANG']['MSG']['successfullyCanceledBooking'] = 'Booking with ID %s has been successfully canceled.';
-$GLOBALS['TL_LANG']['MSG']['successfullyCanceledBookingAndItsRepetitions'] = 'Successfully canceled booking with ID %s and %s of its repetitions.';
 
 // Frontend template
 $GLOBALS['TL_LANG']['RBB']['1WeekBack'] = '1 week back';
@@ -77,8 +71,15 @@ $GLOBALS['TL_LANG']['RBB']['deleteRepetitions'] = 'Delete repetitions.';
 $GLOBALS['TL_LANG']['RBB']['invalidDate'] = 'invalid date';
 $GLOBALS['TL_LANG']['RBB']['generalError'] = 'An error has occured. Please check connectivity.';
 $GLOBALS['TL_LANG']['RBB']['error401'] = 'An error has occured. You are not authorized. Please try to log in.';
+$GLOBALS['TL_LANG']['RBB']['pieces'] = 'piece(s)';
 
+// Errors
+$GLOBALS['TL_LANG']['RBB']['ERR']['invalidStartOrEndTime'] = 'You\'ve selected a slot with a invalid start- or end time.';
+$GLOBALS['TL_LANG']['RBB']['ERR']['slotNotBookable'] = 'You\'ve selected a non bookable slot';
+$GLOBALS['TL_LANG']['RBB']['ERR']['generalBookingError'] = 'Error, while trying to book a resource.';
+$GLOBALS['TL_LANG']['RBB']['ERR']['cancelingBookingNotAllowed'] = 'You are not allowed to cancel this booking.';
 
-
-
-
+// Messages
+$GLOBALS['TL_LANG']['RBB']['MSG']['successfullyBookedXItems'] = 'Successfully booked for %s %s items.';
+$GLOBALS['TL_LANG']['RBB']['MSG']['successfullyCanceledBookingAndItsRepetitions'] = 'Successfully canceled booking with ID %s and %s of its repetitions.';
+$GLOBALS['TL_LANG']['RBB']['MSG']['successfullyCanceledBooking'] = 'Booking with ID %s has been successfully canceled.';

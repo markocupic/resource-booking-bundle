@@ -272,6 +272,7 @@ class BookingWindow
                     'tstamp' => time(),
                     'bookingUuid' => null,
                     'isBookable' => false,
+                    'isFullyBooked' => false,
                     'isValidDate' => true,
                     'hasBookings' => false,
                     'bookings' => null,
@@ -360,23 +361,26 @@ class BookingWindow
                 (int) $arrData['bookingRepeatStopWeekTstamp'],
             );
 
+            // Check if slot is fully booked
+            $arrBookedSlots[$i]['sFullyBooked'] = $slot->isFullyBooked();
+
             // Check if booking is possible
             if (!$slot->hasValidDate()) {
                 // Invalid time period
                 $arrBookedSlots[$i]['isBookable'] = false;
                 $arrBookedSlots[$i]['isValidDate'] = false;
-                $this->setErrorMessage('invalidStartOrEndTime');
+                $this->setErrorMessage('RBB.ERR.invalidStartOrEndTime');
             } elseif ($slot->isBookable()) {
                 // All ok! Resource is bookable. -> override defaults
                 $arrBookedSlots[$i]['isBookable'] = true;
             } elseif (!$slot->isBookable()) {
                 // Resource has already been booked by an other user
                 $arrBookedSlots[$i]['isBookable'] = false;
-                $this->setErrorMessage('slotNotBookable');
+                $this->setErrorMessage('RBB.ERR.slotNotBookable');
             } else {
                 // This case normally should not happen
                 $arrBookedSlots[$i]['isBookable'] = false;
-                $this->setErrorMessage('slotNotBookable');
+                $this->setErrorMessage('RBB.ERR.slotNotBookable');
             }
 
             if ($slot->isBookedByUser()) {

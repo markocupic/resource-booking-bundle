@@ -1,3 +1,22 @@
+.custom-scroll-bar-thin, .mod_resourceBookingWeekcalendar .resource-booking-table-window .layout-cell.time-slot-cell[data-isbooked=true], .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell.time-slot-cell[data-isbooked=true] {
+  /* Chrome, Edge, and Safari */
+}
+.custom-scroll-bar-thin, .mod_resourceBookingWeekcalendar .resource-booking-table-window .layout-cell.time-slot-cell[data-isbooked=true], .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell.time-slot-cell[data-isbooked=true] {
+  scrollbar-width: auto;
+  scrollbar-color: #000000 #ffffff;
+}
+.custom-scroll-bar-thin::-webkit-scrollbar, .mod_resourceBookingWeekcalendar .resource-booking-table-window .layout-cell.time-slot-cell[data-isbooked=true]::-webkit-scrollbar, .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell.time-slot-cell[data-isbooked=true]::-webkit-scrollbar {
+  width: 10px;
+}
+.custom-scroll-bar-thin::-webkit-scrollbar-track, .mod_resourceBookingWeekcalendar .resource-booking-table-window .layout-cell.time-slot-cell[data-isbooked=true]::-webkit-scrollbar-track, .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell.time-slot-cell[data-isbooked=true]::-webkit-scrollbar-track {
+  background: #ffffff;
+}
+.custom-scroll-bar-thin::-webkit-scrollbar-thumb, .mod_resourceBookingWeekcalendar .resource-booking-table-window .layout-cell.time-slot-cell[data-isbooked=true]::-webkit-scrollbar-thumb, .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell.time-slot-cell[data-isbooked=true]::-webkit-scrollbar-thumb {
+  background-color: #000000;
+  border-radius: 10px;
+  border: 3px solid #ffffff;
+}
+
 .resource-booking-backdrop-layer {
   position: fixed;
   top: 0;
@@ -57,13 +76,17 @@
   display: flex;
 }
 .mod_resourceBookingWeekcalendar .resource-booking-table-window .layout-cell.time-slot-cell[data-isbooked=true], .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell.time-slot-cell[data-isbooked=true] {
-  background-color: #adb5bd2e;
+  background-color: rgba(115, 207, 97, 0.42);
+  overflow-y: auto;
 }
 .mod_resourceBookingWeekcalendar .resource-booking-table-window .layout-cell.time-slot-cell[data-isbookable=true], .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell.time-slot-cell[data-isbookable=true] {
   background-color: rgba(115, 207, 97, 0.42);
 }
 .mod_resourceBookingWeekcalendar .resource-booking-table-window .layout-cell.time-slot-cell[data-isinvaliddate=true], .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell.time-slot-cell[data-isinvaliddate=true] {
   background-color: #adb5bd2e;
+}
+.mod_resourceBookingWeekcalendar .resource-booking-table-window .layout-cell.time-slot-cell[data-isfullybooked=true], .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell.time-slot-cell[data-isfullybooked=true] {
+  background-color: #ffded5;
 }
 .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell.time-slot-cell {
   align-items: flex-start;
@@ -127,7 +150,7 @@
 .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell.time-slot-cell .holder-box {
   font-weight: bold;
 }
-.mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell.time-slot-cell .holder-box, .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell.time-slot-cell .description-box {
+.mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell.time-slot-cell .holder-box, .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell.time-slot-cell .description-box, .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell.time-slot-cell .item-counter-box {
   position: relative;
   z-index: 20;
 }
@@ -139,7 +162,7 @@
   color: #98777e !important;
   transition: color 0.8s;
 }
-.mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell[data-iscancelable]:hover .description-box, .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell[data-iscancelable]:hover .holder-box, .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell[data-isbookable]:hover .description-box, .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell[data-isbookable]:hover .holder-box {
+.mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell[data-iscancelable]:hover .description-box, .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell[data-iscancelable]:hover .holder-box, .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell[data-iscancelable]:hover .item-counter-box, .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell[data-isbookable]:hover .description-box, .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell[data-isbookable]:hover .holder-box, .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell[data-isbookable]:hover .item-counter-box {
   opacity: 0.3;
 }
 .mod_resourceBookingWeekcalendar .resource-booking-table-window .layout-cell {
