@@ -13,20 +13,20 @@ Das Tool setzt auf [vue.js](https://vuejs.org/), [Fontawesome](https://fontaweso
 
 Anm: Bei der Installation wird neben den oben erwähnten Erweiterungen auch [codefog/contao-haste](https://github.com/codefog/contao-haste) mitinstalliert.
 
-![Alt text](docs/screenshot/screenshot.png?raw=true "Buchungstool im Frontend-Ansicht")
+![Alt text](docs/screenshot/screenshot.png "Buchungstool im Frontend-Ansicht")
 
-![Alt text](docs/screenshot/screenshot2.png?raw=true "Buchungstool im Frontend-Ansicht")
+![Alt text](docs/screenshot/screenshot2.png "Buchungstool im Frontend-Ansicht")
 
 ## Template mit zusätzlichen Mitgliederdaten erweitern
 Sollen zusätzliche Mitgliederdaten in der Buchungsübersicht angezeigt weden, müssen zwei Dinge angepasst werden.
 
 Erstens muss in der Moduleinstellung das Feld, welches zusätzlich angezeigt werden soll, ausgewählt werden. 
 
-![Alt text](docs/screenshot/screenshot3.png?raw=true "Weitere Mitgliederfelder anzeigen")
+![Alt text](docs/screenshot/screenshot3.png "Weitere Mitgliederfelder anzeigen")
 
 Weiter muss zusätzlich das Template angepasst werden. Mit *{{ eventBox.bookedByCompany }}* kann der Firmenname mitangezeigt werden. Achtung! Hierbei handelt es sich nicht um einen Contao Inserttag, sondern um die "vue.js-Mustache-Syntax-Schreibweise". Das Leerzeichen nach bzw. vor der geschweiften Klammer ist nötig. 
 
-![Alt text](docs/screenshot/screenshot4.png?raw=true "Weitere Mitgliederfelder anzeigen")
+![Alt text](docs/screenshot/screenshot4.png "Weitere Mitgliederfelder anzeigen")
 
 
 
