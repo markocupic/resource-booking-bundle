@@ -24,7 +24,7 @@ use Markocupic\ResourceBookingBundle\Event\PostBookingEvent;
 use Markocupic\ResourceBookingBundle\Event\PostCancelingEvent;
 use Markocupic\ResourceBookingBundle\Event\PreBookingEvent;
 use Markocupic\ResourceBookingBundle\Event\PreCancelingEvent;
-use Markocupic\ResourceBookingBundle\Helper\DateHelper;
+use Markocupic\ResourceBookingBundle\Utils\DateHelper;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceTypeModel;

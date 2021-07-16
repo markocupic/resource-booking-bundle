@@ -15,7 +15,7 @@ namespace Markocupic\ResourceBookingBundle\EventListener\ContaoHooks;
 use Contao\Controller;
 use Contao\Validator;
 use Contao\Widget;
-use Markocupic\ResourceBookingBundle\Helper\DateHelper;
+use Markocupic\ResourceBookingBundle\Utils\DateHelper;
 
 /**
  * Class Regexp.

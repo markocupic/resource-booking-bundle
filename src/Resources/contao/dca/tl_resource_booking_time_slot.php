@@ -13,7 +13,7 @@ use Contao\DataContainer;
 use Contao\Date;
 use Contao\Input;
 use Contao\Message;
-use Markocupic\ResourceBookingBundle\Helper\UtcTimeHelper;
+use Markocupic\ResourceBookingBundle\Utils\UtcTimeHelper;
 
 /**
  * Table tl_resource_booking_time_slot
