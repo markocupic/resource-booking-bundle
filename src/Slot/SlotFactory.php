@@ -16,7 +16,14 @@ use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 
 class SlotFactory
 {
+    /**
+     * @var SlotMain
+     */
     private $slotMain;
+
+    /**
+     * @var SlotBooking
+     */
     private $slotBooking;
 
     public function __construct(SlotMain $slotMain, SlotBooking $slotBooking)
@@ -25,14 +32,14 @@ class SlotFactory
         $this->slotBooking = $slotBooking;
     }
 
-    public function get(string $mode, ResourceBookingResourceModel $resource, int $startTime, int $endTime, int $desiredItems = 1)
+    public function get(string $mode, ResourceBookingResourceModel $resource, int $startTime, int $endTime, int $desiredItems = 1, ?int $bookingRepeatStopWeekTstamp = null): SlotInterface
     {
-        if($mode === 'main-window'){
-            return $this->slotMain->create($resource, $startTime, $endTime, $desiredItems);
+        if (SlotMain::MODE === $mode) {
+            return $this->slotMain->create($resource, $startTime, $endTime, $desiredItems, $bookingRepeatStopWeekTstamp);
         }
-        
-        if($mode === 'booking-window'){
-            return $this->slotBooking->create($resource, $startTime, $endTime, $desiredItems);
+
+        if (SlotBooking::MODE === $mode) {
+            return $this->slotBooking->create($resource, $startTime, $endTime, $desiredItems, $bookingRepeatStopWeekTstamp);
         }
     }
 }

@@ -18,23 +18,21 @@ use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Database;
 use Contao\Date;
 use Contao\Input;
-use Contao\MemberModel;
 use Contao\Model\Collection;
 use Contao\ModuleModel;
 use Contao\StringUtil;
-use Markocupic\ResourceBookingBundle\Util\DateHelper;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
-use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotModel;
 use Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag;
+use Markocupic\ResourceBookingBundle\Slot\SlotBooking;
+use Markocupic\ResourceBookingBundle\Slot\SlotFactory;
 use Markocupic\ResourceBookingBundle\User\LoggedInFrontendUser;
+use Markocupic\ResourceBookingBundle\Util\DateHelper;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
-use Markocupic\ResourceBookingBundle\Slot\SlotFactory;
 
 /**
- * Class BookingWindow
- * @package Markocupic\ResourceBookingBundle\Booking
+ * Class BookingWindow.
  */
 class BookingWindow
 {
@@ -99,6 +97,11 @@ class BookingWindow
     private $sessionBag;
 
     /**
+     * @var string
+     */
+    private $errorMsg;
+
+    /**
      * Booking constructor.
      */
     public function __construct(ContaoFramework $framework, SessionInterface $session, RequestStack $requestStack, SlotFactory $slotFactory, LoggedInFrontendUser $user, string $bagName)
@@ -119,18 +122,14 @@ class BookingWindow
         $objBookings = $this->getBookingCollection();
         $objBookings->reset();
 
-        $arrBookings = $objBookings->fetchAll();
+        $arrBookedSlots = $objBookings->fetchAll();
 
-        if (!\is_array($arrBookings) || empty($arrBookings)) {
+        if (!\is_array($arrBookedSlots) || empty($arrBookedSlots)) {
             return false;
         }
 
-        foreach ($arrBookings as $arrBooking) {
-            if (true === $arrBooking['invalidDate']) {
-                return false;
-            }
-
-            if (true === $arrBooking['resourceIsAlreadyBooked'] && false === $arrBooking['resourceIsAlreadyBookedByLoggedInUser']) {
+        foreach ($arrBookedSlots as $arrBooking) {
+            if (!$arrBooking['isBookable']) {
                 return false;
             }
         }
@@ -179,18 +178,6 @@ class BookingWindow
         return $this->bookingUuid;
     }
 
-    public function isResourceBooked(ResourceBookingResourceModel $objResource, int $slotStartTime, int $slotEndTime): bool
-    {
-        /** @var ResourceBookingModel $resourceBookingModelAdapter */
-        $resourceBookingModelAdapter = $this->framework->getAdapter(ResourceBookingModel::class);
-
-        if (null === $resourceBookingModelAdapter->findOneByResourceIdStarttimeAndEndtime($objResource, $slotStartTime, $slotEndTime)) {
-            return false;
-        }
-
-        return true;
-    }
-
     /**
      * @throws \Exception
      */
@@ -225,6 +212,16 @@ class BookingWindow
         }
     }
 
+    public function getErrorMessage(): ?string
+    {
+        return $this->errorMsg;
+    }
+
+    private function setErrorMessage(string $error): void
+    {
+        $this->errorMsg = $error;
+    }
+
     /**
      * @throws \Exception
      */
@@ -245,21 +242,12 @@ class BookingWindow
         /** @var Config $configAdapter */
         $configAdapter = $this->framework->getAdapter(Config::class);
 
-        /** @var MemberModel $memberModelAdapter */
-        $memberModelAdapter = $this->framework->getAdapter(MemberModel::class);
-
-        /** @var ResourceBookingModel $resourceBookingModelAdapter */
-        $resourceBookingModelAdapter = $this->framework->getAdapter(ResourceBookingModel::class);
-
-        /** @var ResourceBookingTimeSlotModel $resourceBookingTimeSlotModelAdapter */
-        $resourceBookingTimeSlotModelAdapter = $this->framework->getAdapter(ResourceBookingTimeSlotModel::class);
-
         /** @var Controller $controllerAdapter */
         $controllerAdapter = $this->framework->getAdapter(Controller::class);
 
         $request = $this->requestStack->getCurrentRequest();
 
-        $arrBookings = [];
+        $arrBookedSlots = [];
 
         $this->arrDateSelection = !empty($request->request->get('bookingDateSelection')) ? $request->request->get('bookingDateSelection') : [];
 
@@ -275,18 +263,20 @@ class BookingWindow
                     'endTime' => (int) $arrTimeSlot[2],
                     'date' => '',
                     'datim' => '',
+                    'title' => '',
                     'mondayTimestampSelectedWeek' => (int) $arrTimeSlot[3],
                     'pid' => $inputAdapter->post('resourceId'),
-                    'bookingUuid' => '',
+                    'itemsBooked' => $inputAdapter->post('itemsBooked'),
+                    'description' => $stringUtilAdapter->decodeEntities($inputAdapter->post('bookingDescription')),
                     'member' => $this->user->getLoggedInUser()->id,
                     'tstamp' => time(),
-                    'resourceIsAlreadyBooked' => true,
-                    'resourceBlocked' => true,
-                    'invalidDate' => false,
-                    'description' => $stringUtilAdapter->decodeEntities($inputAdapter->post('bookingDescription')),
-                    'resourceIsAlreadyBookedByLoggedInUser' => false,
-                    'newInsert' => false,
-                    'holder' => '',
+                    'bookingUuid' => null,
+                    'isBookable' => false,
+                    'isValidDate' => true,
+                    'hasBookings' => false,
+                    'bookings' => null,
+                    'userHasBooked' => false,
+                    'bookingRelatedToLoggedInUser' => null,
                 ];
 
                 // Load dca
@@ -307,7 +297,7 @@ class BookingWindow
                     }
                 }
 
-                $arrBookings[] = $arrData;
+                $arrBookedSlots[] = $arrData;
 
                 // Handle repetitions
                 if ($arrTimeSlot[3] < $this->bookingRepeatStopWeekTstamp) {
@@ -318,7 +308,7 @@ class BookingWindow
                         $arrRepeat['startTime'] = $dateHelperAdapter->addDaysToTime(7, $arrRepeat['startTime']);
                         $arrRepeat['endTime'] = $dateHelperAdapter->addDaysToTime(7, $arrRepeat['endTime']);
                         $arrRepeat['mondayTimestampSelectedWeek'] = $dateHelperAdapter->addDaysToTime(7, $arrRepeat['mondayTimestampSelectedWeek']);
-                        $arrBookings[] = $arrRepeat;
+                        $arrBookedSlots[] = $arrRepeat;
 
                         // Stop repeating
                         if ($arrRepeat['mondayTimestampSelectedWeek'] >= $this->bookingRepeatStopWeekTstamp) {
@@ -332,23 +322,23 @@ class BookingWindow
             }
         }
 
-        if (!empty($arrBookings)) {
+        if (!empty($arrBookedSlots)) {
             // Sort array by startTime
             usort(
-                $arrBookings,
+                $arrBookedSlots,
                 static function ($a, $b) {
                     return $a['startTime'] <=> $b['startTime'];
                 }
             );
         }
 
-        foreach ($arrBookings as $i => $arrData) {
+        foreach ($arrBookedSlots as $i => $arrData) {
             // Set date
-            $arrBookings[$i]['date'] = $dateAdapter->parse($configAdapter->get('dateFormat'), $arrData['startTime']);
-            $arrBookings[$i]['datim'] = sprintf('%s, %s: %s - %s', $dateAdapter->parse('D', $arrData['startTime']), $dateAdapter->parse($configAdapter->get('dateFormat'), $arrData['startTime']), $dateAdapter->parse('H:i', $arrData['startTime']), $dateAdapter->parse('H:i', $arrData['endTime']));
+            $arrBookedSlots[$i]['date'] = $dateAdapter->parse($configAdapter->get('dateFormat'), $arrData['startTime']);
+            $arrBookedSlots[$i]['datim'] = sprintf('%s, %s: %s - %s', $dateAdapter->parse('D', $arrData['startTime']), $dateAdapter->parse($configAdapter->get('dateFormat'), $arrData['startTime']), $dateAdapter->parse('H:i', $arrData['startTime']), $dateAdapter->parse('H:i', $arrData['endTime']));
 
             // Set title
-            $arrBookings[$i]['title'] = sprintf(
+            $arrBookedSlots[$i]['title'] = sprintf(
                 '%s : %s %s %s [%s - %s]',
                 $this->getActiveResource()->title,
                 $GLOBALS['TL_LANG']['MSC']['bookingFor'],
@@ -359,61 +349,64 @@ class BookingWindow
             );
 
             // Set booking uuid
-            $arrBookings[$i]['bookingUuid'] = $this->getBookingUuid();
+            $arrBookedSlots[$i]['bookingUuid'] = $this->getBookingUuid();
+
+            $slot = $this->slotFactory->get(
+                SlotBooking::MODE,
+                $this->getActiveResource(),
+                (int) $arrData['startTime'],
+                (int) $arrData['endTime'],
+                (int) $arrData['itemsBooked'],
+                (int) $arrData['bookingRepeatStopWeekTstamp'],
+            );
 
             // Check if booking is possible
-            if ($this->moduleModel->resourceBooking_addDateStop && $this->moduleModel->resourceBooking_dateStop + 24 * 3600 < $arrData['endTime']) {
+            if (!$slot->hasValidDate()) {
                 // Invalid time period
-                $arrBookings[$i]['resourceBlocked'] = true;
-                $arrBookings[$i]['invalidDate'] = true;
-            } elseif (null !== $resourceBookingTimeSlotModelAdapter->findByPk($arrData['timeSlotId']) && !$this->isResourceBooked($this->getActiveResource(), $arrData['startTime'], $arrData['endTime'])) {
+                $arrBookedSlots[$i]['isBookable'] = false;
+                $arrBookedSlots[$i]['isValidDate'] = false;
+                $this->setErrorMessage('invalidStartOrEndTime');
+            } elseif ($slot->isBookable()) {
                 // All ok! Resource is bookable. -> override defaults
-                $arrBookings[$i]['resourceBlocked'] = false;
-                $arrBookings[$i]['resourceIsAlreadyBooked'] = false;
-            } elseif (null !== ($objBooking = $resourceBookingModelAdapter->findOneByResourceIdStarttimeEndtimeAndMember($this->getActiveResource(), $arrData['startTime'], $arrData['endTime'], $arrData['member']))) {
-                // Resource has already been booked by the current/logged in user in a previous session
-                $arrBookings[$i]['resourceBlocked'] = false;
-                $arrBookings[$i]['resourceIsAlreadyBooked'] = true;
-                $arrBookings[$i]['resourceIsAlreadyBookedByLoggedInUser'] = true;
-                $arrBookings[$i]['id'] = $objBooking->id;
+                $arrBookedSlots[$i]['isBookable'] = true;
+            } elseif (!$slot->isBookable()) {
+                // Resource has already been booked by an other user
+                $arrBookedSlots[$i]['isBookable'] = false;
+                $this->setErrorMessage('slotNotBookable');
             } else {
                 // This case normally should not happen
-                $arrBookings[$i]['resourceBlocked'] = true;
-                $arrBookings[$i]['resourceIsAlreadyBooked'] = true;
-                $arrBookings[$i]['holder'] = '';
-
-                $objRes = $resourceBookingModelAdapter->findOneByResourceIdStarttimeAndEndtime($this->getActiveResource(), $arrData['startTime'], $arrData['endTime']);
-
-                if (null !== $objRes) {
-                    $arrBookings[$i]['holder'] = 'undefined';
-                    $objMember = $memberModelAdapter->findByPk($objRes->member);
-
-                    if (null !== $objMember) {
-                        $arrBookings[$i]['holder'] = $stringUtilAdapter->substr($objMember->firstname, 1, '').'. '.$objMember->lastname;
-                    }
-                }
+                $arrBookedSlots[$i]['isBookable'] = false;
+                $this->setErrorMessage('slotNotBookable');
             }
 
-            // Set "newInsert" to "true", if it is a new insert
-            if (!$arrBookings[$i]['id']) {
-                $arrBookings[$i]['newInsert'] = true;
+            if ($slot->isBookedByUser()) {
+                $arrBookedSlots[$i]['userHasBooked'] = true;
+                $arrBookedSlots[$i]['bookingRelatedToLoggedInUser'] = $slot->getBookingRelatedToLoggedInUser;
+            }
+
+            if ($slot->hasBookings()) {
+                $arrBookedSlots[$i]['hasBookings'] = true;
+                $arrBookedSlots[$i]['bookings'] = $slot->getBookings();
             }
         }
 
         $bookingCollection = [];
 
-        foreach ($arrBookings as $arrBooking) {
-            if (true === $arrBooking['resourceIsAlreadyBookedByLoggedInUser'] && null !== $arrBooking['id']) {
-                $objBooking = $resourceBookingModelAdapter->findByPk($arrBooking['id']);
-            } else {
+        foreach ($arrBookedSlots as $arrBooking) {
+            // Use already available booking entity
+            $objBooking = $arrBooking['bookingRelatedToLoggedInUser'];
+
+            if (!$arrBooking['userHasBooked'] && null === $objBooking) {
+                // Create new booking entity
                 $objBooking = new ResourceBookingModel();
             }
-
+            // Add data to the model
             if (null !== $objBooking) {
                 foreach ($arrBooking as $k => $v) {
                     $objBooking->{$k} = $v;
                 }
                 $bookingCollection[] = $objBooking;
+                // !Do not save the model here, this will be done after
             }
         }
 

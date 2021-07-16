@@ -61,11 +61,16 @@ class DateHelper
     }
 
     /**
-     * @return false|int
+     * @param int|null $timestamp
+     * @return int
      */
-    public static function getMondayOfCurrentWeek(): int
+    public static function getMondayOfCurrentWeek(int $timestamp = null): int
     {
-        return strtotime('monday this week');
+        if(!$timestamp)
+        {
+            $timestamp = time();
+        }
+        return strtotime('monday this week', $timestamp);
     }
 
     /**

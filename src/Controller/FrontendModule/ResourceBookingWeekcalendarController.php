@@ -14,6 +14,7 @@ namespace Markocupic\ResourceBookingBundle\Controller\FrontendModule;
 
 use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController;
 use Contao\CoreBundle\Framework\ContaoFramework;
+use Contao\Date;
 use Contao\Environment;
 use Contao\ModuleModel;
 use Contao\PageModel;
@@ -122,6 +123,7 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
 
     protected function getResponse(Template $template, ModuleModel $model, Request $request): ?Response
     {
+
         // Used, if multiple rbb modules are used on the same page
         $template->moduleKey = $this->moduleKey;
 

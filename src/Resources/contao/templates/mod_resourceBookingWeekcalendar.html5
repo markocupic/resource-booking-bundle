@@ -96,12 +96,13 @@
 
 					<div v-for="(row, rowIndex) in rows" v-bind:data-row-index="rowIndex" v-bind:id="row.rowData.cssRowId" class="layout-row" v-bind:class="row.rowData.cssRowClass">
 						<div class="layout-cell time-slot-indicator" v-bind:class="timeSlots[rowIndex].cssClass ? timeSlots[rowIndex].cssClass : ''">{{ timeSlots[rowIndex].timeSpanString }}</div>
-						<div class="layout-cell time-slot-cell" v-for="(slot, colIndex) in row.cellData" v-bind:class="slot.cssClass ? slot.cssClass : ''" v-bind:data-day-index="slot.index" v-bind:data-is-holder="slot.isHolder ? 'true' : 'false'" v-bind:data-iscancelable="slot.isBooked && slot.isEditable && slot.validDate" v-bind:data-isbookable="!slot.isBooked && slot.isEditable && slot.validDate" v-bind:data-isbooked="slot.isBooked" v-bind:data-isinvaliddate="!slot.validDate">
+						<div class="layout-cell time-slot-cell" v-for="(slot, colIndex) in row.cellData" v-bind:class="slot.cssClass ? slot.cssClass : ''" v-bind:data-day-index="slot.index" v-bind:data-iscancelable="slot.isBooked && slot.isEditable && slot.validDate" v-bind:data-isbookable="!slot.isCancelable && slot.isBookable" v-bind:data-isbooked="slot.hasBookings" v-bind:data-isinvaliddate="!slot.isValidDate">
 							<div v-if="slot.hasBookings" v-for="booking in slot.bookings">
                 <span class="holder-box">{{ booking.bookedByFullname }} {{ booking.itemsBooked }}/{{  activeResource.itemsAvailable }}</span>
                 {{br}}
                 <span class="description-box">{{ booking.bookingDescription }}</span>
-                <button class="btn btn-link btn-cancel-booking" v-if="userIsLoggedIn && slot.isCancelable" v-on:click="openBookingWindow(slot, 'showCancelBookingForm', booking)" title="{{rbb_lang::cancelResource}}">
+                <button class="btn btn-link btn-cancel-booking" v-if="userIsLoggedIn && slot.isCancelable && slot.userHasBooked && slot.bookingRelatedToLoggedInUser" v-on:click="openBookingWindow(slot, 'showCancelBookingForm', slot.bookingRelatedToLoggedInUser)" title="{{rbb_lang::cancelResource}}">
+                  {{ slot.bookingRelatedToLoggedInUser.id }}
                   <i class="icon-booking far fa-check-circle"></i>
                   <i class="icon-cancel-booking fas fa-times-circle"></i>
                 </button>
@@ -239,8 +240,8 @@
 
 								<div class="layout-row" v-for="(row, rowIndex) in rows" v-bind:data-row-index="rowIndex" v-bind:class="row.rowData.cssRowClass">
 									<div class="layout-cell time-slot-indicator">{{ timeSlots[rowIndex].timeSpanString }}</div>
-									<div class="layout-cell time-slot-cell" v-for="(slot, colIndex) in row.cellData" v-bind:data-day-index="slot.index" v-bind:data-is-holder="slot.isHolder ? 'true' : 'false'" v-bind:data-isbookable="!slot.isBooked && slot.isEditable && slot.validDate" v-bind:data-isbooked="slot.isBooked" v-bind:data-isinvaliddate="!slot.validDate">
-										<div v-if="slot.isEditable && !slot.isBooked">
+									<div class="layout-cell time-slot-cell" v-for="(slot, colIndex) in row.cellData" v-bind:data-day-index="slot.index" v-bind:data-isbookable="slot.isBookable && slot.isValidDate" v-bind:data-isbooked="slot.hasBookings" v-bind:data-isinvaliddate="!slot.isValidDate">
+										<div v-if="slot.isBookable">
 											<div class="custom-control custom-checkbox">
 												<input type="checkbox" v-on:change="bookingFormValidationRequest()" v-model="bookingWindow.selectedTimeSlots" v-bind:value="slot.bookingCheckboxValue" class="custom-control-input" v-bind:id="slot.bookingCheckboxId">
 												<label class="custom-control-label" v-bind:for="slot.bookingCheckboxId"></label>

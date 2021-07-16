@@ -21,15 +21,16 @@ use Contao\ModuleModel;
 use Contao\StringUtil;
 use Contao\System;
 use Contao\Validator;
-use Markocupic\ResourceBookingBundle\Util\DateHelper;
-use Markocupic\ResourceBookingBundle\Util\UtcTimeHelper;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceTypeModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotModel;
 use Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag;
 use Markocupic\ResourceBookingBundle\Slot\SlotFactory;
+use Markocupic\ResourceBookingBundle\Slot\SlotMain;
 use Markocupic\ResourceBookingBundle\User\LoggedInFrontendUser;
+use Markocupic\ResourceBookingBundle\Util\DateHelper;
+use Markocupic\ResourceBookingBundle\Util\UtcTimeHelper;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Security\Core\Security;
@@ -122,9 +123,6 @@ class BookingMain
 
         /** @var UtcTimeHelper $stringUtilAdapter */
         $utcTimeHelperAdapter = $this->framework->getAdapter(UtcTimeHelper::class);
-
-        /** @var ResourceBookingModel $resourceBookingModelAdapter */
-        $resourceBookingModelAdapter = $this->framework->getAdapter(ResourceBookingModel::class);
 
         /** @var ResourceBookingResourceTypeModel $resourceBookingResourceTypeModelAdapter */
         $resourceBookingResourceTypeModelAdapter = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class);
@@ -284,8 +282,8 @@ class BookingMain
 
                         $startTimestamp = strtotime(sprintf('+%s day', $colCount), $this->sessionBag->get('activeWeekTstamp')) + $objTimeslots->startTime;
                         $endTimestamp = strtotime(sprintf('+%s day', $colCount), $this->sessionBag->get('activeWeekTstamp')) + $objTimeslots->endTime;
-
-                        $slot = $this->slotFactory->get('main-window', $this->getActiveResource(), $startTimestamp, $endTimestamp);
+                        /** @var SlotMain $slot */
+                        $slot = $this->slotFactory->get(SlotMain::MODE, $this->getActiveResource(), $startTimestamp, $endTimestamp);
 
                         $objTs = new \stdClass();
                         $objTs->index = $colCount;
@@ -299,9 +297,10 @@ class BookingMain
                         $objTs->hasBookings = $slot->hasBookings();
                         $objTs->isBookable = $slot->isBookable();
                         $objTs->isCancelable = $slot->isCancelable();
-                        $objTs->isEditable = $objTs->isBooked ? false : true;
+                        $objTs->userHasBooked = $slot->isBookedByUser();
+                        $objTs->bookingRelatedToLoggedInUser = $slot->getBookingRelatedToLoggedInUser() ? $slot->getBookingRelatedToLoggedInUser()->row() : null;
                         $objTs->timeSlotId = $objTimeslots->id;
-                        $objTs->validDate = true;
+                        $objTs->isValidDate = $slot->hasValidDate();
                         $objTs->resourceId = $this->getActiveResource()->id;
                         $objTs->cssClass = $cssCellClass;
                         $objTs->bookings = [];
@@ -311,16 +310,10 @@ class BookingMain
                         $objTs->bookingCheckboxId = sprintf('bookingCheckbox_modId_%s_%s_%s', $this->getModuleModel()->id, $rowCount, $colCount);
 
                         if ($objTs->hasBookings) {
-                            $objTs->isEditable = false;
                             $objBooking = $slot->getBookings();
 
                             while ($objBooking->next()) {
                                 if (null !== $objBooking) {
-                                    if ($objBooking->member === $this->user->getLoggedInUser()->id) {
-                                        $objTs->isEditable = true;
-                                        $objTs->isHolder = true;
-                                    }
-
                                     $objBk = new \stdClass();
 
                                     $objBk->itemsBooked = $objBooking->itemsBooked;
@@ -336,7 +329,7 @@ class BookingMain
 
                                     if (null !== $objMember) {
                                         // Do not transmit and display sensitive data if user is not holder
-                                        if (!$objTs->isHolder && $this->getModuleModel()->resourceBooking_displayClientPersonalData && !empty($arrFields)) {
+                                        if ($objBooking->member !== $objMember->id && $this->getModuleModel()->resourceBooking_displayClientPersonalData && !empty($arrFields)) {
                                             foreach ($arrFields as $fieldname) {
                                                 $objBk->{'bookedBy'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($objMember->$fieldname);
                                             }
@@ -398,19 +391,6 @@ class BookingMain
                                     $objTs->bookings[] = $objBk;
                                 }
                             }
-                        }
-
-                        // Do not allow editing if resourceBooking_addDateStop is set and resourceBooking_dateStop < time()
-                        if ($this->getModuleModel()->resourceBooking_addDateStop) {
-                            if ($objTs->endTimestamp > $this->getModuleModel()->resourceBooking_dateStop + 24 * 3600) {
-                                $objTs->isEditable = false;
-                                $objTs->validDate = false;
-                            }
-                        }
-
-                        // Do not allow editing, if time slot lies in the past
-                        if ($objTs->endTimestamp < strtotime('today')) {
-                            $objTs->isEditable = false;
                         }
 
                         $cells[] = $objTs;
