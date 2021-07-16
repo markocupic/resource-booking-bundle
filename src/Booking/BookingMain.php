@@ -35,12 +35,12 @@ use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Security\Core\Security;
 
 /**
- * Class BookingTable.
+ * Class BookingMain.
  *
  * This is a helper class, which will generate the json response array
  * when calling the "fetchDataRequest" post ajax request from the frontend.
  */
-class BookingTable
+class BookingMain
 {
     /**
      * @var ContaoFramework
@@ -78,7 +78,7 @@ class BookingTable
     private $user;
 
     /**
-     * BookingTable constructor.
+     * BookingMain constructor.
      *
      * @throws \Exception
      */

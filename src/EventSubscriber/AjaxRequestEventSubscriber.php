@@ -17,8 +17,8 @@ use Contao\CoreBundle\Monolog\ContaoContext;
 use Contao\Date;
 use Contao\Model\Collection;
 use Contao\System;
-use Markocupic\ResourceBookingBundle\Booking\Booking;
-use Markocupic\ResourceBookingBundle\Booking\BookingTable;
+use Markocupic\ResourceBookingBundle\Booking\BookingWindow;
+use Markocupic\ResourceBookingBundle\Booking\BookingMain;
 use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
 use Markocupic\ResourceBookingBundle\Event\PostBookingEvent;
 use Markocupic\ResourceBookingBundle\Event\PostCancelingEvent;
@@ -51,14 +51,14 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
     private $framework;
 
     /**
-     * @var BookingTable
+     * @var BookingMain
      */
-    private $bookingTableHelper;
+    private $bookingMain;
 
     /**
-     * @var Booking
+     * @var BookingWindow
      */
-    private $booking;
+    private $bookingWindow;
 
     /**
      * @var LoggedInFrontendUser
@@ -93,11 +93,11 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
     /**
      * AjaxRequestEventSubscriber constructor.
      */
-    public function __construct(ContaoFramework $framework, BookingTable $bookingTableHelper, Booking $booking, LoggedInFrontendUser $user, SessionInterface $session, RequestStack $requestStack, string $bagName, Security $security, EventDispatcherInterface $eventDispatcher)
+    public function __construct(ContaoFramework $framework, BookingMain $bookingMain, BookingWindow $bookingWindow, LoggedInFrontendUser $user, SessionInterface $session, RequestStack $requestStack, string $bagName, Security $security, EventDispatcherInterface $eventDispatcher)
     {
         $this->framework = $framework;
-        $this->bookingTableHelper = $bookingTableHelper;
-        $this->booking = $booking;
+        $this->bookingMain = $bookingMain;
+        $this->bookingWindow = $bookingWindow;
         $this->user = $user;
         $this->session = $session;
         $this->requestStack = $requestStack;
@@ -135,7 +135,7 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
     {
         $ajaxResponse = $ajaxRequestEvent->getAjaxResponse();
         $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
-        $ajaxResponse->setDataFromArray($this->bookingTableHelper->fetchData());
+        $ajaxResponse->setDataFromArray($this->bookingMain->fetchData());
     }
 
     /**
@@ -210,7 +210,7 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
 
         // Fetch data and send it to the browser
         $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
-        $ajaxResponse->setDataFromArray($this->bookingTableHelper->fetchData());
+        $ajaxResponse->setDataFromArray($this->bookingMain->fetchData());
     }
 
     /**
@@ -235,19 +235,19 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
         // Load language file
         $systemAdapter->loadLanguageFile('default', $this->sessionBag->get('language'));
 
-        $this->booking->initialize();
+        $this->bookingWindow->initialize();
 
         $ajaxResponse = $ajaxRequestEvent->getAjaxResponse();
 
         // First we check, if booking is possible!
-        if (!$this->booking->isBookingPossible()) {
-            $ajaxResponse->setErrorMessage($this->booking->getErrorMessage());
+        if (!$this->bookingWindow->isBookingPossible()) {
+            $ajaxResponse->setErrorMessage($this->bookingWindow->getErrorMessage());
             $ajaxResponse->setStatus(AjaxResponse::STATUS_ERROR);
 
             return;
         }
 
-        $objBookings = $this->booking->getBookingCollection();
+        $objBookings = $this->bookingWindow->getBookingCollection();
 
         if (null !== $objBookings) {
             $objBookings->reset();
@@ -277,7 +277,7 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
 
                     // Log
                     $logger = $systemAdapter->getContainer()->get('monolog.logger.contao');
-                    $strLog = sprintf('New resource "%s" (with ID %s) has been booked.', $this->booking->getActiveResource()->title, $objBooking->id);
+                    $strLog = sprintf('New resource "%s" (with ID %s) has been booked.', $this->bookingWindow->getActiveResource()->title, $objBooking->id);
                     $logger->log(LogLevel::INFO, $strLog, ['contao' => new ContaoContext(__METHOD__, 'INFO')]);
                 }
             }
@@ -285,7 +285,7 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
 
         // Dispatch post booking event "rbb.event.post_booking"
         /** @var Collection $objBookings */
-        $objBookings = $resourceBookingModelAdapter->findByBookingUuid($this->booking->getBookingUuid());
+        $objBookings = $resourceBookingModelAdapter->findByBookingUuid($this->bookingWindow->getBookingUuid());
 
         if (null !== $objBookings) {
             $eventData = new \stdClass();
@@ -305,7 +305,7 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
                 $ajaxResponse->setConfirmationMessage(
                     sprintf(
                         $GLOBALS['TL_LANG']['MSG']['successfullyBookedXItems'],
-                        $this->booking->getActiveResource()->title,
+                        $this->bookingWindow->getActiveResource()->title,
                         $objBookings->count()
                     )
                 );
@@ -333,7 +333,7 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
     {
         $ajaxResponse = $ajaxRequestEvent->getAjaxResponse();
 
-        $this->booking->initialize();
+        $this->bookingWindow->initialize();
 
         $hasError = false;
         $arrBookings = [];
@@ -348,9 +348,9 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
         if (!$hasError) {
             $ajaxResponse->setData('passedValidation', true);
 
-            $arrBookings = $this->booking->getBookingCollection()->fetchAll();
+            $arrBookings = $this->bookingWindow->getBookingCollection()->fetchAll();
 
-            if (!$this->booking->isBookingPossible()) {
+            if (!$this->bookingWindow->isBookingPossible()) {
                 if (empty($arrBookings)) {
                     $ajaxResponse->setData('passedValidation', false);
                     $ajaxResponse->setData('noDatesSelected', true);

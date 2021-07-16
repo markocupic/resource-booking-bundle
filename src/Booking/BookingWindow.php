@@ -33,9 +33,10 @@ use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Markocupic\ResourceBookingBundle\Slot\SlotFactory;
 
 /**
- * Class Booking.
+ * Class BookingWindow
+ * @package Markocupic\ResourceBookingBundle\Booking
  */
-class Booking
+class BookingWindow
 {
     /**
      * @var ResourceBookingResourceModel
