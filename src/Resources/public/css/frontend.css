@@ -54,18 +54,31 @@
 .mod_resourceBookingWeekcalendar .resource-booking-table-window .layout-cell.time-slot-cell, .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell.time-slot-cell {
   background-color: rgba(115, 207, 97, 0.42);
   height: 6rem;
+  display: flex;
 }
 .mod_resourceBookingWeekcalendar .resource-booking-table-window .layout-cell.time-slot-cell[data-isbooked=true], .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell.time-slot-cell[data-isbooked=true] {
   background-color: rgba(255, 200, 196, 0.66);
 }
 .mod_resourceBookingWeekcalendar .resource-booking-table-window .layout-cell.time-slot-cell[data-isbookable=true], .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell.time-slot-cell[data-isbookable=true] {
-  display: flex;
-  align-items: flex-start;
   background-color: rgba(115, 207, 97, 0.42);
-  justify-content: flex-start;
 }
 .mod_resourceBookingWeekcalendar .resource-booking-table-window .layout-cell.time-slot-cell[data-isinvaliddate=true], .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell.time-slot-cell[data-isinvaliddate=true] {
   background-color: rgba(255, 200, 196, 0.66);
+}
+.mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell.time-slot-cell {
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+.mod_resourceBookingWeekcalendar .resource-booking-table-window .layout-cell.time-slot-cell {
+  align-items: center;
+  justify-content: center;
+}
+.mod_resourceBookingWeekcalendar .resource-booking-table-window .layout-cell.time-slot-cell .custom-control {
+  line-height: 0;
+}
+.mod_resourceBookingWeekcalendar .resource-booking-table-window .layout-cell.time-slot-cell .custom-control label {
+  margin: 0;
+  display: none;
 }
 .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell {
   min-width: 180px;

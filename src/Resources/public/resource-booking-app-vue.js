@@ -366,7 +366,7 @@ class resourceBookingApp {
                     let data = new FormData();
                     data.append('REQUEST_TOKEN', this.options.requestToken);
                     data.append('action', action);
-                    data.append('bookingId', this.bookingWindow.activeTimeSlot.bookingId);
+                    data.append('bookingId', this.bookingWindow.booking.bookingId);
                     data.append('deleteBookingsWithSameBookingUuid', this.bookingWindow.deleteBookingsWithSameBookingUuid);
                     data.append('moduleKey', this.options.moduleKey);
 
@@ -427,13 +427,13 @@ class resourceBookingApp {
                     this.activeWeekTstamp = tstamp;
                 },
 
-
                 /**
-                 * Open booking window
+                 *
                  * @param objActiveTimeSlot
+                 * @param booking
                  * @param action
                  */
-                openBookingWindow: function openBookingWindow(objActiveTimeSlot, action) {
+                openBookingWindow: function openBookingWindow(objActiveTimeSlot, action, booking = null) {
 
                     this.mode = 'booking-window';
 
@@ -442,6 +442,8 @@ class resourceBookingApp {
                     this.bookingWindow.action = action;
                     this.bookingWindow.showConfirmationMsg = false;
                     this.bookingWindow.activeTimeSlot = objActiveTimeSlot;
+                    this.bookingWindow.booking = booking;
+
                     this.bookingWindow.messages = {
                         confirmation: null,
                         info: null,

@@ -428,12 +428,14 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
                             'tl_resource_booking.bookingUuid=?',
                             'tl_resource_booking.timeSlotId=?',
                             'tl_resource_booking.id!=?',
+                            'tl_resource_booking.member=?',
                         ];
 
                         $arrValues = [
                             $bookingUuid,
                             $timeSlotId,
                             $objBooking->id,
+                            $this->user->getLoggedInUser()->id,
                         ];
 
                         $objRepetitions = $resourceBookingModelAdapter->findBy($arrColumns, $arrValues);

@@ -183,7 +183,7 @@ class BookingTable
         $arrData['filterBoard']['jumpPrevWeek'] = $this->getJumpWeekDate(-1);
 
         // Filter form: get date dropdown
-        $arrData['filterBoard']['weekSelection'] = $this->getWeekSelection((int)$this->sessionBag->get('tstampFirstPossibleWeek'), (int)$this->sessionBag->get('tstampLastPossibleWeek'), true);
+        $arrData['filterBoard']['weekSelection'] = $this->getWeekSelection((int) $this->sessionBag->get('tstampFirstPossibleWeek'), (int) $this->sessionBag->get('tstampLastPossibleWeek'), true);
 
         // Logged in user
         $arrData['userIsLoggedIn'] = false;
@@ -192,26 +192,26 @@ class BookingTable
             $arrData['userIsLoggedIn'] = true;
             $arrData['loggedInUser'] = [
                 'firstname' => $this->user->getLoggedInUser()->firstname,
-                'lastname'  => $this->user->getLoggedInUser()->lastname,
-                'gender'    => '' !== $GLOBALS['TL_LANG'][$this->user->getLoggedInUser()->gender] ? $GLOBALS['TL_LANG'][$this->user->getLoggedInUser()->gender] : $this->user->getLoggedInUser()->gender,
-                'email'     => $this->user->getLoggedInUser()->email,
-                'id'        => $this->user->getLoggedInUser()->id,
+                'lastname' => $this->user->getLoggedInUser()->lastname,
+                'gender' => '' !== $GLOBALS['TL_LANG'][$this->user->getLoggedInUser()->gender] ? $GLOBALS['TL_LANG'][$this->user->getLoggedInUser()->gender] : $this->user->getLoggedInUser()->gender,
+                'email' => $this->user->getLoggedInUser()->email,
+                'id' => $this->user->getLoggedInUser()->id,
             ];
         }
 
         // Selected week
-        $arrData['activeWeekTstamp'] = (int)$this->sessionBag->get('activeWeekTstamp');
+        $arrData['activeWeekTstamp'] = (int) $this->sessionBag->get('activeWeekTstamp');
         $arrData['activeWeek'] = [
             'tstampStart' => $this->sessionBag->get('activeWeekTstamp'),
-            'tstampEnd'   => $dateHelperAdapter->addDaysToTime(6, $this->sessionBag->get('activeWeekTstamp')),
-            'dateStart'   => $dateAdapter->parse($configAdapter->get('dateFormat'), $this->sessionBag->get('activeWeekTstamp')),
-            'dateEnd'     => $dateAdapter->parse($configAdapter->get('dateFormat'), $dateHelperAdapter->addDaysToTime(6, $this->sessionBag->get('activeWeekTstamp'))),
-            'weekNumber'  => $dateAdapter->parse('W', $this->sessionBag->get('activeWeekTstamp')),
-            'year'        => $dateAdapter->parse('Y', $this->sessionBag->get('activeWeekTstamp')),
+            'tstampEnd' => $dateHelperAdapter->addDaysToTime(6, $this->sessionBag->get('activeWeekTstamp')),
+            'dateStart' => $dateAdapter->parse($configAdapter->get('dateFormat'), $this->sessionBag->get('activeWeekTstamp')),
+            'dateEnd' => $dateAdapter->parse($configAdapter->get('dateFormat'), $dateHelperAdapter->addDaysToTime(6, $this->sessionBag->get('activeWeekTstamp'))),
+            'weekNumber' => $dateAdapter->parse('W', $this->sessionBag->get('activeWeekTstamp')),
+            'year' => $dateAdapter->parse('Y', $this->sessionBag->get('activeWeekTstamp')),
         ];
 
         // Get booking RepeatsSelection
-        $arrData['bookingRepeatsSelection'] = $this->getWeekSelection((int)$this->sessionBag->get('activeWeekTstamp'), (int)$this->sessionBag->get('tstampLastPossibleWeek'), false);
+        $arrData['bookingRepeatsSelection'] = $this->getWeekSelection((int) $this->sessionBag->get('activeWeekTstamp'), (int) $this->sessionBag->get('tstampLastPossibleWeek'), false);
 
         // Send weekdays, dates and day
         $arrWeek = [];
@@ -223,10 +223,10 @@ class BookingTable
                 continue;
             }
             $arrWeek[] = [
-                'index'      => $i,
-                'title'      => '' !== $GLOBALS['TL_LANG']['DAYS_LONG'][$i] ? $GLOBALS['TL_LANG']['DAYS_LONG'][$i] : $arrWeekdays[$i],
+                'index' => $i,
+                'title' => '' !== $GLOBALS['TL_LANG']['DAYS_LONG'][$i] ? $GLOBALS['TL_LANG']['DAYS_LONG'][$i] : $arrWeekdays[$i],
                 'titleShort' => '' !== $GLOBALS['TL_LANG']['DAYS_SHORTENED'][$i] ? $GLOBALS['TL_LANG']['DAYS_SHORTENED'][$i] : $arrWeekdays[$i],
-                'date'       => $dateAdapter->parse('d.m.Y', strtotime($dateAdapter->parse('Y-m-d', $this->sessionBag->get('activeWeekTstamp')).' +'.$i.' day')),
+                'date' => $dateAdapter->parse('d.m.Y', strtotime($dateAdapter->parse('Y-m-d', $this->sessionBag->get('activeWeekTstamp')).' +'.$i.' day')),
             ];
         }
         // Weekdays
@@ -285,7 +285,7 @@ class BookingTable
                         $startTimestamp = strtotime(sprintf('+%s day', $colCount), $this->sessionBag->get('activeWeekTstamp')) + $objTimeslots->startTime;
                         $endTimestamp = strtotime(sprintf('+%s day', $colCount), $this->sessionBag->get('activeWeekTstamp')) + $objTimeslots->endTime;
 
-                        $slot = $this->slotFactory->get($this->getActiveResource(), $startTimestamp, $endTimestamp);
+                        $slot = $this->slotFactory->get('main-window', $this->getActiveResource(), $startTimestamp, $endTimestamp);
 
                         $objTs = new \stdClass();
                         $objTs->index = $colCount;
@@ -295,7 +295,7 @@ class BookingTable
                         $objTs->endTimeString = $dateAdapter->parse('H:i', $endTimestamp);
                         $objTs->endTimestamp = $slot->getEndTime();
                         $objTs->timeSpanString = $dateAdapter->parse('H:i', $startTimestamp).' - '.$dateAdapter->parse('H:i', $endTimestamp);
-                        $objTs->mondayTimestampSelectedWeek = (int)$this->sessionBag->get('activeWeekTstamp');
+                        $objTs->mondayTimestampSelectedWeek = (int) $this->sessionBag->get('activeWeekTstamp');
                         $objTs->hasBookings = $slot->hasBookings();
                         $objTs->isBookable = $slot->isBookable();
                         $objTs->isCancelable = $slot->isCancelable();
@@ -313,6 +313,7 @@ class BookingTable
                         if ($objTs->hasBookings) {
                             $objTs->isEditable = false;
                             $objBooking = $slot->getBookings();
+
                             while ($objBooking->next()) {
                                 if (null !== $objBooking) {
                                     if ($objBooking->member === $this->user->getLoggedInUser()->id) {
@@ -437,15 +438,15 @@ class BookingTable
                 if (!empty($arrCssCellID[1])) {
                     $cssCellClass = $arrCssCellID[1];
                 }
-                $startTimestamp = (int)$objTimeslots->startTime;
-                $endTimestamp = (int)$objTimeslots->endTime;
+                $startTimestamp = (int) $objTimeslots->startTime;
+                $endTimestamp = (int) $objTimeslots->endTime;
                 $objTs = new \stdClass();
                 $objTs->cssClass = $cssCellClass;
                 $objTs->startTimeString = $utcTimeHelperAdapter->parse('H:i', $startTimestamp);
-                $objTs->startTimestamp = (int)$startTimestamp;
+                $objTs->startTimestamp = (int) $startTimestamp;
                 $objTs->endTimeString = $utcTimeHelperAdapter->parse('H:i', $endTimestamp);
                 $objTs->timeSpanString = $utcTimeHelperAdapter->parse('H:i', $startTimestamp).' - '.$utcTimeHelperAdapter->parse('H:i', $endTimestamp);
-                $objTs->endTimestamp = (int)$endTimestamp;
+                $objTs->endTimestamp = (int) $endTimestamp;
                 $timeSlots[] = $objTs;
             }
         }
@@ -509,8 +510,8 @@ class BookingTable
             if ($dateHelperAdapter->getMondayOfCurrentWeek() === $currentTstamp) {
                 if ($injectEmptyLine) {
                     $arrWeeks[] = [
-                        'tstamp'     => '',
-                        'date'       => '',
+                        'tstamp' => '',
+                        'date' => '',
                         'optionText' => '-------------',
                     ];
                 }
@@ -529,18 +530,18 @@ class BookingTable
             $calWeek = $dateAdapter->parse('W', $tstampMonday);
             $yearMonday = $dateAdapter->parse('Y', $tstampMonday);
             $arrWeeks[] = [
-                'cssClass'        => $cssClass,
-                'tstamp'          => (int)$currentTstamp,
-                'tstampMonday'    => (int)$tstampMonday,
-                'tstampSunday'    => (int)$tstampSunday,
-                'stringMonday'    => $dateMonday,
-                'stringSunday'    => $dateSunday,
-                'daySpan'         => $dateMonday.' - '.$dateSunday,
-                'calWeek'         => (int)$calWeek,
-                'year'            => $yearMonday,
+                'cssClass' => $cssClass,
+                'tstamp' => (int) $currentTstamp,
+                'tstampMonday' => (int) $tstampMonday,
+                'tstampSunday' => (int) $tstampSunday,
+                'stringMonday' => $dateMonday,
+                'stringSunday' => $dateSunday,
+                'daySpan' => $dateMonday.' - '.$dateSunday,
+                'calWeek' => (int) $calWeek,
+                'year' => $yearMonday,
                 'optionDateStart' => $dateMonday,
-                'optionDateEnd'   => $dateSunday,
-                'optionText'      => sprintf($GLOBALS['TL_LANG']['MSC']['weekSelectOptionText'], $calWeek, $yearMonday, $dateMonday, $dateSunday),
+                'optionDateEnd' => $dateSunday,
+                'optionText' => sprintf($GLOBALS['TL_LANG']['MSC']['weekSelectOptionText'], $calWeek, $yearMonday, $dateMonday, $dateSunday),
             ];
 
             $currentTstamp = $dateHelperAdapter->addDaysToTime(7, $currentTstamp);
@@ -559,7 +560,7 @@ class BookingTable
 
         $arrReturn = [
             'disabled' => false,
-            'tstamp'   => null,
+            'tstamp' => null,
         ];
 
         $intJumpDays = 7 * $intJumpWeek;
@@ -575,7 +576,7 @@ class BookingTable
             $arrReturn['disabled'] = true;
         }
 
-        $arrReturn['tstamp'] = (int)$jumpTime;
+        $arrReturn['tstamp'] = (int) $jumpTime;
 
         return $arrReturn;
     }

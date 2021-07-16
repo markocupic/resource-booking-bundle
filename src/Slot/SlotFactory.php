@@ -16,15 +16,23 @@ use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 
 class SlotFactory
 {
-    private $slot;
+    private $slotMain;
+    private $slotBooking;
 
-    public function __construct(Slot $slot)
+    public function __construct(SlotMain $slotMain, SlotBooking $slotBooking)
     {
-        $this->slot = $slot;
+        $this->slotMain = $slotMain;
+        $this->slotBooking = $slotBooking;
     }
 
-    public function get(ResourceBookingResourceModel $resource, int $startTime, int $endTime, int $desiredItems = 1)
+    public function get(string $mode, ResourceBookingResourceModel $resource, int $startTime, int $endTime, int $desiredItems = 1)
     {
-        return $this->slot->create($resource, $startTime, $endTime, $desiredItems);
+        if($mode === 'main-window'){
+            return $this->slotMain->create($resource, $startTime, $endTime, $desiredItems);
+        }
+        
+        if($mode === 'booking-window'){
+            return $this->slotBooking->create($resource, $startTime, $endTime, $desiredItems);
+        }
     }
 }

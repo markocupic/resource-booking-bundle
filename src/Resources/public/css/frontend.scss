@@ -78,6 +78,7 @@ $transitionSpeed: .8s;
       &.time-slot-cell {
         background-color: $bookableBg;
         height: 6rem;
+        display: flex;
       }
 
       &.time-slot-cell[data-isbooked="true"] {
@@ -85,17 +86,36 @@ $transitionSpeed: .8s;
       }
 
       &.time-slot-cell[data-isbookable="true"] {
-        display: flex;
-        align-items: flex-start;
         background-color: $bookableBg;
-        justify-content: flex-start;
       }
 
       &.time-slot-cell[data-isinvaliddate="true"] {
         background-color: $notBookableBg;
       }
     }
+  }
 
+  .resource-booking-table-main {
+    .layout-cell.time-slot-cell {
+      align-items: flex-start;
+      justify-content: flex-start;
+    }
+  }
+
+  .resource-booking-table-window {
+    .layout-cell.time-slot-cell {
+      align-items: center;
+      justify-content: center;
+
+      .custom-control {
+        line-height: 0;
+
+        label {
+          margin: 0;
+          display: none;
+        }
+      }
+    }
   }
 
   // Wrap long words

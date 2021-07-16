@@ -22,11 +22,11 @@ use Markocupic\ResourceBookingBundle\Utils\Utils;
 use Symfony\Component\Security\Core\Security;
 
 /**
- * Class Slot.
+ * Class SlotMain.
  *
  * Use SlotFactory to create Slot instance
  */
-class Slot
+class SlotMain
 {
     /**
      * @var ContaoFramework
