@@ -18,7 +18,7 @@ use Contao\MemberModel;
 use Contao\Model\Collection;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
-use Markocupic\ResourceBookingBundle\Utils\Utils;
+use Markocupic\ResourceBookingBundle\Util\Utils;
 use Symfony\Component\Security\Core\Security;
 
 /**

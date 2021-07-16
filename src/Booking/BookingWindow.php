@@ -22,7 +22,7 @@ use Contao\MemberModel;
 use Contao\Model\Collection;
 use Contao\ModuleModel;
 use Contao\StringUtil;
-use Markocupic\ResourceBookingBundle\Utils\DateHelper;
+use Markocupic\ResourceBookingBundle\Util\DateHelper;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotModel;
