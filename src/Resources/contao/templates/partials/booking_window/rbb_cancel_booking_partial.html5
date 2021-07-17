@@ -11,7 +11,7 @@
   <?php $this->insert('rbb_info_table_partial', $this->getData()); ?>
 
   <!-- switch delete repetitions -->
-  <div class="custom-control custom-switch mt-5">
+  <div v-if="!bookingWindow.showConfirmationMsg" class="custom-control custom-switch mt-5">
     <input v-model="bookingWindow.deleteBookingsWithSameBookingUuid" type="checkbox" class="custom-control-input" id="deleteSiblingsWithSameBookingIdSwitch">
     <label class="custom-control-label" for="deleteSiblingsWithSameBookingIdSwitch">{{trans::RBB.deleteRepetitions::contao_default}}</label>
   </div>
@@ -20,6 +20,9 @@
     <p>{{trans::RBB.cancelBooking::contao_default}}</p>
   </div>
 
+  <p v-if="bookingWindow.showConfirmationMsg">
+    <small>{{trans::RBB.MSG.windowClosesAutomatically::contao_default}}</small>
+  </p>
 
   <!-- footer -->
   <div class="booking-window-footer mt-5">

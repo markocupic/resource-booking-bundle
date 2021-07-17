@@ -324,6 +324,7 @@ class BookingMain
                             while ($objBooking->next()) {
                                 if (null !== $objBooking) {
                                     $objBk = new \stdClass();
+                                    $objBk->id = $objBooking->id;
 
                                     $objBk->itemsBooked = $objBooking->itemsBooked;
 

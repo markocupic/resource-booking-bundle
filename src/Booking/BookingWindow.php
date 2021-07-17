@@ -422,7 +422,7 @@ class BookingWindow
             // Add data to the model
             if (null !== $objBooking) {
                 foreach ($arrBooking as $k => $v) {
-                    if($k === 'id'){
+                    if ('id' === $k && empty($v)) {
                         continue;
                     }
                     $objBooking->{$k} = $v;
