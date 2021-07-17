@@ -293,10 +293,10 @@ class resourceBookingApp {
                             if (response.status === 'success') {
                                 this.bookingWindow.response = response.data;
                                 this.autoCloseBookingWindowTimeout = window.setTimeout(() => {
-                                    //this.mode = 'main-window';
+                                    this.mode = 'main-window';
                                 }, this.options.autocloseWindowsAfter);
                             } else {
-                                this.bookingWindow = response.data;
+                                this.bookingWindow.response = response.data;
                             }
 
                             // Always
@@ -385,12 +385,12 @@ class resourceBookingApp {
                     })
                     .then(response => {
                         if (response.status === 'success') {
-                            this.bookingWindow.messages = response.data.messages;
+                            this.bookingWindow.response = response.data;
                             this.autoCloseBookingWindowTimeout = window.setTimeout(() => {
-                                //this.mode = 'main-window';
+                                this.mode = 'main-window';
                             }, this.options.autocloseWindowsAfter);
                         } else {
-                            this.bookingWindow.messages = response.data.messages;
+                            this.bookingWindow.response = response.data;
                         }
                         // Always
                         this.bookingWindow.deleteBookingsWithSameBookingUuid = false;

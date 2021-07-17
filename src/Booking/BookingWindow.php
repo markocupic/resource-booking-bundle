@@ -269,7 +269,6 @@ class BookingWindow
                 $arrTimeSlot = explode('-', $strTimeSlot);
                 // Defaults
                 $arrData = [
-                    'id' => null,
                     'timeSlotId' => $arrTimeSlot[0],
                     'startTime' => (int) $arrTimeSlot[1],
                     'endTime' => (int) $arrTimeSlot[2],
@@ -423,6 +422,9 @@ class BookingWindow
             // Add data to the model
             if (null !== $objBooking) {
                 foreach ($arrBooking as $k => $v) {
+                    if($k === 'id'){
+                        continue;
+                    }
                     $objBooking->{$k} = $v;
                 }
                 $bookingCollection[] = $objBooking;

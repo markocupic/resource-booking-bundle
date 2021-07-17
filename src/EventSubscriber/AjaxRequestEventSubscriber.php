@@ -294,7 +294,7 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
                     $logger->log(LogLevel::INFO, $strLog, ['contao' => new ContaoContext(__METHOD__, 'INFO')]);
                 }
             }
-            $ajaxResponse->setData('bookingSucceed', true);
+            $ajaxResponse->setData('bookingSucceeded', true);
         }
 
         // Dispatch post booking event "rbb.event.post_booking"

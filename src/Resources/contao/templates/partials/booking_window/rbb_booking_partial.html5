@@ -23,7 +23,7 @@
         {{ bookingWindow.response.messages.info }}
       </div>
       <p v-if="bookingWindow.response.bookingSucceeded">
-        <small>aha{{trans::RBB.MSG.windowClosesAutomatically::contao_default}}</small>
+        <small>{{trans::RBB.MSG.windowClosesAutomatically::contao_default}}</small>
       </p>
     </div>
   </template>
@@ -125,7 +125,7 @@
 
   <!-- footer -->
   <div class="booking-window-footer mt-5">
-    <button type="button" class="btn btn-primary" v-if="bookingFormValidation.passedValidation && !bookingWindow.response.bookingSucceeded" v-on:click="bookingRequest">
+    <button type="button" class="btn btn-primary" v-if="bookingFormValidation.response.passedValidation && !bookingWindow.response.bookingSucceeded" v-on:click="bookingRequest">
       {{trans::RBB.bookResource::contao_default}}
     </button>
     <button type="button" class="btn btn-secondary" v-on:click="hideBookingWindow">
