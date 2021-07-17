@@ -1,0 +1,32 @@
+<template v-if="bookingWindow.action === 'showCancelBookingForm'">
+  <div class="booking-window-header bg-primary d-flex justify-content-between">
+    <h3 class="booking-window-header-title m-3">
+      {{trans::RBB.cancel::contao_default}}: {{ activeResource.title }}
+    </h3>
+    <button type="button" v-on:click="hideBookingWindow" class="close-window bg-primary" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+
+  <?php $this->insert('rbb_info_table_partial', $this->getData()); ?>
+
+  <!-- switch delete repetitions -->
+  <div class="custom-control custom-switch mt-5">
+    <input v-model="bookingWindow.deleteBookingsWithSameBookingUuid" type="checkbox" class="custom-control-input" id="deleteSiblingsWithSameBookingIdSwitch">
+    <label class="custom-control-label" for="deleteSiblingsWithSameBookingIdSwitch">{{trans::RBB.deleteRepetitions::contao_default}}</label>
+  </div>
+
+  <div class="mt-5" v-if="!bookingWindow.showConfirmationMsg">
+    <p>{{trans::RBB.cancelBooking::contao_default}}</p>
+  </div>
+
+
+  <!-- footer -->
+  <div class="booking-window-footer mt-5">
+    <button type="button" class="btn btn-danger" v-if="!bookingWindow.showConfirmationMsg" v-on:click="cancelBookingRequest">
+      {{trans::RBB.cancelResource::contao_default}}
+    </button>
+  </div>
+
+</template>
+

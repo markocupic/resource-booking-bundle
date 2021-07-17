@@ -4,6 +4,7 @@
     <div class="col-sm-1 mb-2">
       <button v-on:click="jumpWeekRequest(filterBoard.jumpPrevWeek.tstamp,$event)" v-bind:data-tstamp="filterBoard.jumpPrevWeek.tstamp" role="button" class="btn btn-primary w-100" title="{{trans::RBB.1WeekBack::contao_default}}" v-bind:class="filterBoard.jumpPrevWeek.disabled ? 'disabled' : ''" v-bind:aria-disabled="filterBoard.jumpPrevWeek.disabled ? 'true' : 'false'" :disabled="filterBoard.jumpPrevWeek.disabled"><i class="fas fa-chevron-left"></i></button>
     </div>
+
     <div class="col-sm-3 ressource-type-select mb-2">
       <label for="resType_<?= $this->moduleKey ?>" class="d-none">Typ</label>
       <select id="resType_<?= $this->moduleKey ?>" class="form-control w-100" name="resType" v-model="activeResourceTypeId">

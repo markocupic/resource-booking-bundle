@@ -66,8 +66,12 @@ class resourceBookingApp {
                 // Contains data about the active week: tstampStart, tstampEnd, dateStart, dateEnd, weekNumber, year
                 activeWeek: [],
                 bookingRepeatsSelection: [],
-                bookingWindow: [],
-                bookingFormValidation: [],
+                bookingWindow: {
+                    response: {},
+                },
+                bookingFormValidation: {
+                    response: {},
+                },
                 intervals: [],
                 autoCloseBookingWindowTimeout: null,
                 messages: null,
@@ -287,13 +291,14 @@ class resourceBookingApp {
                         })
                         .then(response => {
                             if (response.status === 'success') {
-                                this.bookingWindow.messages = response.data.messages;
+                                this.bookingWindow.response = response.data;
                                 this.autoCloseBookingWindowTimeout = window.setTimeout(() => {
-                                    this.mode = 'main-window';
+                                    //this.mode = 'main-window';
                                 }, this.options.autocloseWindowsAfter);
                             } else {
-                                this.bookingWindow.messages = response.data.messages;
+                                this.bookingWindow = response.data;
                             }
+
                             // Always
                             this.bookingWindow.showConfirmationMsg = true;
                             this.fetchDataRequest();
@@ -322,7 +327,7 @@ class resourceBookingApp {
                     data.append('REQUEST_TOKEN', this.options.requestToken);
                     data.append('action', action);
                     data.append('resourceId', this.bookingWindow.activeTimeSlot.resourceId);
-                    data.append('bookingRepeatStopWeekTstamp', this.$el.querySelectorAll('.booking-repeat-stop-week-tstamp')[0].value);
+                    data.append('bookingRepeatStopWeekTstamp', this.$el.querySelector('.booking-repeat-stop-week-tstamp').value);
                     data.append('moduleKey', this.options.moduleKey);
                     data.append('itemsBooked', this.$el.querySelector('[name="itemsBooked"]') ? this.$el.querySelector('[name="itemsBooked"]').value : '1');
 
@@ -344,7 +349,7 @@ class resourceBookingApp {
                     })
                     .then(response => {
                         if (response.status === 'success') {
-                            this.bookingFormValidation = response.data;
+                            this.bookingFormValidation.response = response.data;
                             this.isReady = true;
                         }
                     })
@@ -382,7 +387,7 @@ class resourceBookingApp {
                         if (response.status === 'success') {
                             this.bookingWindow.messages = response.data.messages;
                             this.autoCloseBookingWindowTimeout = window.setTimeout(() => {
-                                this.mode = 'main-window';
+                                //this.mode = 'main-window';
                             }, this.options.autocloseWindowsAfter);
                         } else {
                             this.bookingWindow.messages = response.data.messages;
@@ -431,28 +436,30 @@ class resourceBookingApp {
                  * @param action
                  */
                 openBookingWindow: function openBookingWindow(objActiveTimeSlot, action, booking = null) {
-
                     this.mode = 'booking-window';
 
-                    this.bookingWindow.deleteBookingsWithSameBookingUuid = false;
-                    this.bookingWindow.selectedTimeSlots = [];
-                    this.bookingWindow.action = action;
-                    this.bookingWindow.showConfirmationMsg = false;
-                    this.bookingWindow.activeTimeSlot = objActiveTimeSlot;
-                    this.bookingWindow.booking = booking;
+                    // Reset
+                    this.bookingWindow = {
+                        'action':action,
+                        'activeTimeSlot': objActiveTimeSlot,
+                        'booking': booking,
+                        'response': {},
+                        'deleteBookingsWithSameBookingUuid': false,
+                        'selectedTimeSlots': [],
+                        'showConfirmationMsg': false,
+                    }
 
-                    this.bookingWindow.messages = {
-                        confirmation: null,
-                        info: null,
-                        error: null,
-                    };
+                    // Reset
+                    this.bookingFormValidation = {
+                        'response': {},
+                    }
+
                     this.bookingWindow.selectedTimeSlots.push(objActiveTimeSlot.bookingCheckboxValue);
-                    this.bookingFormValidation = [];
 
                     if (action === 'showBookingForm') {
                         window.setTimeout(() => {
                             this.bookingFormValidationRequest();
-                        }, 500);
+                        }, 100);
                     }
 
                     // Wrap this code, otherwise querySelector will not find dom elements

@@ -172,6 +172,26 @@ abstract class AbstractSlot implements SlotInterface
         return false;
     }
 
+    public function enoughItemsAvailable(): bool
+    {
+        $count = 0;
+
+        if (null !== ($objBookings = $this->getBookings())) {
+            while ($objBookings->next()) {
+                if ($this->user && (int) $this->user->id === (int) $objBookings->member) {
+                    continue;
+                }
+                $count += (int) $objBookings->itemsBooked;
+            }
+        }
+
+        if ($count + $this->desiredItems > (int) $this->getResource()->itemsAvailable) {
+            return false;
+        }
+
+        return true;
+    }
+
     public function isFullyBooked(): bool
     {
         $count = 0;

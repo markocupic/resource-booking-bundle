@@ -284,6 +284,7 @@ class BookingWindow
                     'tstamp' => time(),
                     'bookingUuid' => null,
                     'isBookable' => false,
+                    'enoughItemsAvailable' => false,
                     'isFullyBooked' => false,
                     'isValidDate' => true,
                     'hasBookings' => false,
@@ -375,6 +376,9 @@ class BookingWindow
             // Check if slot is fully booked
             $arrBookedSlots[$i]['isFullyBooked'] = $slot->isFullyBooked();
 
+            // Check if there are enough items available
+            $arrBookedSlots[$i]['enoughItemsAvailable'] = $slot->enoughItemsAvailable();
+
             // Check if booking is possible
             if (!$slot->hasValidDate()) {
                 // Invalid time period
@@ -396,7 +400,7 @@ class BookingWindow
 
             if ($slot->isBookedByUser()) {
                 $arrBookedSlots[$i]['userHasBooked'] = true;
-                $arrBookedSlots[$i]['bookingRelatedToLoggedInUser'] = $slot->getBookingRelatedToLoggedInUser;
+                $arrBookedSlots[$i]['bookingRelatedToLoggedInUser'] = $slot->getBookingRelatedToLoggedInUser();
             }
 
             if ($slot->hasBookings()) {
@@ -411,10 +415,11 @@ class BookingWindow
             // Use already available booking entity
             $objBooking = $arrBooking['bookingRelatedToLoggedInUser'];
 
-            if (!$arrBooking['userHasBooked'] && null === $objBooking) {
+            if (true !== $arrBooking['userHasBooked'] && null === $objBooking) {
                 // Create new booking entity
                 $objBooking = new ResourceBookingModel();
             }
+
             // Add data to the model
             if (null !== $objBooking) {
                 foreach ($arrBooking as $k => $v) {

@@ -218,7 +218,7 @@
   background-color: rgba(115, 207, 97, 0.42);
 }
 .mod_resourceBookingWeekcalendar .booking-window .booking-preview .not-bookable {
-  background-color: #adb5bd2e;
+  background-color: #ffded5;
 }
 .mod_resourceBookingWeekcalendar .booking-window button.close-window {
   padding: 0 30px;

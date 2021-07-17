@@ -68,7 +68,7 @@ $GLOBALS['TL_LANG']['RBB']['ERR']['generalBookingError'] = 'Error, while trying 
 $GLOBALS['TL_LANG']['RBB']['ERR']['cancelingBookingNotAllowed'] = 'You are not allowed to cancel this booking.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['selectBookingDatesPlease'] = 'Select one or more booking time slots please.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['resourceIsAlreadyFullyBooked'] = 'Resource is already fully booked.';
-$GLOBALS['TL_LANG']['RBB']['ERR']['notEnoughItemsAvailable'] = 'The requested resource(s) are fully booked or there are not enough units available.';
+$GLOBALS['TL_LANG']['RBB']['ERR']['notEnoughItemsAvailable'] = 'There aren\'t enough items available for your booking request.';
 
 // Messages
 $GLOBALS['TL_LANG']['RBB']['MSG']['successfullyBookedXItems'] = 'Successfully booked for %s %s items.';

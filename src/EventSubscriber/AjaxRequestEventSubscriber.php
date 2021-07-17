@@ -294,6 +294,7 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
                     $logger->log(LogLevel::INFO, $strLog, ['contao' => new ContaoContext(__METHOD__, 'INFO')]);
                 }
             }
+            $ajaxResponse->setData('bookingSucceed', true);
         }
 
         // Dispatch post booking event "rbb.event.post_booking"
@@ -398,7 +399,7 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
         } else {
             $ajaxResponse->setConfirmationMessage($this->translator->trans('RBB.MSG.resourceAvailable', [], 'contao_default'));
         }
-        $ajaxResponse->setData('bookingSelection', $arrBookings);
+        $ajaxResponse->setData('slotSelection', $arrBookings);
         $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
     }
 
