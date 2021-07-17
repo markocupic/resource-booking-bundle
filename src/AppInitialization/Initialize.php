@@ -21,10 +21,10 @@ use Contao\PageModel;
 use Contao\StringUtil;
 use Haste\Util\Url;
 use Markocupic\ResourceBookingBundle\AppInitialization\Helper\ModuleKey;
-use Markocupic\ResourceBookingBundle\Util\DateHelper;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceTypeModel;
 use Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag;
+use Markocupic\ResourceBookingBundle\Util\DateHelper;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
@@ -134,17 +134,7 @@ class Initialize
         // Save page model id to session
         $this->sessionBag->set('pageModelId', $objPageModel->id);
 
-        // Set language
-        if (!empty($objPageModel->language)) {
-            $language = $objPageModel->language;
-        } elseif (!empty($objPageModel->rootLanguage)) {
-            $language = $objPageModel->rootLanguage;
-        } elseif (!empty($objPageModel->rootFallbackLanguage)) {
-            $language = $objPageModel->rootFallbackLanguage;
-        } else {
-            $language = 'en';
-        }
-        $this->sessionBag->set('language', $language);
+
 
         // Set resType by url param
         $blnRedirect = false;

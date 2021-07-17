@@ -1,7 +1,11 @@
 # resource-booking-bundle
-Mit diesem Modul für Contao kann eine einfache Online-Ressourcenverwaltung betrieben werden. 
-Das Modul wurde für eine Schule entwickelt, wo ein Zimmerreservations-System benötigt wurde. Natürlich kann das Plugin auch im Zusammenhang mit anderen Ressourcen betrieben werden. 
+Mit diesem Modul für Contao kann eine einfache Online-Ressourcenverwaltung betrieben werden.
+Das Modul wurde für eine Schule entwickelt, wo ein Zimmerreservations-System benötigt wurde. Natürlich kann das Plugin auch im Zusammenhang mit anderen Ressourcen betrieben werden.
 
+Ab Version 3.x kann eingestellt werden, wie viele Items einer Ressource buchbar sein können. Damit wird es möglich eine Ressource von mehreren Personen buchen zu lassen, bis diese ausgebucht ist. Ein typischer use case können buchbare Geräte/Computer sein.
+!Achtung beim Update von Version 2.x auf 3.x ist es zu grossen Änderungen an den Templates gekommen. Vorher angepasste Custom-Templates müssen neu geschrieben werden.
+
+## Configuration
 Nach der Installation mit dem Contao Manager müssen:
 * Mindestens 1 Reservations-Zeitfenster-Typ erstellt werden.
 * Danach darin die Reservations-Zeitfenster im Zeitformat H:i (08:00 bis 08:45) erstellt werden.
@@ -20,11 +24,11 @@ Anm: Bei der Installation wird neben den oben erwähnten Erweiterungen auch [cod
 ## Template mit zusätzlichen Mitgliederdaten erweitern
 Sollen zusätzliche Mitgliederdaten in der Buchungsübersicht angezeigt weden, müssen zwei Dinge angepasst werden.
 
-Erstens muss in der Moduleinstellung das Feld, welches zusätzlich angezeigt werden soll, ausgewählt werden. 
+Erstens muss in der Moduleinstellung das Feld, welches zusätzlich angezeigt werden soll, ausgewählt werden.
 
 ![Alt text](docs/screenshot/screenshot3.png "Weitere Mitgliederfelder anzeigen")
 
-Weiter muss zusätzlich das Template angepasst werden. Mit *{{ eventBox.bookedByCompany }}* kann der Firmenname mitangezeigt werden. Achtung! Hierbei handelt es sich nicht um einen Contao Inserttag, sondern um die "vue.js-Mustache-Syntax-Schreibweise". Das Leerzeichen nach bzw. vor der geschweiften Klammer ist nötig. 
+Weiter muss zusätzlich das Template angepasst werden. Mit *{{ eventBox.bookedByCompany }}* kann der Firmenname mitangezeigt werden. Achtung! Hierbei handelt es sich nicht um einen Contao Inserttag, sondern um die "vue.js-Mustache-Syntax-Schreibweise". Das Leerzeichen nach bzw. vor der geschweiften Klammer ist nötig.
 
 ![Alt text](docs/screenshot/screenshot4.png "Weitere Mitgliederfelder anzeigen")
 
@@ -70,7 +74,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 final class PostBookingEventSubscriber implements EventSubscriberInterface
 {
    const priority = 10000;
- 
+
    public static function getSubscribedEvents(): array
     {
         return [
@@ -112,7 +116,7 @@ final class PostBookingEventSubscriber implements EventSubscriberInterface
 
 ### XmlHttp event subscriber
 Das Buchungstool basiert fast vollständig auf Ajax Requests. Mit einer eigenen Event Subscriber Klasse können die Responses auf diese Ajax Anfragen angepasst werden oder es lassen sich auch custom Anfragen implementieren.
-Der *rbb.event.xml_http_request* Event wird bei Ajax-Anfragen vor dem Absenden der Response zurück an den Browser getriggert. 
+Der *rbb.event.xml_http_request* Event wird bei Ajax-Anfragen vor dem Absenden der Response zurück an den Browser getriggert.
 
 Dazu muss die Subscriber-Klasse, die auf den *rbb.event.xml_http_request* Event hört, in der listener.yml registriert werden:
 
@@ -126,8 +130,8 @@ services:
 
 ```
 
-Weiter muss eine entsprechende Event-Subscriber-Klasse erstellt werden. 
-Mit der Konstante "priority" kann die Reihenfolge eingestellt werden. Je grösser der Wert, umso eher wird der Subscriber aufgerufen. Der Originalsubscriber hat als Priorität den Wert 1000 zugewiesen. 
+Weiter muss eine entsprechende Event-Subscriber-Klasse erstellt werden.
+Mit der Konstante "priority" kann die Reihenfolge eingestellt werden. Je grösser der Wert, umso eher wird der Subscriber aufgerufen. Der Originalsubscriber hat als Priorität den Wert 1000 zugewiesen.
 
 ```php
 <?php
@@ -191,10 +195,10 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
         // Stop propagation and do not run original event handler
         // Works only if the priority is > 10
         $ajaxRequestEvent->stopPropagation();
-        
+
         // Get response object
         $ajaxResponse = $ajaxRequestEvent->getAjaxResponse();
-        
+
         // Add some custom data to the response object
         $ajaxResponse->setData('foo', 'bar');
         $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);

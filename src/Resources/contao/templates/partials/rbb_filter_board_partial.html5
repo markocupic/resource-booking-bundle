@@ -7,7 +7,7 @@
     <div class="col-sm-3 ressource-type-select mb-2">
       <label for="resType_<?= $this->moduleKey ?>" class="d-none">Typ</label>
       <select id="resType_<?= $this->moduleKey ?>" class="form-control w-100" name="resType" v-model="activeResourceTypeId">
-        <option value="undefined">{{trans::RBB.selectResourceType::contao_default}}</option>
+        <option value="undefined">{{trans::RBB.formOptionSelectResourceType::contao_default}}</option>
         <option v-for="(resourceType, index) in filterBoard.resourceTypes" v-bind:value="resourceType.id">{{ resourceType.title }}</option>
       </select>
     </div>
@@ -15,7 +15,7 @@
     <div class="col-sm-3 ressource-select mb-2">
       <label for="res_<?= $this->moduleKey ?>" class="d-none">{{trans::RBB.resource::contao_default}}</label>
       <select id="res_<?= $this->moduleKey ?>" class="shake-chunk form-control w-100" name="res" v-model="activeResourceId" :disabled="activeResourceTypeId ==='undefined'">
-        <option value="undefined">{{trans::RBB.selectResource::contao_default}}</option>
+        <option value="undefined">{{trans::RBB.formOptionSelectResource::contao_default}}</option>
         <option v-for="(resource, index) in filterBoard.resources" v-bind:value="resource.id">{{ resource.title }}</option>
       </select>
     </div>

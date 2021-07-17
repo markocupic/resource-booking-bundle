@@ -143,7 +143,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = array(
             'sorting'    => false,
             'filter'     => true,
             'inputType' => 'text',
-            'eval'       => array('mandatory' => true, 'rgxp' => 'natural', 'tl_class' => 'w50'),
+            'eval'       => array('mandatory' => true, 'rgxp' => 'custom', 'customRgxp' => '/^[1-9]\d*$/', 'tl_class' => 'w50'),
             'sql'        => "int(10) unsigned NOT NULL default '1'",
         ),
 		'timeSlotType' => array(

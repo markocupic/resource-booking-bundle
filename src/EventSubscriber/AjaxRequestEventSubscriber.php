@@ -240,7 +240,7 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
         $systemAdapter = $this->framework->getAdapter(System::class);
 
         // Load language file
-        $systemAdapter->loadLanguageFile('default', $this->sessionBag->get('language'));
+        $systemAdapter->loadLanguageFile('default', $this->translator->getLocale());
 
         $this->bookingWindow->initialize();
 
@@ -350,7 +350,7 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
         $systemAdapter = $this->framework->getAdapter(System::class);
 
         // Load language file
-        $systemAdapter->loadLanguageFile('default', $this->sessionBag->get('language'));
+        $systemAdapter->loadLanguageFile('default', $this->translator->getLocale());
         $ajaxResponse = $ajaxRequestEvent->getAjaxResponse();
 
         $this->bookingWindow->initialize();
@@ -419,7 +419,7 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
         $systemAdapter = $this->framework->getAdapter(System::class);
 
         // Load language file
-        $systemAdapter->loadLanguageFile('default', $this->sessionBag->get('language'));
+        $systemAdapter->loadLanguageFile('default', $this->translator->getLocale());
 
         $request = $this->requestStack->getCurrentRequest();
 

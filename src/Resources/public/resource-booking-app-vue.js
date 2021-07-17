@@ -139,7 +139,7 @@ class resourceBookingApp {
 
                     Object.keys(newVal).forEach(i => {
                         Object.keys(newVal[i]['cellData']).forEach(ii => {
-                            if (newVal[i]['cellData'][ii]['isBooked'] === true && oldVal[i]['cellData'][ii]['isBooked'] === false) {
+                            if (parseInt(newVal[i]['cellData'][ii]['bookingCount']) > parseInt(oldVal[i]['cellData'][ii]['bookingCount'])) {
                                 if (newVal[i]['cellData'][ii]['mondayTimestampSelectedWeek'] === oldVal[i]['cellData'][ii]['mondayTimestampSelectedWeek']) {
                                     if (newVal[i]['cellData'][ii]['resourceId'] === oldVal[i]['cellData'][ii]['resourceId']) {
                                         newBooking = true;
@@ -265,10 +265,7 @@ class resourceBookingApp {
                     data.append('REQUEST_TOKEN', this.options.requestToken);
                     data.append('action', action);
                     data.append('resourceId', this.bookingWindow.activeTimeSlot.resourceId);
-                    //data.append('description', this.$el.querySelectorAll('.booking-window [name="bookingDescription"]')[0].value);
-                    //data.append('bookingRepeatStopWeekTstamp', this.$el.querySelectorAll('.booking-repeat-stop-week-tstamp')[0].value);
                     data.append('moduleKey', this.options.moduleKey);
-                    //data.append('itemsBooked', this.$el.querySelector('[name="itemsBooked"]') ? this.$el.querySelector('[name="itemsBooked"]').value : '1');
 
                     Object.keys(this.bookingWindow.selectedTimeSlots).forEach(key => {
                         data.append('bookingDateSelection[]', this.bookingWindow.selectedTimeSlots[key]);

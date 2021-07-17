@@ -34,6 +34,7 @@ use Markocupic\ResourceBookingBundle\Util\UtcTimeHelper;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Security\Core\Security;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Class BookingMain.
@@ -79,11 +80,16 @@ class BookingMain
     private $user;
 
     /**
+     * @var TranslatorInterface
+     */
+    private $translator;
+
+    /**
      * BookingMain constructor.
      *
      * @throws \Exception
      */
-    public function __construct(ContaoFramework $framework, Security $security, SessionInterface $session, RequestStack $requestStack, SlotFactory $slotFactory, LoggedInFrontendUser $user, string $bagName)
+    public function __construct(ContaoFramework $framework, Security $security, SessionInterface $session, RequestStack $requestStack, SlotFactory $slotFactory, LoggedInFrontendUser $user, TranslatorInterface $translator, string $bagName)
     {
         $this->framework = $framework;
         $this->security = $security;
@@ -92,6 +98,7 @@ class BookingMain
         $this->requestStack = $requestStack;
         $this->slotFactory = $slotFactory;
         $this->user = $user;
+        $this->translator = $translator;
 
         if (null === $this->getModuleModel()) {
             throw new \Exception('Module model not found.');
@@ -142,15 +149,15 @@ class BookingMain
         $arrData = [];
 
         // Load language file
-        $systemAdapter->loadLanguageFile('default', $this->sessionBag->get('language'));
+        $systemAdapter->loadLanguageFile('default', $this->translator->getLocale());
 
         // Messages
         if (null === $this->getActiveResourceType() && !$messageAdapter->hasMessages()) {
-            $messageAdapter->addInfo($GLOBALS['TL_LANG']['MSG']['selectResourceTypePlease']);
+            $messageAdapter->addInfo($this->translator->trans('RBB.MSG.selectResourceTypePlease', [], 'contao_default'));
         }
 
         if (null === $this->getActiveResource() && !$messageAdapter->hasMessages()) {
-            $messageAdapter->addInfo($GLOBALS['TL_LANG']['MSG']['selectResourcePlease']);
+            $messageAdapter->addInfo($this->translator->trans('RBB.MSG.selectResourcePlease', [], 'contao_default'));
         }
 
         // Filter form: get resource types dropdown
@@ -191,7 +198,7 @@ class BookingMain
             $arrData['loggedInUser'] = [
                 'firstname' => $this->user->getLoggedInUser()->firstname,
                 'lastname' => $this->user->getLoggedInUser()->lastname,
-                'gender' => '' !== $GLOBALS['TL_LANG'][$this->user->getLoggedInUser()->gender] ? $GLOBALS['TL_LANG'][$this->user->getLoggedInUser()->gender] : $this->user->getLoggedInUser()->gender,
+                'gender' => $this->user->getLoggedInUser()->gender ? $this->translator->trans('MSC.'.$this->user->getLoggedInUser()->gender, [], 'contao_default') : '',
                 'email' => $this->user->getLoggedInUser()->email,
                 'id' => $this->user->getLoggedInUser()->id,
             ];
@@ -222,8 +229,8 @@ class BookingMain
             }
             $arrWeek[] = [
                 'index' => $i,
-                'title' => '' !== $GLOBALS['TL_LANG']['DAYS_LONG'][$i] ? $GLOBALS['TL_LANG']['DAYS_LONG'][$i] : $arrWeekdays[$i],
-                'titleShort' => '' !== $GLOBALS['TL_LANG']['DAYS_SHORTENED'][$i] ? $GLOBALS['TL_LANG']['DAYS_SHORTENED'][$i] : $arrWeekdays[$i],
+                'title' => $this->translator->trans('MSC.DAYS_LONG.'.$i, [], 'contao_default'),
+                'titleShort' => $this->translator->trans('MSC.DAYS_SHORTENED.'.$i, [], 'contao_default'),
                 'date' => $dateAdapter->parse('d.m.Y', strtotime($dateAdapter->parse('Y-m-d', $this->sessionBag->get('activeWeekTstamp')).' +'.$i.' day')),
             ];
         }
@@ -305,6 +312,7 @@ class BookingMain
                         $objTs->resourceId = $this->getActiveResource()->id;
                         $objTs->cssClass = $cssCellClass;
                         $objTs->bookings = [];
+                        $objTs->bookingCount = $slot->getBookingCount();
 
                         // slotId-startTime-endTime-mondayTimestampSelectedWeek
                         $objTs->bookingCheckboxValue = sprintf('%s-%s-%s-%s', $objTimeslots->id, $startTimestamp, $endTimestamp, $this->sessionBag->get('activeWeekTstamp'));
@@ -478,7 +486,7 @@ class BookingMain
         $dateAdapter = $this->framework->getAdapter(Date::class);
 
         // Load language file
-        $systemAdapter->loadLanguageFile('default', $this->sessionBag->get('language'));
+        $systemAdapter->loadLanguageFile('default', $this->translator->getLocale());
 
         $arrWeeks = [];
 
@@ -522,7 +530,7 @@ class BookingMain
                 'year' => $yearMonday,
                 'optionDateStart' => $dateMonday,
                 'optionDateEnd' => $dateSunday,
-                'optionText' => sprintf($GLOBALS['TL_LANG']['MSC']['weekSelectOptionText'], $calWeek, $yearMonday, $dateMonday, $dateSunday),
+                'optionText' => $this->translator->trans('MSC.weekSelectOptionText', [$calWeek, $yearMonday, $dateMonday, $dateSunday], 'contao_default'),
             ];
 
             $currentTstamp = $dateHelperAdapter->addDaysToTime(7, $currentTstamp);

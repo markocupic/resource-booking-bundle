@@ -22,6 +22,7 @@ $GLOBALS['TL_LANG']['tl_resource_booking_resource']['published'] = array('Veröf
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['title'] = array('Bezeichnung');
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['description'] = array('Beschreibung');
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['timeSlotType'] = array('Buchungszeitplan');
+$GLOBALS['TL_LANG']['tl_resource_booking_resource']['itemsAvailable'] = array('Verfügbare Stückzahl (Standard: 1).', 'Bitte geben Sie eine natürliche Zahl grösser als 0 ein.');
 
 
 

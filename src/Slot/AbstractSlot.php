@@ -125,6 +125,15 @@ abstract class AbstractSlot implements SlotInterface
         return $this->bookings;
     }
 
+    public function getBookingCount(): int
+    {
+        if (!$this->hasBookings()) {
+            return 0;
+        }
+
+        return $this->getBookings()->count();
+    }
+
     public function getEndTime(): int
     {
         return $this->endTime;

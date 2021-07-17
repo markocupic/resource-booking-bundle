@@ -88,6 +88,9 @@
 .mod_resourceBookingWeekcalendar .resource-booking-table-window .layout-cell.time-slot-cell[data-isfullybooked=true], .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell.time-slot-cell[data-isfullybooked=true] {
   background-color: #ffded5;
 }
+.mod_resourceBookingWeekcalendar .resource-booking-table-window .layout-cell.cell-headline, .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell.cell-headline {
+  background-color: #ffffff;
+}
 .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell.time-slot-cell {
   align-items: flex-start;
   justify-content: flex-start;
@@ -117,7 +120,7 @@
   bottom: 0;
   left: 0;
   z-index: 10;
-  opacity: 0.6;
+  opacity: 0.4;
   transition: opacity 0.8s;
 }
 .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell .btn-link > .icon-cancel-booking {
@@ -153,6 +156,9 @@
 .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell.time-slot-cell .holder-box, .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell.time-slot-cell .description-box, .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell.time-slot-cell .item-counter-box {
   position: relative;
   z-index: 20;
+}
+.mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell.time-slot-cell .description-box small {
+  font-size: 0.75rem;
 }
 .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell[data-iscancelable]:hover .btn-link, .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell[data-isbookable]:hover .btn-link {
   z-index: 30;

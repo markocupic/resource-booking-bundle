@@ -54,7 +54,7 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_hideDaysSelection'] =
 	'exclude'   => true,
 	'inputType' => 'checkbox',
 	'options'   => range(0, 6),
-	'reference' => &$GLOBALS['TL_LANG']['DAYS_LONG'],
+	'reference' => &$GLOBALS['TL_LANG']['MSC']['DAYS_LONG'],
 	'eval'      => array('multiple' => true, 'tl_class' => 'clr'),
 	'sql'       => "blob NULL"
 );

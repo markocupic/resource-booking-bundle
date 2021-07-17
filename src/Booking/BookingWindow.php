@@ -30,6 +30,7 @@ use Markocupic\ResourceBookingBundle\User\LoggedInFrontendUser;
 use Markocupic\ResourceBookingBundle\Util\DateHelper;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Class BookingWindow.
@@ -92,6 +93,11 @@ class BookingWindow
     private $user;
 
     /**
+     * @var TranslatorInterface
+     */
+    private $translator;
+
+    /**
      * @var ArrayAttributeBag
      */
     private $sessionBag;
@@ -104,13 +110,14 @@ class BookingWindow
     /**
      * Booking constructor.
      */
-    public function __construct(ContaoFramework $framework, SessionInterface $session, RequestStack $requestStack, SlotFactory $slotFactory, LoggedInFrontendUser $user, string $bagName)
+    public function __construct(ContaoFramework $framework, SessionInterface $session, RequestStack $requestStack, SlotFactory $slotFactory, LoggedInFrontendUser $user, TranslatorInterface $translator, string $bagName)
     {
         $this->framework = $framework;
         $this->session = $session;
         $this->requestStack = $requestStack;
         $this->slotFactory = $slotFactory;
         $this->user = $user;
+        $this->translator = $translator;
         $this->sessionBag = $session->getBag($bagName);
     }
 
@@ -292,7 +299,7 @@ class BookingWindow
                 $arrAllowed[] = 'bookingDateSelection[]';
                 $arrAllowed[] = 'bookingRepeatStopWeekTstamp';
 
-                // Get data from POST, thus the extension can easily be extended
+                // Add data from POST, thus the extension can easily be extended
                 foreach (array_keys($_POST) as $k) {
                     if (!\in_array($k, $arrAllowed, true)) {
                         continue;
@@ -347,7 +354,7 @@ class BookingWindow
             $arrBookedSlots[$i]['title'] = sprintf(
                 '%s : %s %s %s [%s - %s]',
                 $this->getActiveResource()->title,
-                $GLOBALS['TL_LANG']['MSC']['bookingFor'],
+                $this->translator->trans('MSC.bookingFor', [], 'contao_default'),
                 $this->user->getLoggedInUser()->firstname,
                 $this->user->getLoggedInUser()->lastname,
                 $dateAdapter->parse($configAdapter->get('datimFormat'), $arrData['startTime']),
