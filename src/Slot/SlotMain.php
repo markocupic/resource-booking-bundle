@@ -34,14 +34,14 @@ class SlotMain extends AbstractSlot
 
         if (null !== ($objBookings = $this->getBookings())) {
             while ($objBookings->next()) {
-                if ($this->user && (int) $this->user->id === (int) $objBookings->member) {
+                if ($this->arrData['user'] && (int) $this->arrData['user']->id === (int) $objBookings->member) {
                     continue;
                 }
                 $itemsBooked += (int) $objBookings->itemsBooked;
             }
         }
 
-        if ((int) $this->resource->itemsAvailable > $itemsBooked) {
+        if ((int) $this->arrData['resource']->itemsAvailable > $itemsBooked) {
             return true;
         }
 
@@ -63,12 +63,12 @@ class SlotMain extends AbstractSlot
             return false;
         }
 
-        if (!$this->user) {
+        if (!$this->arrData['user']) {
             return false;
         }
 
         while ($bookings->next()) {
-            if ((int) $this->user->id === (int) $bookings->member) {
+            if ((int) $this->arrData['user']->id === (int) $bookings->member) {
                 $bookings->reset();
 
                 return true;

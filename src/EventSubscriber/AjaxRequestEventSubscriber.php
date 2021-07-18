@@ -428,9 +428,9 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
 
         $arrIds = [];
 
-        if (null !== $this->user->getLoggedInUser() && (int) $request->request->get('bookingId') > 0) {
-            $bookingId = $request->request->get('bookingId');
-            $objBooking = $resourceBookingModelAdapter->findByPk($bookingId);
+        if (null !== $this->user->getLoggedInUser() && (int) $request->request->get('id') > 0) {
+            $id = $request->request->get('id');
+            $objBooking = $resourceBookingModelAdapter->findByPk($id);
 
             if (null !== $objBooking) {
                 if ((int) $objBooking->member === (int) $this->user->getLoggedInUser()->id) {

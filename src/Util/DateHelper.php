@@ -60,16 +60,12 @@ class DateHelper
         return strtotime(Date::parse('Y-m-d H:i:s', $time).' '.$strAddWeeks);
     }
 
-    /**
-     * @param int|null $timestamp
-     * @return int
-     */
     public static function getMondayOfCurrentWeek(int $timestamp = null): int
     {
-        if(!$timestamp)
-        {
+        if (!$timestamp) {
             $timestamp = time();
         }
+
         return strtotime('monday this week', $timestamp);
     }
 

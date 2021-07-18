@@ -21,7 +21,6 @@ use Contao\ModuleModel;
 use Contao\StringUtil;
 use Contao\System;
 use Contao\Validator;
-use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceTypeModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotModel;
@@ -245,7 +244,7 @@ class BookingMain
             $arrData['activeResourceTypeId'] = $this->getActiveResourceType()->id;
         }
 
-        // Get rows
+        // Generate table data
         $arrData['activeResourceId'] = 'undefined';
         $rows = [];
 
@@ -290,49 +289,40 @@ class BookingMain
 
                         $startTimestamp = strtotime(sprintf('+%s day', $colCount), $this->sessionBag->get('activeWeekTstamp')) + $objTimeslots->startTime;
                         $endTimestamp = strtotime(sprintf('+%s day', $colCount), $this->sessionBag->get('activeWeekTstamp')) + $objTimeslots->endTime;
+
                         /** @var SlotMain $slot */
                         $slot = $this->slotFactory->get(SlotMain::MODE, $this->getActiveResource(), $startTimestamp, $endTimestamp);
+                        $slot->index = $colCount;
+                        $slot->weekday = $weekday;
+                        $slot->startTimeString = $dateAdapter->parse('H:i', $startTimestamp);
+                        $slot->startTimestamp = $slot->getStartTime();
+                        $slot->endTimeString = $dateAdapter->parse('H:i', $endTimestamp);
+                        $slot->endTimestamp = $slot->getEndTime();
+                        $slot->timeSpanString = $dateAdapter->parse('H:i', $startTimestamp).' - '.$dateAdapter->parse('H:i', $endTimestamp);
+                        $slot->mondayTimestampSelectedWeek = (int) $this->sessionBag->get('activeWeekTstamp');
+                        $slot->hasBookings = $slot->hasBookings();
+                        $slot->isBookable = $slot->isBookable();
+                        $slot->isCancelable = $slot->isCancelable();
+                        $slot->userHasBooked = $slot->isBookedByUser();
+                        $slot->bookingRelatedToLoggedInUser = $slot->getBookingRelatedToLoggedInUser() ? $slot->getBookingRelatedToLoggedInUser()->row() : null;
+                        $slot->timeSlotId = $objTimeslots->id;
+                        $slot->isValidDate = $slot->hasValidDate();
+                        $slot->isFullyBooked = $slot->isFullyBooked();
+                        $slot->resourceId = $this->getActiveResource()->id;
+                        $slot->cssClass = $cssCellClass;
+                        $slot->bookingCount = $slot->getBookingCount();
+                        $slot->bookingCheckboxValue = sprintf('%s-%s-%s-%s', $objTimeslots->id, $startTimestamp, $endTimestamp, $this->sessionBag->get('activeWeekTstamp'));
+                        $slot->bookingCheckboxId = sprintf('bookingCheckbox_modId_%s_%s_%s', $this->getModuleModel()->id, $rowCount, $colCount);
 
-                        $objTs = new \stdClass();
-                        $objTs->index = $colCount;
-                        $objTs->weekday = $weekday;
-                        $objTs->startTimeString = $dateAdapter->parse('H:i', $startTimestamp);
-                        $objTs->startTimestamp = $slot->getStartTime();
-                        $objTs->endTimeString = $dateAdapter->parse('H:i', $endTimestamp);
-                        $objTs->endTimestamp = $slot->getEndTime();
-                        $objTs->timeSpanString = $dateAdapter->parse('H:i', $startTimestamp).' - '.$dateAdapter->parse('H:i', $endTimestamp);
-                        $objTs->mondayTimestampSelectedWeek = (int) $this->sessionBag->get('activeWeekTstamp');
-                        $objTs->hasBookings = $slot->hasBookings();
-                        $objTs->isBookable = $slot->isBookable();
-                        $objTs->isCancelable = $slot->isCancelable();
-                        $objTs->userHasBooked = $slot->isBookedByUser();
-                        $objTs->bookingRelatedToLoggedInUser = $slot->getBookingRelatedToLoggedInUser() ? $slot->getBookingRelatedToLoggedInUser()->row() : null;
-                        $objTs->timeSlotId = $objTimeslots->id;
-                        $objTs->isValidDate = $slot->hasValidDate();
-                        $objTs->isFullyBooked = $slot->isFullyBooked();
-                        $objTs->resourceId = $this->getActiveResource()->id;
-                        $objTs->cssClass = $cssCellClass;
-                        $objTs->bookings = [];
-                        $objTs->bookingCount = $slot->getBookingCount();
-
-                        // slotId-startTime-endTime-mondayTimestampSelectedWeek
-                        $objTs->bookingCheckboxValue = sprintf('%s-%s-%s-%s', $objTimeslots->id, $startTimestamp, $endTimestamp, $this->sessionBag->get('activeWeekTstamp'));
-                        $objTs->bookingCheckboxId = sprintf('bookingCheckbox_modId_%s_%s_%s', $this->getModuleModel()->id, $rowCount, $colCount);
-
-                        if ($objTs->hasBookings) {
+                        if ($slot->hasBookings) {
                             $objBooking = $slot->getBookings();
 
                             while ($objBooking->next()) {
                                 if (null !== $objBooking) {
-                                    $objBk = new \stdClass();
-                                    $objBk->id = $objBooking->id;
-
-                                    $objBk->itemsBooked = $objBooking->itemsBooked;
-
                                     // Presets
-                                    $objBk->bookedByFirstname = '';
-                                    $objBk->bookedByLastname = '';
-                                    $objBk->bookedByFullname = '';
+                                    $objBooking->bookedByFirstname = '';
+                                    $objBooking->bookedByLastname = '';
+                                    $objBooking->bookedByFullname = '';
 
                                     $arrFields = $stringUtilAdapter->deserialize($this->getModuleModel()->resourceBooking_clientPersonalData, true);
 
@@ -342,11 +332,11 @@ class BookingMain
                                         // Do not transmit and display sensitive data if user is not holder
                                         if ($objBooking->member !== $objMember->id && $this->getModuleModel()->resourceBooking_displayClientPersonalData && !empty($arrFields)) {
                                             foreach ($arrFields as $fieldname) {
-                                                $objBk->{'bookedBy'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($objMember->$fieldname);
+                                                $objBooking->{'bookedBy'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($objMember->$fieldname);
                                             }
 
                                             if (\in_array('firstname', $arrFields, true) && \in_array('lastname', $arrFields, true)) {
-                                                $objBk->bookedByFullname = $stringUtilAdapter->decodeEntities($objMember->firstname.' '.$objMember->lastname);
+                                                $objBooking->bookedByFullname = $stringUtilAdapter->decodeEntities($objMember->firstname.' '.$objMember->lastname);
                                             }
                                         } else {
                                             foreach (array_keys($objMember->row()) as $fieldname) {
@@ -377,11 +367,12 @@ class BookingMain
                                                     }
                                                 }
 
-                                                $objBk->{'bookedBy'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($varData);
-                                                $objBk->{'bookedBy'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($varData);
+                                                $objBooking->{'bookedBy'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($varData);
+                                                $objBooking->{'bookedBy'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($varData);
                                             }
-                                            $objBk->bookedByFullname = $stringUtilAdapter->decodeEntities($objMember->firstname.' '.$objMember->lastname);
+                                            $objBooking->bookedByFullname = $stringUtilAdapter->decodeEntities($objMember->firstname.' '.$objMember->lastname);
                                         }
+                                        $objBooking->bookedBySession = null;
                                     }
 
                                     // Send sensitive data if it has been permitted in tl_module
@@ -390,21 +381,16 @@ class BookingMain
 
                                         foreach ($arrFields as $fieldname) {
                                             if (\in_array($fieldname, $arrFields, true)) {
-                                                $objBk->{'booking'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($objBooking->$fieldname);
+                                                $objBooking->{'booking'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($objBooking->$fieldname);
                                             }
                                         }
                                     }
 
-                                    $objBk->bookingId = $objBooking->id;
-                                    $objBk->bookingUuid = $objBooking->bookingUuid;
-
-                                    // Add new item to bookings
-                                    $objTs->bookings[] = $objBk;
+                                    $objBooking->bookingUuid = $objBooking->bookingUuid;
                                 }
                             }
                         }
-
-                        $cells[] = $objTs;
+                        $cells[] = $slot->row();
                     }
                     $rows[] = ['cellData' => $cells, 'rowData' => $objRow];
                     ++$rowCount;
@@ -413,6 +399,7 @@ class BookingMain
         }
 
         $arrData['rows'] = $rows;
+        // End generate table data
 
         // Get time slots
         $objTimeslots = $resourceBookingTimeSlotModelAdapter->findPublishedByPid($this->getActiveResource()->timeSlotType);
@@ -459,18 +446,6 @@ class BookingMain
         $arrData['isReady'] = true;
 
         return $arrData;
-    }
-
-    protected function isResourceBooked(ResourceBookingResourceModel $objResource, int $slotStartTime, int $slotEndTime): bool
-    {
-        /** @var ResourceBookingModel $resourceBookingModelAdapter */
-        $resourceBookingModelAdapter = $this->framework->getAdapter(ResourceBookingModel::class);
-
-        if (null === $resourceBookingModelAdapter->findOneByResourceIdStarttimeAndEndtime($objResource, $slotStartTime, $slotEndTime)) {
-            return false;
-        }
-
-        return true;
     }
 
     /**

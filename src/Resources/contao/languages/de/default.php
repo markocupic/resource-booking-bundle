@@ -9,21 +9,21 @@
  */
 
 // Weekdays
-$GLOBALS['TL_LANG']['MSC']['DAYS_SHORTENED'][0] = 'Mo';
-$GLOBALS['TL_LANG']['MSC']['DAYS_SHORTENED'][1] = 'Di';
-$GLOBALS['TL_LANG']['MSC']['DAYS_SHORTENED'][2] = 'Mi';
-$GLOBALS['TL_LANG']['MSC']['DAYS_SHORTENED'][3] = 'Do';
-$GLOBALS['TL_LANG']['MSC']['DAYS_SHORTENED'][4] = 'Fr';
-$GLOBALS['TL_LANG']['MSC']['DAYS_SHORTENED'][5] = 'Sa';
-$GLOBALS['TL_LANG']['MSC']['DAYS_SHORTENED'][6] = 'So';
+$GLOBALS['TL_LANG']['MSC']['DAYS_SHORTENED']['monday'] = 'Mo';
+$GLOBALS['TL_LANG']['MSC']['DAYS_SHORTENED']['tuesday'] = 'Di';
+$GLOBALS['TL_LANG']['MSC']['DAYS_SHORTENED']['wednesday'] = 'Mi';
+$GLOBALS['TL_LANG']['MSC']['DAYS_SHORTENED']['thursday'] = 'Do';
+$GLOBALS['TL_LANG']['MSC']['DAYS_SHORTENED']['friday'] = 'Fr';
+$GLOBALS['TL_LANG']['MSC']['DAYS_SHORTENED']['saturday'] = 'Sa';
+$GLOBALS['TL_LANG']['MSC']['DAYS_SHORTENED']['sunday'] = 'So';
 
-$GLOBALS['TL_LANG']['MSC']['DAYS_LONG'][0] = 'Montag';
-$GLOBALS['TL_LANG']['MSC']['DAYS_LONG'][1] = 'Dienstag';
-$GLOBALS['TL_LANG']['MSC']['DAYS_LONG'][2] = 'Mittwoch';
-$GLOBALS['TL_LANG']['MSC']['DAYS_LONG'][3] = 'Donnerstag';
-$GLOBALS['TL_LANG']['MSC']['DAYS_LONG'][4] = 'Freitag';
-$GLOBALS['TL_LANG']['MSC']['DAYS_LONG'][5] = 'Samstag';
-$GLOBALS['TL_LANG']['MSC']['DAYS_LONG'][6] = 'Sonntag';
+$GLOBALS['TL_LANG']['MSC']['DAYS_LONG']['monday'] = 'Montag';
+$GLOBALS['TL_LANG']['MSC']['DAYS_LONG']['tuesday'] = 'Dienstag';
+$GLOBALS['TL_LANG']['MSC']['DAYS_LONG']['wednesday'] = 'Mittwoch';
+$GLOBALS['TL_LANG']['MSC']['DAYS_LONG']['thursday'] = 'Donnerstag';
+$GLOBALS['TL_LANG']['MSC']['DAYS_LONG']['friday'] = 'Freitag';
+$GLOBALS['TL_LANG']['MSC']['DAYS_LONG']['saturday'] = 'Samstag';
+$GLOBALS['TL_LANG']['MSC']['DAYS_LONG']['sunday'] = 'Sonntag';
 
 // Forms
 $GLOBALS['TL_LANG']['MSC']['weekSelectOptionText'] = 'KW %s/%s: %s - %s';

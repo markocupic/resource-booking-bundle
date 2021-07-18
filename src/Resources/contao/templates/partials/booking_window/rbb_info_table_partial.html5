@@ -7,9 +7,9 @@
     <div class="layout-cell column-0 column-first"><strong>{{trans::RBB.fullname::contao_default}}</strong></div>
     <div class="layout-cell column-1 column-last">{{ loggedInUser.firstname }} {{ loggedInUser.lastname }}</div>
   </div>
-  <div class="d-flex layout-row" v-if="bookingWindow.activeTimeSlot.bookingId">
+  <div class="d-flex layout-row" v-if="bookingWindow.booking">
     <div class="layout-cell column-0 column-first"><strong>{{trans::RBB.bookingIdAndUuid::contao_default}}</strong></div>
-    <div class="layout-cell column-1 column-last">{{ bookingWindow.activeTimeSlot.bookingId }} / {{ bookingWindow.activeTimeSlot.bookingUuid }}</div>
+    <div class="layout-cell column-1 column-last">{{ bookingWindow.booking.id }} / {{ bookingWindow.booking.bookingUuid }}</div>
   </div>
   <div class="d-flex layout-row row-last">
     <div class="layout-cell column-0 column-first"><strong>{{trans::RBB.week::contao_default}}</strong></div>

@@ -320,7 +320,6 @@ class resourceBookingApp {
          * Send resource availability request
          */
         bookingFormValidationRequest: function bookingFormValidationRequest() {
-
           let action = 'bookingFormValidationRequest';
 
           let data = new FormData();
@@ -367,7 +366,7 @@ class resourceBookingApp {
           let data = new FormData();
           data.append('REQUEST_TOKEN', this.options.requestToken);
           data.append('action', action);
-          data.append('bookingId', this.bookingWindow.booking.id);
+          data.append('id', this.bookingWindow.booking.id);
           data.append('deleteBookingsWithSameBookingUuid', this.bookingWindow.deleteBookingsWithSameBookingUuid);
           data.append('moduleKey', this.options.moduleKey);
 
@@ -434,13 +433,13 @@ class resourceBookingApp {
          * @param booking
          * @param action
          */
-        openBookingWindow: function openBookingWindow(objActiveTimeSlot, action, booking = null) {
+        openBookingWindow: function openBookingWindow(slot, action, booking = null) {
           this.mode = 'booking-window';
 
           // Reset
           this.bookingWindow = {
             'action': action,
-            'activeTimeSlot': objActiveTimeSlot,
+            'activeTimeSlot': slot,
             'booking': booking,
             'response': {},
             'deleteBookingsWithSameBookingUuid': false,
@@ -453,7 +452,7 @@ class resourceBookingApp {
             'response': {},
           }
 
-          this.bookingWindow.selectedTimeSlots.push(objActiveTimeSlot.bookingCheckboxValue);
+          this.bookingWindow.selectedTimeSlots.push(slot.bookingCheckboxValue);
 
           if (action === 'showBookingForm') {
             window.setTimeout(() => {
