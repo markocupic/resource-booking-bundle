@@ -1,41 +1,49 @@
 services:
-  _defaults:
-    autowire: true
-    autoconfigure: true
-    public: true
-    bind:
-      $bagName: '%resource_booking_bundle.session.attribute_bag_name%'
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: true
+        bind:
+            $bagName: '%resource_booking_bundle.session.attribute_bag_name%'
 
-  _instanceof:
-    Symfony\Bundle\FrameworkBundle\Controller\AbstractController:
-      calls:
-        - [ setContainer, [ '@service_container' ] ]
+    _instanceof:
+        Symfony\Bundle\FrameworkBundle\Controller\AbstractController:
+            calls:
+                - [ setContainer, [ '@service_container' ] ]
 
-  Markocupic\ResourceBookingBundle\:
-    resource: ../../
-    exclude: ../../{DependencyInjection,Resources,Model,Config,Event}
+    Markocupic\ResourceBookingBundle\:
+        resource: ../../
+        exclude: ../../{DependencyInjection,Resources,Model,Config,Event}
 
-  # Contao frontend module "resourceBookingWeekcalendar"
-  Markocupic\ResourceBookingBundle\Controller\FrontendModule\ResourceBookingWeekcalendarController:
-    tags:
-    - { name: contao.frontend_module, category: resourceBooking, type: resourceBookingWeekcalendar }
 
-  # Subscribers: Handle ajay requests
-  Markocupic\ResourceBookingBundle\EventSubscriber\AjaxRequestEventSubscriber:
-    tags:
-      - { name: kernel.event_subscriber }
+    markocupic.resource_booking.event_subscriber.ajax_event_subscriber:
+        class: Markocupic\ResourceBookingBundle\EventSubscriber\AjaxRequestEventSubscriber
 
-  # Register session bag
-  Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag:
-    calls:
-      - ['setName', ['%resource_booking_bundle.session.attribute_bag_name%']]
+    Markocupic\ResourceBookingBundle\AjaxController\BookingController:
+        tags:
+            - { name: markocupic.resource_booking.ajax_controller, alias: booking }
 
-  # Contao hook: addCustomRegexp
-  Markocupic\ResourceBookingBundle\EventListener\ContaoHooks\Regexp:
-    tags:
-      - { name: contao.hook, hook: addCustomRegexp, method: onCustomRegexp, priority: 0 }
+    # Contao frontend module "resourceBookingWeekcalendar"
+    Markocupic\ResourceBookingBundle\Controller\FrontendModule\ResourceBookingWeekcalendarController:
+        tags:
+            - { name: contao.frontend_module, category: resourceBooking, type: resourceBookingWeekcalendar }
 
-   # Migration class: Add booking uuid
-  Markocupic\ResourceBookingBundle\Migration\AddBookingUuid\AddBookingUuid:
-    tags:
-      - { name: contao.migration, priority: 0 }
+    # Subscribers: Handle ajay requests
+    Markocupic\ResourceBookingBundle\EventSubscriber\AjaxRequestEventSubscriber:
+        tags:
+            - { name: kernel.event_subscriber }
+
+    # Register session bag
+    Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag:
+        calls:
+            - [ 'setName', [ '%resource_booking_bundle.session.attribute_bag_name%' ] ]
+
+    # Contao hook: addCustomRegexp
+    Markocupic\ResourceBookingBundle\EventListener\ContaoHooks\Regexp:
+        tags:
+            - { name: contao.hook, hook: addCustomRegexp, method: onCustomRegexp, priority: 0 }
+
+        # Migration class: Add booking uuid
+    Markocupic\ResourceBookingBundle\Migration\AddBookingUuid\AddBookingUuid:
+        tags:
+            - { name: contao.migration, priority: 0 }
