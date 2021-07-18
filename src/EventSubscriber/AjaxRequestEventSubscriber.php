@@ -31,6 +31,7 @@ use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag;
 use Markocupic\ResourceBookingBundle\User\LoggedInFrontendUser;
 use Markocupic\ResourceBookingBundle\Util\DateHelper;
+use Markocupic\ResourceBookingBundle\Util\Utils;
 use Psr\Log\LogLevel;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -82,6 +83,11 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
     private $translator;
 
     /**
+     * @var Utils
+     */
+    private $utils;
+
+    /**
      * @var ArrayAttributeBag
      */
     private $sessionBag;
@@ -99,7 +105,7 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
     /**
      * AjaxRequestEventSubscriber constructor.
      */
-    public function __construct(ContaoFramework $framework, BookingMain $bookingMain, BookingWindow $bookingWindow, LoggedInFrontendUser $user, SessionInterface $session, RequestStack $requestStack, TranslatorInterface $translator, string $bagName, Security $security, EventDispatcherInterface $eventDispatcher)
+    public function __construct(ContaoFramework $framework, BookingMain $bookingMain, BookingWindow $bookingWindow, LoggedInFrontendUser $user, SessionInterface $session, RequestStack $requestStack, TranslatorInterface $translator, Utils $utils, string $bagName, Security $security, EventDispatcherInterface $eventDispatcher)
     {
         $this->framework = $framework;
         $this->bookingMain = $bookingMain;
@@ -108,6 +114,7 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
         $this->session = $session;
         $this->requestStack = $requestStack;
         $this->translator = $translator;
+        $this->utils = $utils;
         $this->sessionBag = $session->getBag($bagName);
         $this->security = $security;
         $this->eventDispatcher = $eventDispatcher;
@@ -283,6 +290,11 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
         if (null !== $objBookings) {
             while ($objBookings->next()) {
                 $objBooking = $objBookings->current();
+
+                // Check if mandatory fields are filled out, see dca mandatory key
+                if (true !== ($success = $this->utils->areMandatoryFieldsSet($objBooking->row(), 'tl_resource_booking'))) {
+                    throw new \Exception('No value detected for the mandatory field '.$success);
+                }
 
                 // Save booking
                 if (!$objBooking->doNotSave) {

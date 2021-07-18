@@ -281,7 +281,6 @@ class BookingWindow
                     'description' => $stringUtilAdapter->decodeEntities($inputAdapter->post('bookingDescription')),
                     'member' => $this->user->getLoggedInUser()->id,
                     'tstamp' => time(),
-                    'bookingUuid' => null,
                     'isBookable' => false,
                     'enoughItemsAvailable' => false,
                     'isFullyBooked' => false,
