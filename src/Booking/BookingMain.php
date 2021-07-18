@@ -287,18 +287,18 @@ class BookingMain
                             continue;
                         }
 
-                        $startTimestamp = strtotime(sprintf('+%s day', $colCount), $this->sessionBag->get('activeWeekTstamp')) + $objTimeslots->startTime;
-                        $endTimestamp = strtotime(sprintf('+%s day', $colCount), $this->sessionBag->get('activeWeekTstamp')) + $objTimeslots->endTime;
+                        $startTime = strtotime(sprintf('+%s day', $colCount), $this->sessionBag->get('activeWeekTstamp')) + $objTimeslots->startTime;
+                        $endTime = strtotime(sprintf('+%s day', $colCount), $this->sessionBag->get('activeWeekTstamp')) + $objTimeslots->endTime;
 
                         /** @var SlotMain $slot */
-                        $slot = $this->slotFactory->get(SlotMain::MODE, $this->getActiveResource(), $startTimestamp, $endTimestamp);
+                        $slot = $this->slotFactory->get(SlotMain::MODE, $this->getActiveResource(), $startTime, $endTime);
                         $slot->index = $colCount;
                         $slot->weekday = $weekday;
-                        $slot->startTimeString = $dateAdapter->parse('H:i', $startTimestamp);
-                        $slot->startTimestamp = $slot->getStartTime();
-                        $slot->endTimeString = $dateAdapter->parse('H:i', $endTimestamp);
-                        $slot->endTimestamp = $slot->getEndTime();
-                        $slot->timeSpanString = $dateAdapter->parse('H:i', $startTimestamp).' - '.$dateAdapter->parse('H:i', $endTimestamp);
+                        $slot->startTimeString = $dateAdapter->parse('H:i', $startTime);
+                        $slot->startTime = $slot->getStartTime();
+                        $slot->endTimeString = $dateAdapter->parse('H:i', $endTime);
+                        $slot->endTime = $slot->getEndTime();
+                        $slot->timeSpanString = $dateAdapter->parse('H:i', $startTime).' - '.$dateAdapter->parse('H:i', $endTime);
                         $slot->mondayTimestampSelectedWeek = (int) $this->sessionBag->get('activeWeekTstamp');
                         $slot->hasBookings = $slot->hasBookings();
                         $slot->isBookable = $slot->isBookable();
@@ -311,7 +311,7 @@ class BookingMain
                         $slot->resourceId = $this->getActiveResource()->id;
                         $slot->cssClass = $cssCellClass;
                         $slot->bookingCount = $slot->getBookingCount();
-                        $slot->bookingCheckboxValue = sprintf('%s-%s-%s-%s', $objTimeslots->id, $startTimestamp, $endTimestamp, $this->sessionBag->get('activeWeekTstamp'));
+                        $slot->bookingCheckboxValue = sprintf('%s-%s-%s-%s', $objTimeslots->id, $startTime, $endTime, $this->sessionBag->get('activeWeekTstamp'));
                         $slot->bookingCheckboxId = sprintf('bookingCheckbox_modId_%s_%s_%s', $this->getModuleModel()->id, $rowCount, $colCount);
 
                         if ($slot->hasBookings) {
@@ -416,15 +416,15 @@ class BookingMain
                 if (!empty($arrCssCellID[1])) {
                     $cssCellClass = $arrCssCellID[1];
                 }
-                $startTimestamp = (int) $objTimeslots->startTime;
-                $endTimestamp = (int) $objTimeslots->endTime;
+                $startTime = (int) $objTimeslots->startTime;
+                $endTime = (int) $objTimeslots->endTime;
                 $objTs = new \stdClass();
                 $objTs->cssClass = $cssCellClass;
-                $objTs->startTimeString = $utcTimeHelperAdapter->parse('H:i', $startTimestamp);
-                $objTs->startTimestamp = (int) $startTimestamp;
-                $objTs->endTimeString = $utcTimeHelperAdapter->parse('H:i', $endTimestamp);
-                $objTs->timeSpanString = $utcTimeHelperAdapter->parse('H:i', $startTimestamp).' - '.$utcTimeHelperAdapter->parse('H:i', $endTimestamp);
-                $objTs->endTimestamp = (int) $endTimestamp;
+                $objTs->startTimeString = $utcTimeHelperAdapter->parse('H:i', $startTime);
+                $objTs->startTime = (int) $startTime;
+                $objTs->endTimeString = $utcTimeHelperAdapter->parse('H:i', $endTime);
+                $objTs->timeSpanString = $utcTimeHelperAdapter->parse('H:i', $startTime).' - '.$utcTimeHelperAdapter->parse('H:i', $endTime);
+                $objTs->endTime = (int) $endTime;
                 $timeSlots[] = $objTs;
             }
         }

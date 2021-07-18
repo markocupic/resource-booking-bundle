@@ -32,14 +32,14 @@ class SlotFactory
         $this->slotBooking = $slotBooking;
     }
 
-    public function get(string $mode, ResourceBookingResourceModel $resource, int $startTimestamp, int $endTime, int $desiredItems = 1, ?int $bookingRepeatStopWeekTstamp = null): SlotInterface
+    public function get(string $mode, ResourceBookingResourceModel $resource, int $startTime, int $endTime, int $desiredItems = 1, ?int $bookingRepeatStopWeekTstamp = null): SlotInterface
     {
         if (SlotMain::MODE === $mode) {
-            return $this->slotMain->create($resource, $startTimestamp, $endTime, $desiredItems, $bookingRepeatStopWeekTstamp);
+            return $this->slotMain->create($resource, $startTime, $endTime, $desiredItems, $bookingRepeatStopWeekTstamp);
         }
 
         if (SlotBooking::MODE === $mode) {
-            return $this->slotBooking->create($resource, $startTimestamp, $endTime, $desiredItems, $bookingRepeatStopWeekTstamp);
+            return $this->slotBooking->create($resource, $startTime, $endTime, $desiredItems, $bookingRepeatStopWeekTstamp);
         }
     }
 }
