@@ -27,12 +27,23 @@ class MarkocupicResourceBookingExtension extends Extension
      */
     public function load(array $configs, ContainerBuilder $container): void
     {
+        $configuration = new Configuration();
+
         $loader = new YamlFileLoader(
             $container,
             new FileLocator(__DIR__.'/../Resources/config')
         );
 
+        $config = $this->processConfiguration($configuration, $configs);
+
         $loader->load('parameters.yml');
         $loader->load('services.yml');
+
+        $container->setParameter($this->getAlias().'.weekdays', $config['weekdays']);
+    }
+
+    public function getAlias()
+    {
+        return Configuration::KEY;
     }
 }

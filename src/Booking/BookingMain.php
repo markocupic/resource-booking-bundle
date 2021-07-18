@@ -220,20 +220,21 @@ class BookingMain
 
         // Send weekdays, dates and day
         $arrWeek = [];
-        $arrWeekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        $arrWeekdays = System::getContainer()->getParameter('markocupic_resource_booking.weekdays');
 
-        for ($i = 0; $i < \count($arrWeekdays); ++$i) {
+        foreach ($arrWeekdays as $i => $weekday) {
             // Skip days
-            if ($this->getModuleModel()->resourceBooking_hideDays && !\in_array($i, $stringUtilAdapter->deserialize($this->getModuleModel()->resourceBooking_hideDaysSelection, true), false)) {
+            if ($this->getModuleModel()->resourceBooking_hideDays && !\in_array($weekday, $stringUtilAdapter->deserialize($this->getModuleModel()->resourceBooking_hideDaysSelection, true), false)) {
                 continue;
             }
             $arrWeek[] = [
                 'index' => $i,
-                'title' => $this->translator->trans('MSC.DAYS_LONG.'.$i, [], 'contao_default'),
-                'titleShort' => $this->translator->trans('MSC.DAYS_SHORTENED.'.$i, [], 'contao_default'),
+                'title' => $this->translator->trans('MSC.DAYS_LONG.'.$weekday, [], 'contao_default'),
+                'titleShort' => $this->translator->trans('MSC.DAYS_SHORTENED.'.$weekday, [], 'contao_default'),
                 'date' => $dateAdapter->parse('d.m.Y', strtotime($dateAdapter->parse('Y-m-d', $this->sessionBag->get('activeWeekTstamp')).' +'.$i.' day')),
             ];
         }
+
         // Weekdays
         $arrData['weekdays'] = $arrWeek;
 
@@ -281,9 +282,9 @@ class BookingMain
                         $cssCellClass = $arrCssCellID[1];
                     }
 
-                    for ($colCount = 0; $colCount < 7; ++$colCount) {
+                    foreach ($arrWeekdays as $colCount => $weekday) {
                         // Skip days
-                        if ($this->getModuleModel()->resourceBooking_hideDays && !\in_array($colCount, $stringUtilAdapter->deserialize($this->getModuleModel()->resourceBooking_hideDaysSelection, true), false)) {
+                        if ($this->getModuleModel()->resourceBooking_hideDays && !\in_array($weekday, $stringUtilAdapter->deserialize($this->getModuleModel()->resourceBooking_hideDaysSelection, true), false)) {
                             continue;
                         }
 
@@ -294,7 +295,7 @@ class BookingMain
 
                         $objTs = new \stdClass();
                         $objTs->index = $colCount;
-                        $objTs->weekday = $arrWeekdays[$colCount];
+                        $objTs->weekday = $weekday;
                         $objTs->startTimeString = $dateAdapter->parse('H:i', $startTimestamp);
                         $objTs->startTimestamp = $slot->getStartTime();
                         $objTs->endTimeString = $dateAdapter->parse('H:i', $endTimestamp);

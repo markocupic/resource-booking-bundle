@@ -134,8 +134,6 @@ class Initialize
         // Save page model id to session
         $this->sessionBag->set('pageModelId', $objPageModel->id);
 
-
-
         // Set resType by url param
         $blnRedirect = false;
 
