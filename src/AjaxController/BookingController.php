@@ -28,13 +28,31 @@ use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Markocupic\ResourceBookingBundle\Slot\SlotBooking;
 use Markocupic\ResourceBookingBundle\Util\DateHelper;
+use Markocupic\ResourceBookingBundle\Util\Utils;
 use Psr\Log\LogLevel;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
  * Class AjaxRequestEventSubscriber.
  */
 final class BookingController extends AbstractController implements ControllerInterface
 {
+    private Utils $utils;
+
+    private EventDispatcherInterface $eventDispatcher;
+
+    /**
+     * @required
+     * Use setter via "required" annotation injection in child classes instead of __construct injection
+     * see: https://stackoverflow.com/questions/58447365/correct-way-to-extend-classes-with-symfony-autowiring
+     * see: https://symfony.com/doc/current/service_container/calls.html
+     */
+    public function setController(Utils $utils, EventDispatcherInterface $eventDispatcher): void
+    {
+        $this->utils = $utils;
+        $this->eventDispatcher = $eventDispatcher;
+    }
+
     /**
      * @throws \Exception
      */
@@ -81,7 +99,7 @@ final class BookingController extends AbstractController implements ControllerIn
         $eventData->sessionBag = $this->sessionBag;
         // Dispatch event
         $objPreBookingEvent = new PreBookingEvent($eventData);
-        $this->eventDispatcher->dispatch($objPreBookingEvent, PreBookingEvent::NAME);
+        $this->eventDispatcher->dispatch($objPreBookingEvent);
 
         if (null !== $objBookings) {
             $objBookings->reset();
@@ -121,7 +139,7 @@ final class BookingController extends AbstractController implements ControllerIn
             $eventData->sessionBag = $this->sessionBag;
             // Dispatch event
             $objPostBookingEvent = new PostBookingEvent($eventData);
-            $this->eventDispatcher->dispatch($objPostBookingEvent, PostBookingEvent::NAME);
+            $this->eventDispatcher->dispatch($objPostBookingEvent);
         }
 
         if (null !== $objBookings) {
@@ -192,6 +210,9 @@ final class BookingController extends AbstractController implements ControllerIn
         return true;
     }
 
+    /**
+     * @throws \Exception
+     */
     private function getBookingCollection(): Collection
     {
         if (null === $this->bookingCollection) {

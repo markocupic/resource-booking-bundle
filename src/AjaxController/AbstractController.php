@@ -15,16 +15,12 @@ namespace Markocupic\ResourceBookingBundle\AjaxController;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Model\Collection;
 use Contao\ModuleModel;
-use Exception;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Slot\SlotFactory;
 use Markocupic\ResourceBookingBundle\User\LoggedInFrontendUser;
-use Markocupic\ResourceBookingBundle\Util\Utils;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionBagInterface;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
-use Symfony\Component\Security\Core\Security;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -56,12 +52,6 @@ abstract class AbstractController
 
     protected TranslatorInterface $translator;
 
-    protected Utils $utils;
-
-    protected Security $security;
-
-    protected EventDispatcherInterface $eventDispatcher;
-
     protected SessionBagInterface $sessionBag;
 
     protected ?string $errorMsg = null;
@@ -69,7 +59,7 @@ abstract class AbstractController
     /**
      * AbstractController constructor.
      */
-    public function __construct(ContaoFramework $framework, SessionInterface $session, RequestStack $requestStack, SlotFactory $slotFactory, LoggedInFrontendUser $user, TranslatorInterface $translator, Utils $utils, Security $security, EventDispatcherInterface $eventDispatcher, string $bagName)
+    public function __construct(ContaoFramework $framework, SessionInterface $session, RequestStack $requestStack, SlotFactory $slotFactory, LoggedInFrontendUser $user, TranslatorInterface $translator, string $bagName)
     {
         $this->framework = $framework;
         $this->session = $session;
@@ -77,14 +67,11 @@ abstract class AbstractController
         $this->slotFactory = $slotFactory;
         $this->user = $user;
         $this->translator = $translator;
-        $this->utils = $utils;
-        $this->security = $security;
-        $this->eventDispatcher = $eventDispatcher;
         $this->sessionBag = $session->getBag($bagName);
     }
 
     /**
-     * @throws Exception
+     * @throws \Exception
      */
     protected function initialize(): void
     {
@@ -92,33 +79,33 @@ abstract class AbstractController
         $moduleModelAdapter = $this->framework->getAdapter(ModuleModel::class);
 
         if (null === $this->user->getLoggedInUser()) {
-            throw new Exception('No logged in user found.');
+            throw new \Exception('No logged in user found.');
         }
 
         // Set module model
         $this->moduleModel = $moduleModelAdapter->findByPk($this->sessionBag->get('moduleModelId'));
 
         if (null === $this->moduleModel) {
-            throw new Exception('Module model not found.');
+            throw new \Exception('Module model not found.');
         }
 
         // Get resource
         $request = $this->requestStack->getCurrentRequest();
 
         if (null === $this->getActiveResource()) {
-            throw new Exception(sprintf('Resource with Id %s not found.', $request->request->get('resourceId')));
+            throw new \Exception(sprintf('Resource with Id %s not found.', $request->request->get('resourceId')));
         }
 
         // Get booking repeat stop week timestamp
         $this->bookingRepeatStopWeekTstamp = (int) $request->request->get('bookingRepeatStopWeekTstamp', null);
 
         if (null === $this->bookingRepeatStopWeekTstamp) {
-            throw new Exception('No booking repeat stop week timestamp found.');
+            throw new \Exception('No booking repeat stop week timestamp found.');
         }
     }
 
     /**
-     * @throws Exception
+     * @throws \Exception
      */
     protected function getActiveResource(): ?ResourceBookingResourceModel
     {
