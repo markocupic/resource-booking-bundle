@@ -155,7 +155,7 @@ abstract class AbstractController
         $arrSlotCollection = [];
         $resource = $this->getActiveResource();
         $itemsBooked = (int) $request->request->get('itemsBooked', 1);
-        $description = $request->request->has('description') ? $stringUtilAdapter->decodeEntities($inputAdapter->post('bookingDescription')) : '';
+        $description = $request->request->has('bookingDescription') ? $stringUtilAdapter->decodeEntities($inputAdapter->post('bookingDescription')) : '';
         $arrDateSelection = $request->request->get('bookingDateSelection', []);
         $this->bookingUuid = $this->getBookingUuid();
 

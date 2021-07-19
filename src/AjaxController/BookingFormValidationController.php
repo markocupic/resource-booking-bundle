@@ -56,13 +56,13 @@ final class BookingFormValidationController extends AbstractController implement
         $slotCollection = $this->getSlotCollectionFromRequest();
 
         if (!$this->isBookingPossible($slotCollection)) {
+            $ajaxResponse->setData('passedValidation', false);
+
             if ($this->hasErrorMessage()) {
                 $ajaxResponse->setErrorMessage($this->translator->trans($this->getErrorMessage(), [], 'contao_default'));
             }
 
             if (empty($slotCollection)) {
-                $ajaxResponse->setData('passedValidation', false);
-                $ajaxResponse->setData('noDatesSelected', true);
                 $ajaxResponse->setErrorMessage($this->translator->trans('RBB.ERR.selectBookingDatesPlease', [], 'contao_default'));
             } else {
                 $slotCollection->reset();
@@ -71,21 +71,17 @@ final class BookingFormValidationController extends AbstractController implement
                     $slot = $slotCollection->next();
 
                     if (true === $slot->invalidDate) {
-                        $ajaxResponse->setData('passedValidation', false);
-                        $ajaxResponse->setData('dateNotInAllowedTimeSpan', true);
                         $ajaxResponse->setErrorMessage($this->translator->trans('RBB.ERR.selectBookingDatesPlease', [], 'contao_default'));
                         break;
                     }
 
                     if (!$slot->isBookable) {
                         if ($slot->isFullyBooked) {
-                            $ajaxResponse->setData('resourceIsAlreadyFullyBooked', true);
                             $ajaxResponse->setErrorMessage($this->translator->trans('RBB.ERR.resourceIsAlreadyFullyBooked', [], 'contao_default'));
                         } else {
                             $ajaxResponse->setErrorMessage($this->translator->trans('RBB.ERR.notEnoughItemsAvailable', [], 'contao_default'));
                         }
                         $ajaxResponse->setData('passedValidation', false);
-
                         break;
                     }
                 }
