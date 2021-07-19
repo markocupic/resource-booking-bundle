@@ -273,7 +273,7 @@ class BookingWindow
                     'startTime' => (int) $arrTimeSlot[1],
                     'endTime' => (int) $arrTimeSlot[2],
                     'date' => '',
-                    'datim' => '',
+                    'datimSpanString' => '',
                     'title' => '',
                     'mondayTimestampSelectedWeek' => (int) $arrTimeSlot[3],
                     'pid' => $inputAdapter->post('resourceId'),
@@ -347,7 +347,7 @@ class BookingWindow
         foreach ($arrBookedSlots as $i => $arrData) {
             // Set date
             $arrBookedSlots[$i]['date'] = $dateAdapter->parse($configAdapter->get('dateFormat'), $arrData['startTime']);
-            $arrBookedSlots[$i]['datim'] = sprintf('%s, %s: %s - %s', $dateAdapter->parse('D', $arrData['startTime']), $dateAdapter->parse($configAdapter->get('dateFormat'), $arrData['startTime']), $dateAdapter->parse('H:i', $arrData['startTime']), $dateAdapter->parse('H:i', $arrData['endTime']));
+            $arrBookedSlots[$i]['datimSpanString'] = sprintf('%s, %s: %s - %s', $dateAdapter->parse('D', $arrData['startTime']), $dateAdapter->parse($configAdapter->get('dateFormat'), $arrData['startTime']), $dateAdapter->parse('H:i', $arrData['startTime']), $dateAdapter->parse('H:i', $arrData['endTime']));
 
             // Set title
             $arrBookedSlots[$i]['title'] = sprintf(

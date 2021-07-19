@@ -12,34 +12,36 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\Slot;
 
+use Contao\CoreBundle\Framework\ContaoFramework;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
+use Markocupic\ResourceBookingBundle\Util\Utils;
+use Symfony\Component\Security\Core\Security;
 
 class SlotFactory
 {
-    /**
-     * @var SlotMain
-     */
-    private $slotMain;
+    private ContaoFramework $framework;
+    private Security $security;
+    private Utils $utils;
 
-    /**
-     * @var SlotBooking
-     */
-    private $slotBooking;
-
-    public function __construct(SlotMain $slotMain, SlotBooking $slotBooking)
+    public function __construct(ContaoFramework $framework, Security $security, Utils $utils)
     {
-        $this->slotMain = $slotMain;
-        $this->slotBooking = $slotBooking;
+        $this->framework = $framework;
+        $this->security = $security;
+        $this->utils = $utils;
     }
 
     public function get(string $mode, ResourceBookingResourceModel $resource, int $startTime, int $endTime, int $desiredItems = 1, ?int $bookingRepeatStopWeekTstamp = null): SlotInterface
     {
         if (SlotMain::MODE === $mode) {
-            return $this->slotMain->create($resource, $startTime, $endTime, $desiredItems, $bookingRepeatStopWeekTstamp);
+            $slotEntity = new SlotMain($this->framework, $this->security, $this->utils);
+
+            return $slotEntity->create($resource, $startTime, $endTime, $desiredItems, $bookingRepeatStopWeekTstamp);
         }
 
         if (SlotBooking::MODE === $mode) {
-            return $this->slotBooking->create($resource, $startTime, $endTime, $desiredItems, $bookingRepeatStopWeekTstamp);
+            $slotEntity = new SlotBooking($this->framework, $this->security, $this->utils);
+
+            return $slotEntity->create($resource, $startTime, $endTime, $desiredItems, $bookingRepeatStopWeekTstamp);
         }
     }
 }

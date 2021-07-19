@@ -15,23 +15,35 @@ services:
         resource: ../../
         exclude: ../../{DependencyInjection,Resources,Model,Config,Event}
 
-
-    markocupic.resource_booking.event_subscriber.ajax_event_subscriber:
-        class: Markocupic\ResourceBookingBundle\EventSubscriber\AjaxRequestEventSubscriber
+    # Subscribers: Handle ajay requests
+    Markocupic\ResourceBookingBundle\EventSubscriber\AjaxRequestEventSubscriber:
+        tags:
+            - { name: kernel.event_subscriber }
 
     Markocupic\ResourceBookingBundle\AjaxController\BookingController:
         tags:
             - { name: markocupic.resource_booking.ajax_controller, alias: booking }
 
+    Markocupic\ResourceBookingBundle\AjaxController\CancelController:
+        tags:
+            - { name: markocupic.resource_booking.ajax_controller, alias: cancelBooking }
+
+    Markocupic\ResourceBookingBundle\AjaxController\ApplyFilterController:
+        tags:
+            - { name: markocupic.resource_booking.ajax_controller, alias: applyFilter }
+
+    Markocupic\ResourceBookingBundle\AjaxController\JumpWeekController:
+        tags:
+            - { name: markocupic.resource_booking.ajax_controller, alias: jumpWeek }
+
+    Markocupic\ResourceBookingBundle\AjaxController\BookingFormValidationController:
+        tags:
+            - { name: markocupic.resource_booking.ajax_controller, alias: bookingFormValidation }
+
     # Contao frontend module "resourceBookingWeekcalendar"
     Markocupic\ResourceBookingBundle\Controller\FrontendModule\ResourceBookingWeekcalendarController:
         tags:
             - { name: contao.frontend_module, category: resourceBooking, type: resourceBookingWeekcalendar }
-
-    # Subscribers: Handle ajay requests
-    Markocupic\ResourceBookingBundle\EventSubscriber\AjaxRequestEventSubscriber:
-        tags:
-            - { name: kernel.event_subscriber }
 
     # Register session bag
     Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag:

@@ -83,7 +83,7 @@
   background-color: rgba(115, 207, 97, 0.42);
 }
 .mod_resourceBookingWeekcalendar .resource-booking-table-window .layout-cell.time-slot-cell[data-isinvaliddate=true], .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell.time-slot-cell[data-isinvaliddate=true] {
-  background-color: #adb5bd2e;
+  background-color: #adb5bd8f;
 }
 .mod_resourceBookingWeekcalendar .resource-booking-table-window .layout-cell.time-slot-cell[data-isfullybooked=true], .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell.time-slot-cell[data-isfullybooked=true] {
   background-color: #ffded5;
@@ -235,7 +235,7 @@
   background-color: rgba(115, 207, 97, 0.42);
 }
 .mod_resourceBookingWeekcalendar .booking-window .booking-preview.table > tbody tr.not-bookable td {
-  background-color: #adb5bd2e;
+  background-color: #adb5bd8f;
 }
 .mod_resourceBookingWeekcalendar .booking-window .timeSpanSelect option[selected] {
   background-color: #149efb;

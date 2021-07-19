@@ -62,7 +62,7 @@
         <div class="layout-table">
           <div class="layout-row d-flex" v-for="(slot, index) in bookingFormValidation.response.slotSelection" v-bind:class="!slot.isBookable ? 'not-bookable' : 'bookable'">
             <div class="layout-cell">
-              <small>{{ slot.datim }}: </small>
+              <small>{{ slot.datimSpanString }}: </small>
             </div>
             <div class="layout-cell">
               <span v-if="slot.invalidDate"><small>{{trans::RBB.ERR.invalidStartOrEndTime::contao_default}}</small></span>

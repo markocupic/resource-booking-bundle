@@ -30,14 +30,14 @@ class SlotBooking extends AbstractSlot
 
         if (null !== ($objBookings = $this->getBookings())) {
             while ($objBookings->next()) {
-                if ($this->arrData['user'] && (int) $this->arrData['user']->id === (int) $objBookings->member) {
+                if ($this->user && (int) $this->user->id === (int) $objBookings->member) {
                     continue;
                 }
                 $itemsBooked += (int) $objBookings->itemsBooked;
             }
         }
 
-        if ((int) $this->arrData['resource']->itemsAvailable >= $itemsBooked + $this->arrData['desiredItems']) {
+        if ((int) $this->arrData['resource']->itemsAvailable >= $itemsBooked + $this->arrData['itemsBooked']) {
             return true;
         }
 

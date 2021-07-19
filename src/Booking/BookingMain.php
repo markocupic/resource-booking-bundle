@@ -293,29 +293,12 @@ class BookingMain
                         /** @var SlotMain $slot */
                         $slot = $this->slotFactory->get(SlotMain::MODE, $this->getActiveResource(), $startTime, $endTime);
                         $slot->index = $colCount;
-                        $slot->weekday = $weekday;
-                        $slot->startTimeString = $dateAdapter->parse('H:i', $startTime);
-                        $slot->startTime = $slot->getStartTime();
-                        $slot->endTimeString = $dateAdapter->parse('H:i', $endTime);
-                        $slot->endTime = $slot->getEndTime();
-                        $slot->timeSpanString = $dateAdapter->parse('H:i', $startTime).' - '.$dateAdapter->parse('H:i', $endTime);
-                        $slot->mondayTimestampSelectedWeek = (int) $this->sessionBag->get('activeWeekTstamp');
-                        $slot->hasBookings = $slot->hasBookings();
-                        $slot->isBookable = $slot->isBookable();
-                        $slot->isCancelable = $slot->isCancelable();
-                        $slot->userHasBooked = $slot->isBookedByUser();
-                        $slot->bookingRelatedToLoggedInUser = $slot->getBookingRelatedToLoggedInUser() ? $slot->getBookingRelatedToLoggedInUser()->row() : null;
-                        $slot->timeSlotId = $objTimeslots->id;
-                        $slot->isValidDate = $slot->hasValidDate();
-                        $slot->isFullyBooked = $slot->isFullyBooked();
-                        $slot->resourceId = $this->getActiveResource()->id;
-                        $slot->cssClass = $cssCellClass;
-                        $slot->bookingCount = $slot->getBookingCount();
                         $slot->bookingCheckboxValue = sprintf('%s-%s-%s-%s', $objTimeslots->id, $startTime, $endTime, $this->sessionBag->get('activeWeekTstamp'));
                         $slot->bookingCheckboxId = sprintf('bookingCheckbox_modId_%s_%s_%s', $this->getModuleModel()->id, $rowCount, $colCount);
+                        $slot->isBookable = $slot->isBookable();
 
                         if ($slot->hasBookings) {
-                            $objBooking = $slot->getBookings();
+                            $objBooking = $slot->bookings;
 
                             while ($objBooking->next()) {
                                 if (null !== $objBooking) {
@@ -385,8 +368,6 @@ class BookingMain
                                             }
                                         }
                                     }
-
-                                    $objBooking->bookingUuid = $objBooking->bookingUuid;
                                 }
                             }
                         }

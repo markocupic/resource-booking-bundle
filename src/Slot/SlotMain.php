@@ -34,7 +34,7 @@ class SlotMain extends AbstractSlot
 
         if (null !== ($objBookings = $this->getBookings())) {
             while ($objBookings->next()) {
-                if ($this->arrData['user'] && (int) $this->arrData['user']->id === (int) $objBookings->member) {
+                if ($this->user && (int) $this->user->id === (int) $objBookings->member) {
                     continue;
                 }
                 $itemsBooked += (int) $objBookings->itemsBooked;
@@ -44,38 +44,6 @@ class SlotMain extends AbstractSlot
         if ((int) $this->arrData['resource']->itemsAvailable > $itemsBooked) {
             return true;
         }
-
-        return false;
-    }
-
-    /**
-     * Check, if slot is bookable, independent of a logged in user.
-     */
-    public function isCancelable(): bool
-    {
-        $bookings = $this->getBookings();
-
-        if (!$this->hasValidDate()) {
-            return false;
-        }
-
-        if (null === $bookings) {
-            return false;
-        }
-
-        if (!$this->arrData['user']) {
-            return false;
-        }
-
-        while ($bookings->next()) {
-            if ((int) $this->arrData['user']->id === (int) $bookings->member) {
-                $bookings->reset();
-
-                return true;
-            }
-        }
-
-        $bookings->reset();
 
         return false;
     }

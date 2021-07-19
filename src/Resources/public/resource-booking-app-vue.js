@@ -145,7 +145,7 @@ class resourceBookingApp {
             Object.keys(newVal[i]['cellData']).forEach(ii => {
               if (parseInt(newVal[i]['cellData'][ii]['bookingCount']) > parseInt(oldVal[i]['cellData'][ii]['bookingCount'])) {
                 if (newVal[i]['cellData'][ii]['mondayTimestampSelectedWeek'] === oldVal[i]['cellData'][ii]['mondayTimestampSelectedWeek']) {
-                  if (newVal[i]['cellData'][ii]['resourceId'] === oldVal[i]['cellData'][ii]['resourceId']) {
+                  if (newVal[i]['cellData'][ii]['pid'] === oldVal[i]['cellData'][ii]['pid']) {
                     newBooking = true;
                   }
                 }
@@ -268,7 +268,7 @@ class resourceBookingApp {
           let data = new FormData(form);
           data.append('REQUEST_TOKEN', this.options.requestToken);
           data.append('action', action);
-          data.append('resourceId', this.bookingWindow.activeTimeSlot.resourceId);
+          data.append('resourceId', this.bookingWindow.activeTimeSlot.pid);
           data.append('moduleKey', this.options.moduleKey);
 
           Object.keys(this.bookingWindow.selectedTimeSlots).forEach(key => {
@@ -325,7 +325,7 @@ class resourceBookingApp {
           let data = new FormData();
           data.append('REQUEST_TOKEN', this.options.requestToken);
           data.append('action', action);
-          data.append('resourceId', this.bookingWindow.activeTimeSlot.resourceId);
+          data.append('resourceId', this.bookingWindow.activeTimeSlot.pid);
           data.append('bookingRepeatStopWeekTstamp', this.$el.querySelector('.booking-repeat-stop-week-tstamp').value);
           data.append('moduleKey', this.options.moduleKey);
           data.append('itemsBooked', this.$el.querySelector('[name="itemsBooked"]') ? this.$el.querySelector('[name="itemsBooked"]').value : '1');
@@ -361,7 +361,6 @@ class resourceBookingApp {
          * Send cancel booking request
          */
         cancelBookingRequest: function cancelBookingRequest() {
-
           let action = 'cancelBookingRequest';
           let data = new FormData();
           data.append('REQUEST_TOKEN', this.options.requestToken);

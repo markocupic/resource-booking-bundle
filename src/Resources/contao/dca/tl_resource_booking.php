@@ -80,6 +80,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = array(
 		'pid'         => array(
 			'foreignKey' => 'tl_resource_booking_resource.title',
 			'relation'   => array('type' => 'belongsTo', 'load' => 'lazy'),
+			'eval'=> array('mandatory' => true),
 			'sql'        => "int(10) unsigned NOT NULL default '0'",
 		),
 		'tstamp'      => array(
@@ -88,7 +89,8 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = array(
 			'sql' => "int(10) unsigned NOT NULL default '0'"
 		),
 		'timeSlotId'  => array(
-			'sql' => "int(10) unsigned NOT NULL default '0'",
+            'eval'=> array('mandatory' => true),
+            'sql' => "int(10) unsigned NOT NULL default '0'",
 		),
 		'bookingUuid' => array(
 			'label'     => &$GLOBALS['TL_LANG']['tl_resource_booking']['bookingUuid'],
@@ -96,7 +98,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = array(
 			'sorting'   => true,
 			'filter'    => true,
 			'inputType' => 'text',
-			'eval'      => array('readonly' => true, 'doNotCopy' => true, 'tl_class' => 'w50'),
+			'eval'      => array('mandatory' => true, 'readonly' => true, 'doNotCopy' => true, 'tl_class' => 'w50'),
 			'sql'       => "varchar(64) NOT NULL default ''"
 		),
 		'member'      => array(

@@ -25,7 +25,7 @@ class AddAjaxControllerPass implements CompilerPassInterface
      */
     public function process(ContainerBuilder $container): void
     {
-        $definition = $container->findDefinition('markocupic.resource_booking.event_subscriber.ajax_event_subscriber');
+        $definition = $container->findDefinition('Markocupic\ResourceBookingBundle\EventSubscriber\AjaxRequestEventSubscriber');
 
         // find all service IDs with the huh.api.resource tag
         $taggedServices = $container->findTaggedServiceIds('markocupic.resource_booking.ajax_controller');

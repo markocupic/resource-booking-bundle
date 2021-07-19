@@ -12,9 +12,12 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\Slot;
 
+use Contao\Config;
 use Contao\CoreBundle\Framework\ContaoFramework;
+use Contao\Date;
 use Contao\FrontendUser;
 use Contao\MemberModel;
+use Contao\Model;
 use Contao\Model\Collection;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
@@ -25,28 +28,35 @@ use Symfony\Component\Security\Core\Security;
 /**
  * Class AbstractSlot.
  *
- * @property int                       $index
- * @property string                    $weekday
- * @property int                       $startTime
- * @property int                       $endTime
- * @property int|null                  $bookingRepeatStopWeekTstamp
- * @property int|null                  $mondayTimestampSelectedWeek
- * @property string                    $startTimeString
- * @property string                    $endTimeString
- * @property MemberModel|null          $user
- * @property string                    $timeSpanString
- * @property bool                      $hasBookings
- * @property bool                      $isBookable
- * @property bool                      $isCancelable
- * @property bool                      $userHasBooked
- * @property ResourceBookingModel|null $bookingRelatedToLoggedInUser
- * @property int                       $timeSlotId
- * @property int                       $resourceId
- * @property bool                      $isFullyBooked
- * @property bool                      $isValidDate
- * @property string                    $cssClass
- * @property Collection|null           $bookings
- * @property int                       $bookingCount
+ * @property int                               $index
+ * @property string                            $weekday
+ * @property int                               $startTime
+ * @property int                               $endTime
+ * @property int                               $itemsBooked
+ * @property string                            $date
+ * @property int|null                          $bookingRepeatStopWeekTstamp
+ * @property int|null                          $mondayTimestampSelectedWeek
+ * @property string                            $startTimeString
+ * @property string                            $endTimeString
+ * @property MemberModel|null                  $user
+ * @property string                            $timeSpanString
+ * @property string                            $datimSpanString
+ * @property bool                              $hasBookings
+ * @property bool                              $isBookable
+ * @property bool                              $isCancelable
+ * @property bool                              $hasEnoughItemsAvailable
+ * @property bool                              $userHasBooked
+ * @property ResourceBookingModel|null         $bookingRelatedToLoggedInUser
+ * @property int                               $timeSlotId
+ * @property ResourceBookingResourceModel|null $resource
+ * @property int                               $pid
+ * @property bool                              $isFullyBooked
+ * @property bool                              $isValidDate
+ * @property string                            $cssClass
+ * @property Collection|null                   $bookings
+ * @property int                               $bookingCount
+ * @property string                            $bookingUuid
+ * @property array                             $newBooking
  *
  * properties from booking main
  * @property string $bookingCheckboxValue
@@ -54,26 +64,19 @@ use Symfony\Component\Security\Core\Security;
  */
 abstract class AbstractSlot implements SlotInterface
 {
-    /**
-     * @var ContaoFramework
-     */
-    protected $framework;
+    protected ContaoFramework $framework;
+
+    protected Security $security;
+
+    protected Utils $utils;
+
+    protected array $arrData = [];
+
+    protected ?MemberModel $user = null;
 
     /**
-     * @var Security
+     * @required
      */
-    protected $security;
-
-    /**
-     * @var Utils
-     */
-    protected $utils;
-
-    /**
-     * @var array
-     */
-    protected $arrData = [];
-
     public function __construct(ContaoFramework $framework, Security $security, Utils $utils)
     {
         $this->framework = $framework;
@@ -100,49 +103,73 @@ abstract class AbstractSlot implements SlotInterface
         return $this->arrData[$strKey] ?? null;
     }
 
-    public function create(ResourceBookingResourceModel $resource, int $startTime, int $endTime, int $desiredItems = 1, int $bookingRepeatStopWeekTstamp = null): SlotInterface
+    public function create(ResourceBookingResourceModel $resource, int $startTime, int $endTime, int $itemsBooked = 1, int $bookingRepeatStopWeekTstamp = null): SlotInterface
     {
-        $this->arrData['resource'] = $resource;
-        $this->arrData['startTime'] = $startTime;
-        $this->arrData['endTime'] = $endTime;
-        $this->arrData['desiredItems'] = $desiredItems;
-
-        if (null === $bookingRepeatStopWeekTstamp) {
-            $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
-            $bookingRepeatStopWeekTstamp = $dateHelperAdapter->getMondayOfCurrentWeek($this->arrData['startTime']);
-        }
-
-        // This is the timestamp of a monday,
-        // All bookings in the current week are allowed
-        $this->arrData['bookingRepeatStopWeekTstamp'] = $bookingRepeatStopWeekTstamp;
+        $dateAdapter = $this->framework->getAdapter(Date::class);
+        $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
+        $configAdapter = $this->framework->getAdapter(Config::class);
 
         if ($this->security->getUser() instanceof FrontendUser) {
             /** @var MemberModel user */
             $memberModelAdapter = $this->framework->getAdapter(MemberModel::class);
             $this->user = $memberModelAdapter->findByPk($this->security->getUser()->id);
+            //$this->arrData['user'] = $this->user;
         }
 
-        $this->setBookings();
+        $this->arrData['resource'] = $resource;
+        $this->arrData['startTime'] = $startTime;
+        $this->arrData['endTime'] = $endTime;
+        $this->arrData['itemsBooked'] = $itemsBooked;
+
+        // Auto fill
+        if (null === $bookingRepeatStopWeekTstamp) {
+            $bookingRepeatStopWeekTstamp = $dateHelperAdapter->getMondayOfCurrentWeek($this->arrData['startTime']);
+        }
+
+        // This is the timestamp of a monday,
+        $this->arrData['bookingRepeatStopWeekTstamp'] = $bookingRepeatStopWeekTstamp;
+        $this->arrData['pid'] = $resource->id;
+        $this->arrData['isValidDate'] = $this->hasValidDate();
+        $this->arrData['weekday'] = strtolower(date('l', $this->arrData['startTime']));
+        $this->arrData['startTimeString'] = $dateAdapter->parse('H:i', $this->arrData['startTime']);
+        $this->arrData['endTimeString'] = $dateAdapter->parse('H:i', $this->arrData['endTime']);
+        $this->arrData['date'] = $dateAdapter->parse($configAdapter->get('dateFormat'), $this->arrData['startTime']);
+        $this->arrData['datimSpanString'] = sprintf('%s, %s: %s - %s', $dateAdapter->parse('D', $this->arrData['startTime']), $dateAdapter->parse($configAdapter->get('dateFormat'), $this->arrData['startTime']), $dateAdapter->parse('H:i', $this->arrData['startTime']), $dateAdapter->parse('H:i', $this->arrData['endTime']));
+        $this->arrData['timeSpanString'] = $dateAdapter->parse('H:i', $this->arrData['startTime']).' - '.$dateAdapter->parse('H:i', $this->arrData['startTime']);
+        $this->arrData['mondayTimestampSelectedWeek'] = $dateHelperAdapter->getMondayOfCurrentWeek($this->arrData['startTime']);
+
+        $this->arrData['isBookable'] = $this->isBookable();
+        $this->arrData['enoughItemsAvailable'] = $this->enoughItemsAvailable();
+        $this->arrData['isFullyBooked'] = $this->isFullyBooked();
+
+        $this->arrData['hasBookings'] = $this->hasBookings();
+        $this->arrData['bookings'] = $this->getBookings();
+        $this->arrData['bookingCount'] = $this->getBookingCount();
+        $this->arrData['userHasBooked'] = $this->isBookedByUser();
+        $this->arrData['bookingRelatedToLoggedInUser'] = $this->getBookingRelatedToLoggedInUser();
+        $this->arrData['newBooking'] = [];
+        $this->arrData['isCancelable'] = $this->isCancelable();
 
         return $this;
     }
 
     public function hasBookings(): bool
     {
-        return null !== $this->arrData['bookings'];
+        return null !== $this->getBookings();
     }
 
     public function getBookings(): ?Collection
     {
-        if (null === $this->arrData['bookings']) {
-            $this->setBookings();
-        }
+        /** @var ResourceBookingModel $resourceBookingModelAdapter */
+        $resourceBookingModelAdapter = $this->framework->getAdapter(ResourceBookingModel::class);
 
-        if (null !== $this->arrData['bookings']) {
-            $this->arrData['bookings']->reset();
-        }
-
-        return $this->arrData['bookings'];
+        return $resourceBookingModelAdapter
+            ->findByResourceStarttimeAndEndtime(
+                $this->arrData['resource'],
+                $this->arrData['startTime'],
+                $this->arrData['endTime']
+            )
+        ;
     }
 
     public function getBookingCount(): int
@@ -152,31 +179,6 @@ abstract class AbstractSlot implements SlotInterface
         }
 
         return $this->getBookings()->count();
-    }
-
-    public function getEndTime(): int
-    {
-        return $this->arrData['endTime'];
-    }
-
-    public function getStartTime(): int
-    {
-        return $this->arrData['startTime'];
-    }
-
-    public function getDesiredItems(): int
-    {
-        return $this->arrData['desiredItems'];
-    }
-
-    public function getResource(): ?ResourceBookingResourceModel
-    {
-        return $this->arrData['resource'];
-    }
-
-    public function getRepetitionStop(): int
-    {
-        return $this->repetitionStop;
     }
 
     public function isBookedByUser(): bool
@@ -205,7 +207,7 @@ abstract class AbstractSlot implements SlotInterface
             }
         }
 
-        if ($count + $this->arrData['desiredItems'] > (int) $this->getResource()->itemsAvailable) {
+        if ($count + $this->arrData['itemsBooked'] > (int) $this->resource->itemsAvailable) {
             return false;
         }
 
@@ -222,7 +224,7 @@ abstract class AbstractSlot implements SlotInterface
             }
         }
 
-        if ($count >= (int) $this->getResource()->itemsAvailable) {
+        if ($count >= (int) $this->resource->itemsAvailable) {
             return true;
         }
 
@@ -270,7 +272,9 @@ abstract class AbstractSlot implements SlotInterface
         $arrReturn = [];
 
         foreach ($this->arrData as $k => $v) {
-            if ($v instanceof Collection) {
+            if ($v instanceof Model) {
+                $v = $v->row();
+            } elseif ($v instanceof Collection) {
                 $v = $v->fetchAll();
             }
             $arrReturn[$k] = $v;
@@ -279,12 +283,32 @@ abstract class AbstractSlot implements SlotInterface
         return $arrReturn;
     }
 
-    protected function setBookings(): void
+    public function isCancelable(): bool
     {
-        /** @var ResourceBookingModel $resourceBookingModelAdapter */
-        $resourceBookingModelAdapter = $this->framework->getAdapter(ResourceBookingModel::class);
-        $this->arrData['bookings'] = $resourceBookingModelAdapter
-            ->findByResourceStarttimeAndEndtime($this->arrData['resource'], $this->arrData['startTime'], $this->arrData['endTime'])
-        ;
+        $bookings = $this->getBookings();
+
+        if (null === $bookings) {
+            return false;
+        }
+
+        if (!$this->hasValidDate()) {
+            return false;
+        }
+
+        if (!$this->user) {
+            return false;
+        }
+
+        while ($bookings->next()) {
+            if ((int) $this->user->id === (int) $bookings->member) {
+                $bookings->reset();
+
+                return true;
+            }
+        }
+
+        $bookings->reset();
+
+        return false;
     }
 }
