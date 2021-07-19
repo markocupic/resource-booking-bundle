@@ -20,22 +20,28 @@ services:
         tags:
             - { name: kernel.event_subscriber }
 
+    # Ajax controller
     Markocupic\ResourceBookingBundle\AjaxController\BookingController:
         tags:
             - { name: markocupic.resource_booking.ajax_controller, alias: booking }
 
+
+    # Ajax controller
     Markocupic\ResourceBookingBundle\AjaxController\CancelController:
         tags:
             - { name: markocupic.resource_booking.ajax_controller, alias: cancelBooking }
 
+    # Ajax controller
     Markocupic\ResourceBookingBundle\AjaxController\ApplyFilterController:
         tags:
             - { name: markocupic.resource_booking.ajax_controller, alias: applyFilter }
 
+    # Ajax controller
     Markocupic\ResourceBookingBundle\AjaxController\JumpWeekController:
         tags:
             - { name: markocupic.resource_booking.ajax_controller, alias: jumpWeek }
 
+    # Ajax controller
     Markocupic\ResourceBookingBundle\AjaxController\BookingFormValidationController:
         tags:
             - { name: markocupic.resource_booking.ajax_controller, alias: bookingFormValidation }

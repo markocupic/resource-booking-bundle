@@ -16,7 +16,6 @@ use Contao\CoreBundle\Framework\ContaoFramework;
 use Markocupic\ResourceBookingBundle\AjaxController\BookingController;
 use Markocupic\ResourceBookingBundle\AjaxController\ControllerInterface;
 use Markocupic\ResourceBookingBundle\Booking\BookingMain;
-use Markocupic\ResourceBookingBundle\Booking\BookingWindow;
 use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag;
@@ -45,11 +44,6 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
      * @var BookingMain
      */
     private $bookingMain;
-
-    /**
-     * @var BookingWindow
-     */
-    private $bookingWindow;
 
     /**
      * @var LoggedInFrontendUser
@@ -98,11 +92,10 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
     /**
      * AjaxRequestEventSubscriber constructor.
      */
-    public function __construct(ContaoFramework $framework, BookingMain $bookingMain, BookingWindow $bookingWindow, LoggedInFrontendUser $user, SessionInterface $session, RequestStack $requestStack, TranslatorInterface $translator, Utils $utils, string $bagName, Security $security, EventDispatcherInterface $eventDispatcher)
+    public function __construct(ContaoFramework $framework, BookingMain $bookingMain, LoggedInFrontendUser $user, SessionInterface $session, RequestStack $requestStack, TranslatorInterface $translator, Utils $utils, string $bagName, Security $security, EventDispatcherInterface $eventDispatcher)
     {
         $this->framework = $framework;
         $this->bookingMain = $bookingMain;
-        $this->bookingWindow = $bookingWindow;
         $this->user = $user;
         $this->session = $session;
         $this->requestStack = $requestStack;
