@@ -10,10 +10,9 @@ declare(strict_types=1);
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
-namespace Markocupic\ResourceBookingBundle\Booking;
+namespace Markocupic\ResourceBookingBundle\AjaxController\Traits;
 
 use Contao\Config;
-use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Date;
 use Contao\MemberModel;
 use Contao\Message;
@@ -21,93 +20,23 @@ use Contao\ModuleModel;
 use Contao\StringUtil;
 use Contao\System;
 use Contao\Validator;
+use Markocupic\ResourceBookingBundle\Config\RbbConfig;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceTypeModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotModel;
-use Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag;
-use Markocupic\ResourceBookingBundle\Slot\SlotFactory;
 use Markocupic\ResourceBookingBundle\Slot\SlotMain;
-use Markocupic\ResourceBookingBundle\User\LoggedInFrontendUser;
 use Markocupic\ResourceBookingBundle\Util\DateHelper;
 use Markocupic\ResourceBookingBundle\Util\UtcTimeHelper;
-use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\HttpFoundation\Session\SessionInterface;
-use Symfony\Component\Security\Core\Security;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * Class BookingMain.
- *
- * This is a helper class, which will generate the json response array
- * when calling the "fetchDataRequest" post ajax request from the frontend.
+ * Trait RefreshDataTrait.
  */
-class BookingMain
+trait RefreshDataTrait
 {
     /**
-     * @var ContaoFramework
-     */
-    private $framework;
-
-    /**
-     * @var Security
-     */
-    private $security;
-
-    /**
-     * @var SessionInterface
-     */
-    private $session;
-
-    /**
-     * @var ArrayAttributeBag
-     */
-    private $sessionBag;
-
-    /**
-     * @var RequestStack
-     */
-    private $requestStack;
-
-    /**
-     * @var SlotFactory
-     */
-    private $slotFactory;
-
-    /**
-     * @var LoggedInFrontendUser
-     */
-    private $user;
-
-    /**
-     * @var TranslatorInterface
-     */
-    private $translator;
-
-    /**
-     * BookingMain constructor.
-     *
      * @throws \Exception
      */
-    public function __construct(ContaoFramework $framework, Security $security, SessionInterface $session, RequestStack $requestStack, SlotFactory $slotFactory, LoggedInFrontendUser $user, TranslatorInterface $translator, string $bagName)
-    {
-        $this->framework = $framework;
-        $this->security = $security;
-        $this->session = $session;
-        $this->sessionBag = $session->getBag($bagName);
-        $this->requestStack = $requestStack;
-        $this->slotFactory = $slotFactory;
-        $this->user = $user;
-        $this->translator = $translator;
-
-        if (null === $this->getModuleModel()) {
-            throw new \Exception('Module model not found.');
-        }
-    }
-
-    /**
-     * @throws \Exception
-     */
-    public function fetchData(): array
+    private function refreshData(): array
     {
         /** @var System $systemAdapter */
         $systemAdapter = $this->framework->getAdapter(System::class);
@@ -151,17 +80,17 @@ class BookingMain
         $systemAdapter->loadLanguageFile('default', $this->translator->getLocale());
 
         // Messages
-        if (null === $this->getActiveResourceType() && !$messageAdapter->hasMessages()) {
+        if (null === $this->getActiveResourceTypeFromSession() && !$messageAdapter->hasMessages()) {
             $messageAdapter->addInfo($this->translator->trans('RBB.MSG.selectResourceTypePlease', [], 'contao_default'));
         }
 
-        if (null === $this->getActiveResource() && !$messageAdapter->hasMessages()) {
+        if (null === $this->getActiveResourceFromSession() && !$messageAdapter->hasMessages()) {
             $messageAdapter->addInfo($this->translator->trans('RBB.MSG.selectResourcePlease', [], 'contao_default'));
         }
 
         // Filter form: get resource types dropdown
         $rows = [];
-        $arrResTypesIds = $stringUtilAdapter->deserialize($this->getModuleModel()->resourceBooking_resourceTypes, true);
+        $arrResTypesIds = $stringUtilAdapter->deserialize($this->getModuleModelFromSession()->resourceBooking_resourceTypes, true);
 
         if (null !== ($objResourceTypes = $resourceBookingResourceTypeModelAdapter->findPublishedByIds($arrResTypesIds))) {
             while ($objResourceTypes->next()) {
@@ -174,7 +103,7 @@ class BookingMain
         // Filter form: get resource dropdown
         $rows = [];
 
-        if (null !== ($objResources = $resourceBookingResourceModelAdapter->findPublishedByPid($this->getActiveResourceType()->id))) {
+        if (null !== ($objResources = $resourceBookingResourceModelAdapter->findPublishedByPid($this->getActiveResourceTypeFromSession()->id))) {
             while ($objResources->next()) {
                 $rows[] = $objResources->row();
             }
@@ -219,11 +148,11 @@ class BookingMain
 
         // Send weekdays, dates and day
         $arrWeek = [];
-        $arrWeekdays = System::getContainer()->getParameter('markocupic_resource_booking.weekdays');
+        $arrWeekdays = RbbConfig::RBB_WEEKDAYS;
 
         foreach ($arrWeekdays as $i => $weekday) {
             // Skip days
-            if ($this->getModuleModel()->resourceBooking_hideDays && !\in_array($weekday, $stringUtilAdapter->deserialize($this->getModuleModel()->resourceBooking_hideDaysSelection, true), false)) {
+            if ($this->getModuleModelFromSession()->resourceBooking_hideDays && !\in_array($weekday, $stringUtilAdapter->deserialize($this->getModuleModelFromSession()->resourceBooking_hideDaysSelection, true), false)) {
                 continue;
             }
             $arrWeek[] = [
@@ -239,20 +168,20 @@ class BookingMain
 
         $arrData['activeResourceTypeId'] = 'undefined';
 
-        if (null !== $this->getActiveResourceType()) {
-            $arrData['activeResourceType'] = $this->getActiveResourceType()->row();
-            $arrData['activeResourceTypeId'] = $this->getActiveResourceType()->id;
+        if (null !== $this->getActiveResourceTypeFromSession()) {
+            $arrData['activeResourceType'] = $this->getActiveResourceTypeFromSession()->row();
+            $arrData['activeResourceTypeId'] = $this->getActiveResourceTypeFromSession()->id;
         }
 
         // Generate table data
         $arrData['activeResourceId'] = 'undefined';
         $rows = [];
 
-        if (null !== $this->getActiveResource() && null !== $this->getActiveResourceType()) {
-            $arrData['activeResourceId'] = $this->getActiveResource()->id;
-            $arrData['activeResource'] = $this->getActiveResource()->row();
+        if (null !== $this->getActiveResourceFromSession() && null !== $this->getActiveResourceTypeFromSession()) {
+            $arrData['activeResourceId'] = $this->getActiveResourceFromSession()->id;
+            $arrData['activeResource'] = $this->getActiveResourceFromSession()->row();
 
-            $objTimeslots = $resourceBookingTimeSlotModelAdapter->findPublishedByPid($this->getActiveResource()->timeSlotType);
+            $objTimeslots = $resourceBookingTimeSlotModelAdapter->findPublishedByPid($this->getActiveResourceFromSession()->timeSlotType);
             $rowCount = 0;
 
             if (null !== $objTimeslots) {
@@ -260,7 +189,7 @@ class BookingMain
                     $cells = [];
                     $objRow = new \stdClass();
 
-                    $cssRowId = sprintf('timeSlotModId_%s_%s', $this->getModuleModel()->id, $objTimeslots->id);
+                    $cssRowId = sprintf('timeSlotModId_%s_%s', $this->getModuleModelFromSession()->id, $objTimeslots->id);
                     $cssRowClass = 'time-slot-'.$objTimeslots->id;
 
                     // Get the CSS ID
@@ -283,7 +212,7 @@ class BookingMain
 
                     foreach ($arrWeekdays as $colCount => $weekday) {
                         // Skip days
-                        if ($this->getModuleModel()->resourceBooking_hideDays && !\in_array($weekday, $stringUtilAdapter->deserialize($this->getModuleModel()->resourceBooking_hideDaysSelection, true), false)) {
+                        if ($this->getModuleModelFromSession()->resourceBooking_hideDays && !\in_array($weekday, $stringUtilAdapter->deserialize($this->getModuleModelFromSession()->resourceBooking_hideDaysSelection, true), false)) {
                             continue;
                         }
 
@@ -291,10 +220,10 @@ class BookingMain
                         $endTime = strtotime(sprintf('+%s day', $colCount), $this->sessionBag->get('activeWeekTstamp')) + $objTimeslots->endTime;
 
                         /** @var SlotMain $slot */
-                        $slot = $this->slotFactory->get(SlotMain::MODE, $this->getActiveResource(), $startTime, $endTime);
+                        $slot = $this->slotFactory->get(SlotMain::MODE, $this->getActiveResourceFromSession(), $startTime, $endTime);
                         $slot->index = $colCount;
                         $slot->bookingCheckboxValue = sprintf('%s-%s-%s-%s', $objTimeslots->id, $startTime, $endTime, $this->sessionBag->get('activeWeekTstamp'));
-                        $slot->bookingCheckboxId = sprintf('bookingCheckbox_modId_%s_%s_%s', $this->getModuleModel()->id, $rowCount, $colCount);
+                        $slot->bookingCheckboxId = sprintf('bookingCheckbox_modId_%s_%s_%s', $this->getModuleModelFromSession()->id, $rowCount, $colCount);
                         $slot->isBookable = $slot->isBookable();
 
                         if ($slot->hasBookings) {
@@ -307,13 +236,13 @@ class BookingMain
                                     $objBooking->bookedByLastname = '';
                                     $objBooking->bookedByFullname = '';
 
-                                    $arrFields = $stringUtilAdapter->deserialize($this->getModuleModel()->resourceBooking_clientPersonalData, true);
+                                    $arrFields = $stringUtilAdapter->deserialize($this->getModuleModelFromSession()->resourceBooking_clientPersonalData, true);
 
                                     $objMember = $memberModelAdapter->findByPk($objBooking->member);
 
                                     if (null !== $objMember) {
                                         // Do not transmit and display sensitive data if user is not holder
-                                        if ($objBooking->member !== $objMember->id && $this->getModuleModel()->resourceBooking_displayClientPersonalData && !empty($arrFields)) {
+                                        if ($objBooking->member !== $objMember->id && $this->getModuleModelFromSession()->resourceBooking_displayClientPersonalData && !empty($arrFields)) {
                                             foreach ($arrFields as $fieldname) {
                                                 $objBooking->{'bookedBy'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($objMember->$fieldname);
                                             }
@@ -359,8 +288,8 @@ class BookingMain
                                     }
 
                                     // Send sensitive data if it has been permitted in tl_module
-                                    if ($this->getModuleModel()->resourceBooking_setBookingSubmittedFields) {
-                                        $arrFields = $stringUtilAdapter->deserialize($this->getModuleModel()->resourceBooking_bookingSubmittedFields, true);
+                                    if ($this->getModuleModelFromSession()->resourceBooking_setBookingSubmittedFields) {
+                                        $arrFields = $stringUtilAdapter->deserialize($this->getModuleModelFromSession()->resourceBooking_bookingSubmittedFields, true);
 
                                         foreach ($arrFields as $fieldname) {
                                             if (\in_array($fieldname, $arrFields, true)) {
@@ -383,7 +312,7 @@ class BookingMain
         // End generate table data
 
         // Get time slots
-        $objTimeslots = $resourceBookingTimeSlotModelAdapter->findPublishedByPid($this->getActiveResource()->timeSlotType);
+        $objTimeslots = $resourceBookingTimeSlotModelAdapter->findPublishedByPid($this->getActiveResourceFromSession()->timeSlotType);
         $timeSlots = [];
 
         if (null !== $objTimeslots) {
@@ -432,7 +361,7 @@ class BookingMain
     /**
      * @throws \Exception
      */
-    protected function getWeekSelection(int $startTstamp, int $endTstamp, bool $injectEmptyLine = false): array
+    private function getWeekSelection(int $startTstamp, int $endTstamp, bool $injectEmptyLine = false): array
     {
         /** @var System $systemAdapter */
         $systemAdapter = $this->framework->getAdapter(System::class);
@@ -454,7 +383,7 @@ class BookingMain
             $cssClass = 'past-week';
 
             // add empty
-            if ($dateHelperAdapter->getMondayOfCurrentWeek() === $currentTstamp) {
+            if ($dateHelperAdapter->getFirstDayOfCurrentWeek() === $currentTstamp) {
                 if ($injectEmptyLine) {
                     $arrWeeks[] = [
                         'tstamp' => '',
@@ -466,7 +395,7 @@ class BookingMain
                 $cssClass = 'current-week';
             }
 
-            if ($dateHelperAdapter->getMondayOfCurrentWeek() < $currentTstamp) {
+            if ($dateHelperAdapter->getFirstDayOfCurrentWeek() < $currentTstamp) {
                 $cssClass = 'future-week';
             }
 
@@ -500,7 +429,7 @@ class BookingMain
     /**
      * @throws \Exception
      */
-    protected function getJumpWeekDate(int $intJumpWeek): array
+    private function getJumpWeekDate(int $intJumpWeek): array
     {
         /** @var DateHelper $dateHelperAdapter */
         $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
@@ -519,7 +448,7 @@ class BookingMain
             $arrReturn['disabled'] = true;
         }
 
-        if (!$this->sessionBag->get('activeWeekTstamp') > 0 || null === $this->getActiveResourceType() || null === $this->getActiveResource()) {
+        if (!$this->sessionBag->get('activeWeekTstamp') > 0 || null === $this->getActiveResourceTypeFromSession() || null === $this->getActiveResourceFromSession()) {
             $arrReturn['disabled'] = true;
         }
 
@@ -531,7 +460,7 @@ class BookingMain
     /**
      * @throws \Exception
      */
-    protected function getActiveResource(): ?ResourceBookingResourceModel
+    private function getActiveResourceFromSession(): ?ResourceBookingResourceModel
     {
         /** @var ResourceBookingResourceModel $resourceBookingResourceModelAdapter */
         $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
@@ -542,7 +471,7 @@ class BookingMain
     /**
      * @throws \Exception
      */
-    protected function getActiveResourceType(): ?ResourceBookingResourceTypeModel
+    private function getActiveResourceTypeFromSession(): ?ResourceBookingResourceTypeModel
     {
         /** @var ResourceBookingResourceTypeModel $resourceBookingResourceTypeModelAdapter */
         $resourceBookingResourceTypeModelAdapter = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class);
@@ -553,7 +482,7 @@ class BookingMain
     /**
      * @throws \Exception
      */
-    protected function getModuleModel(): ?ModuleModel
+    private function getModuleModelFromSession(): ?ModuleModel
     {
         /** @var ModuleModel $moduleModelAdapter */
         $moduleModelAdapter = $this->framework->getAdapter(ModuleModel::class);

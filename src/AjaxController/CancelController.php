@@ -15,7 +15,6 @@ namespace Markocupic\ResourceBookingBundle\AjaxController;
 use Contao\CoreBundle\Monolog\ContaoContext;
 use Contao\Date;
 use Contao\System;
-use Exception;
 use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
 use Markocupic\ResourceBookingBundle\Event\PostCancelingEvent;
 use Markocupic\ResourceBookingBundle\Event\PreCancelingEvent;
@@ -23,12 +22,14 @@ use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Psr\Log\LogLevel;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Class CancelController.
  */
 final class CancelController extends AbstractController implements ControllerInterface
 {
+    private TranslatorInterface $translator;
     private EventDispatcherInterface $eventDispatcher;
 
     /**
@@ -37,13 +38,14 @@ final class CancelController extends AbstractController implements ControllerInt
      * see: https://stackoverflow.com/questions/58447365/correct-way-to-extend-classes-with-symfony-autowiring
      * see: https://symfony.com/doc/current/service_container/calls.html
      */
-    public function _setController(EventDispatcherInterface $eventDispatcher): void
+    public function _setController(TranslatorInterface $translator, EventDispatcherInterface $eventDispatcher): void
     {
+        $this->translator = $translator;
         $this->eventDispatcher = $eventDispatcher;
     }
 
     /**
-     * @throws Exception
+     * @throws \Exception
      */
     public function generateResponse(AjaxRequestEvent $ajaxRequestEvent): void
     {

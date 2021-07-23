@@ -13,27 +13,37 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\AjaxController;
 
 use Contao\System;
-use Exception;
+use Markocupic\ResourceBookingBundle\AjaxController\Traits\BookingTrait;
 use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
+use Markocupic\ResourceBookingBundle\Slot\SlotFactory;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Class BookingFormValidationController.
  */
 final class BookingFormValidationController extends AbstractController implements ControllerInterface
 {
+    use BookingTrait;
+
+    private SlotFactory $slotFactory;
+    private TranslatorInterface $translator;
+    private ?string $bookingUuid = null;
+
     /**
      * @required
      * Use setter via "required" annotation injection in child classes instead of __construct injection
      * see: https://stackoverflow.com/questions/58447365/correct-way-to-extend-classes-with-symfony-autowiring
      * see: https://symfony.com/doc/current/service_container/calls.html
      */
-    public function _setController(): void
+    public function _setController(SlotFactory $slotFactory, TranslatorInterface $translator): void
     {
+        $this->slotFactory = $slotFactory;
+        $this->translator = $translator;
     }
 
     /**
-     * @throws Exception
+     * @throws \Exception
      */
     public function generateResponse(AjaxRequestEvent $ajaxRequestEvent): void
     {

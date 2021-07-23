@@ -39,7 +39,7 @@ class MarkocupicResourceBookingExtension extends Extension
         $loader->load('parameters.yml');
         $loader->load('services.yml');
 
-        $container->setParameter($this->getAlias().'.weekdays', $config['weekdays']);
+        $container->setParameter($this->getAlias().'.beginnWeek', $config['beginnWeek']);
     }
 
     public function getAlias()

@@ -12,21 +12,26 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\AjaxController;
 
-use Exception;
-use Markocupic\ResourceBookingBundle\Booking\BookingMain;
+use Markocupic\ResourceBookingBundle\AjaxController\Traits\RefreshDataTrait;
 use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceTypeModel;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
+use Markocupic\ResourceBookingBundle\Slot\SlotFactory;
 use Markocupic\ResourceBookingBundle\Util\DateHelper;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Class ApplyFilterController.
  */
 final class ApplyFilterController extends AbstractController implements ControllerInterface
 {
+    use RefreshDataTrait;
+
     private EventDispatcherInterface $eventDispatcher;
+    private SlotFactory $slotFactory;
+    private TranslatorInterface $translator;
 
     /**
      * @required
@@ -34,14 +39,15 @@ final class ApplyFilterController extends AbstractController implements Controll
      * see: https://stackoverflow.com/questions/58447365/correct-way-to-extend-classes-with-symfony-autowiring
      * see: https://symfony.com/doc/current/service_container/calls.html
      */
-    public function _setController(EventDispatcherInterface $eventDispatcher, BookingMain $bookingMain): void
+    public function _setController(EventDispatcherInterface $eventDispatcher, SlotFactory $slotFactory, TranslatorInterface $translator): void
     {
         $this->eventDispatcher = $eventDispatcher;
-        $this->bookingMain = $bookingMain;
+        $this->slotFactory = $slotFactory;
+        $this->translator = $translator;
     }
 
     /**
-     * @throws Exception
+     * @throws \Exception
      */
     public function generateResponse(AjaxRequestEvent $ajaxRequestEvent): void
     {
@@ -93,7 +99,7 @@ final class ApplyFilterController extends AbstractController implements Controll
 
         // Get active week timestamp from post request
         $intTstampDate = (int) $request->request->get('date', 0);
-        $intTstampDate = $dateHelperAdapter->isValidDate($intTstampDate) ? $intTstampDate : $dateHelperAdapter->getMondayOfCurrentWeek();
+        $intTstampDate = $dateHelperAdapter->isValidDate($intTstampDate) ? $intTstampDate : $dateHelperAdapter->getFirstDayOfCurrentWeek();
 
         // Validate $intTstampDate
         $tstampFirstPossibleWeek = $this->sessionBag->get('tstampFirstPossibleWeek');
@@ -110,8 +116,8 @@ final class ApplyFilterController extends AbstractController implements Controll
 
         $this->sessionBag->set('activeWeekTstamp', (int) $intTstampDate);
 
-        // Fetch data and send it to the browser
+        // Fetch refreshed data and send it to the browser
         $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
-        $ajaxResponse->setDataFromArray($this->bookingMain->fetchData());
+        $ajaxResponse->setDataFromArray($this->refreshData());
     }
 }

@@ -11,6 +11,7 @@
 use Contao\Backend;
 use Contao\Database;
 use Contao\System;
+use Markocupic\ResourceBookingBundle\Config\RbbConfig;
 
 /**
  * Add palettes to tl_module
@@ -53,7 +54,7 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_hideDaysSelection'] =
 	'label'     => &$GLOBALS['TL_LANG']['tl_module']['resourceBooking_hideDaysSelection'],
 	'exclude'   => true,
 	'inputType' => 'checkbox',
-	'options'   => System::getContainer()->getParameter('markocupic_resource_booking.weekdays'),
+	'options'   => RbbConfig::RBB_WEEKDAYS,
 	'reference' => &$GLOBALS['TL_LANG']['MSC']['DAYS_LONG'],
 	'eval'      => array('multiple' => true, 'tl_class' => 'clr'),
 	'sql'       => "blob NULL"

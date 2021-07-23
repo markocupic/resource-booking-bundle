@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\DependencyInjection;
 
+use Markocupic\ResourceBookingBundle\Config\RbbConfig;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
@@ -24,11 +25,11 @@ class Configuration implements ConfigurationInterface
         $treeBuilder = new TreeBuilder(self::KEY);
 
         $treeBuilder->getRootNode()
+
             ->children()
-                ->arrayNode('weekdays')
-                    ->info('Add weekdays in the preferred order.')
-                    ->prototype('scalar')->end()
-                    ->defaultValue(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'])
+                ->enumNode('beginnWeek')
+                    ->values(RbbConfig::RBB_WEEKDAYS)
+                    ->defaultValue('monday')
                 ->end()
             ->end()
         ;

@@ -36,7 +36,7 @@ $GLOBALS['TL_MODELS']['tl_resource_booking_time_slot_type'] = ResourceBookingTim
 // Backend Stylesheets
 if (TL_MODE === 'BE')
 {
-	$GLOBALS['TL_CSS'][] = RbbConfig::MOD_RESOURCE_BOOKING_ASSET_PATH . '/css/backend.css';
+	$GLOBALS['TL_CSS'][] = RbbConfig::RBB_ASSET_PATH . '/css/backend.css';
 }
 
 // Set backWeeks and aheadWeeks

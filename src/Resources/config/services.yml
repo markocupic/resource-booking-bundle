@@ -37,14 +37,14 @@ services:
             - { name: markocupic.resource_booking.ajax_controller, alias: applyFilter }
 
     # Ajax controller
-    Markocupic\ResourceBookingBundle\AjaxController\JumpWeekController:
-        tags:
-            - { name: markocupic.resource_booking.ajax_controller, alias: jumpWeek }
-
-    # Ajax controller
     Markocupic\ResourceBookingBundle\AjaxController\BookingFormValidationController:
         tags:
             - { name: markocupic.resource_booking.ajax_controller, alias: bookingFormValidation }
+
+    # Ajax controller
+    Markocupic\ResourceBookingBundle\AjaxController\RefreshDataController:
+        tags:
+            - { name: markocupic.resource_booking.ajax_controller, alias: refreshData }
 
     # Contao frontend module "resourceBookingWeekcalendar"
     Markocupic\ResourceBookingBundle\Controller\FrontendModule\ResourceBookingWeekcalendarController:

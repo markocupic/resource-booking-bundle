@@ -34,7 +34,7 @@ class resourceBookingApp {
             },
           },
         },
-        // indicates if application is initialized, switches to true, when fetchData request was fired first time
+        // indicates if application is initialized, switches to true, when refreshData request was fired first time
         // and the request status is 200
         isReady: false,
         // Indicate the mode
@@ -77,7 +77,7 @@ class resourceBookingApp {
         messages: null,
         // Indicates if user is idle
         isIdle: false,
-        // Do not run fetchDataRequest() if there is a pending request
+        // Do not run refreshDataRequest() if there is a pending request
         isBusy: false,
       },
 
@@ -95,13 +95,13 @@ class resourceBookingApp {
 
         // Show the loading spinner for 2s
         window.setTimeout(() => {
-          this.fetchDataRequest();
+          this.refreshDataRequest();
         }, 2000);
 
         // Fetch data from server each 15s
-        this.intervals.fetchDataRequest = window.setInterval(() => {
+        this.intervals.refreshDataRequest = window.setInterval(() => {
           if (!this.isIdle && !this.isBusy) {
-            this.fetchDataRequest();
+            this.refreshDataRequest();
           }
         }, 15000);
 
@@ -144,7 +144,7 @@ class resourceBookingApp {
           Object.keys(newVal).forEach(i => {
             Object.keys(newVal[i]['cellData']).forEach(ii => {
               if (parseInt(newVal[i]['cellData'][ii]['bookingCount']) > parseInt(oldVal[i]['cellData'][ii]['bookingCount'])) {
-                if (newVal[i]['cellData'][ii]['mondayTimestampSelectedWeek'] === oldVal[i]['cellData'][ii]['mondayTimestampSelectedWeek']) {
+                if (newVal[i]['cellData'][ii]['beginnWeekTimestampSelectedWeek'] === oldVal[i]['cellData'][ii]['beginnWeekTimestampSelectedWeek']) {
                   if (newVal[i]['cellData'][ii]['pid'] === oldVal[i]['cellData'][ii]['pid']) {
                     newBooking = true;
                   }
@@ -164,11 +164,11 @@ class resourceBookingApp {
       methods: {
 
         /**
-         * Fetch all the data from the server
+         * Fetch all the data from the server and refresh the booking table
          */
-        fetchDataRequest: function fetchDataRequest() {
+        refreshDataRequest: function refreshDataRequest() {
 
-          let action = 'fetchDataRequest';
+          let action = 'refreshDataRequest';
           this.isBusy = true;
 
           let data = new FormData();
@@ -301,7 +301,7 @@ class resourceBookingApp {
 
               // Always
               this.bookingWindow.showConfirmationMsg = true;
-              this.fetchDataRequest();
+              this.refreshDataRequest();
             })
             .then(response => {
               // Call onAfterBookingRequest callback
@@ -311,7 +311,7 @@ class resourceBookingApp {
               this.isReady = false;
               // Always
               this.bookingWindow.showConfirmationMsg = true;
-              this.fetchDataRequest();
+              this.refreshDataRequest();
             });
           }
         },
@@ -392,13 +392,13 @@ class resourceBookingApp {
             // Always
             this.bookingWindow.deleteBookingsWithSameBookingUuid = false;
             this.bookingWindow.showConfirmationMsg = true;
-            this.fetchDataRequest();
+            this.refreshDataRequest();
           })
           .catch(response => {
             this.isReady = false;
             // Always
             this.bookingWindow.showConfirmationMsg = true;
-            this.fetchDataRequest();
+            this.refreshDataRequest();
             this.bookingWindow.deleteBookingsWithSameBookingUuid = false;
           });
         },
@@ -534,7 +534,7 @@ class resourceBookingApp {
             },
             onActive: () => {
               this.isIdle = false;
-              this.fetchDataRequest();
+              this.refreshDataRequest();
             },
             idle: idleAfter,
           });
@@ -556,7 +556,7 @@ class resourceBookingApp {
               if (this.isIdle) {
                 // On active again
                 this.isIdle = false;
-                this.fetchDataRequest();
+                this.refreshDataRequest();
               }
 
               idleSecondsCounter = idleTimeout;

@@ -15,27 +15,32 @@ namespace Markocupic\ResourceBookingBundle\AjaxController;
 use Contao\CoreBundle\Monolog\ContaoContext;
 use Contao\Model\Collection;
 use Contao\System;
-use Exception;
+use Markocupic\ResourceBookingBundle\AjaxController\Traits\BookingTrait;
 use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
 use Markocupic\ResourceBookingBundle\Event\PostBookingEvent;
 use Markocupic\ResourceBookingBundle\Event\PreBookingEvent;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Markocupic\ResourceBookingBundle\Slot\SlotCollection;
+use Markocupic\ResourceBookingBundle\Slot\SlotFactory;
 use Markocupic\ResourceBookingBundle\Slot\SlotMain;
 use Markocupic\ResourceBookingBundle\Util\Utils;
 use Psr\Log\LogLevel;
-use stdClass;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Class BookingController.
  */
 final class BookingController extends AbstractController implements ControllerInterface
 {
-    private Utils $utils;
+    use BookingTrait;
 
     private EventDispatcherInterface $eventDispatcher;
+    private SlotFactory $slotFactory;
+    private TranslatorInterface $translator;
+    private Utils $utils;
+    private ?string $bookingUuid = null;
 
     /**
      * @required
@@ -43,14 +48,16 @@ final class BookingController extends AbstractController implements ControllerIn
      * see: https://stackoverflow.com/questions/58447365/correct-way-to-extend-classes-with-symfony-autowiring
      * see: https://symfony.com/doc/current/service_container/calls.html
      */
-    public function _setController(Utils $utils, EventDispatcherInterface $eventDispatcher): void
+    public function _setController(EventDispatcherInterface $eventDispatcher, SlotFactory $slotFactory, TranslatorInterface $translator, Utils $utils): void
     {
-        $this->utils = $utils;
         $this->eventDispatcher = $eventDispatcher;
+        $this->slotFactory = $slotFactory;
+        $this->translator = $translator;
+        $this->utils = $utils;
     }
 
     /**
-     * @throws Exception
+     * @throws \Exception
      */
     public function generateResponse(AjaxRequestEvent $ajaxRequestEvent): void
     {
@@ -88,7 +95,7 @@ final class BookingController extends AbstractController implements ControllerIn
         $objBookings = $this->getBookingCollection($slotCollection);
 
         // Dispatch pre booking event "rbb.event.pre_booking"
-        $eventData = new stdClass();
+        $eventData = new \stdClass();
         $eventData->user = $this->user->getLoggedInUser();
         $eventData->bookingCollection = $objBookings;
         $eventData->ajaxResponse = $ajaxResponse;
@@ -108,7 +115,7 @@ final class BookingController extends AbstractController implements ControllerIn
 
                 // Check if mandatory fields are all filled out, see dca mandatory key
                 if (true !== ($success = $this->utils->areMandatoryFieldsSet($objBooking->row(), 'tl_resource_booking'))) {
-                    throw new Exception('No value detected for the mandatory field '.$success);
+                    throw new \Exception('No value detected for the mandatory field '.$success);
                 }
 
                 // Save booking to the database
@@ -129,7 +136,7 @@ final class BookingController extends AbstractController implements ControllerIn
         $objBookings = $resourceBookingModelAdapter->findByBookingUuid($this->getBookingUuid());
 
         if (null !== $objBookings) {
-            $eventData = new stdClass();
+            $eventData = new \stdClass();
             $eventData->user = $this->user->getLoggedInUser();
             $eventData->bookingCollection = $objBookings;
             $eventData->ajaxResponse = $ajaxResponse;

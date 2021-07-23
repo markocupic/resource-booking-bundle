@@ -35,30 +35,11 @@ use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
  */
 class Initialize
 {
-    /**
-     * @var ContaoFramework
-     */
-    private $framework;
-
-    /**
-     * @var SessionInterface
-     */
-    private $session;
-
-    /**
-     * @var RequestStack
-     */
-    private $requestStack;
-
-    /**
-     * @var string
-     */
-    private $bagName;
-
-    /**
-     * @var ArrayAttributeBag
-     */
-    private $sessionBag;
+    private ContaoFramework $framework;
+    private SessionInterface $session;
+    private RequestStack $requestStack;
+    private string $bagName;
+    private ArrayAttributeBag $sessionBag;
 
     /**
      * Initialize constructor.
@@ -216,7 +197,7 @@ class Initialize
         }
 
         // Set active week timestamp
-        $tstampCurrentWeek = (int) $this->sessionBag->get('activeWeekTstamp', $dateHelperAdapter->getMondayOfCurrentWeek());
+        $tstampCurrentWeek = (int) $this->sessionBag->get('activeWeekTstamp', $dateHelperAdapter->getFirstDayOfCurrentWeek());
         $this->sessionBag->set('activeWeekTstamp', $tstampCurrentWeek);
 
         // Overwrite rbb_intAheadWeeks from module settings
@@ -231,19 +212,19 @@ class Initialize
         $this->sessionBag->set('intAheadWeeks', $intAheadWeeks);
 
         // Get first and last possible week tstamp
-        $this->sessionBag->set('tstampFirstPossibleWeek', $dateHelperAdapter->addWeeksToTime($intBackWeeks, $dateHelperAdapter->getMondayOfCurrentWeek()));
+        $this->sessionBag->set('tstampFirstPossibleWeek', $dateHelperAdapter->addWeeksToTime($intBackWeeks, $dateHelperAdapter->getFirstDayOfCurrentWeek()));
 
-        $intTstampLastPossibleWeek = $dateHelperAdapter->addWeeksToTime($intAheadWeeks, $dateHelperAdapter->getMondayOfCurrentWeek());
+        $intTstampLastPossibleWeek = $dateHelperAdapter->addWeeksToTime($intAheadWeeks, $dateHelperAdapter->getFirstDayOfCurrentWeek());
 
         if ($objModuleModel->resourceBooking_addDateStop) {
-            $intTstampStop = $dateHelperAdapter->getMondayOfWeekDate($objModuleModel->resourceBooking_dateStop);
+            $intTstampStop = $dateHelperAdapter->getFirstDayOfWeek($objModuleModel->resourceBooking_dateStop);
 
             if ($intTstampStop < $intTstampLastPossibleWeek) {
                 $intTstampLastPossibleWeek = $intTstampStop;
             }
 
             if ($intTstampStop < time()) {
-                $intTstampLastPossibleWeek = $dateHelperAdapter->getMondayOfCurrentWeek();
+                $intTstampLastPossibleWeek = $dateHelperAdapter->getFirstDayOfCurrentWeek();
             }
         }
         $this->sessionBag->set('tstampLastPossibleWeek', $intTstampLastPossibleWeek);

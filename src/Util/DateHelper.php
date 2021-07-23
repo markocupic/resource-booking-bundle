@@ -14,6 +14,8 @@ namespace Markocupic\ResourceBookingBundle\Util;
 
 use Contao\Config;
 use Contao\Date;
+use Contao\System;
+use Markocupic\ResourceBookingBundle\Config\RbbConfig;
 
 /**
  * Class DateHelper.
@@ -60,13 +62,15 @@ class DateHelper
         return strtotime(Date::parse('Y-m-d H:i:s', $time).' '.$strAddWeeks);
     }
 
-    public static function getMondayOfCurrentWeek(int $timestamp = null): int
+    public static function getFirstDayOfCurrentWeek(int $timestamp = null): int
     {
         if (!$timestamp) {
             $timestamp = time();
         }
 
-        return strtotime('monday this week', $timestamp);
+        $beginnWeek = System::getContainer()->getParameter('markocupic_resource_booking.beginnWeek');
+
+        return strtotime(sprintf('%s this week', $beginnWeek), $timestamp);
     }
 
     /**
@@ -74,7 +78,7 @@ class DateHelper
      *
      * @param null $tstamp
      */
-    public function getMondayOfWeekDate($tstamp = null): int
+    public function getFirstDayOfWeek($tstamp = null): int
     {
         if (null === $tstamp) {
             $tstamp = time();
@@ -84,14 +88,17 @@ class DateHelper
 
         $date->setTime(0, 0, 0);
 
-        if (1 === $date->format('N')) {
-            // If the date is already a Monday, return it as-is
+        $beginnWeek = System::getContainer()->getParameter('markocupic_resource_booking.beginnWeek');
+
+        $key = array_search($beginnWeek, RbbConfig::RBB_WEEKDAYS, true);
+
+        if ($key === $date->format('N')) {
+            // If the date is already configured beginn week day, return it as-is
             return $date->getTimestamp();
         }
 
-        // Otherwise, return the date of the nearest Monday in the past
-        // This includes Sunday in the previous week instead of it being the start of a new week
-        return $date->modify('last monday')->getTimestamp();
+        // Otherwise, return the date of the nearest Monday (beginn week day) in the past
+        return $date->modify(sprintf('last %s', $beginnWeek))->getTimestamp();
     }
 
     /**
@@ -114,8 +121,8 @@ class DateHelper
         $intAheadWeeks = (int) Config::get('rbb_intAheadWeeks');
 
         // Get the timestamp of the first and last possible weeks
-        $tstampFirstPossibleWeek = static::addWeeksToTime($intBackWeeks, static::getMondayOfCurrentWeek());
-        $tstampLastPossibleWeek = static::addWeeksToTime($intAheadWeeks, static::getMondayOfCurrentWeek());
+        $tstampFirstPossibleWeek = static::addWeeksToTime($intBackWeeks, static::getFirstDayOfCurrentWeek());
+        $tstampLastPossibleWeek = static::addWeeksToTime($intAheadWeeks, static::getFirstDayOfCurrentWeek());
 
         if ($tstamp < $tstampFirstPossibleWeek || $tstamp > $tstampLastPossibleWeek) {
             return false;

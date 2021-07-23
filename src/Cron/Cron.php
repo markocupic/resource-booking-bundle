@@ -24,10 +24,7 @@ use Contao\System;
  */
 class Cron
 {
-    /**
-     * @var ContaoFramework
-     */
-    private $framework;
+    private ContaoFramework $framework;
 
     public function __construct(ContaoFramework $framework)
     {
@@ -54,7 +51,8 @@ class Cron
 
         if (($intWeeks = (int) $configAdapter->get('rbb_intBackWeeks')) < 0) {
             $intWeeks = abs($intWeeks);
-            $dateMonThisWeek = $dateAdapter->parse('d-m-Y', strtotime('monday this week'));
+            $beginnWeek = $systemAdapter->getContainer()->getParameter('markocupic_resource_booking.beginnWeek');
+            $dateMonThisWeek = $dateAdapter->parse('d-m-Y', strtotime(sprintf('%s this week', $beginnWeek)));
 
             if (false !== ($tstampLimit = strtotime($dateMonThisWeek.' -'.$intWeeks.' weeks'))) {
                 $objStmt = $databaseAdapter->getInstance()->prepare('DELETE FROM tl_resource_booking WHERE endTime<?')->execute($tstampLimit);
