@@ -62,6 +62,9 @@ class DateHelper
         return strtotime(Date::parse('Y-m-d H:i:s', $time).' '.$strAddWeeks);
     }
 
+    /**
+     * By default this is the timestamp of a monday.
+     */
     public static function getFirstDayOfCurrentWeek(int $timestamp = null): int
     {
         if (!$timestamp) {
@@ -74,7 +77,8 @@ class DateHelper
     }
 
     /**
-     * Return monday of the week the timestamp is in.
+     * Return beginn weekday of the week the timestamp is in
+     * By default this is a monday.
      *
      * @param null $tstamp
      */
@@ -97,7 +101,8 @@ class DateHelper
             return $date->getTimestamp();
         }
 
-        // Otherwise, return the date of the nearest Monday (beginn week day) in the past
+        // Otherwise, return the date of the nearest "beginn week day" in the past
+        // by default this is a monday
         return $date->modify(sprintf('last %s', $beginnWeek))->getTimestamp();
     }
 

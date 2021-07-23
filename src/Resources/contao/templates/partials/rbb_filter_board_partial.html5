@@ -24,7 +24,7 @@
     <div class="col-sm-4 week-select mb-2">
       <label for="date_<?= $this->moduleKey ?>" class="d-none">{{trans::RBB.timeSpan::contao_default}}</label>
       <select id="date_<?= $this->moduleKey ?>" :disabled="!rows" class="form-control  w-100 timeSpanSelect" name="date" v-model="activeWeekTstamp">
-        <option v-for="(week, index) in filterBoard.weekSelection" v-bind:class="week.cssClass" v-bind:value="week.tstampMonday">{{ week.optionText }}</option>
+        <option v-for="(week, index) in filterBoard.weekSelection" v-bind:class="week.cssClass" v-bind:value="week.tstampBeginnWeek">{{ week.optionText }}</option>
       </select>
     </div>
 

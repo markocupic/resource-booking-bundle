@@ -148,7 +148,13 @@ trait RefreshDataTrait
 
         // Send weekdays, dates and day
         $arrWeek = [];
+        // First get a full week,
+        // $arrWeekdays[0] should be the weekday defined in markocupic_resource_booking.beginnWeek
         $arrWeekdays = RbbConfig::RBB_WEEKDAYS;
+        $arrWeekdays = [...$arrWeekdays, ...$arrWeekdays];
+        $beginnWeek = $systemAdapter->getContainer()->getParameter('markocupic_resource_booking.beginnWeek');
+        $offset = array_search($beginnWeek, $arrWeekdays, true);
+        $arrWeekdays = \array_slice($arrWeekdays, $offset, 7);
 
         foreach ($arrWeekdays as $i => $weekday) {
             // Skip days
@@ -399,25 +405,25 @@ trait RefreshDataTrait
                 $cssClass = 'future-week';
             }
 
-            $tstampMonday = $currentTstamp;
-            $dateMonday = $dateAdapter->parse('d.m.Y', $currentTstamp);
-            $tstampSunday = strtotime($dateMonday.' + 6 days');
-            $dateSunday = $dateAdapter->parse('d.m.Y', $tstampSunday);
-            $calWeek = $dateAdapter->parse('W', $tstampMonday);
-            $yearMonday = $dateAdapter->parse('Y', $tstampMonday);
+            $tstampBeginnWeek = $currentTstamp;
+            $dateBeginnWeek = $dateAdapter->parse('d.m.Y', $currentTstamp);
+            $tstampEndWeek = strtotime($dateBeginnWeek.' + 6 days');
+            $dateEndWeek = $dateAdapter->parse('d.m.Y', $tstampEndWeek);
+            $calWeek = $dateAdapter->parse('W', $tstampBeginnWeek);
+            $yearBeginnWeek = $dateAdapter->parse('Y', $tstampBeginnWeek);
             $arrWeeks[] = [
                 'cssClass' => $cssClass,
                 'tstamp' => (int) $currentTstamp,
-                'tstampMonday' => (int) $tstampMonday,
-                'tstampSunday' => (int) $tstampSunday,
-                'stringMonday' => $dateMonday,
-                'stringSunday' => $dateSunday,
-                'daySpan' => $dateMonday.' - '.$dateSunday,
+                'tstampBeginnWeek' => (int) $tstampBeginnWeek,
+                'tstampEndWeek' => (int) $tstampEndWeek,
+                'stringBeginnWeek' => $dateBeginnWeek,
+                'stringEndWeek' => $dateEndWeek,
+                'daySpan' => $dateBeginnWeek.' - '.$dateEndWeek,
                 'calWeek' => (int) $calWeek,
-                'year' => $yearMonday,
-                'optionDateStart' => $dateMonday,
-                'optionDateEnd' => $dateSunday,
-                'optionText' => $this->translator->trans('MSC.weekSelectOptionText', [$calWeek, $yearMonday, $dateMonday, $dateSunday], 'contao_default'),
+                'year' => $yearBeginnWeek,
+                'optionDateStart' => $dateBeginnWeek,
+                'optionDateEnd' => $dateEndWeek,
+                'optionText' => $this->translator->trans('MSC.weekSelectOptionText', [$calWeek, $yearBeginnWeek, $dateBeginnWeek, $dateEndWeek], 'contao_default'),
             ];
 
             $currentTstamp = $dateHelperAdapter->addDaysToTime(7, $currentTstamp);

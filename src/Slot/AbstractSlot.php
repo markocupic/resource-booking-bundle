@@ -126,7 +126,7 @@ abstract class AbstractSlot implements SlotInterface
             $bookingRepeatStopWeekTstamp = $dateHelperAdapter->getFirstDayOfCurrentWeek($this->arrData['startTime']);
         }
 
-        // This is the timestamp of a monday,
+        // This is the timestamp of a "beginn week weekday" by default this is a monday
         $this->arrData['bookingRepeatStopWeekTstamp'] = $bookingRepeatStopWeekTstamp;
         $this->arrData['pid'] = $resource->id;
         $this->arrData['isValidDate'] = $this->hasValidDate();

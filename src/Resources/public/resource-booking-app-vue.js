@@ -61,7 +61,7 @@ class resourceBookingApp {
         activeResourceId: 'undefined',
         // Contains the data in an array: id, title, etc.
         activeResource: [],
-        // Monday current week 00:00 UTC
+        // Beginn week weekday of current week 00:00 UTC
         activeWeekTstamp: 0,
         // Contains data about the active week: tstampStart, tstampEnd, dateStart, dateEnd, weekNumber, year
         activeWeek: [],
