@@ -166,6 +166,11 @@ trait BookingTrait
 
         $slotCollection->reset();
 
+        if ($slotCollection->count() < 1) {
+            $this->setErrorMessage('RBB.ERR.selectBookingDatesPlease');
+            return false;
+        }
+
         while ($slotCollection->next()) {
             /** @var SlotMain $slot */
             $slot = $slotCollection->current();
