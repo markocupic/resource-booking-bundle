@@ -37,25 +37,10 @@ use Symfony\Component\Security\Core\Security;
  */
 class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
 {
-    /**
-     * @var ContaoFramework
-     */
-    private $framework;
-
-    /**
-     * @var RequestStack
-     */
-    private $requestStack;
-
-    /**
-     * @var SessionInterface
-     */
-    private $session;
-
-    /**
-     * @var Security
-     */
-    private $security;
+    private ContaoFramework $framework;
+    private RequestStack $requestStack;
+    private SessionInterface $session;
+    private Security $security;
 
     /**
      * ArrayAttributeBag constructor.

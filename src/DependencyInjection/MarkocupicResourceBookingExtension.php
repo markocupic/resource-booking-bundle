@@ -28,22 +28,24 @@ class MarkocupicResourceBookingExtension extends Extension
     public function load(array $configs, ContainerBuilder $container): void
     {
         $configuration = new Configuration();
+        $config = $this->processConfiguration($configuration, $configs);
 
         $loader = new YamlFileLoader(
             $container,
             new FileLocator(__DIR__.'/../Resources/config')
         );
 
-        $config = $this->processConfiguration($configuration, $configs);
-
-        $loader->load('parameters.yml');
         $loader->load('services.yml');
 
-        $container->setParameter($this->getAlias().'.beginnWeek', $config['beginnWeek']);
+        $container->setParameter('markocupic_resource_booking.session.attribute_bag_name', $config['session']['attribute_bag_name']);
+        $container->setParameter('markocupic_resource_booking.session.attribute_bag_key', $config['session']['attribute_bag_key']);
+        $container->setParameter('markocupic_resource_booking.session.flash_bag_key', $config['session']['flash_bag_key']);
+        $container->setParameter('markocupic_resource_booking.cookie.name', $config['cookie']['name']);
+        $container->setParameter('markocupic_resource_booking.apps', $config['apps']);
     }
 
     public function getAlias()
     {
-        return Configuration::KEY;
+        return 'markocupic_resource_booking';
     }
 }

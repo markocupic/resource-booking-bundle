@@ -123,6 +123,7 @@ trait BookingTrait
             'itemsBooked' => $itemsBooked,
             'tstamp' => time(),
             'pid' => $resource->id,
+            'moduleId' => $this->sessionBag->get('moduleModelId'),
             'description' => $description,
         ];
 

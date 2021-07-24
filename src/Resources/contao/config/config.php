@@ -39,6 +39,3 @@ if (TL_MODE === 'BE')
 	$GLOBALS['TL_CSS'][] = RbbConfig::RBB_ASSET_PATH . '/css/backend.css';
 }
 
-// Set backWeeks and aheadWeeks
-Config::set('rbb_intBackWeeks', -10);
-Config::set('rbb_intAheadWeeks', 51);

@@ -24,20 +24,9 @@ class PreCancelingEvent extends Event
 {
     public const NAME = 'rbb.event.pre_canceling';
 
-    /**
-     * @var Collection
-     */
-    private $bookingCollection;
-
-    /**
-     * @var FrontendUser
-     */
-    private $user;
-
-    /**
-     * @var ArrayAttributeBag
-     */
-    private $sessionBag;
+    private ?Collection $bookingCollection;
+    private FrontendUser $user;
+    private ArrayAttributeBag $sessionBag;
 
     /**
      * PreCancelingEvent constructor.

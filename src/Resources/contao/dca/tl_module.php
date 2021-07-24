@@ -9,14 +9,13 @@
  */
 
 use Contao\Backend;
-use Contao\Database;
 use Contao\System;
 use Markocupic\ResourceBookingBundle\Config\RbbConfig;
 
 /**
  * Add palettes to tl_module
  */
-$GLOBALS['TL_DCA']['tl_module']['palettes']['resourceBookingWeekcalendar'] = '{title_legend},name,headline,type;{config_legend},resourceBooking_resourceTypes,resourceBooking_hideDays,resourceBooking_intAheadWeek,resourceBooking_addDateStop,resourceBooking_displayClientPersonalData,resourceBooking_setBookingSubmittedFields;{template_legend:hide},customTpl;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['resourceBookingWeekcalendar'] = '{title_legend},name,headline,type;{config_legend},resourceBooking_appConfig,resourceBooking_resourceTypes,resourceBooking_hideDays,resourceBooking_addDateStop,resourceBooking_displayClientPersonalData,resourceBooking_setBookingSubmittedFields;{template_legend:hide},customTpl;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 $GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'resourceBooking_hideDays';
 $GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'resourceBooking_addDateStop';
 $GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'resourceBooking_displayClientPersonalData';
@@ -34,7 +33,6 @@ $GLOBALS['TL_DCA']['tl_module']['subpalettes']['resourceBooking_setBookingSubmit
  * Add fields to tl_module
  */
 $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_resourceTypes'] = array(
-	'label'            => &$GLOBALS['TL_LANG']['tl_module']['resourceBooking_resourceTypes'],
 	'exclude'          => true,
 	'inputType'        => 'checkbox',
 	'options_callback' => array('tl_module_resource_booking', 'getResourceTypes'),
@@ -43,7 +41,6 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_resourceTypes'] = arr
 );
 
 $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_hideDays'] = array(
-	'label'     => &$GLOBALS['TL_LANG']['tl_module']['resourceBooking_hideDays'],
 	'exclude'   => true,
 	'inputType' => 'checkbox',
 	'eval'      => array('submitOnChange' => true, 'tl_class' => 'clr'),
@@ -51,7 +48,6 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_hideDays'] = array(
 );
 
 $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_hideDaysSelection'] = array(
-	'label'     => &$GLOBALS['TL_LANG']['tl_module']['resourceBooking_hideDaysSelection'],
 	'exclude'   => true,
 	'inputType' => 'checkbox',
 	'options'   => RbbConfig::RBB_WEEKDAYS,
@@ -60,17 +56,7 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_hideDaysSelection'] =
 	'sql'       => "blob NULL"
 );
 
-$GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_intAheadWeek'] = array(
-	'label'     => &$GLOBALS['TL_LANG']['tl_module']['resourceBooking_intAheadWeek'],
-	'exclude'   => true,
-	'inputType' => 'text',
-	'options'   => range(0, 156),
-	'eval'      => array('tl_class' => 'clr', 'rgxp' => 'natural'),
-	'sql'       => "int(10) unsigned NOT NULL default '0'",
-);
-
 $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_addDateStop'] = array(
-	'label'     => &$GLOBALS['TL_LANG']['tl_module']['resourceBooking_addDateStop'],
 	'exclude'   => true,
 	'inputType' => 'checkbox',
 	'eval'      => array('submitOnChange' => true, 'tl_class' => 'clr'),
@@ -78,7 +64,6 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_addDateStop'] = array
 );
 
 $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_dateStop'] = array(
-	'label'     => &$GLOBALS['TL_LANG']['tl_module']['resourceBooking_dateStop'],
 	'exclude'   => true,
 	'default'   => time(),
 	'inputType' => 'text',
@@ -86,7 +71,6 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_dateStop'] = array(
 	'sql'       => "varchar(11) NOT NULL default ''"
 );
 $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_dateStop'] = array(
-	'label'     => &$GLOBALS['TL_LANG']['tl_module']['resourceBooking_dateStop'],
 	'exclude'   => true,
 	'default'   => time(),
 	'inputType' => 'text',
@@ -95,7 +79,6 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_dateStop'] = array(
 );
 
 $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_displayClientPersonalData'] = array(
-	'label'     => &$GLOBALS['TL_LANG']['tl_module']['resourceBooking_displayClientPersonalData'],
 	'exclude'   => true,
 	'inputType' => 'checkbox',
 	'eval'      => array('submitOnChange' => true, 'tl_class' => 'clr'),
@@ -103,7 +86,6 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_displayClientPersonal
 );
 
 $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_clientPersonalData'] = array(
-	'label'            => &$GLOBALS['TL_LANG']['tl_module']['resourceBooking_clientPersonalData'],
 	'exclude'          => true,
 	'reference'        => &$GLOBALS['TL_LANG']['tl_member'],
 	'inputType'        => 'select',
@@ -113,7 +95,6 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_clientPersonalData'] 
 );
 
 $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_setBookingSubmittedFields'] = array(
-	'label'     => &$GLOBALS['TL_LANG']['tl_module']['resourceBooking_setBookingSubmittedFields'],
 	'exclude'   => true,
 	'inputType' => 'checkbox',
 	'eval'      => array('submitOnChange' => true, 'tl_class' => 'clr'),
@@ -121,7 +102,6 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_setBookingSubmittedFi
 );
 
 $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_bookingSubmittedFields'] = array(
-	'label'            => &$GLOBALS['TL_LANG']['tl_module']['resourceBooking_bookingSubmittedFields'],
 	'exclude'          => true,
 	'reference'        => &$GLOBALS['TL_LANG']['tl_resource_booking'],
 	'inputType'        => 'select',
@@ -130,19 +110,20 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_bookingSubmittedField
 	'sql'              => "varchar(1024) NOT NULL default 'a:2:{i:0;s:5:\"title\";i:1;s:11:\"description\";}'"
 );
 
+$GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_appConfig'] = array(
+    'exclude'          => true,
+    'inputType'        => 'select',
+    'options_callback' => array('tl_module_resource_booking', 'getAppConfigurations'),
+    'eval'             => array('mandatory' => true, 'multiple' => false, 'tl_class' => 'clr'),
+    'sql'              => "varchar(64) NOT NULL default 'default'"
+);
+
 /**
  * Class tl_module_resource_booking
  */
 class tl_module_resource_booking extends Backend
 {
-	/**
-	 * Import the back end user object
-	 */
-	public function __construct()
-	{
-		parent::__construct();
-		$this->import('Contao\BackendUser', 'User');
-	}
+
 
 	/**
 	 * @return array
@@ -150,7 +131,10 @@ class tl_module_resource_booking extends Backend
 	public function getResourceTypes(): array
 	{
 		$opt = array();
-		$objDb = Database::getInstance()->prepare('SELECT * FROM tl_resource_booking_resource_type')->execute();
+		$objDb = $this->Database
+            ->prepare('SELECT * FROM tl_resource_booking_resource_type')
+            ->execute()
+        ;
 
 		while ($objDb->next())
 		{
@@ -159,6 +143,17 @@ class tl_module_resource_booking extends Backend
 
 		return $opt;
 	}
+
+    /**
+     * @return array
+     */
+    public function getAppConfigurations(): array
+    {
+        $appConfig = System::getContainer()->getParameter('markocupic_resource_booking.apps');
+        $opt = array_keys($appConfig);
+
+        return $opt;
+    }
 
 	/**
 	 * @return array
@@ -174,7 +169,7 @@ class tl_module_resource_booking extends Backend
 	 */
 	public function getTlMemberFields(): array
 	{
-		$arrFieldnames = Database::getInstance()->getFieldNames('tl_member');
+		$arrFieldnames = $this->Database->getFieldNames('tl_member');
 
 		System::loadLanguageFile('tl_member');
 		$arrOpt = array();
@@ -199,7 +194,7 @@ class tl_module_resource_booking extends Backend
 	 */
 	public function getTlResourceBookingFields(): array
 	{
-		$arrFieldnames = Database::getInstance()->getFieldNames('tl_resource_booking');
+		$arrFieldnames = $this->Database->getFieldNames('tl_resource_booking');
 		System::loadLanguageFile('tl_resource_booking');
 
 		return $arrFieldnames;

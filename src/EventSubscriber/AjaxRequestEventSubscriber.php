@@ -25,18 +25,9 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
 {
     public const PRIORITY = 1000;
 
-    /**
-     * @var ContaoFramework
-     */
-    private $framework;
-
-    /**
-     * @var RequestStack
-     */
-    private $requestStack;
-
+    private ContaoFramework $framework;
+    private RequestStack $requestStack;
     private $services = [];
-
     private $resources = [];
 
     /**
@@ -56,12 +47,8 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
 
     /**
      * Get a resource by alias.
-     *
-     * @param $alias
-     *
-     * @return mixed
      */
-    public function get($alias)
+    public function get(string $alias): ControllerInterface
     {
         if (\array_key_exists($alias, $this->resources)) {
             return $this->resources[$alias];

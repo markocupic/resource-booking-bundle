@@ -17,10 +17,7 @@ use Symfony\Component\Security\Core\Security;
 
 class LoggedInFrontendUser
 {
-    /**
-     * @var Security
-     */
-    private $security;
+    private Security $security;
 
     public function __construct(Security $security)
     {

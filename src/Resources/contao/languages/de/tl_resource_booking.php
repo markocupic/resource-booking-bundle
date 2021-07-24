@@ -9,7 +9,8 @@
  */
 
 // Legends
-$GLOBALS['TL_LANG']['tl_resource_booking']['title_legend'] = 'Titel-Einstellungen';
+$GLOBALS['TL_LANG']['tl_resource_booking']['booking_legend'] = 'Buchungs-Einstellungen';
+$GLOBALS['TL_LANG']['tl_resource_booking']['module_legend'] = 'Modul-Einstellungen';
 $GLOBALS['TL_LANG']['tl_resource_booking']['time_legend'] = 'Zeit-Einstellungen';
 
 // Global operations
@@ -27,5 +28,6 @@ $GLOBALS['TL_LANG']['tl_resource_booking']['startTime'] = array('Startzeit');
 $GLOBALS['TL_LANG']['tl_resource_booking']['endTime'] = array('Endzeit');
 $GLOBALS['TL_LANG']['tl_resource_booking']['bookingUuid'] = array('Buchungs-Id');
 $GLOBALS['TL_LANG']['tl_resource_booking']['itemsBooked'] = array('Gebuchte Einheiten');
+$GLOBALS['TL_LANG']['tl_resource_booking']['moduleId'] = array('Frontend Modul');
 
 

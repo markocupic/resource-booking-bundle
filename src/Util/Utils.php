@@ -15,20 +15,14 @@ namespace Markocupic\ResourceBookingBundle\Util;
 use Contao\Controller;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\ModuleModel;
+use Contao\System;
 use Symfony\Component\HttpFoundation\Session\SessionBagInterface;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 class Utils
 {
-    /**
-     * @var ContaoFramework
-     */
-    private $framework;
-
-    /**
-     * @var SessionBagInterface
-     */
-    private $session;
+    private ContaoFramework $framework;
+    private SessionBagInterface $session;
 
     public function __construct(ContaoFramework $framework, SessionInterface $session, string $bagName)
     {
@@ -75,5 +69,35 @@ class Utils
         }
 
         return true;
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function getAppConfig(): array
+    {
+        if ($this->session->has('moduleModelId')) {
+            $moduleModelAdapter = $this->framework->getAdapter(ModuleModel::class);
+            $module = $moduleModelAdapter->findByPk($this->session->get('moduleModelId'));
+
+            if (null !== $module) {
+                $strConfig = $module->resourceBooking_appConfig;
+
+                if ('' !== (string) $strConfig) {
+                    $systemAdapter = $this->framework->getAdapter(System::class);
+                    $appConfig = $systemAdapter->getContainer()
+                        ->getParameter('markocupic_resource_booking.apps')
+                    ;
+
+                    if (isset($appConfig[$strConfig]) && \is_array($appConfig[$strConfig])) {
+                        return $appConfig[$strConfig];
+                    }
+                }
+            }
+
+            throw new \Exception('Could not find app configuration array. Please check your config.yml file an make sure you have created correctly your custom configuration.');
+        }
+
+        throw new \Exception('Initialize RBB application must be initialized first, before you can call '.__METHOD__.'.');
     }
 }

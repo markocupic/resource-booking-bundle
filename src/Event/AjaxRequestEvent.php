@@ -23,15 +23,8 @@ class AjaxRequestEvent extends Event
 {
     public const NAME = 'xml_http_request';
 
-    /**
-     * @var AjaxResponse
-     */
-    private $ajaxResponse;
-
-    /**
-     * @var Request
-     */
-    private $request;
+    private AjaxResponse $ajaxResponse;
+    private Request $request;
 
     /**
      * AjaxRequestEvent constructor.

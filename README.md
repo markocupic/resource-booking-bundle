@@ -9,7 +9,7 @@ Ab Version 3.x kann eingestellt werden, wie viele Items einer Ressource buchbar 
 
 ![sidebar navigation](https://github.com/markocupic/markocupic/blob/main/resource-booking-bundle/resource-booking-bundle.gif)
 
-## Configuration
+## Konfiguration
 Nach der Installation mit dem Contao Manager müssen:
 * Mindestens 1 Reservations-Zeitfenster-Typ erstellt werden.
 * Danach darin die Reservations-Zeitfenster im Zeitformat H:i (08:00 bis 08:45) erstellt werden.
@@ -17,24 +17,28 @@ Nach der Installation mit dem Contao Manager müssen:
 * In jedem Ressourcen-Typ mindestens eine Ressource (z.B. Zimmer) erstellt werden.
 * Mindestens 1 Mitglied (Frontend-Benutzer) angelegt werden. (Das Buchungsmodul wird nur bei eingeloggtem Benutzer angezeigt.)
 
+
+![App Konfiguration anpassen](docs/screenshots/adjust-app-configuration.png "Frontendmodul-Einstellungen")
+Die Erweiterung wird mit einer Standardkonfiguration ausgeliefert. Weitere Konfigurationssets können erstellt werden. Mehr dazu weiter [unten](##App-Konfiguration-anpassen).
+
 Das Tool setzt auf [vue.js](https://vuejs.org/), [Fontawesome](https://fontawesome.com/) und [Bootstrap](https://getbootstrap.com/) auf. Die benötigten Libraries/Frameworks werden automatisch mitinstalliert und im Template eingebunden.
 
 Anm: Bei der Installation wird neben den oben erwähnten Erweiterungen auch [codefog/contao-haste](https://github.com/codefog/contao-haste) mitinstalliert.
 
-![Alt text](docs/screenshot/screenshot.png "Buchungstool im Frontend-Ansicht")
+![Alt text](docs/screenshots/screenshot.png "Buchungstool im Frontend-Ansicht")
 
-![Alt text](docs/screenshot/screenshot2.png "Buchungstool im Frontend-Ansicht")
+![Alt text](docs/screenshots/screenshot2.png "Buchungstool im Frontend-Ansicht")
 
 ## Template mit zusätzlichen Mitgliederdaten erweitern
 Sollen zusätzliche Mitgliederdaten in der Buchungsübersicht angezeigt weden, müssen zwei Dinge angepasst werden.
 
 Erstens muss in der Moduleinstellung das Feld, welches zusätzlich angezeigt werden soll, ausgewählt werden.
 
-![Alt text](docs/screenshot/screenshot3.png "Weitere Mitgliederfelder anzeigen")
+![Alt text](docs/screenshots/screenshot3.png "Weitere Mitgliederfelder anzeigen")
 
 Weiter muss zusätzlich das Template angepasst werden. Mit *{{ eventBox.bookedByCompany }}* kann der Firmenname mitangezeigt werden. Achtung! Hierbei handelt es sich nicht um einen Contao Inserttag, sondern um die "vue.js-Mustache-Syntax-Schreibweise". Das Leerzeichen nach bzw. vor der geschweiften Klammer ist nötig.
 
-![Alt text](docs/screenshot/screenshot4.png "Weitere Mitgliederfelder anzeigen")
+![Alt text](docs/screenshots/screenshot4.png "Weitere Mitgliederfelder anzeigen")
 
 
 
@@ -238,4 +242,19 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
         // Do some stuff here
     }
 }
+```
+
+
+## App Konfiguration anpassen
+Die Erweiterung wird mit einer Default-Konfiguration installiert.
+In app/config.yml können weitere Konfigurations-Sets erstellt werden, welche dann in den Frontend-Moduleinstellungen ausgewählt werden können.
+
+Dazu muss in app/config.yml ein Eintrag erstellt werden.
+```
+markocupic_resource_booking:
+    apps:
+        my_rbb_custom:
+            beginnWeek: 'monday'
+            intBackWeeks: -10
+            intAheadWeeks: 60
 ```

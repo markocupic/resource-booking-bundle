@@ -12,9 +12,7 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\Util;
 
-use Contao\Config;
 use Contao\Date;
-use Contao\System;
 use Markocupic\ResourceBookingBundle\Config\RbbConfig;
 
 /**
@@ -65,13 +63,13 @@ class DateHelper
     /**
      * By default this is the timestamp of a monday.
      */
-    public static function getFirstDayOfCurrentWeek(int $timestamp = null): int
+    public static function getFirstDayOfCurrentWeek(array $arrAppConfig, int $timestamp = null): int
     {
         if (!$timestamp) {
             $timestamp = time();
         }
 
-        $beginnWeek = System::getContainer()->getParameter('markocupic_resource_booking.beginnWeek');
+        $beginnWeek = $arrAppConfig['beginnWeek'];
 
         return strtotime(sprintf('%s this week', $beginnWeek), $timestamp);
     }
@@ -82,7 +80,7 @@ class DateHelper
      *
      * @param null $tstamp
      */
-    public function getFirstDayOfWeek($tstamp = null): int
+    public function getFirstDayOfWeek(array $arrAppConfig, $tstamp = null): int
     {
         if (null === $tstamp) {
             $tstamp = time();
@@ -92,7 +90,7 @@ class DateHelper
 
         $date->setTime(0, 0, 0);
 
-        $beginnWeek = System::getContainer()->getParameter('markocupic_resource_booking.beginnWeek');
+        $beginnWeek = $arrAppConfig['beginnWeek'];
 
         $key = array_search($beginnWeek, RbbConfig::RBB_WEEKDAYS, true);
 
@@ -120,14 +118,14 @@ class DateHelper
     /**
      * Check if date is in range.
      */
-    public static function isValidDate(int $tstamp): bool
+    public static function isValidDate(int $tstamp, array $arrAppConfig): bool
     {
-        $intBackWeeks = (int) Config::get('rbb_intBackWeeks');
-        $intAheadWeeks = (int) Config::get('rbb_intAheadWeeks');
+        $intBackWeeks = $arrAppConfig['intBackWeeks'];
+        $intAheadWeeks = $arrAppConfig['intAheadWeeks'];
 
         // Get the timestamp of the first and last possible weeks
-        $tstampFirstPossibleWeek = static::addWeeksToTime($intBackWeeks, static::getFirstDayOfCurrentWeek());
-        $tstampLastPossibleWeek = static::addWeeksToTime($intAheadWeeks, static::getFirstDayOfCurrentWeek());
+        $tstampFirstPossibleWeek = static::addWeeksToTime($intBackWeeks, static::getFirstDayOfCurrentWeek($arrAppConfig));
+        $tstampLastPossibleWeek = static::addWeeksToTime($intAheadWeeks, static::getFirstDayOfCurrentWeek($arrAppConfig));
 
         if ($tstamp < $tstampFirstPossibleWeek || $tstamp > $tstampLastPossibleWeek) {
             return false;

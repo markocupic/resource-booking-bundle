@@ -12,7 +12,7 @@
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['title_legend'] = 'Title settings';
 
 // Operations
-$GLOBALS['TL_LANG']['tl_resource_booking_resource']['bookingsmeta'] = 'Watch booking';
+$GLOBALS['TL_LANG']['tl_resource_booking_resource']['bookings'] = 'Watch bookings from resource with ID %s';
 
 // Global operations
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['new'] = array('New', 'Add new resource.');

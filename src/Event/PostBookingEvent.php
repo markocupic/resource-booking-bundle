@@ -23,26 +23,12 @@ use Symfony\Contracts\EventDispatcher\Event;
  */
 class PostBookingEvent extends Event
 {
-    public const NAME = 'rbb.event.ppost_booking';
-    /**
-     * @var Collection
-     */
-    private $bookingCollection;
+    public const NAME = 'rbb.event.post_booking';
 
-    /**
-     * @var FrontendUser
-     */
-    private $user;
-
-    /**
-     * @var ArrayAttributeBag
-     */
-    private $sessionBag;
-
-    /**
-     * @var AjaxRequestEvent;
-     */
-    private $ajaxResponse;
+    private ?Collection $bookingCollection;
+    private FrontendUser $user;
+    private ArrayAttributeBag $sessionBag;
+    private AjaxResponse $ajaxResponse;
 
     /**
      * PostBookingEvent constructor.

@@ -145,14 +145,15 @@ trait RefreshDataTrait
 
         // Get booking RepeatsSelection
         $arrData['bookingRepeatsSelection'] = $this->getWeekSelection((int) $this->sessionBag->get('activeWeekTstamp'), (int) $this->sessionBag->get('tstampLastPossibleWeek'), false);
+        $arrAppConfig = $this->utils->getAppConfig();
 
         // Send weekdays, dates and day
         $arrWeek = [];
         // First get a full week,
-        // $arrWeekdays[0] should be the weekday defined in markocupic_resource_booking.beginnWeek
+        // $arrWeekdays[0] should be the weekday defined in the application configuration
         $arrWeekdays = RbbConfig::RBB_WEEKDAYS;
         $arrWeekdays = [...$arrWeekdays, ...$arrWeekdays];
-        $beginnWeek = $systemAdapter->getContainer()->getParameter('markocupic_resource_booking.beginnWeek');
+        $beginnWeek = $arrAppConfig['beginnWeek'];
         $offset = array_search($beginnWeek, $arrWeekdays, true);
         $arrWeekdays = \array_slice($arrWeekdays, $offset, 7);
 
@@ -388,8 +389,10 @@ trait RefreshDataTrait
         while ($currentTstamp <= $endTstamp) {
             $cssClass = 'past-week';
 
+            $arrAppConfig = $this->utils->getAppConfig();
+
             // add empty
-            if ($dateHelperAdapter->getFirstDayOfCurrentWeek() === $currentTstamp) {
+            if ($dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig) === $currentTstamp) {
                 if ($injectEmptyLine) {
                     $arrWeeks[] = [
                         'tstamp' => '',
@@ -401,7 +404,7 @@ trait RefreshDataTrait
                 $cssClass = 'current-week';
             }
 
-            if ($dateHelperAdapter->getFirstDayOfCurrentWeek() < $currentTstamp) {
+            if ($dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig) < $currentTstamp) {
                 $cssClass = 'future-week';
             }
 
@@ -449,7 +452,10 @@ trait RefreshDataTrait
         // Create 1 week back and 1 week ahead links
         $jumpTime = $dateHelperAdapter->addDaysToTime($intJumpDays, $this->sessionBag->get('activeWeekTstamp'));
 
-        if (!$dateHelperAdapter->isValidDate($jumpTime)) {
+        // Get app config
+        $arrAppConfig = $this->utils->getAppConfig();
+
+        if (!$dateHelperAdapter->isValidDate($jumpTime, $arrAppConfig)) {
             $jumpTime = $this->sessionBag->get('activeWeekTstamp');
             $arrReturn['disabled'] = true;
         }

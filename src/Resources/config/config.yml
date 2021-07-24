@@ -1,0 +1,6 @@
+markocupic_resource_booking:
+    apps:
+        default:
+            beginnWeek: 'monday'
+            intBackWeeks: -10
+            intAheadWeeks: 60

@@ -24,7 +24,6 @@ use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Markocupic\ResourceBookingBundle\Slot\SlotCollection;
 use Markocupic\ResourceBookingBundle\Slot\SlotFactory;
 use Markocupic\ResourceBookingBundle\Slot\SlotMain;
-use Markocupic\ResourceBookingBundle\Util\Utils;
 use Psr\Log\LogLevel;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -39,7 +38,6 @@ final class BookingController extends AbstractController implements ControllerIn
     private EventDispatcherInterface $eventDispatcher;
     private SlotFactory $slotFactory;
     private TranslatorInterface $translator;
-    private Utils $utils;
     private ?string $bookingUuid = null;
 
     /**
@@ -48,12 +46,11 @@ final class BookingController extends AbstractController implements ControllerIn
      * see: https://stackoverflow.com/questions/58447365/correct-way-to-extend-classes-with-symfony-autowiring
      * see: https://symfony.com/doc/current/service_container/calls.html
      */
-    public function _setController(EventDispatcherInterface $eventDispatcher, SlotFactory $slotFactory, TranslatorInterface $translator, Utils $utils): void
+    public function _setController(EventDispatcherInterface $eventDispatcher, SlotFactory $slotFactory, TranslatorInterface $translator): void
     {
         $this->eventDispatcher = $eventDispatcher;
         $this->slotFactory = $slotFactory;
         $this->translator = $translator;
-        $this->utils = $utils;
     }
 
     /**

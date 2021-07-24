@@ -18,19 +18,12 @@ namespace Markocupic\ResourceBookingBundle\Response;
 class AjaxResponse
 {
     public const STATUS_SUCCESS = 'success';
-
     public const STATUS_ERROR = 'error';
-
     public const MESSAGE_CONFIRMATION = 'confirmation';
-
     public const MESSAGE_INFO = 'info';
-
     public const MESSAGE_ERROR = 'error';
 
-    /**
-     * @var array
-     */
-    private $arrData;
+    private array $arrData;
 
     /**
      * JsonResponse constructor.

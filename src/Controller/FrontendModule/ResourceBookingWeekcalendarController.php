@@ -14,6 +14,7 @@ namespace Markocupic\ResourceBookingBundle\Controller\FrontendModule;
 
 use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController;
 use Contao\CoreBundle\Framework\ContaoFramework;
+use Contao\CoreBundle\ServiceAnnotation\FrontendModule;
 use Contao\Environment;
 use Contao\ModuleModel;
 use Contao\PageModel;
@@ -30,39 +31,22 @@ use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Class ResourceBookingWeekcalendarController.
+ * @FrontendModule(type=ResourceBookingWeekcalendarController::TYPE, category="resourceBooking", )
  */
 class ResourceBookingWeekcalendarController extends AbstractFrontendModuleController
 {
-    /**
-     * @var ContaoFramework
-     */
-    private $framework;
+    public const TYPE = 'resourceBookingWeekcalendar';
 
-    /**
-     * @var RequestStack
-     */
-    private $requestStack;
-
-    /**
-     * @var EventDispatcherInterface
-     */
-    private $eventDispatcher;
-
-    /**
-     * @var Initialize
-     */
-    private $appInitializer;
-
-    /**
-     * @var AjaxResponse
-     */
-    private $ajaxResponse;
+    private ContaoFramework $framework;
+    private RequestStack $requestStack;
+    private EventDispatcherInterface $eventDispatcher;
+    private Initialize $appInitializer;
+    private AjaxResponse $ajaxResponse;
 
     /**
      * @var string
      */
-    private $moduleKey;
+    private ?string $moduleKey = null;
 
     /**
      * ResourceBookingWeekcalendarController constructor.

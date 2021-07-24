@@ -16,6 +16,7 @@ use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\ModuleModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\User\LoggedInFrontendUser;
+use Markocupic\ResourceBookingBundle\Util\Utils;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionBagInterface;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
@@ -27,6 +28,7 @@ abstract class AbstractController
 {
     protected ContaoFramework $framework;
     protected LoggedInFrontendUser $user;
+    protected Utils $utils;
     protected RequestStack $requestStack;
     protected SessionBagInterface $sessionBag;
     protected ?ResourceBookingResourceModel $activeResource = null;
@@ -36,10 +38,11 @@ abstract class AbstractController
     /**
      * AbstractController constructor.
      */
-    public function __construct(ContaoFramework $framework, LoggedInFrontendUser $user, RequestStack $requestStack, SessionInterface $session, string $bagName)
+    public function __construct(ContaoFramework $framework, LoggedInFrontendUser $user, Utils $utils, RequestStack $requestStack, SessionInterface $session, string $bagName)
     {
         $this->framework = $framework;
         $this->user = $user;
+        $this->utils = $utils;
         $this->requestStack = $requestStack;
         $this->sessionBag = $session->getBag($bagName);
     }

@@ -121,9 +121,11 @@ abstract class AbstractSlot implements SlotInterface
         $this->arrData['endTime'] = $endTime;
         $this->arrData['itemsBooked'] = $itemsBooked;
 
+        $appConfig = $this->utils->getAppConfig();
+
         // Auto fill
         if (null === $bookingRepeatStopWeekTstamp) {
-            $bookingRepeatStopWeekTstamp = $dateHelperAdapter->getFirstDayOfCurrentWeek($this->arrData['startTime']);
+            $bookingRepeatStopWeekTstamp = $dateHelperAdapter->getFirstDayOfCurrentWeek($appConfig, $this->arrData['startTime']);
         }
 
         // This is the timestamp of a "beginn week weekday" by default this is a monday
@@ -136,7 +138,7 @@ abstract class AbstractSlot implements SlotInterface
         $this->arrData['date'] = $dateAdapter->parse($configAdapter->get('dateFormat'), $this->arrData['startTime']);
         $this->arrData['datimSpanString'] = sprintf('%s, %s: %s - %s', $dateAdapter->parse('D', $this->arrData['startTime']), $dateAdapter->parse($configAdapter->get('dateFormat'), $this->arrData['startTime']), $dateAdapter->parse('H:i', $this->arrData['startTime']), $dateAdapter->parse('H:i', $this->arrData['endTime']));
         $this->arrData['timeSpanString'] = $dateAdapter->parse('H:i', $this->arrData['startTime']).' - '.$dateAdapter->parse('H:i', $this->arrData['startTime']);
-        $this->arrData['beginnWeekTimestampSelectedWeek'] = $dateHelperAdapter->getFirstDayOfCurrentWeek($this->arrData['startTime']);
+        $this->arrData['beginnWeekTimestampSelectedWeek'] = $dateHelperAdapter->getFirstDayOfCurrentWeek($appConfig, $this->arrData['startTime']);
 
         $this->arrData['isBookable'] = $this->isBookable();
         $this->arrData['enoughItemsAvailable'] = $this->enoughItemsAvailable();

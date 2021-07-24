@@ -14,27 +14,28 @@ namespace Markocupic\ResourceBookingBundle\DependencyInjection\Compiler;
 
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
-use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\DependencyInjection\Reference;
 
-class AddAjaxControllerPass implements CompilerPassInterface
+/**
+ * Class AddSessionBagsPass.
+ */
+class AddConfigurationPass implements CompilerPassInterface
 {
     /**
      * @throws ServiceNotFoundException
      */
     public function process(ContainerBuilder $container): void
     {
-        $definition = $container->findDefinition('Markocupic\ResourceBookingBundle\EventSubscriber\AjaxRequestEventSubscriber');
+        $definition = $container->findDefinition('huh.api.manager.resource');
 
         // find all service IDs with the huh.api.resource tag
-        $taggedServices = $container->findTaggedServiceIds('markocupic_resource_booking.ajax_controller');
+        $taggedServices = $container->findTaggedServiceIds('huh.api.resource');
 
         foreach ($taggedServices as $id => $tags) {
             // a service could have the same tag twice
             foreach ($tags as $attributes) {
                 if (!isset($attributes['alias'])) {
-                    throw new InvalidArgumentException(sprintf('Missing tag information "alias" on markocupic_resource_booking.ajax_controller tagged service "%s".', $id));
+                    throw new InvalidArgumentException(sprintf('Missing tag information "alias" on huh.api.resource tagged service "%s".', $id));
                 }
 
                 $definition->addMethodCall(

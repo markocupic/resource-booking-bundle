@@ -1,10 +1,11 @@
 services:
+
     _defaults:
         autowire: true
         autoconfigure: true
         public: true
         bind:
-            $bagName: '%resource_booking_bundle.session.attribute_bag_name%'
+            $bagName: '%markocupic_resource_booking.session.attribute_bag_name%'
 
     _instanceof:
         Symfony\Bundle\FrameworkBundle\Controller\AbstractController:
@@ -23,38 +24,33 @@ services:
     # Ajax controller
     Markocupic\ResourceBookingBundle\AjaxController\BookingController:
         tags:
-            - { name: markocupic.resource_booking.ajax_controller, alias: booking }
+            - { name: markocupic_resource_booking.ajax_controller, alias: booking }
 
 
     # Ajax controller
     Markocupic\ResourceBookingBundle\AjaxController\CancelController:
         tags:
-            - { name: markocupic.resource_booking.ajax_controller, alias: cancelBooking }
+            - { name: markocupic_resource_booking.ajax_controller, alias: cancelBooking }
 
     # Ajax controller
     Markocupic\ResourceBookingBundle\AjaxController\ApplyFilterController:
         tags:
-            - { name: markocupic.resource_booking.ajax_controller, alias: applyFilter }
+            - { name: markocupic_resource_booking.ajax_controller, alias: applyFilter }
 
     # Ajax controller
     Markocupic\ResourceBookingBundle\AjaxController\BookingFormValidationController:
         tags:
-            - { name: markocupic.resource_booking.ajax_controller, alias: bookingFormValidation }
+            - { name: markocupic_resource_booking.ajax_controller, alias: bookingFormValidation }
 
     # Ajax controller
     Markocupic\ResourceBookingBundle\AjaxController\RefreshDataController:
         tags:
-            - { name: markocupic.resource_booking.ajax_controller, alias: refreshData }
-
-    # Contao frontend module "resourceBookingWeekcalendar"
-    Markocupic\ResourceBookingBundle\Controller\FrontendModule\ResourceBookingWeekcalendarController:
-        tags:
-            - { name: contao.frontend_module, category: resourceBooking, type: resourceBookingWeekcalendar }
+            - { name: markocupic_resource_booking.ajax_controller, alias: refreshData }
 
     # Register session bag
     Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag:
         calls:
-            - [ 'setName', [ '%resource_booking_bundle.session.attribute_bag_name%' ] ]
+            - [ 'setName', [ '%markocupic_resource_booking.session.attribute_bag_name%' ] ]
 
     # Contao hook: addCustomRegexp
     Markocupic\ResourceBookingBundle\EventListener\ContaoHooks\Regexp:
