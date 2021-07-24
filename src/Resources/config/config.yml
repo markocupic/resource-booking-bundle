@@ -1,4 +1,10 @@
 markocupic_resource_booking:
+    session:
+        attribute_bag_name: resource_booking_bundle_attributes
+        attribute_bag_key: _resource_booking_bundle_attributes
+        flash_bag_key: _resource_booking_bundle_flash_bag
+    cookie:
+        name: _contao_resource_booking_token
     apps:
         default:
             beginnWeek: 'monday'
