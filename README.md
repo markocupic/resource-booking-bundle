@@ -37,7 +37,7 @@ Erstens muss in der Moduleinstellung das Feld, welches zusätzlich angezeigt wer
 
 ![Alt text](docs/screenshots/screenshot3.png "Weitere Mitgliederfelder anzeigen")
 
-Weiter muss zusätzlich das Template angepasst werden. Mit *{{ eventBox.bookedByCompany }}* kann der Firmenname mitangezeigt werden. Achtung! Hierbei handelt es sich nicht um einen Contao Inserttag, sondern um die "vue.js-Mustache-Syntax-Schreibweise". Das Leerzeichen nach bzw. vor der geschweiften Klammer ist nötig.
+Weiter muss zusätzlich das Template angepasst werden. Mit *{{ booking.bookedByCompany }}* kann der Firmenname oder mit *{{ booking.bookedByCity }}* der Wohnort mitangezeigt werden. Achtung! Hierbei handelt es sich nicht um einen Contao Inserttag, sondern um die "vue.js-Mustache-Syntax-Schreibweise". Das Leerzeichen nach bzw. vor der geschweiften Klammer ist nötig.
 
 ![Alt text](docs/screenshots/screenshot4.png "Weitere Mitgliederfelder anzeigen")
 
@@ -62,7 +62,7 @@ services:
     tags:
     - { name: kernel.event_subscriber }
 ```
- 
+
 Weiter muss eine entsprechende Event-Subscriber-Klasse erstellt werden (hier anhand rbb.event.post_booking):
 
 ```php
@@ -248,10 +248,13 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
 
 ## App Konfiguration anpassen
 Die Erweiterung wird mit einer Default-Konfiguration installiert.
-In app/config.yml können weitere Konfigurations-Sets erstellt werden, welche dann in den Frontend-Moduleinstellungen ausgewählt werden können.
+In config/config.yml können weitere Konfigurations-Sets erstellt werden,
+welche dann in den Frontend-Moduleinstellungen ausgewählt werden können.
 
-Dazu muss in app/config.yml ein Eintrag erstellt werden.
+Dazu muss in config/config.yml ein Eintrag erstellt werden.
 ```
+# config/config.yml
+
 markocupic_resource_booking:
     apps:
         my_rbb_custom:

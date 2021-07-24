@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\AjaxController\Traits;
 
 use Contao\Config;
+use Contao\Database;
 use Contao\Date;
 use Contao\MemberModel;
 use Contao\Message;
@@ -73,6 +74,10 @@ trait RefreshDataTrait
 
         /** @var Config $configAdapter */
         $configAdapter = $this->framework->getAdapter(Config::class);
+
+        /** @var Database $databaseAdapter */
+        $databaseAdapter = $this->framework->getAdapter(Database::class);
+
 
         $arrData = [];
 
@@ -249,13 +254,19 @@ trait RefreshDataTrait
 
                                     if (null !== $objMember) {
                                         // Do not transmit and display sensitive data if user is not holder
-                                        if ($objBooking->member !== $objMember->id && $this->getModuleModelFromSession()->resourceBooking_displayClientPersonalData && !empty($arrFields)) {
-                                            foreach ($arrFields as $fieldname) {
-                                                $objBooking->{'bookedBy'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($objMember->$fieldname);
-                                            }
+                                        if ((int) $objBooking->member !== (int) $this->user->getLoggedInUser()->id) {
+                                            if ($this->getModuleModelFromSession()->resourceBooking_displayClientPersonalData && !empty($arrFields)) {
+                                                foreach ($arrFields as $fieldname) {
+                                                    $objBooking->{'bookedBy'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($objMember->$fieldname);
+                                                }
 
-                                            if (\in_array('firstname', $arrFields, true) && \in_array('lastname', $arrFields, true)) {
-                                                $objBooking->bookedByFullname = $stringUtilAdapter->decodeEntities($objMember->firstname.' '.$objMember->lastname);
+                                                if (\in_array('firstname', $arrFields, true) && \in_array('lastname', $arrFields, true)) {
+                                                    $objBooking->bookedByFullname = $stringUtilAdapter->decodeEntities($objMember->firstname.' '.$objMember->lastname);
+                                                }
+                                            }
+                                            // Fallback
+                                            if ('' === $objBooking->bookedByFullname) {
+                                                $objBooking->bookedByFullname = $stringUtilAdapter->decodeEntities($this->translator->trans('RBB.anonymous', [], 'contao_default'));
                                             }
                                         } else {
                                             foreach (array_keys($objMember->row()) as $fieldname) {
@@ -295,15 +306,31 @@ trait RefreshDataTrait
                                     }
 
                                     // Send sensitive data if it has been permitted in tl_module
+                                    $arrAvailable = Database::getInstance()->listFields('tl_resource_booking');
+
                                     if ($this->getModuleModelFromSession()->resourceBooking_setBookingSubmittedFields) {
                                         $arrFields = $stringUtilAdapter->deserialize($this->getModuleModelFromSession()->resourceBooking_bookingSubmittedFields, true);
-
-                                        foreach ($arrFields as $fieldname) {
-                                            if (\in_array($fieldname, $arrFields, true)) {
-                                                $objBooking->{'booking'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($objBooking->$fieldname);
+                                        foreach ($arrAvailable as $arrField) {
+                                            $field = $arrField['name'];
+                                            if (\in_array($field, $arrFields, true)) {
+                                                $objBooking->{'booking'.ucfirst($field)} = $stringUtilAdapter->decodeEntities($objBooking->$field);
+                                            } else {
+                                                if(!empty($field) && $field !== 'id' && $field !== 'pid'){
+                                                    $objBooking->{'booking'.ucfirst($field)} = null;
+                                                }
+                                            }
+                                        }
+                                    } else {
+                                        foreach ($arrAvailable as $arrField) {
+                                            $field = $arrField['name'];
+                                            if(!empty($field) && $field !== 'id' && $field !== 'pid'){
+                                                $objBooking->{'booking'.ucfirst($field)} = null;
                                             }
                                         }
                                     }
+                                    $objBooking->title = null;
+                                    $objBooking->description = null;
+                                    $objBooking->moduleId = null;
                                 }
                             }
                         }

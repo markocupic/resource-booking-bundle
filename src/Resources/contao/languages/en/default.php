@@ -60,6 +60,7 @@ $GLOBALS['TL_LANG']['RBB']['invalidDate'] = 'invalid date';
 $GLOBALS['TL_LANG']['RBB']['generalError'] = 'An error has occured. Please check connectivity.';
 $GLOBALS['TL_LANG']['RBB']['error401'] = 'An error has occured. You are not authorized. Please try to log in.';
 $GLOBALS['TL_LANG']['RBB']['pieces'] = 'piece(s)';
+$GLOBALS['TL_LANG']['RBB']['anonymous'] = 'Anonymous';
 
 // Errors
 $GLOBALS['TL_LANG']['RBB']['ERR']['invalidStartOrEndTime'] = 'You\'ve selected a slot with a invalid start- or end time.';

@@ -168,6 +168,7 @@ trait BookingTrait
 
         if ($slotCollection->count() < 1) {
             $this->setErrorMessage('RBB.ERR.selectBookingDatesPlease');
+
             return false;
         }
 

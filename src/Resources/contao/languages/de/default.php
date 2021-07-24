@@ -59,6 +59,8 @@ $GLOBALS['TL_LANG']['RBB']['invalidDate'] = 'Ungültiges Datum.';
 $GLOBALS['TL_LANG']['RBB']['generalError'] = 'Es ist ein Fehler aufgetreten. Bitte überprüfen Sie die Verbindung.';
 $GLOBALS['TL_LANG']['RBB']['error401'] = 'Es ist ein Fehler aufgetreten. Sie haben nicht die benötigen Rechte für diesen Seiteninhalt. Bitte versuchen Sie sich anzumelden.';
 $GLOBALS['TL_LANG']['RBB']['pieces'] = 'Stück';
+$GLOBALS['TL_LANG']['RBB']['anonymous'] = 'Anonym';
+
 
 // Errors
 $GLOBALS['TL_LANG']['RBB']['ERR']['invalidStartOrEndTime'] = 'Sie haben einen Slot mit ungültiger Start- oder Endzeit ausgewählt.';
