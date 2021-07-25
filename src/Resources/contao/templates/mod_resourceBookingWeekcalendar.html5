@@ -1,6 +1,6 @@
 <?php $GLOBALS['TL_JAVASCRIPT'][] = 'assets/contao-component-bootstrap/bootstrap/dist/js/bootstrap.bundle.min.js|static'; ?>
 <?php $GLOBALS['TL_JAVASCRIPT'][] = 'assets/contao-component-vue-js/vue/dist/vue.min.js'; ?>
-<?php $GLOBALS['TL_JAVASCRIPT'][] = \Markocupic\ResourceBookingBundle\Config\RbbConfig::RBB_ASSET_PATH.'/resource-booking-app-vue.js'; ?>
+<?php $GLOBALS['TL_JAVASCRIPT'][] = \Markocupic\ResourceBookingBundle\Config\RbbConfig::RBB_ASSET_PATH.'/resource-booking-app-vue.js|static'; ?>
 <?php $GLOBALS['TL_CSS'][] = 'assets/contao-component-bootstrap/bootstrap/dist/css/bootstrap.min.css'; ?>
 <?php $GLOBALS['TL_CSS'][] = 'assets/contao-component-fontawesome-free/css/all.min.css|static'; ?>
 <?php $GLOBALS['TL_CSS'][] = \Markocupic\ResourceBookingBundle\Config\RbbConfig::RBB_ASSET_PATH.'/css/frontend.min.css|static'; ?>

@@ -100,7 +100,7 @@ trait RefreshDataTrait
         $arrData['bookingRepeatsSelection'] = $this->getWeekSelection((int) $this->sessionBag->get('activeWeekTstamp'), (int) $this->sessionBag->get('tstampLastPossibleWeek'), false);
 
         // Weekdays
-        $arrData['weekdays'] = $arrWeekdays = $this->getWeekdays($this->sessionBag->get('activeWeekTstamp'), $this->getModuleModelFromSession());
+        $arrData['weekdays'] = $this->getWeekdays($this->sessionBag->get('activeWeekTstamp'), $this->getModuleModelFromSession());
 
         $arrData['activeResourceTypeId'] = 'undefined';
 
@@ -118,7 +118,7 @@ trait RefreshDataTrait
         }
 
         $arrData['rows'] = $this->getBookingTableData(
-            $arrWeekdays,
+            $this->getDaysOfWeek(), // Get all seven days of one week, the week will start with the  the day that has been configured (config.yml).
             $this->sessionBag->get('activeWeekTstamp'),
             $this->getModuleModelFromSession(),
             $this->getActiveResourceFromSession(),
@@ -322,18 +322,12 @@ trait RefreshDataTrait
     {
         $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
         $dateAdapter = $this->framework->getAdapter(Date::class);
-        $arrAppConfig = $this->utils->getAppConfig();
 
         // Send weekdays, dates and day
         $arrWeek = [];
 
         // First get a full week,
-        // $arrWeekdays[0] should be the weekday defined in the application configuration
-        $arrWeekdays = RbbConfig::RBB_WEEKDAYS;
-        $arrWeekdays = [...$arrWeekdays, ...$arrWeekdays];
-        $beginnWeek = $arrAppConfig['beginnWeek'];
-        $offset = array_search($beginnWeek, $arrWeekdays, true);
-        $arrWeekdays = \array_slice($arrWeekdays, $offset, 7);
+        $arrWeekdays = $this->getDaysOfWeek();
 
         foreach ($arrWeekdays as $i => $weekday) {
             // Skip days
@@ -387,9 +381,7 @@ trait RefreshDataTrait
                 $objRow->cssRowId = $cssRowId;
                 $objRow->cssRowClass = $cssRowClass;
 
-                foreach ($arrWeekdays as $colCount => $arrWeekday) {
-                    $weekday = $arrWeekday['name'];
-
+                foreach ($arrWeekdays as $colCount => $weekday) {
                     // Skip days
                     if ($moduleModel->resourceBooking_hideDays && !\in_array($weekday, $stringUtilAdapter->deserialize($moduleModel->resourceBooking_hideDaysSelection, true), false)) {
                         continue;
@@ -485,6 +477,18 @@ trait RefreshDataTrait
         }
 
         return $rows;
+    }
+
+    private function getDaysOfWeek(): array
+    {
+        // $arrWeekdays[0] should be the weekday defined in the application configuration
+        $arrWeekdays = RbbConfig::RBB_WEEKDAYS;
+        $arrWeekdays = [...$arrWeekdays, ...$arrWeekdays];
+        $arrAppConfig = $this->utils->getAppConfig();
+        $beginnWeek = $arrAppConfig['beginnWeek'];
+        $offset = array_search($beginnWeek, $arrWeekdays, true);
+
+        return \array_slice($arrWeekdays, $offset, 7);
     }
 
     /**
