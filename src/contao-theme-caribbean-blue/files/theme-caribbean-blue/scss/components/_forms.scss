@@ -1,0 +1,134 @@
+// Bootstrap
+.widget {
+  //@extend .input-group;
+}
+
+input.text, input.captcha, textarea, select {
+  @extend .form-control;
+  border-radius: 0;
+}
+
+.btn {
+  border-radius: 0;
+}
+
+a.btn, .btn a
+{
+  text-decoration: none;
+  &:hover{
+    text-decoration: none;
+  }
+}
+
+.submit{
+  @extend .btn;
+  @extend .btn-primary;
+  background-color: $accent-color;
+  border-color: $accent-color;
+  &:hover{
+    background-color: darken($accent-color, 4);
+    border-color: darken($accent-color, 4);
+  }
+}
+
+#main {
+  .formbody {
+    //max-width: 800px;
+    background: #fff;
+    //border: 1px solid $gray-lighter;
+    padding: $spacer 0;
+    position:relative;
+    & > *{
+      box-sizing: border-box;
+    }
+    fieldset {
+      margin: $spacer 0 2rem 0;
+      legend {
+        margin-bottom: $spacer;
+        border-bottom: 1px solid $gray-lighter;
+      }
+    }
+
+    .checkbox_container, .radio_container {
+      display: flex;
+      align-items: baseline;
+      position: relative;
+      label, input,
+      {
+        margin: 0;
+        padding: 0;
+      }
+      input {
+        margin-right: .75rem;
+      }
+      label {
+        max-width: 90%;
+      }
+    }
+    .checkbox_container, .radio_container, .submit_container {
+      margin: 2rem 0;
+    }
+
+    // Special treatment for radio or checkbox widgets
+    .widget .checkbox_container, .widget .radio_container {
+      span {
+        display: flex;
+        align-items: baseline;
+      }
+    }
+
+    .captcha_text {
+      margin-top: 10px;
+      display: block;
+    }
+
+    label {
+      font-weight: bold;
+    }
+
+    // Switch display order: Display label before input
+    .widget {
+      display: flex;
+      flex-direction: column;
+    }
+
+    span.mandatory, .captcha_text {
+      display: inline-block !important;
+    }
+    // Do not hide comments label in the comment form
+    label[for="ctrl_comment"].invisible {
+      display: block;
+      visibility: visible !important;
+    }
+    .submit {
+      margin-top: $spacer-y;
+    }
+
+  }
+
+  // Reverse order between input and label in ce_comments
+  .ce_comments {
+    .widget {
+      display: flex;
+      flex-direction: column-reverse;
+    }
+    // show the comment label
+    label[for="ctrl_comment"].invisible {
+      display: block;
+      visibility: visible;
+      width: inherit;
+      height: inherit;
+      left: inherit;
+      top: inherit;
+      position: inherit;
+      overflow: inherit;
+    }
+  }
+
+}
+
+
+
+
+
+

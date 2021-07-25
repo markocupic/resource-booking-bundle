@@ -1,0 +1,44 @@
+{
+  "name": "markocupic/resource-booking-bundle",
+  "description": "Resource-booking-plugin for schools or other institutions. Book a resource for a predefined amount of time. This extension is a plugin for Contao CMS.",
+  "keywords": [
+    "contao",
+    "resource",
+    "room",
+    "booking",
+    "school"
+  ],
+  "type": "contao-module",
+  "license": "LGPL-3.0+",
+  "authors": [
+    {
+      "name": "Marko Cupic",
+      "email": "m.cupic@gmx.ch",
+      "homepage": "https://github.com/markocupic",
+      "role": "Developer"
+    }
+  ],
+  "support": {
+    "issues": "https://github.com/markocupic/resource-booking-bundle/issues",
+    "source": "https://github.com/markocupic/resource-booking-bundle"
+  },
+  "require": {
+    "php": ">=7.4",
+    "contao/core-bundle": "^4.11",
+    "codefog/contao-haste": "^4.23",
+    "markocupic/contao-component-bootstrap": "^5.0",
+    "markocupic/contao-component-fontawesome-free": "^5.13",
+    "markocupic/contao-component-vue-js": "^2.6"
+  },
+  "require-dev": {
+    "contao/easy-coding-standard": "^3.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "Markocupic\\ResourceBookingBundle\\": "src/"
+    }
+  },
+  "extra": {
+    "contao-manager-plugin": "Markocupic\\ResourceBookingBundle\\ContaoManager\\Plugin"
+  }
+}

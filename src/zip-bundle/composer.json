@@ -1,0 +1,44 @@
+{
+  "name": "markocupic/zip-bundle",
+  "description": "Provides a simple ZIP extension for zipping directories recursively.",
+  "keywords": [
+    "contao",
+    "zip",
+    "zip recursive"
+  ],
+  "type": "contao-bundle",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Marko Cupic",
+      "email": "m.cupic@gmx.ch",
+      "homepage": "https://github.com/markocupic",
+      "role": "Developer"
+    }
+  ],
+  "support": {
+    "issues": "https://github.com/markocupic/zip-bundle/issues",
+    "source": "https://github.com/markocupic/zip-bundle"
+  },
+  "require": {
+    "contao/core-bundle": "^4.9",
+    "ext-zip": "*"
+  },
+  "require-dev": {
+    "contao/test-case": "^4.0",
+    "contao/php-cs-fixer": "^2.2",
+    "contao/manager-plugin": "^2.3",
+    "phpunit/phpunit": "^8.4",
+    "symfony/http-client": "4.4.*",
+    "symfony/phpunit-bridge": "4.4.*"
+  },
+  "autoload": {
+    "psr-4": {
+      "Markocupic\\ZipBundle\\": "src/"
+    }
+  },
+  "extra": {
+    "contao-manager-plugin": "Markocupic\\ZipBundle\\ContaoManager\\Plugin"
+  }
+
+}

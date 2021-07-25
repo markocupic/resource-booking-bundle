@@ -1,0 +1,40 @@
+.ce_text_image_layer {
+
+  position: relative;
+  blockquote {
+    padding: 0 1.5rem;
+    color: #fff;
+    position: absolute;
+    top: 20%;
+    right:0;
+    max-width: 100%;
+    max-height: 80%;
+    overflow: hidden;
+    font-size: 1.25rem;
+    @include media-breakpoint-up(md) {
+      font-size: 1.75rem;
+    }
+    @include media-breakpoint-up(lg) {
+      top: 20%;
+      max-width: 75%;
+      max-height: 70%;
+      font-size: 2rem;
+    }
+    @include media-breakpoint-up(xl) {
+      max-width: 50%;
+      font-size: 2.25rem;
+    }
+
+    footer {
+      text-align: left;
+    }
+  }
+
+  img {
+    -webkit-filter: brightness(0.5);
+    -moz-filter: brightness(0.5);
+    -o-filter: brightness(0.5);
+    -ms-filter: brightness(0.5);
+    filter: brightness(0.5);
+  }
+}

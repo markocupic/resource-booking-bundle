@@ -1,0 +1,40 @@
+{
+    "name":"markocupic/bootstrap_responsive_youtube_embed",
+    "description":"Embed youtube movies into your responsive layout. Frontend extension for the Contao Open Source CMS",
+    "keywords":["contao", "Bootstrap Responsive Embed Youtube"],
+    "type":"contao-module",
+    "license":"LGPL-3.0+",
+    "authors":[
+        {
+            "name":"Marko Cupic",
+            "email":"m.cupic@gmx.ch",
+            "homepage":"http://4ae-racing-team.ch",
+            "role":"Developer"
+        }
+    ],
+    "support":{
+        "issues":"https://github.com/markocupic/bootstrap_responsive_youtube_embed/issues",
+        "source":"https://github.com/markocupic/bootstrap_responsive_youtube_embed",
+        "forum":"https://community.contao.org"
+    },
+    "require":{
+        "php":">=5.3.2",
+        "contao/core-bundle":">=3.5 || >=4.3"
+    },
+    "replace": {
+        "contao-legacy/bootstrap_responsive_youtube_embed":"*"
+    },
+    "conflict": {
+        "contao/core": "3.0.*"
+    },
+    "autoload":{
+        "classmap":[""]
+    },
+    "extra":{
+        "contao":{
+            "sources":{
+                "":"system/modules/bootstrap_responsive_youtube_embed"
+            }
+        }
+    }
+}

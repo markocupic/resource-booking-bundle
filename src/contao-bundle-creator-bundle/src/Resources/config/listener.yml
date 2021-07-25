@@ -1,0 +1,5 @@
+services:
+
+  Markocupic\ContaoBundleCreatorBundle\Listener\ContaoHook\AddCustomRegexpListener:
+    tags:
+      - { name: contao.hook, hook: addCustomRegexp, method: cbcbRegexp, priority: 0 }

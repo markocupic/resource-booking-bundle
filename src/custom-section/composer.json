@@ -1,0 +1,59 @@
+{
+  "name": "markocupic/custom-section",
+  "description": "Contao frontend module. Insert Content via template.",
+  "keywords": [
+    "contao",
+    "frontend",
+    "module",
+    "template",
+    "content"
+  ],
+  "type": "contao-module",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Marko Cupic",
+      "email": "m.cupic@gmx.ch",
+      "homepage": "https://github.com/markocupic",
+      "role": "Developer"
+    }
+  ],
+  "support": {
+    "issues": "https://github.com/markocupic/custom-section/issues",
+    "source": "https://github.com/markocupic/custom-section"
+  },
+  "require": {
+    "contao/core-bundle":"~3.2 || ~4.4"
+  },
+  "replace": {
+  },
+  "conflict": {
+    "contao/core": "3.0.*"
+  },
+  "autoload": {
+    "psr-4": {
+      "Markocupic\\CustomSection\\": "src/"
+    },
+    "classmap": [
+      "src/Resources/contao"
+    ],
+    "exclude-from-classmap": [
+      "src/Resources/contao/config",
+      "src/Resources/contao/dca",
+      "src/Resources/contao/languages",
+      "src/Resources/contao/templates"
+    ]
+  },
+  "extra": {
+    "contao-manager-plugin": "Markocupic\\CustomSection\\ContaoManager\\Plugin",
+    "contao": {
+      "sources": {
+        "src/Resources/contao/config": "system/modules/custom-section/config",
+        "src/Resources/contao/dca": "system/modules/custom-section/dca",
+        "src/Resources/contao/languages": "system/modules/custom-section/languages",
+        "src/Resources/contao/modules": "system/modules/custom-section/modules",
+        "src/Resources/contao/templates": "system/modules/custom-section/templates"
+      }
+    }
+  }
+}

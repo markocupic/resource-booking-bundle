@@ -1,0 +1,61 @@
+
+<div class="footer-row-1">
+    <div class="container">
+        <div class="row">
+
+            <div class="col-md-4">
+                <div>
+                    <h5 class="title">Schule Ettiswil</h5>
+                    Dorf 21<br>
+                    6218 Ettiswil<br>
+                    Tel. Lehrerzimmer:<br>
+                    041 984 13 50
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div>
+                    <h5 class="title">Gesamtschulleitung:</h5>
+                    {{email::gesamtschulleitung@schule-ettiswil.ch}}<br>
+                    041 984 13 51
+                </div>
+            </div>
+
+
+            <div class="col-md-4">
+                <div>
+                    <h5 class="title">Quicklinks</h5>
+                    {{insert_module::99}}
+                    </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="copyright-box footer-row-2">
+    <div class="container">
+        <div class="d-flex">
+            <div class="flex-grow-1">
+                <div>Copyright ©  <?= \Date::parse('Y') ?> Konzeption & Design Marko Cupic</div>
+            </div>
+            <div class="">
+                <div>{{link::impressum}}</div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    (function($) {
+        $(document).ready(function() {
+            $('a[data-lightbox]').map(function() {
+                $(this).colorbox({
+                    // Put custom options here
+                    loop: false,
+                    rel: $(this).attr('data-lightbox'),
+                    maxWidth: '95%',
+                    maxHeight: '95%'
+                });
+            });
+        });
+
+    })(jQuery);
+</script>

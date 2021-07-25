@@ -1,0 +1,46 @@
+{
+    "name": "markocupic/resource-booking-notification-bundle",
+    "description": "Extends markocupic/resource-booking-bundle with the ability to notify users on booking- or canceling requests.",
+    "keywords": [
+        "contao",
+        "bundle",
+        "markocupic/resource-booking-bundle",
+        "notification"
+    ],
+    "type": "contao-bundle",
+    "license": "LGPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "Marko Cupic",
+            "email": "m.cupic@gmx.ch",
+            "homepage": "https://github.com/markocupic",
+            "role": "Developer"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/markocupic/resource-booking-notification-bundle/issues",
+        "source": "https://github.com/markocupic/resource-booking-notification-bundle"
+    },
+    "version": "1.1",
+    "require": {
+        "contao/core-bundle": "^4.9",
+        "markocupic/resource-booking-bundle": "^2.8",
+        "terminal42/notification_center": "^1.5"
+    },
+    "require-dev": {
+        "contao/manager-plugin": "^2.3",
+        "contao/test-case": "^4.0",
+        "phpunit/phpunit": "^8.4",
+        "symfony/http-client": "4.4.*",
+        "symfony/phpunit-bridge": "4.4.*",
+        "contao/easy-coding-standard": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Markocupic\\ResourceBookingNotificationBundle\\": "src/"
+        }
+    },
+    "extra": {
+        "contao-manager-plugin": "Markocupic\\ResourceBookingNotificationBundle\\ContaoManager\\Plugin"
+    }
+}

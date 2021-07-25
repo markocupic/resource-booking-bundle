@@ -1,0 +1,4 @@
+# config/routes.yml
+markocupic_contao_isotope_schulfilme.controller:
+    resource: ../../../src/Controller
+    type: annotation

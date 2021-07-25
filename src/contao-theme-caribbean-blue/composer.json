@@ -1,0 +1,54 @@
+{
+  "name": "markocupic/contao-theme-caribbean-blue",
+  "description": "Contao Frontend Theme Caribbean Blue for Contao 4",
+  "keywords": [
+    "contao",
+    "frontend",
+    "theme"
+  ],
+  "type": "contao-module",
+  "license": "LGPL-3.0+",
+  "authors": [
+    {
+      "name": "Marko Cupic",
+      "email": "m.cupic@gmx.ch",
+      "homepage": "https://github.com/markocupic",
+      "role": "Developer"
+    }
+  ],
+  "support": {
+    "issues": "https://github.com/markocupic/contao-theme-caribbean-blue/issues",
+    "source": "https://github.com/markocupic/contao-theme-caribbean-blue"
+  },
+  "require": {
+    "contao/core-bundle":"^4.11",
+    "dma/dma_simple_grid": "^1.0",
+    "markocupic/bootstrap_responsive_youtube_embed": "^1.0",
+    "markocupic/contao-component-bootstrap": "^5.0",
+    "markocupic/contao-db-backup": "^1.2",
+    "markocupic/custom-section": "^1.0",
+    "markocupic/rotate_image": "^1.0",
+    "markocupic/contao-sidebar-navigation": "^1.0",
+    "markocupic/service-link-bundle": "^1.0",
+    "menatwork/contao-multicolumnwizard-bundle": "^3.4"
+  },
+  "replace": {
+  },
+  "autoload": {
+    "classmap": [
+      ""
+    ]
+  },
+  "extra": {
+    "contao": {
+      "sources": {
+        "templates/theme-caribbean-blue": "templates/theme-caribbean-blue",
+        "files/theme-caribbean-blue": "files/theme-caribbean-blue",
+        "system/modules/theme-caribbean-blue": "system/modules/theme-caribbean-blue"
+      }
+    }
+  },
+  "repositories": [
+
+  ]
+}

@@ -1,0 +1,40 @@
+/** Accordion **/
+.ce_accordion {
+  border-bottom: 1px solid $gray-lighter;
+  .ui-accordion-header {
+    @extend .h4;
+  }
+  padding: $spacer-y, 0;
+  margin: $spacer-y, 0;
+  .ui-accordion-header.active {
+    padding-bottom: 15px;
+  }
+  .ui-state-focus {
+    outline: none !important;
+
+  }
+  .ui-accordion-header.active:focus {
+    border: none;
+  }
+  .toggler {
+    //font-size: 1.25rem !important;
+    cursor: pointer;
+    @include transition(color);
+    color: #000;
+    // for open accordions
+    .ui-icon-triangle-1-s::before {
+      font-family: $icon-font-name;
+      content: "\f078";
+      padding-right: 20px;
+    }
+    // for closed accordions
+    .ui-icon-triangle-1-e::before {
+      font-family: $icon-font-name;
+      content: "\f054";
+      padding-right: 20px;
+    }
+  }
+  .toggler:hover {
+    color: $link-color;
+  }
+}

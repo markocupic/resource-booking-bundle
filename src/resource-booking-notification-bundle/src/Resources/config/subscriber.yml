@@ -1,0 +1,11 @@
+# subscriber.yml
+services:
+  Markocupic\ResourceBookingNotificationBundle\EventSubscriber\NotificationSubscriber:
+    arguments:
+    - '@contao.framework'
+    - '@Markocupic\ResourceBookingBundle\User\LoggedInFrontendUser'
+    - '@session'
+    - '%markocupic_resource_booking.session.attribute_bag_name%'
+
+    tags:
+    - { name: kernel.event_subscriber }

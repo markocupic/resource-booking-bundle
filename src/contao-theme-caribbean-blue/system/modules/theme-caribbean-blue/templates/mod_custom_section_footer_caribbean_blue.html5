@@ -1,0 +1,43 @@
+
+<div class="footer-row-1">
+    <div class="container">
+        <div class="row">
+
+            <div class="col-md-4">
+                <div>
+                    <h5 class="title">Schule Ettiswil</h5>
+                    Strasse<br>
+                    6xxx Ort<br>
+                    041 xxx xx xx
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div>
+                    <h5 class="title">E-Mail:</h5>
+                    {{email::bla.blo@fake.ch}}<br>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div>
+                    <h5 class="title">Quicklinks</h5>
+                    {{insert_module::99}}
+                    </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="copyright-box footer-row-2">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8">
+                <div>Copyright ©  <?= \Date::parse('Y') ?> Konzeption & Design Marko Cupic</div>
+            </div>
+            <div class="col-lg-4">
+                <div>{{link::impressum}}</div>
+            </div>
+        </div>
+    </div>
+</div>

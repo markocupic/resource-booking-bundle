@@ -1,0 +1,121 @@
+@charset "UTF-8";
+/*
+ * This file is part of Contao Sidebar Navigation.
+ *
+ * (c) Marko Cupic 2021 <m.cupic@gmx.ch>
+ * @license GPL-3.0-or-later
+ * For the full copyright and license information,
+ * please view the LICENSE file that was distributed with this source code.
+ * @link https://github.com/markocupic/contao-sidebar-navigatio
+ */
+.sidebar-navigation {
+    padding: 0;
+    margin: 0;
+    text-align: left;
+}
+.sidebar-navigation * {
+    text-decoration: none;
+}
+.sidebar-navigation ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.sidebar-navigation ul li.submenu > .toggle-submenu {
+    position: absolute;
+    top: 0;
+    right: 0;
+    vertical-align: middle;
+    text-align: center;
+    margin-right: 10px;
+    width: 30px;
+    cursor: pointer;
+    border: 0;
+    background: 0;
+}
+.sidebar-navigation ul li.submenu > .toggle-submenu:before {
+    /** plus sign **/
+    content: "+";
+}
+.sidebar-navigation ul li.submenu.expanded > .toggle-submenu:before {
+    /** minus sign **/
+    content: "−";
+}
+.sidebar-navigation li {
+    display: block;
+    position: relative;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+.sidebar-navigation ul.level_1 {
+    display: block;
+    /** Hide submenus **/
+}
+.sidebar-navigation ul.level_1 ul {
+    display: none;
+}
+.sidebar-navigation ul.level_1 li.trail > ul {
+    /** display active submenu items **/
+    display: block;
+}
+.sidebar-navigation ul.level_1 > li {
+    line-height: 2.25rem;
+}
+.sidebar-navigation ul.level_1 > li > a, .sidebar-navigation ul.level_1 > li > strong {
+    font-size: 1.125rem;
+    padding-left: 2.5rem;
+}
+.sidebar-navigation ul.level_1 > li > .toggle-submenu {
+    font-size: 1.125rem;
+}
+.sidebar-navigation ul.level_2 > li {
+    line-height: 2rem;
+}
+.sidebar-navigation ul.level_2 > li > a, .sidebar-navigation ul.level_2 > li > strong {
+    font-size: 1rem;
+    padding-left: 2.75rem;
+}
+.sidebar-navigation ul.level_2 > li > .toggle-submenu {
+    font-size: 1rem;
+}
+.sidebar-navigation ul.level_3 > li {
+    line-height: 1.75rem;
+}
+.sidebar-navigation ul.level_3 > li > a, .sidebar-navigation ul.level_3 > li > strong {
+    font-size: 0.875rem;
+    padding-left: 3rem;
+}
+.sidebar-navigation ul.level_3 > li > .toggle-submenu {
+    font-size: 0.875rem;
+}
+.sidebar-navigation ul.level_4 > li {
+    line-height: 1.5rem;
+}
+.sidebar-navigation ul.level_4 > li > a, .sidebar-navigation ul.level_4 > li > strong {
+    font-size: 0.75rem;
+    padding-left: 3.25rem;
+}
+.sidebar-navigation ul.level_4 > li > .toggle-submenu {
+    font-size: 0.75rem;
+}
+.sidebar-navigation ul.level_5 > li {
+    line-height: 1.25rem;
+}
+.sidebar-navigation ul.level_5 > li > a, .sidebar-navigation ul.level_5 > li > strong {
+    font-size: 0.625rem;
+    padding-left: 3.5rem;
+}
+.sidebar-navigation ul.level_5 > li > .toggle-submenu {
+    font-size: 0.625rem;
+}
+.sidebar-navigation ul.level_6 > li {
+    line-height: 1rem;
+}
+.sidebar-navigation ul.level_6 > li > a, .sidebar-navigation ul.level_6 > li > strong {
+    font-size: 0.5rem;
+    padding-left: 3.75rem;
+}
+.sidebar-navigation ul.level_6 > li > .toggle-submenu {
+    font-size: 0.5rem;
+}

@@ -1,0 +1,27 @@
+<?php
+
+$header = <<<EOF
+This file is part of a markocupic Contao Bundle
+
+@copyright  Marko Cupic 2020 <m.cupic@gmx.ch>
+@author     Marko Cupic
+@package    Contao Schule Ettiswil Licenses
+@license    GPL-3.0-or-later
+@see        https://github.com/markocupic/contao-schule-ettiswil-licenses
+EOF;
+
+$finder = PhpCsFixer\Finder::create()
+    ->exclude('Resources')
+    ->in([
+        __DIR__.'/src',
+    ])
+;
+
+$config = new Contao\PhpCsFixer\DefaultConfig($header);
+$config
+    ->getFinder()
+    ->in(['src/'])
+;
+
+return $config;
+;

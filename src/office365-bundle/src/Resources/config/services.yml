@@ -1,0 +1,13 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: true
+
+    Markocupic\Office365Bundle\Import\Import: ~
+
+    Markocupic\Office365Bundle\Message\SessionMessage: ~
+
+    Markocupic\Office365Bundle\Email\SendPassword: ~
+
+

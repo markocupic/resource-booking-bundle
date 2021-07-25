@@ -1,0 +1,18 @@
+<?php $GLOBALS['TL_HEAD'][] = \Contao\Template::generateStyleTag('bundles/markocupiccontaosidebarnavigation/css/sidebar_navigation.css'); ?>
+<?php $GLOBALS['TL_HEAD'][] = \Contao\Template::generateScriptTag('bundles/markocupiccontaosidebarnavigation/js/sidebar_navigation.min.js'); ?>
+
+<!-- indexer::stop -->
+<nav class="<?= $this->class ?> sidebar-navigation block"<?= $this->cssID ?><?php if ($this->style): ?> style="<?= $this->style ?>"<?php endif; ?> itemscope itemtype="http://schema.org/SiteNavigationElement">
+
+	<?php if ($this->headline): ?>
+		<<?= $this->hl ?>><?= $this->headline ?></<?= $this->hl ?>>
+	<?php endif; ?>
+
+	<a href="<?= $this->request ?>#<?= $this->skipId ?>" class="invisible"><?= $this->skipNavigation ?></a>
+
+		<?= $this->items ?>
+
+	<a id="<?= $this->skipId ?>" class="invisible">&nbsp;</a>
+
+</nav>
+<!-- indexer::continue -->

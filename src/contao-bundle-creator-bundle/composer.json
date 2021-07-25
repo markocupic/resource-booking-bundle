@@ -1,0 +1,58 @@
+{
+  "name": "markocupic/contao-bundle-creator-bundle",
+  "description": "This bundle provides a bundle maker for Contao 4.*. The extension will create a fully working backend- or/and frontend module after you have defined a few parameters in the contao backend.",
+  "keywords": [
+    "contao",
+    "bundle",
+    "maker",
+    "creator",
+    "extension",
+    "boilerplate",
+    "skeleton"
+  ],
+  "type": "contao-bundle",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Marko Cupic",
+      "email": "m.cupic@gmx.ch",
+      "homepage": "https://github.com/markocupic",
+      "role": "Developer"
+    }
+  ],
+  "support": {
+    "issues": "https://github.com/markocupic/contao-bundle-creator-bundle/issues",
+    "source": "https://github.com/markocupic/contao-bundle-creator-bundle"
+  },
+  "require": {
+    "contao/core-bundle": "^4.9",
+    "markocupic/zip-bundle": "^1.0",
+    "ext-json": "*"
+  },
+  "require-dev": {
+    "contao/easy-coding-standard": "^3.0",
+    "contao/test-case": "^4.0",
+    "contao/manager-plugin": "^2.3",
+    "phpunit/phpunit": "^8.4",
+    "symfony/http-client": "4.4.*",
+    "symfony/phpunit-bridge": "4.4.*"
+  },
+  "autoload": {
+    "psr-4": {
+      "Markocupic\\ContaoBundleCreatorBundle\\": "src/"
+    },
+    "classmap": [
+      "src/Resources/contao"
+    ],
+    "exclude-from-classmap": [
+      "src/Resources/skeleton",
+      "src/Resources/contao/config",
+      "src/Resources/contao/dca",
+      "src/Resources/contao/languages",
+      "src/Resources/contao/templates"
+    ]
+  },
+  "extra": {
+    "contao-manager-plugin": "Markocupic\\ContaoBundleCreatorBundle\\ContaoManager\\Plugin"
+  }
+}

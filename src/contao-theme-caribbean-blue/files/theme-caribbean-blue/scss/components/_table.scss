@@ -1,0 +1,7 @@
+#main {
+  .ce_table, .ce_text {
+    table {
+      @extend .table;
+    }
+  }
+}

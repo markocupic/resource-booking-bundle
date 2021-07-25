@@ -1,0 +1,5 @@
+<div class="mod_custom_section">
+    <div class="bla">
+        <h2>Hallo ich bin die Custom Section. Heute ist der <?= \Date::parse('d.m.Y') ?>.</h2>
+    </div>
+</div>

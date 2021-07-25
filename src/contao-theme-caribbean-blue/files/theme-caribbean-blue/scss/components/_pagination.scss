@@ -1,0 +1,30 @@
+.paginationn {
+  margin: 0;
+  padding: 0;
+  p {
+    margin-right: 10px;
+  }
+  ul {
+    display: flex;
+  }
+  li {
+    margin-right: 10px;
+    a, span, strong.active {
+      border-radius: 0 !important;
+      i {
+        margin-right: px;
+      }
+    }
+  }
+}
+.pagination > ul{
+  @extend .pagination;
+  margin:1rem 0;
+  padding:0 !important;
+  li{
+    @extend .page-item;
+    a,strong{
+      @extend .page-link;
+    }
+  }
+}

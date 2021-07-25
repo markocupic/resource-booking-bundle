@@ -1,0 +1,50 @@
+{
+  "name": "markocupic/service-link-bundle",
+  "description": "Add a service icon link as a contao content element.",
+  "keywords": [
+    "contao",
+    "frontend",
+    "service-link",
+    "Font Awesome 5"
+  ],
+  "type": "contao-module",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Marko Cupic",
+      "email": "m.cupic@gmx.ch",
+      "homepage": "https://github.com/markocupic",
+      "role": "Developer"
+    }
+  ],
+  "support": {
+    "issues": "https://github.com/markocupic/service-link-bundle/issues",
+    "source": "https://github.com/markocupic/service-link-bundle"
+  },
+  "require": {
+    "contao/core-bundle": "^4.4",
+    "markocupic/fontawesome-icon-picker-bundle": "^1.0"
+  },
+  "replace": {
+  },
+  "conflict": {
+    "contao/core": "3.0.*"
+  },
+  "autoload": {
+    "psr-4": {
+      "Markocupic\\ServiceLinkBundle\\": "src/"
+    },
+    "classmap": [
+      "src/Resources/contao"
+    ],
+    "exclude-from-classmap": [
+      "src/Resources/contao/config",
+      "src/Resources/contao/dca",
+      "src/Resources/contao/languages",
+      "src/Resources/contao/templates"
+    ]
+  },
+  "extra": {
+    "contao-manager-plugin": "Markocupic\\ServiceLinkBundle\\ContaoManager\\Plugin"
+  }
+}

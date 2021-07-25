@@ -1,0 +1,50 @@
+
+.image_container {
+  overflow: hidden;
+}
+
+.image_container img {
+  width: 100%;
+  @include transition(all);
+  &:hover {
+    //transform: scale(1.1);
+  }
+}
+
+img {
+  height: auto;
+  max-width: 100%;
+}
+
+figure{
+  margin:0;
+  padding:0;
+}
+
+.ce_gallery {
+  ul[class*="cols_"]{
+    @extend .row;
+    li {
+      @extend .col-12;
+      @extend .col-sm-4;
+      @extend .col-md-3;
+      padding: 0.5rem;
+    }
+  }
+  .row {
+    margin: 0 -0.5rem;
+    [class*="col-"] {
+      padding: 0.5rem;
+    }
+  }
+}
+
+// Do not show caption on mobile phones
+@include media-breakpoint-up(sm) {
+      .gallery_creator .caption {
+        display: none;
+      }
+      .ce_gallery .caption {
+        display: none;
+      }
+}

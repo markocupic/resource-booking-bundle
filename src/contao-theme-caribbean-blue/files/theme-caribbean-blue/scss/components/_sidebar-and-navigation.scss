@@ -1,0 +1,340 @@
+$nav-bg-color: $accent-color-2;
+$nav-bg-color: darken($accent-color-2,5%);
+
+$nav-bg-hover-color: #ff9800;
+$nav-border-color: lighten($nav-bg-color, 20%);
+$nav-font-color: #000;
+$level_1-offset: 1rem;
+$level_2-offset: 2.5rem;
+$level_3-offset: 3rem;
+$level_4-offset: 3.5rem;
+
+
+html, body {
+  height: 100%;
+}
+
+
+#header, #sidebar {
+  .navigation-toggler {
+    background: transparent;
+    .fa {
+      font-size: 2rem;
+    }
+    border: 0;
+    &:focus {
+      border: 0;
+      outline: 0;
+    }
+  }
+}
+
+#sidebar{
+  overflow-y: scroll;
+}
+
+#header {
+  .navigation-toggler {
+    margin-left: $spacer;
+    color: $blue;
+  }
+}
+
+#sidebar .mod_search{
+  .btn{
+    background-color:#ff9800 !important;
+    color: #000;
+    border: none !important;
+  }
+}
+
+#sidebar .sidebar-button-container{
+  .svg-inline--fa {
+    color: $nav-font-color !important;
+    font-size: 2rem;
+  }
+}
+
+#sidebarOverlay {
+  display: none;
+  opacity: 0;
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 100%;
+  z-index: $zindex-navbar-aside-backdrop;
+  @include transition(opacity);
+}
+
+// Thin scrollbar
+#sidebar::-webkit-scrollbar {
+  -webkit-appearance: none !important;
+  width: 6px !important;
+  background-color: #000 !important;
+}
+
+#sidebar::-webkit-scrollbar-thumb {
+  border-radius: 6px !important;
+  background-color: $nav-bg-hover-color !important;
+}
+
+#sidebar {
+  visibility:hidden;
+  overflow-x: hidden;
+  z-index: $zindex-navbar-aside;
+  position: fixed;
+  left: -500px;
+  top: 0;
+  width: 500px;
+  height: 100%;
+  background-color: $nav-bg-color;
+  @include transition(left, ease-in-out, 0.7s);
+
+  .sidebar-top-container {
+    background: $nav-bg-color;
+    border-bottom: 1px ridge $nav-border-color;
+    .sidebar-title{
+      color: lighten($nav-bg-color, 20%);
+    }
+    .sidebar-navigation-toggler {
+      .svg-inline--fa {
+        color: $gray-lightest;
+        font-size: 2rem;
+      }
+    }
+  }
+
+  .sidebar-search-form {
+    .btn {
+      color: #fff;
+      border-color: #fff;
+      border-left:0;
+    }
+  }
+}
+
+
+
+body.sidebar-open {
+  #sidebarOverlay {
+    display: block;
+    opacity: 0;
+  }
+  #sidebar {
+    left: 0;
+  }
+  #header .navigation-toggler {
+    display: none;
+  }
+}
+
+@include media-breakpoint-down(sm) {
+  #sidebar {
+    width: 100%;
+    left: -100%;
+  }
+  body.sidebar-open {
+    #sidebar {
+      left: 0;
+    }
+    #wrapper, #footer {
+      display: none;
+    }
+  }
+}
+
+//https://jsfiddle.net/markocupic/br520419/
+
+.sidebar-navigation {
+
+  * {
+    text-decoration: none !important;
+  }
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  li {
+    display: block;
+    position: relative;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    > a,
+    > strong {
+      color: $nav-font-color !important;
+    }
+    > strong.active {
+      color:$red !important;
+    }
+    &:hover {
+      > a, > strong {
+        color: $red !important;
+      }
+    }
+  }
+
+  // Hide Submenus
+  ul.level_1 {
+    display: block;
+    ul {
+      display: none;
+    }
+  }
+
+
+  // Borders&backgrounds
+  ul.level_1 {
+    > li {
+      border-bottom: 1px solid $nav-border-color;
+      &:hover{
+        background-color: $nav-bg-hover-color;
+         > a, > strong{
+          color: #fff !important;
+        }
+      }
+    }
+  }
+
+  // Expand Icon for items with submenus
+  ul.level_1 {
+    > li.expanded{
+      background-color: $nav-bg-hover-color;
+      &:before,  > *,> *:before{
+        color: #fff !important;
+      }
+    }
+
+    li.submenu {
+      > .toggle-submenu {
+        font-size: 1.5rem;
+        vertical-align: middle;
+        margin-right: 10px;
+        width: 30px;
+        text-align: center;
+        position: absolute;
+        top: 0;
+        cursor: pointer;
+      }
+      >.toggle-submenu{
+        border: 0;
+        background-color: transparent;
+      }
+
+      > .toggle-submenu:before {
+        font-family: $icon-font-name;
+        color: $nav-font-color;
+        content: "\f067";
+        font-size: 1.5rem;
+        font-style: normal;
+      }
+
+      > .toggle-submenu:hover:before {
+        color: $red;
+      }
+      &.expanded {
+        > .toggle-submenu {
+          background-color: transparent;
+        }
+        > .toggle-submenu:before {
+          content: "\f068";
+          color: $nav-font-color;
+        }
+      }
+    }
+    > li {
+      > .toggle-submenu:before, > .toggle-submenu:hover:before {
+        color: $nav-font-color !important;
+      }
+    }
+  }
+
+
+  ul.level_1 {
+    > li {
+      padding: 0;
+      line-height: 3.5rem;
+      background-color: transparent;
+      > .toggle-submenu {
+        right: 0;
+      }
+      > a, > strong {
+        padding-left: $level_1-offset;
+        font-size: 1.25rem;
+        color: #fff;
+      }
+      strong.active {
+        color: #fff !important;
+      }
+    }
+  }
+  ul.level_2 {
+    background-color: #222;
+    > li {
+      padding: 0;
+      line-height: 3rem;
+      background-color: transparent;
+      > .toggle-submenu {
+        right: 0;
+      }
+      > a, strong {
+        padding-left: $level_2-offset;
+        font-size: 1rem;
+        color: #999 !important;
+      }
+      strong.active {
+        color: $red !important;
+      }
+    }
+  }
+  ul.level_3 {
+    > li {
+      padding: 0;
+      line-height: 2.5rem;
+      background-color: transparent;
+      > .toggle-submenu {
+        right: 0;
+      }
+      > a, strong {
+        padding-left: $level_3-offset;
+        font-size: .875rem;
+        color: #999 !important;
+      }
+      strong.active {
+        color: $red !important;
+      }
+    }
+  }
+  ul.level_4 {
+    > li {
+      padding: 0;
+      line-height: 2rem;
+      background-color: transparent;
+      > .toggle-submenu {
+        right: 0;
+      }
+
+      > a, strong {
+        padding-left: $level_4-offset;
+        font-size: .75rem;
+        color: #999 !important;
+      }
+      strong.active {
+        color: $red !important;
+      }
+    }
+  }
+
+  // Show active submenus
+  ul.level_1 li.trail > ul {
+    display: block;
+  }
+
+}
+
+
+
+
+
