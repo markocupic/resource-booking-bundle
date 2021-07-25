@@ -26,8 +26,10 @@ Das Tool setzt auf [vue.js](https://vuejs.org/), [Fontawesome](https://fontaweso
 
 Anm: Bei der Installation wird neben den oben erwähnten Erweiterungen auch [codefog/contao-haste](https://github.com/codefog/contao-haste) mitinstalliert.
 
+Buchungstabelle mit Wochenübersicht:
 ![Alt text](docs/screenshots/screenshot.png "Buchungstool im Frontend-Ansicht")
 
+Buchungsfenster:
 ![Alt text](docs/screenshots/screenshot2.png "Buchungstool im Frontend-Ansicht")
 
 ## Template mit zusätzlichen Mitgliederdaten erweitern
