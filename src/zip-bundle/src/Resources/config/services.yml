@@ -1,7 +1,0 @@
-services:
-
-  # Zip service
-  markocupic.zip_bundle.zip.zip:
-    class: Markocupic\ZipBundle\Zip\Zip
-    public: true
-

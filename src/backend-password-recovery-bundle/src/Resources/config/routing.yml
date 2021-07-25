@@ -1,4 +1,0 @@
-contao:
-    resource: '@MarkocupicBackendPasswordRecoveryBundle/Controller'
-    type: annotation
-

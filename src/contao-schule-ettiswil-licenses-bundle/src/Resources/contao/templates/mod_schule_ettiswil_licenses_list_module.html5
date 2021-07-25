@@ -1,8 +1,0 @@
-<?php $this->extend("block_searchable"); ?>
-
-<?php $this->block("content"); ?>
-
-    <!-- use twig template -->
-
-<?php $this->endblock(); ?>
-
