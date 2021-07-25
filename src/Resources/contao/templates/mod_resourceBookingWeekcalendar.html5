@@ -46,7 +46,7 @@
     <!-- end main window / mode === 'main-window'-->
 
     <!-- booking window mode === 'booking-window'-->
-    <div class="booking-window" v-if="mode === 'booking-window'" v-if="userIsLoggedIn">
+    <div class="booking-window" v-if="mode === 'booking-window'" v-if="userHasLoggedIn">
       <?php $this->insert('rbb_booking_window_partial', $this->getData()); ?>
     </div>
     <!-- End booking window -->

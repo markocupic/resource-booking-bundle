@@ -125,11 +125,12 @@ $transitionSpeed: .8s;
         background-color: #ffffff;
       }
     }
-
   }
 
   .resource-booking-table-main {
     .layout-cell.time-slot-cell {
+      display: flex;
+      flex-direction: column;
       align-items: flex-start;
       justify-content: flex-start;
     }
@@ -159,15 +160,32 @@ $transitionSpeed: .8s;
       word-break: break-all;
       position: relative;
 
+      .time-slot-cell-inner {
+        position: relative;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        height: 100%
+      }
+
+      .still-available-box {
+        font-size: xx-small;
+      }
+
       .btn-link {
         position: absolute;
         margin: auto;
-        top: 0;
+        width: 2rem;
+        height: 2rem;
+        padding: 0;
+        font-size: 2rem;
+        top: 1.75rem;
+        line-height: 2rem;
         right: 0;
-        bottom: 0;
         left: 0;
         z-index: 10;
         opacity: 0.4;
+        border: 0;
         transition: opacity $transitionSpeed;
       }
 
@@ -201,16 +219,12 @@ $transitionSpeed: .8s;
         word-break: break-all;
       }
 
-      &.time-slot-cell[data-is-holder="true"] {
-        background-color: $loggedInUserIsHolderBg;
-      }
-
       &.time-slot-cell {
-        .holder-box {
+        .owner-box {
           font-weight: bold;
         }
 
-        .holder-box, .description-box, .item-counter-box {
+        .owner-box, .description-box, .item-counter-box {
           position: relative;
           z-index: 20;
         }
@@ -233,7 +247,7 @@ $transitionSpeed: .8s;
         transition: color $transitionSpeed;
       }
 
-      .description-box, .holder-box, .item-counter-box {
+      .description-box, .owner-box, .item-counter-box, .still-available-box {
         opacity: 0.3;
       }
     }
@@ -321,8 +335,8 @@ $transitionSpeed: .8s;
 
     .booking-preview.table > tbody {
       tr td {
-        padding-left: 4px;
-        padding-right: 4px;
+        padding-left: .25rem;
+        padding-right: .25rem;
       }
 
       tr.bookable td {

@@ -15,18 +15,19 @@ namespace Markocupic\ResourceBookingBundle\AjaxController\Traits;
 use Contao\Config;
 use Contao\Database;
 use Contao\Date;
+use Contao\FrontendUser;
 use Contao\MemberModel;
 use Contao\Message;
 use Contao\ModuleModel;
 use Contao\StringUtil;
 use Contao\System;
-use Contao\Validator;
 use Markocupic\ResourceBookingBundle\Config\RbbConfig;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceTypeModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotModel;
 use Markocupic\ResourceBookingBundle\Slot\SlotMain;
 use Markocupic\ResourceBookingBundle\Util\DateHelper;
+use Markocupic\ResourceBookingBundle\Util\Str;
 use Markocupic\ResourceBookingBundle\Util\UtcTimeHelper;
 
 /**
@@ -39,45 +40,12 @@ trait RefreshDataTrait
      */
     private function refreshData(): array
     {
-        /** @var System $systemAdapter */
         $systemAdapter = $this->framework->getAdapter(System::class);
-
-        /** @var Message $messageAdapter */
         $messageAdapter = $this->framework->getAdapter(Message::class);
-
-        /** @var MemberModel $memberModelAdapter */
-        $memberModelAdapter = $this->framework->getAdapter(MemberModel::class);
-
-        /** @var DateHelper $dateHelperAdapter */
         $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
-
-        /** @var Date $dateAdapter */
         $dateAdapter = $this->framework->getAdapter(Date::class);
-
-        /** @var StringUtil $stringUtilAdapter */
-        $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
-
-        /** @var UtcTimeHelper $stringUtilAdapter */
-        $utcTimeHelperAdapter = $this->framework->getAdapter(UtcTimeHelper::class);
-
-        /** @var ResourceBookingResourceTypeModel $resourceBookingResourceTypeModelAdapter */
-        $resourceBookingResourceTypeModelAdapter = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class);
-
-        /** @var ResourceBookingTimeSlotModel $resourceBookingTimeSlotModelAdapter */
-        $resourceBookingTimeSlotModelAdapter = $this->framework->getAdapter(ResourceBookingTimeSlotModel::class);
-
-        /** @var ResourceBookingResourceModel $resourceBookingResourceModelAdapter */
-        $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
-
-        /** @var Validator $validatorAdapter */
-        $validatorAdapter = $this->framework->getAdapter(Validator::class);
-
-        /** @var Config $configAdapter */
         $configAdapter = $this->framework->getAdapter(Config::class);
-
-        /** @var Database $databaseAdapter */
-        $databaseAdapter = $this->framework->getAdapter(Database::class);
-
+        $strAdapter = $this->framework->getAdapter(Str::class);
 
         $arrData = [];
 
@@ -94,27 +62,10 @@ trait RefreshDataTrait
         }
 
         // Filter form: get resource types dropdown
-        $rows = [];
-        $arrResTypesIds = $stringUtilAdapter->deserialize($this->getModuleModelFromSession()->resourceBooking_resourceTypes, true);
-
-        if (null !== ($objResourceTypes = $resourceBookingResourceTypeModelAdapter->findPublishedByIds($arrResTypesIds))) {
-            while ($objResourceTypes->next()) {
-                $rows[] = $objResourceTypes->row();
-            }
-            $arrData['filterBoard']['resourceTypes'] = $rows;
-        }
-        unset($rows);
+        $arrData['filterBoard']['resourceTypes'] = $this->getResourceTypeSelectOptions($this->getModuleModelFromSession());
 
         // Filter form: get resource dropdown
-        $rows = [];
-
-        if (null !== ($objResources = $resourceBookingResourceModelAdapter->findPublishedByPid($this->getActiveResourceTypeFromSession()->id))) {
-            while ($objResources->next()) {
-                $rows[] = $objResources->row();
-            }
-            $arrData['filterBoard']['resources'] = $rows;
-        }
-        unset($rows);
+        $arrData['filterBoard']['resources'] = $this->getResourceSelectOptions($this->getActiveResourceTypeFromSession());
 
         // Filter form get jump week array
         $arrData['filterBoard']['jumpNextWeek'] = $this->getJumpWeekDate(1);
@@ -124,17 +75,14 @@ trait RefreshDataTrait
         $arrData['filterBoard']['weekSelection'] = $this->getWeekSelection((int) $this->sessionBag->get('tstampFirstPossibleWeek'), (int) $this->sessionBag->get('tstampLastPossibleWeek'), true);
 
         // Logged in user
-        $arrData['userIsLoggedIn'] = false;
+        $arrData['userHasLoggedIn'] = false;
+        $arrData['loggedInUser'] = null;
 
         if (null !== $this->user->getLoggedInUser()) {
-            $arrData['userIsLoggedIn'] = true;
-            $arrData['loggedInUser'] = [
-                'firstname' => $this->user->getLoggedInUser()->firstname,
-                'lastname' => $this->user->getLoggedInUser()->lastname,
-                'gender' => $this->user->getLoggedInUser()->gender ? $this->translator->trans('MSC.'.$this->user->getLoggedInUser()->gender, [], 'contao_default') : '',
-                'email' => $this->user->getLoggedInUser()->email,
-                'id' => $this->user->getLoggedInUser()->id,
-            ];
+            $arrData['userHasLoggedIn'] = true;
+            $arrData['loggedInUser'] = array_map(static fn ($v) => $strAdapter->convertBinUuidsToStringUuids($v), $this->user->getModel()->row());
+            $arrData['loggedInUser']['gender'] = $this->translator->trans('MSC.'.$this->user->getModel()->gender, [], 'contao_default');
+            unset($arrData['loggedInUser']['password']);
         }
 
         // Selected week
@@ -150,33 +98,9 @@ trait RefreshDataTrait
 
         // Get booking RepeatsSelection
         $arrData['bookingRepeatsSelection'] = $this->getWeekSelection((int) $this->sessionBag->get('activeWeekTstamp'), (int) $this->sessionBag->get('tstampLastPossibleWeek'), false);
-        $arrAppConfig = $this->utils->getAppConfig();
-
-        // Send weekdays, dates and day
-        $arrWeek = [];
-        // First get a full week,
-        // $arrWeekdays[0] should be the weekday defined in the application configuration
-        $arrWeekdays = RbbConfig::RBB_WEEKDAYS;
-        $arrWeekdays = [...$arrWeekdays, ...$arrWeekdays];
-        $beginnWeek = $arrAppConfig['beginnWeek'];
-        $offset = array_search($beginnWeek, $arrWeekdays, true);
-        $arrWeekdays = \array_slice($arrWeekdays, $offset, 7);
-
-        foreach ($arrWeekdays as $i => $weekday) {
-            // Skip days
-            if ($this->getModuleModelFromSession()->resourceBooking_hideDays && !\in_array($weekday, $stringUtilAdapter->deserialize($this->getModuleModelFromSession()->resourceBooking_hideDaysSelection, true), false)) {
-                continue;
-            }
-            $arrWeek[] = [
-                'index' => $i,
-                'title' => $this->translator->trans('MSC.DAYS_LONG.'.$weekday, [], 'contao_default'),
-                'titleShort' => $this->translator->trans('MSC.DAYS_SHORTENED.'.$weekday, [], 'contao_default'),
-                'date' => $dateAdapter->parse('d.m.Y', strtotime($dateAdapter->parse('Y-m-d', $this->sessionBag->get('activeWeekTstamp')).' +'.$i.' day')),
-            ];
-        }
 
         // Weekdays
-        $arrData['weekdays'] = $arrWeek;
+        $arrData['weekdays'] = $arrWeekdays = $this->getWeekdays($this->sessionBag->get('activeWeekTstamp'), $this->getModuleModelFromSession());
 
         $arrData['activeResourceTypeId'] = 'undefined';
 
@@ -187,192 +111,21 @@ trait RefreshDataTrait
 
         // Generate table data
         $arrData['activeResourceId'] = 'undefined';
-        $rows = [];
 
         if (null !== $this->getActiveResourceFromSession() && null !== $this->getActiveResourceTypeFromSession()) {
             $arrData['activeResourceId'] = $this->getActiveResourceFromSession()->id;
             $arrData['activeResource'] = $this->getActiveResourceFromSession()->row();
-
-            $objTimeslots = $resourceBookingTimeSlotModelAdapter->findPublishedByPid($this->getActiveResourceFromSession()->timeSlotType);
-            $rowCount = 0;
-
-            if (null !== $objTimeslots) {
-                while ($objTimeslots->next()) {
-                    $cells = [];
-                    $objRow = new \stdClass();
-
-                    $cssRowId = sprintf('timeSlotModId_%s_%s', $this->getModuleModelFromSession()->id, $objTimeslots->id);
-                    $cssRowClass = 'time-slot-'.$objTimeslots->id;
-
-                    // Get the CSS ID
-                    $arrCssCellID = $stringUtilAdapter->deserialize($objTimeslots->cssID, true);
-
-                    // Override the CSS ID
-                    if (!empty($arrCssCellID[0])) {
-                        $cssRowId = $arrCssCellID[0];
-                    }
-
-                    $objRow->cssRowId = $cssRowId;
-                    $objRow->cssRowClass = $cssRowClass;
-
-                    // Add CSS class to cell
-                    $cssCellClass = null;
-
-                    if (!empty($arrCssCellID[1])) {
-                        $cssCellClass = $arrCssCellID[1];
-                    }
-
-                    foreach ($arrWeekdays as $colCount => $weekday) {
-                        // Skip days
-                        if ($this->getModuleModelFromSession()->resourceBooking_hideDays && !\in_array($weekday, $stringUtilAdapter->deserialize($this->getModuleModelFromSession()->resourceBooking_hideDaysSelection, true), false)) {
-                            continue;
-                        }
-
-                        $startTime = strtotime(sprintf('+%s day', $colCount), $this->sessionBag->get('activeWeekTstamp')) + $objTimeslots->startTime;
-                        $endTime = strtotime(sprintf('+%s day', $colCount), $this->sessionBag->get('activeWeekTstamp')) + $objTimeslots->endTime;
-
-                        /** @var SlotMain $slot */
-                        $slot = $this->slotFactory->get(SlotMain::MODE, $this->getActiveResourceFromSession(), $startTime, $endTime);
-                        $slot->index = $colCount;
-                        $slot->bookingCheckboxValue = sprintf('%s-%s-%s-%s', $objTimeslots->id, $startTime, $endTime, $this->sessionBag->get('activeWeekTstamp'));
-                        $slot->bookingCheckboxId = sprintf('bookingCheckbox_modId_%s_%s_%s', $this->getModuleModelFromSession()->id, $rowCount, $colCount);
-                        $slot->isBookable = $slot->isBookable();
-
-                        if ($slot->hasBookings) {
-                            $objBooking = $slot->bookings;
-
-                            while ($objBooking->next()) {
-                                if (null !== $objBooking) {
-                                    // Presets
-                                    $objBooking->bookedByFirstname = '';
-                                    $objBooking->bookedByLastname = '';
-                                    $objBooking->bookedByFullname = '';
-
-                                    $arrFields = $stringUtilAdapter->deserialize($this->getModuleModelFromSession()->resourceBooking_clientPersonalData, true);
-
-                                    $objMember = $memberModelAdapter->findByPk($objBooking->member);
-
-                                    if (null !== $objMember) {
-                                        // Do not transmit and display sensitive data if user is not holder
-                                        if ((int) $objBooking->member !== (int) $this->user->getLoggedInUser()->id) {
-                                            if ($this->getModuleModelFromSession()->resourceBooking_displayClientPersonalData && !empty($arrFields)) {
-                                                foreach ($arrFields as $fieldname) {
-                                                    $objBooking->{'bookedBy'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($objMember->$fieldname);
-                                                }
-
-                                                if (\in_array('firstname', $arrFields, true) && \in_array('lastname', $arrFields, true)) {
-                                                    $objBooking->bookedByFullname = $stringUtilAdapter->decodeEntities($objMember->firstname.' '.$objMember->lastname);
-                                                }
-                                            }
-                                            // Fallback
-                                            if ('' === $objBooking->bookedByFullname) {
-                                                $objBooking->bookedByFullname = $stringUtilAdapter->decodeEntities($this->translator->trans('RBB.anonymous', [], 'contao_default'));
-                                            }
-                                        } else {
-                                            foreach (array_keys($objMember->row()) as $fieldname) {
-                                                $varData = $objMember->$fieldname;
-
-                                                if ('id' === $fieldname || 'password' === $fieldname) {
-                                                    continue;
-                                                }
-
-                                                // Convert bin uuids to string uuids
-                                                if (!empty($varData) && !preg_match('//u', $varData)) {
-                                                    if (\is_array($stringUtilAdapter->deserialize($varData))) {
-                                                        $arrTemp = [];
-
-                                                        foreach ($stringUtilAdapter->deserialize($varData) as $strUuid) {
-                                                            if ($validatorAdapter->isBinaryUuid($strUuid)) {
-                                                                $arrTemp[] = $stringUtilAdapter->binToUuid($strUuid);
-                                                            }
-                                                        }
-                                                        $varData = serialize($arrTemp);
-                                                    } else {
-                                                        $strTemp = '';
-
-                                                        if ($validatorAdapter->isBinaryUuid($varData)) {
-                                                            $strTemp = $stringUtilAdapter->binToUuid($varData);
-                                                        }
-                                                        $varData = $strTemp;
-                                                    }
-                                                }
-
-                                                $objBooking->{'bookedBy'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($varData);
-                                                $objBooking->{'bookedBy'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($varData);
-                                            }
-                                            $objBooking->bookedByFullname = $stringUtilAdapter->decodeEntities($objMember->firstname.' '.$objMember->lastname);
-                                        }
-                                        $objBooking->bookedBySession = null;
-                                    }
-
-                                    // Send sensitive data if it has been permitted in tl_module
-                                    $arrAvailable = Database::getInstance()->listFields('tl_resource_booking');
-
-                                    if ($this->getModuleModelFromSession()->resourceBooking_setBookingSubmittedFields) {
-                                        $arrFields = $stringUtilAdapter->deserialize($this->getModuleModelFromSession()->resourceBooking_bookingSubmittedFields, true);
-                                        foreach ($arrAvailable as $arrField) {
-                                            $field = $arrField['name'];
-                                            if (\in_array($field, $arrFields, true)) {
-                                                $objBooking->{'booking'.ucfirst($field)} = $stringUtilAdapter->decodeEntities($objBooking->$field);
-                                            } else {
-                                                if(!empty($field) && $field !== 'id' && $field !== 'pid'){
-                                                    $objBooking->{'booking'.ucfirst($field)} = null;
-                                                }
-                                            }
-                                        }
-                                    } else {
-                                        foreach ($arrAvailable as $arrField) {
-                                            $field = $arrField['name'];
-                                            if(!empty($field) && $field !== 'id' && $field !== 'pid'){
-                                                $objBooking->{'booking'.ucfirst($field)} = null;
-                                            }
-                                        }
-                                    }
-                                    $objBooking->title = null;
-                                    $objBooking->description = null;
-                                    $objBooking->moduleId = null;
-                                }
-                            }
-                        }
-                        $cells[] = $slot->row();
-                    }
-                    $rows[] = ['cellData' => $cells, 'rowData' => $objRow];
-                    ++$rowCount;
-                }
-            }
         }
 
-        $arrData['rows'] = $rows;
-        // End generate table data
+        $arrData['rows'] = $this->getBookingTableData(
+            $arrWeekdays,
+            $this->sessionBag->get('activeWeekTstamp'),
+            $this->getModuleModelFromSession(),
+            $this->getActiveResourceFromSession(),
+            $this->user->getLoggedInUser()
+        );
 
-        // Get time slots
-        $objTimeslots = $resourceBookingTimeSlotModelAdapter->findPublishedByPid($this->getActiveResourceFromSession()->timeSlotType);
-        $timeSlots = [];
-
-        if (null !== $objTimeslots) {
-            while ($objTimeslots->next()) {
-                // Get the CSS ID
-                $arrCssCellID = $stringUtilAdapter->deserialize($objTimeslots->cssID, true);
-
-                // Override the CSS ID
-                $cssCellClass = null;
-
-                if (!empty($arrCssCellID[1])) {
-                    $cssCellClass = $arrCssCellID[1];
-                }
-                $startTime = (int) $objTimeslots->startTime;
-                $endTime = (int) $objTimeslots->endTime;
-                $objTs = new \stdClass();
-                $objTs->cssClass = $cssCellClass;
-                $objTs->startTimeString = $utcTimeHelperAdapter->parse('H:i', $startTime);
-                $objTs->startTime = (int) $startTime;
-                $objTs->endTimeString = $utcTimeHelperAdapter->parse('H:i', $endTime);
-                $objTs->timeSpanString = $utcTimeHelperAdapter->parse('H:i', $startTime).' - '.$utcTimeHelperAdapter->parse('H:i', $endTime);
-                $objTs->endTime = (int) $endTime;
-                $timeSlots[] = $objTs;
-            }
-        }
-        $arrData['timeSlots'] = $timeSlots;
+        $arrData['timeSlots'] = $this->getTimeslotData($this->getActiveResourceFromSession());
 
         // Get messages
         $arrData['messages'] = [];
@@ -390,6 +143,39 @@ trait RefreshDataTrait
         $arrData['isReady'] = true;
 
         return $arrData;
+    }
+
+    private function getResourceTypeSelectOptions(?ModuleModel $objModule = null): array
+    {
+        /** @var ResourceBookingResourceTypeModel $resourceBookingResourceTypeModelAdapter */
+        $resourceBookingResourceTypeModelAdapter = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class);
+
+        $rows = [];
+        $arrIds = StringUtil::deserialize($objModule->resourceBooking_resourceTypes, true);
+
+        if (null !== ($objResourceTypes = $resourceBookingResourceTypeModelAdapter->findPublishedByIds($arrIds))) {
+            while ($objResourceTypes->next()) {
+                $rows[] = $objResourceTypes->row();
+            }
+        }
+
+        return $rows;
+    }
+
+    private function getResourceSelectOptions(?ResourceBookingResourceTypeModel $ResType = null): array
+    {
+        /** @var ResourceBookingResourceModel $resourceBookingResourceModelAdapter */
+        $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
+
+        $rows = [];
+
+        if (null !== ($objResources = $resourceBookingResourceModelAdapter->findPublishedByPid($ResType->id))) {
+            while ($objResources->next()) {
+                $rows[] = $objResources->row();
+            }
+        }
+
+        return $rows;
     }
 
     /**
@@ -494,6 +280,211 @@ trait RefreshDataTrait
         $arrReturn['tstamp'] = (int) $jumpTime;
 
         return $arrReturn;
+    }
+
+    private function getTimeslotData(?ResourceBookingResourceModel $resourceBookingResourceModel = null)
+    {
+        $resourceBookingTimeSlotModelAdapter = $this->framework->getAdapter(ResourceBookingTimeSlotModel::class);
+        $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
+        $utcTimeHelperAdapter = $this->framework->getAdapter(UtcTimeHelper::class);
+
+        $objTimeslots = $resourceBookingTimeSlotModelAdapter->findPublishedByPid($resourceBookingResourceModel->timeSlotType);
+        $timeSlots = [];
+
+        if (null !== $objTimeslots) {
+            while ($objTimeslots->next()) {
+                // Get the CSS ID
+                $arrCssCellID = $stringUtilAdapter->deserialize($objTimeslots->cssID, true);
+
+                // Override the CSS ID
+                $cssCellClass = null;
+
+                if (!empty($arrCssCellID[1])) {
+                    $cssCellClass = $arrCssCellID[1];
+                }
+                $startTime = (int) $objTimeslots->startTime;
+                $endTime = (int) $objTimeslots->endTime;
+                $objTs = new \stdClass();
+                $objTs->cssClass = $cssCellClass;
+                $objTs->startTimeString = $utcTimeHelperAdapter->parse('H:i', $startTime);
+                $objTs->startTime = (int) $startTime;
+                $objTs->endTimeString = $utcTimeHelperAdapter->parse('H:i', $endTime);
+                $objTs->timeSpanString = $utcTimeHelperAdapter->parse('H:i', $startTime).' - '.$utcTimeHelperAdapter->parse('H:i', $endTime);
+                $objTs->endTime = (int) $endTime;
+                $timeSlots[] = $objTs;
+            }
+        }
+
+        return $timeSlots;
+    }
+
+    private function getWeekdays(int $activeWeekTstamp, ModuleModel $moduleModel): array
+    {
+        $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
+        $dateAdapter = $this->framework->getAdapter(Date::class);
+        $arrAppConfig = $this->utils->getAppConfig();
+
+        // Send weekdays, dates and day
+        $arrWeek = [];
+
+        // First get a full week,
+        // $arrWeekdays[0] should be the weekday defined in the application configuration
+        $arrWeekdays = RbbConfig::RBB_WEEKDAYS;
+        $arrWeekdays = [...$arrWeekdays, ...$arrWeekdays];
+        $beginnWeek = $arrAppConfig['beginnWeek'];
+        $offset = array_search($beginnWeek, $arrWeekdays, true);
+        $arrWeekdays = \array_slice($arrWeekdays, $offset, 7);
+
+        foreach ($arrWeekdays as $i => $weekday) {
+            // Skip days
+            if ($moduleModel->resourceBooking_hideDays && !\in_array($weekday, $stringUtilAdapter->deserialize($moduleModel->resourceBooking_hideDaysSelection, true), false)) {
+                continue;
+            }
+            $arrWeek[] = [
+                'index' => $i,
+                'name' => $weekday,
+                'title' => $this->translator->trans('MSC.DAYS_LONG.'.$weekday, [], 'contao_default'),
+                'titleShort' => $this->translator->trans('MSC.DAYS_SHORTENED.'.$weekday, [], 'contao_default'),
+                'date' => $dateAdapter->parse('d.m.Y', strtotime($dateAdapter->parse('Y-m-d', $activeWeekTstamp).' +'.$i.' day')),
+            ];
+        }
+
+        return $arrWeek;
+    }
+
+    private function getBookingTableData(array $arrWeekdays, int $activeWeekTstamp, ?ModuleModel $moduleModel = null, ?ResourceBookingResourceModel $resourceModel = null, ?FrontendUser $user = null): array
+    {
+        $resourceBookingTimeSlotModelAdapter = $this->framework->getAdapter(ResourceBookingTimeSlotModel::class);
+        $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
+        $strAdapter = $this->framework->getAdapter(Str::class);
+        $memberModelAdapter = $this->framework->getAdapter(MemberModel::class);
+
+        $rows = [];
+
+        if (null === $resourceModel) {
+            return $rows;
+        }
+
+        $objTimeslots = $resourceBookingTimeSlotModelAdapter->findPublishedByPid($resourceModel->timeSlotType);
+        $rowCount = 0;
+
+        if (null !== $objTimeslots) {
+            while ($objTimeslots->next()) {
+                $cells = [];
+                $objRow = new \stdClass();
+
+                $cssRowId = sprintf('timeSlotModId_%s_%s', $moduleModel->id, $objTimeslots->id);
+                $cssRowClass = 'time-slot-'.$objTimeslots->id;
+
+                // Get the CSS ID
+                $arrCssCellID = $stringUtilAdapter->deserialize($objTimeslots->cssID, true);
+
+                // Override the CSS ID
+                if (!empty($arrCssCellID[0])) {
+                    $cssRowId = $arrCssCellID[0];
+                }
+
+                $objRow->cssRowId = $cssRowId;
+                $objRow->cssRowClass = $cssRowClass;
+
+                foreach ($arrWeekdays as $colCount => $arrWeekday) {
+                    $weekday = $arrWeekday['name'];
+
+                    // Skip days
+                    if ($moduleModel->resourceBooking_hideDays && !\in_array($weekday, $stringUtilAdapter->deserialize($moduleModel->resourceBooking_hideDaysSelection, true), false)) {
+                        continue;
+                    }
+
+                    $startTime = strtotime(sprintf('+%s day', $colCount), $activeWeekTstamp) + $objTimeslots->startTime;
+                    $endTime = strtotime(sprintf('+%s day', $colCount), $activeWeekTstamp) + $objTimeslots->endTime;
+
+                    /** @var SlotMain $slot */
+                    $slot = $this->slotFactory->get(SlotMain::MODE, $resourceModel, $startTime, $endTime);
+                    $slot->index = $colCount;
+                    $slot->bookingCheckboxValue = sprintf('%s-%s-%s-%s', $objTimeslots->id, $startTime, $endTime, $activeWeekTstamp);
+                    $slot->bookingCheckboxId = sprintf('bookingCheckbox_modId_%s_%s_%s', $moduleModel->id, $rowCount, $colCount);
+
+                    if ($slot->hasBookings) {
+                        while ($slot->bookings->next()) {
+                            $objBooking = $slot->bookings->current();
+
+                            if (null !== $objBooking) {
+                                // Presets
+                                $objBooking->bookedByFirstname = '';
+                                $objBooking->bookedByLastname = '';
+
+                                // Fallback
+                                $objBooking->bookedByFullname = $stringUtilAdapter->decodeEntities($this->translator->trans('RBB.anonymous', [], 'contao_default'));
+
+                                $arrAllowedMemberFields = $stringUtilAdapter->deserialize($moduleModel->resourceBooking_clientPersonalData, true);
+
+                                $objMember = $memberModelAdapter->findByPk($objBooking->member);
+
+                                if (null !== $objMember) {
+                                    // Do not transmit and display sensitive data if user is not holder
+                                    if ($user && (int) $user->id !== (int) $objBooking->member) {
+                                        if ($moduleModel->resourceBooking_displayClientPersonalData && !empty($arrAllowedMemberFields)) {
+                                            foreach ($arrAllowedMemberFields as $fieldname) {
+                                                $objBooking->{'bookedBy'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($objMember->$fieldname);
+                                            }
+
+                                            if (\in_array('firstname', $arrAllowedMemberFields, true) && \in_array('lastname', $arrAllowedMemberFields, true)) {
+                                                $objBooking->bookedByFullname = $stringUtilAdapter->decodeEntities($objMember->firstname.' '.$objMember->lastname);
+                                            }
+                                        }
+                                    } else {
+                                        foreach (array_keys($objMember->row()) as $fieldname) {
+                                            $varData = $strAdapter->convertBinUuidsToStringUuids($objMember->$fieldname);
+
+                                            $objBooking->{'bookedBy'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($varData);
+                                            $objBooking->{'bookedBy'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($varData);
+                                        }
+                                        $objBooking->bookedByFullname = $stringUtilAdapter->decodeEntities($objMember->firstname.' '.$objMember->lastname);
+                                    }
+                                    $objBooking->bookedBySession = null;
+                                    $objBooking->bookedByPassword = null;
+                                }
+
+                                // Send sensitive data if it has been permitted in tl_module
+                                $databaseAdapter = $this->framework->getAdapter(Database::class);
+                                $arrAvailable = $databaseAdapter->getInstance()->listFields('tl_resource_booking');
+
+                                if ($moduleModel->resourceBooking_setBookingSubmittedFields) {
+                                    $arrAllowedBookingFields = $stringUtilAdapter->deserialize($moduleModel->resourceBooking_bookingSubmittedFields, true);
+
+                                    foreach ($arrAvailable as $arrField) {
+                                        $field = $arrField['name'];
+
+                                        if (\in_array($field, $arrAllowedBookingFields, true)) {
+                                            $objBooking->{'booking'.ucfirst((string) $field)} = $stringUtilAdapter->decodeEntities((string) $objBooking->$field);
+                                        } else {
+                                            $objBooking->{'booking'.ucfirst((string) $field)} = null;
+                                        }
+                                    }
+                                } else {
+                                    foreach ($arrAvailable as $arrField) {
+                                        $field = $arrField['name'];
+                                        $objBooking->{'booking'.ucfirst((string) $field)} = null;
+                                    }
+                                }
+
+                                $objBooking->title = null;
+                                $objBooking->description = null;
+                                $objBooking->moduleId = null;
+                                $objBooking->bookingId = null;
+                                $objBooking->bookingPid = null;
+                                $objBooking->canCancel = $slot->isCancelable() && (int) $user->id === (int) $objMember->id;
+                            }
+                        }
+                    }
+                    $cells[] = $slot->row();
+                }
+                $rows[] = ['cellData' => $cells, 'rowData' => $objRow];
+                ++$rowCount;
+            }
+        }
+
+        return $rows;
     }
 
     /**

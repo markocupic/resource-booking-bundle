@@ -57,6 +57,7 @@ use Symfony\Component\Security\Core\Security;
  * @property int                               $bookingCount
  * @property string                            $bookingUuid
  * @property array                             $newBooking
+ * @property int                               $itemsAvailable
  *
  * properties from booking main
  * @property string $bookingCheckboxValue
@@ -142,6 +143,7 @@ abstract class AbstractSlot implements SlotInterface
 
         $this->arrData['isBookable'] = $this->isBookable();
         $this->arrData['enoughItemsAvailable'] = $this->enoughItemsAvailable();
+        $this->arrData['itemsStillAvailable'] = $this->getItemsAvailable();
         $this->arrData['isFullyBooked'] = $this->isFullyBooked();
 
         $this->arrData['hasBookings'] = $this->hasBookings();
@@ -214,6 +216,19 @@ abstract class AbstractSlot implements SlotInterface
         }
 
         return true;
+    }
+
+    public function getItemsAvailable(): int
+    {
+        $count = 0;
+
+        if (null !== ($objBookings = $this->getBookings())) {
+            while ($objBookings->next()) {
+                $count += (int) $objBookings->itemsBooked;
+            }
+        }
+
+        return (int) $this->resource->itemsAvailable - $count;
     }
 
     public function isFullyBooked(): bool

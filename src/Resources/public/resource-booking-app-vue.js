@@ -44,7 +44,7 @@ class resourceBookingApp {
         // Contains data about available resource types, resources and weeks (week selector)
         filterBoard: null,
         // Indicates if the current user hass logged in as a frontend user
-        userIsLoggedIn: false,
+        userHasLoggedIn: false,
         // Contains the logged in user data
         loggedInUser: [],
         // Contains the weekdays
