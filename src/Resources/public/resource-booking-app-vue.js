@@ -69,9 +69,6 @@ class resourceBookingApp {
         bookingWindow: {
           response: {},
         },
-        bookingFormValidation: {
-          response: {},
-        },
         intervals: [],
         autoCloseBookingWindowTimeout: null,
         messages: null,
@@ -300,7 +297,6 @@ class resourceBookingApp {
               }
 
               // Always
-              this.bookingWindow.showConfirmationMsg = true;
               this.refreshDataRequest();
             })
             .then(response => {
@@ -310,7 +306,6 @@ class resourceBookingApp {
             .catch(response => {
               this.isReady = false;
               // Always
-              this.bookingWindow.showConfirmationMsg = true;
               this.refreshDataRequest();
             });
           }
@@ -347,8 +342,11 @@ class resourceBookingApp {
             return res.json();
           })
           .then(response => {
+            if(response.status){
+              this.bookingWindow.response = response.data;
+            }
+
             if (response.status === 'success') {
-              this.bookingFormValidation.response = response.data;
               this.isReady = true;
             }
           })
@@ -391,13 +389,11 @@ class resourceBookingApp {
             }
             // Always
             this.bookingWindow.deleteBookingsWithSameBookingUuid = false;
-            this.bookingWindow.showConfirmationMsg = true;
             this.refreshDataRequest();
           })
           .catch(response => {
             this.isReady = false;
             // Always
-            this.bookingWindow.showConfirmationMsg = true;
             this.refreshDataRequest();
             this.bookingWindow.deleteBookingsWithSameBookingUuid = false;
           });
@@ -443,12 +439,6 @@ class resourceBookingApp {
             'response': {},
             'deleteBookingsWithSameBookingUuid': false,
             'selectedTimeSlots': [],
-            'showConfirmationMsg': false,
-          }
-
-          // Reset
-          this.bookingFormValidation = {
-            'response': {},
           }
 
           this.bookingWindow.selectedTimeSlots.push(slot.bookingCheckboxValue);

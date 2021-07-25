@@ -31,7 +31,7 @@ use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * @FrontendModule(type=ResourceBookingWeekcalendarController::TYPE, category="resourceBooking", )
+ * @FrontendModule(type=ResourceBookingWeekcalendarController::TYPE, category="resourceBooking")
  */
 class ResourceBookingWeekcalendarController extends AbstractFrontendModuleController
 {
@@ -124,7 +124,11 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
         $this->eventDispatcher->dispatch($objAjaxRequestEvent, AjaxRequestEvent::NAME);
 
         $response = new JsonResponse();
-        $response->setData($this->ajaxResponse->getAll());
+        $response->setData(
+            $this->ajaxResponse
+            ->prepareBeforeSend(true)
+            ->getAll()
+        );
         $response->setStatusCode(200);
         $response->setPrivate();
         $response->setMaxAge(0);

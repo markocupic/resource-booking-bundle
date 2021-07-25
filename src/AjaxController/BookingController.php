@@ -163,6 +163,7 @@ final class BookingController extends AbstractController implements ControllerIn
                     $this->translator->trans('RBB.ERR.generalBookingError', [], 'contao_default')
                 );
             }
+            $ajaxResponse->getInfoMessage();
         }
 
         // Add booking selection to response

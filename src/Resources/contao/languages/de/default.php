@@ -71,7 +71,7 @@ $GLOBALS['TL_LANG']['RBB']['ERR']['generalBookingError'] = 'Beim Versuch die Res
 $GLOBALS['TL_LANG']['RBB']['ERR']['cancelingBookingNotAllowed'] = 'Sie besitzen nicht die nötigen Rechte, um diese Buchung zu stornieren.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['selectBookingDatesPlease'] = 'Bitte wählen Sie einen oder mehrere Slots aus.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['resourceIsAlreadyFullyBooked'] = 'Die Ressource ist bereits ausgebucht.';
-$GLOBALS['TL_LANG']['RBB']['ERR']['notEnoughItemsAvailable'] = 'Es sind zu wenig Einheiten für Ihre Buchungsanfrage verfügbar.';
+$GLOBALS['TL_LANG']['RBB']['ERR']['notEnoughItemsAvailable'] = 'In einem oder mehreren Slots sind zu wenig Einheiten für Ihre Buchungsanfrage verfügbar.';
 
 // Messages
 $GLOBALS['TL_LANG']['RBB']['MSG']['successfullyBookedXItems'] = 'Für %s konnte(n) erfolgreich %s Buchung(en) angelegt werden.';

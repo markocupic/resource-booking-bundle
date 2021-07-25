@@ -12,7 +12,7 @@
 
   <!-- booking alerts -->
   <template v-if="bookingWindow.response.messages">
-    <div class="message-box mt-5">
+    <div class="message-box 1 mt-5">
       <div v-if="bookingWindow.response.messages.confirmation" class="alert alert-success pt-3 pb-3">
         {{ bookingWindow.response.messages.confirmation }}
       </div>
@@ -29,28 +29,10 @@
   </template>
   <!-- End alerts -->
 
-  <!-- booking request validation alerts -->
-  <template v-if="bookingFormValidation.response.messages && bookingFormValidation.response.messages.error">
-    <div class="message-box mt-5">
-      <div class="alert alert-danger pt-3 pb-3">
-        {{ bookingFormValidation.response.messages.error }}
-      </div>
-    </div>
-  </template>
-  <!-- End alerts -->
+
 
   <template v-if="!bookingWindow.response.bookingSucceeded">
-    <!-- start alerts -->
-    <template v-if="bookingFormValidation.response.messages">
-      <div v-if="bookingFormValidation.response.messages.confirmation" class="message-box mt-5">
-        <div class="alert alert-success pt-3 pb-3">
-          {{ bookingFormValidation.response.messages.confirmation }}
-        </div>
-      </div>
-    </template>
-    <!-- End alerts -->
-
-    <template v-if="!bookingFormValidation.response.passedValidation">
+     <template v-if="!bookingWindow.response.passedValidation">
       <!-- start collapse -->
       <div class="mt-4">
         <button class="btn btn-sm btn-danger" type="button" data-bs-toggle="collapse" data-bs-target="#bookingPreview_<?= $this->moduleKey ?>" aria-expanded="false" aria-controls="bookingPreview">
@@ -60,7 +42,7 @@
 
       <div id="bookingPreview_<?= $this->moduleKey ?>" class="booking-preview collapse mt-5">
         <div class="layout-table">
-          <div class="layout-row d-flex" v-for="(slot, index) in bookingFormValidation.response.slotSelection" v-bind:class="!slot.isBookable ? 'not-bookable' : 'bookable'">
+          <div class="layout-row d-flex" v-for="(slot, index) in bookingWindow.response.slotSelection" v-bind:class="!slot.isBookable ? 'not-bookable' : 'bookable'">
             <div class="layout-cell">
               <small>{{ slot.datimSpanString }}: </small>
             </div>
@@ -125,7 +107,7 @@
 
   <!-- footer -->
   <div class="booking-window-footer mt-5">
-    <button type="button" class="btn btn-primary" v-if="bookingFormValidation.response.passedValidation && !bookingWindow.response.bookingSucceeded" v-on:click="bookingRequest">
+    <button type="button" class="btn btn-primary" v-if="bookingWindow.response.passedValidation && !bookingWindow.response.bookingSucceeded" v-on:click="bookingRequest">
       {{trans::RBB.bookResource::contao_default}}
     </button>
     <button type="button" class="btn btn-secondary" v-on:click="hideBookingWindow">
