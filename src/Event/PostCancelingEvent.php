@@ -22,22 +22,11 @@ use Symfony\Contracts\EventDispatcher\Event;
  */
 class PostCancelingEvent extends Event
 {
-    const NAME = 'rbb.event.post_canceling';
+    public const NAME = 'rbb.event.post_canceling';
 
-    /**
-     * @var Collection
-     */
-    private $bookingCollection;
-
-    /**
-     * @var FrontendUser
-     */
-    private $user;
-
-    /**
-     * @var ArrayAttributeBag
-     */
-    private $sessionBag;
+    private ?Collection $bookingCollection;
+    private FrontendUser $user;
+    private ArrayAttributeBag $sessionBag;
 
     /**
      * PostCancelingEvent constructor.

@@ -1,0 +1,32 @@
+<!-- booking table -->
+<template v-if="rows.length > 0">
+  <div class="layout-table resource-booking-table-main mt-5">
+
+    <div class="layout-row">
+      <div class="layout-cell cell-headline time-slot-indicator"><strong>{{trans::RBB.time::contao_default}}</strong></div>
+      <div class="layout-cell cell-headline" v-for="(weekday, index) in weekdays" v-bind:data-day-index="weekday.index"><strong>{{ weekday.title }}</strong>{{br}}{{ weekday.date }}</div>
+    </div>
+
+    <div v-for="(row, rowIndex) in rows" v-bind:data-row-index="rowIndex" v-bind:id="row.rowData.cssRowId" class="layout-row" v-bind:class="row.rowData.cssRowClass">
+      <div class="layout-cell time-slot-indicator" v-bind:class="timeSlots[rowIndex].cssClass ? timeSlots[rowIndex].cssClass : ''">{{ timeSlots[rowIndex].timeSpanString }}</div>
+      <div class="layout-cell time-slot-cell" v-for="(slot, colIndex) in row.cellData" v-bind:class="timeSlots[rowIndex].cssClass ? timeSlots[rowIndex].cssClass : ''" v-bind:data-day-index="slot.index" v-bind:data-iscancelable="slot.isCancelable" v-bind:data-isfullybooked="slot.isFullyBooked" v-bind:data-isbookable="!slot.isCancelable && slot.isBookable" v-bind:data-isbooked="slot.hasBookings" v-bind:data-bookingcount="slot.bookingCount" v-bind:data-isinvaliddate="!slot.isValidDate">
+        <div class="time-slot-cell-inner">
+          <div class="still-available-box" v-if="slot.resource.itemsAvailable > 1 && slot.itemsStillAvailable > 0 && slot.isValidDate" >{{trans::RBB.stillAvailable::contao_default}}: {{ slot.itemsStillAvailable }}</div>
+          <div class="booked-item" v-if="slot.hasBookings" v-for="booking in slot.bookings">
+            <span class="owner-box">{{ booking.bookedByFullname }}</span><span class="item-counter-box" v-if="activeResource.itemsAvailable > 1"> (-{{ booking.itemsBooked }})</span>
+            {{br}}
+            <span class="description-box"><small>{{ booking.bookingDescription }}</small></span>
+            <button class="btn btn-link btn-cancel-booking" v-if="booking.canCancel" v-on:click="openBookingWindow(slot, 'showCancelBookingForm', slot.bookingRelatedToLoggedInUser)" title="{{trans::RBB.cancelResource::contao_default}}">
+              <i class="icon-cancel-booking fas fa-times-circle"></i>
+            </button>
+          </div>
+          <button class="btn btn-link btn-booking" v-if="userHasLoggedIn && (slot.isBookable && !slot.isCancelable)" v-on:click="openBookingWindow(slot, 'showBookingForm', null)" title="{{trans::RBB.bookResource::contao_default}}">
+            <i class="icon-booking far fa-check-circle"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</template>
+<!-- End booking table -->

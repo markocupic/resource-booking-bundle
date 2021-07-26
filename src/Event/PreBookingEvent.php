@@ -23,27 +23,12 @@ use Symfony\Contracts\EventDispatcher\Event;
  */
 class PreBookingEvent extends Event
 {
-    const NAME = 'rbb.event.pre_booking';
+    public const NAME = 'rbb.event.pre_booking';
 
-    /**
-     * @var Collection
-     */
-    private $bookingCollection;
-
-    /**
-     * @var FrontendUser
-     */
-    private $user;
-
-    /**
-     * @var ArrayAttributeBag
-     */
-    private $sessionBag;
-
-    /**
-     * @var AjaxRequestEvent;
-     */
-    private $ajaxResponse;
+    private ?Collection $bookingCollection;
+    private FrontendUser $user;
+    private ArrayAttributeBag $sessionBag;
+    private AjaxResponse $ajaxResponse;
 
     /**
      * PreBookingEvent constructor.

@@ -1,21 +1,32 @@
-$notBookableBg: rgba(255, 200, 196, 0.66);
+$notBookableBg: #adb5bd8f;
 $bookableBg: rgba(115, 207, 97, 0.42);
+$fullyBookedBg: rgb(255, 222, 213);
 $loggedInUserIsHolderBg: rgba(3, 169, 244, 0.32);
 $iconBookingColor: #ffffff;
 $iconCancelBookingColor: #ffffff;
 $iconCancelBookingHoverColor: #98777e;
 $tableBorderColor: #ccc;
 $transitionSpeed: .8s;
+.custom-scroll-bar-thin {
+  & {
+    scrollbar-width: auto;
+    scrollbar-color: #000000 #ffffff;
+  }
 
-.resource-booking-backdrop-layer {
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 1040;
-  width: 100vw;
-  height: 100vh;
-  background-color: transparent;
-  opacity: 0;
+  /* Chrome, Edge, and Safari */
+  &::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #ffffff;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #000000;
+    border-radius: 10px;
+    border: 3px solid #ffffff;
+  }
 }
 
 .mod_resourceBookingWeekcalendar {
@@ -78,24 +89,56 @@ $transitionSpeed: .8s;
       &.time-slot-cell {
         background-color: $bookableBg;
         height: 6rem;
+        display: flex;
       }
 
       &.time-slot-cell[data-isbooked="true"] {
-        background-color: $notBookableBg;
+        background-color: $bookableBg;
+        overflow-y: auto;
+        @extend .custom-scroll-bar-thin;
       }
 
       &.time-slot-cell[data-isbookable="true"] {
-        display: flex;
-        align-items: center;
         background-color: $bookableBg;
-        justify-content: center;
       }
 
       &.time-slot-cell[data-isinvaliddate="true"] {
         background-color: $notBookableBg;
       }
-    }
 
+      &.time-slot-cell[data-isfullybooked="true"] {
+        background-color: $fullyBookedBg;
+      }
+
+      &.cell-headline {
+        background-color: #ffffff;
+      }
+    }
+  }
+
+  .resource-booking-table-main {
+    .layout-cell.time-slot-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: flex-start;
+    }
+  }
+
+  .resource-booking-table-window {
+    .layout-cell.time-slot-cell {
+      align-items: center;
+      justify-content: center;
+
+      .custom-control {
+        line-height: 0;
+
+        label {
+          margin: 0;
+          display: none;
+        }
+      }
+    }
   }
 
   // Wrap long words
@@ -106,15 +149,32 @@ $transitionSpeed: .8s;
       word-break: break-all;
       position: relative;
 
+      .time-slot-cell-inner {
+        position: relative;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        height: 100%
+      }
+
+      .still-available-box {
+        font-size: xx-small;
+      }
+
       .btn-link {
         position: absolute;
         margin: auto;
-        top: 0;
+        width: 2rem;
+        height: 2rem;
+        padding: 0;
+        font-size: 2rem;
+        top: 1.75rem;
+        line-height: 2rem;
         right: 0;
-        bottom: 0;
         left: 0;
         z-index: 10;
-        opacity: 0.6;
+        opacity: 0.4;
+        border: 0;
         transition: opacity $transitionSpeed;
       }
 
@@ -148,18 +208,18 @@ $transitionSpeed: .8s;
         word-break: break-all;
       }
 
-      &.time-slot-cell[data-is-holder="true"] {
-        background-color: $loggedInUserIsHolderBg;
-      }
-
       &.time-slot-cell {
-        .holder-box {
+        .owner-box {
           font-weight: bold;
         }
 
-        .holder-box, .description-box {
+        .owner-box, .description-box, .item-counter-box {
           position: relative;
           z-index: 20;
+        }
+
+        .description-box small {
+          font-size: 0.75rem;
         }
       }
     }
@@ -176,7 +236,7 @@ $transitionSpeed: .8s;
         transition: color $transitionSpeed;
       }
 
-      .description-box, .holder-box {
+      .description-box, .owner-box, .item-counter-box, .still-available-box {
         opacity: 0.3;
       }
     }
@@ -250,7 +310,7 @@ $transitionSpeed: .8s;
       }
 
       .not-bookable {
-        background-color: $notBookableBg;
+        background-color: $fullyBookedBg;
       }
     }
 
@@ -264,8 +324,8 @@ $transitionSpeed: .8s;
 
     .booking-preview.table > tbody {
       tr td {
-        padding-left: 4px;
-        padding-right: 4px;
+        padding-left: .25rem;
+        padding-right: .25rem;
       }
 
       tr.bookable td {

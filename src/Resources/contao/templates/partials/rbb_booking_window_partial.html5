@@ -1,0 +1,13 @@
+<div class="booking-window-dialog">
+  <div class="booking-window-content">
+
+    <template v-if="bookingWindow.action === 'showBookingForm'">
+      <?php $this->insert('rbb_booking_partial', $this->getData()); ?>
+    </template>
+
+    <template v-if="bookingWindow.action === 'showCancelBookingForm'">
+      <?php $this->insert('rbb_cancel_booking_partial', $this->getData()); ?>
+    </template>
+
+  </div>
+</div>

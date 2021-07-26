@@ -17,5 +17,6 @@ namespace Markocupic\ResourceBookingBundle\Config;
  */
 class RbbConfig
 {
-    public const MOD_RESOURCE_BOOKING_ASSET_PATH = 'bundles/markocupicresourcebooking';
+    public const RBB_ASSET_PATH = 'bundles/markocupicresourcebooking';
+    public const RBB_WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 }
