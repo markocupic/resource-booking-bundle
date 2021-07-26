@@ -126,8 +126,8 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
         $response = new JsonResponse();
         $response->setData(
             $this->ajaxResponse
-            ->prepareBeforeSend(true)
-            ->getAll()
+                ->prepareBeforeSend(true)
+                ->getAll()
         );
         $response->setStatusCode(200);
         $response->setPrivate();

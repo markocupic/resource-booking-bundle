@@ -67,7 +67,14 @@ class resourceBookingApp {
         activeWeek: [],
         bookingRepeatsSelection: [],
         bookingWindow: {
+          action: null,
+          activeTimeSlot: null,
+          booking: null,
           response: {},
+          deleteBookingsWithSameBookingUuid: false,
+          selectedTimeSlots: [],
+          showCancelBookingForm: false,
+          showCancelBookingButton: false,
         },
         intervals: [],
         autoCloseBookingWindowTimeout: null,
@@ -211,8 +218,6 @@ class resourceBookingApp {
           let action = 'applyFilterRequest';
           this.isBusy = true;
 
-          this.toggleBackdrop(true);
-
           let data = new FormData();
           data.append('REQUEST_TOKEN', this.options.requestToken);
           data.append('action', action);
@@ -241,11 +246,9 @@ class resourceBookingApp {
             return response;
           })
           .then(response => {
-            this.toggleBackdrop(false);
             this.isBusy = false;
           })
           .catch(response => {
-            this.toggleBackdrop(false);
             this.isBusy = false;
           });
         },
@@ -342,7 +345,7 @@ class resourceBookingApp {
             return res.json();
           })
           .then(response => {
-            if(response.status){
+            if (response.status) {
               this.bookingWindow.response = response.data;
             }
 
@@ -359,6 +362,10 @@ class resourceBookingApp {
          * Send cancel booking request
          */
         cancelBookingRequest: function cancelBookingRequest() {
+          this.isBusy = true;
+          this.bookingWindow.showCancelBookingForm = false;
+          this.bookingWindow.showCancelBookingButton = false;
+
           let action = 'cancelBookingRequest';
           let data = new FormData();
           data.append('REQUEST_TOKEN', this.options.requestToken);
@@ -387,12 +394,15 @@ class resourceBookingApp {
             } else {
               this.bookingWindow.response = response.data;
             }
+
             // Always
+            self.isBusy = false;
             this.bookingWindow.deleteBookingsWithSameBookingUuid = false;
             this.refreshDataRequest();
           })
           .catch(response => {
             this.isReady = false;
+            this.isBusy = false;
             // Always
             this.refreshDataRequest();
             this.bookingWindow.deleteBookingsWithSameBookingUuid = false;
@@ -423,10 +433,9 @@ class resourceBookingApp {
         },
 
         /**
-         *
-         * @param objActiveTimeSlot
-         * @param booking
+         * @param slot
          * @param action
+         * @param booking
          */
         openBookingWindow: function openBookingWindow(slot, action, booking = null) {
           this.mode = 'booking-window';
@@ -447,6 +456,9 @@ class resourceBookingApp {
             window.setTimeout(() => {
               this.bookingFormValidationRequest();
             }, 100);
+          } else if (action === 'showCancelBookingForm') {
+            this.bookingWindow.showCancelBookingButton = true;
+            this.bookingWindow.showCancelBookingForm = true;
           }
 
           // Wrap this code, otherwise querySelector will not find dom elements
@@ -471,34 +483,6 @@ class resourceBookingApp {
           this.mode = 'main-window';
         },
 
-        /**
-         * Add or remove the backdrop
-         * @param blnAdd
-         */
-        toggleBackdrop: function toggleBackdrop(blnAdd = true) {
-          if (blnAdd) {
-            // Remove backdrop layer
-            let backDrops = document.querySelectorAll('.resource-booking-backdrop-layer');
-            if (backDrops.length > 0) {
-              backDrops.forEach(backDrop => backDrop.parentNode.removeChild(backDrop));
-            }
-
-            // Add backdrop layer
-            let backDrop = document.createElement("div");
-            backDrop.classList.add("resource-booking-backdrop-layer");
-            backDrop.classList.add("show");
-            document.querySelector('body').append(backDrop);
-
-          } else {
-            // Remove backdrop layer
-            window.setTimeout(() => {
-              let backDrops = document.querySelectorAll('.resource-booking-backdrop-layer');
-              if (backDrops.length > 0) {
-                backDrops.forEach(backDrop => backDrop.parentNode.removeChild(backDrop));
-              }
-            }, 100);
-          }
-        },
 
         /**
          * Check json response

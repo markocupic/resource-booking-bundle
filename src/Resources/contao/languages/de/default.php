@@ -63,7 +63,6 @@ $GLOBALS['TL_LANG']['RBB']['error401'] = 'Es ist ein Fehler aufgetreten. Sie hab
 $GLOBALS['TL_LANG']['RBB']['pieces'] = 'Stück';
 $GLOBALS['TL_LANG']['RBB']['anonymous'] = 'Anonym';
 
-
 // Errors
 $GLOBALS['TL_LANG']['RBB']['ERR']['invalidStartOrEndTime'] = 'Sie haben einen Slot mit ungültiger Start- oder Endzeit ausgewählt.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['slotNotBookable'] = 'Einer oder mehrere der gewünschten Slots sind bereits ausgebucht.';
@@ -73,6 +72,9 @@ $GLOBALS['TL_LANG']['RBB']['ERR']['selectBookingDatesPlease'] = 'Bitte wählen S
 $GLOBALS['TL_LANG']['RBB']['ERR']['resourceIsAlreadyFullyBooked'] = 'Die Ressource ist bereits ausgebucht.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['notEnoughItemsAvailable'] = 'In einem oder mehreren Slots sind zu wenig Einheiten für Ihre Buchungsanfrage verfügbar.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['thisSlotHasNotEnoughItemsAvailable'] = 'Nicht genügend Einheiten verfügbar.';
+$GLOBALS['TL_LANG']['RBB']['ERR']['bookingNotFound'] = 'Buchung mit ID %s nicht gefunden.';
+$GLOBALS['TL_LANG']['RBB']['ERR']['notAuthorized'] = 'Für diesen Vorgang verfügen Sie nicht über die nötigen Rechte.';
+$GLOBALS['TL_LANG']['RBB']['ERR']['somethingWentWrong'] = 'Ups! Etwas ist schief gelaufen.';
 
 // Messages
 $GLOBALS['TL_LANG']['RBB']['MSG']['successfullyBookedXItems'] = 'Für %s konnte(n) erfolgreich %s Buchung(en) angelegt werden.';

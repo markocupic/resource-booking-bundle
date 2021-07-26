@@ -72,6 +72,9 @@ $GLOBALS['TL_LANG']['RBB']['ERR']['selectBookingDatesPlease'] = 'Select one or m
 $GLOBALS['TL_LANG']['RBB']['ERR']['resourceIsAlreadyFullyBooked'] = 'Resource is already fully booked.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['notEnoughItemsAvailable'] = 'There aren\'t enough items available in one ore more slots you\'ve requested.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['thisSlotHasNotEnoughItemsAvailable'] = 'There aren\'t enough items available in this slot.';
+$GLOBALS['TL_LANG']['RBB']['ERR']['bookingNotFound'] = 'Could not find booking with ID %s.';
+$GLOBALS['TL_LANG']['RBB']['ERR']['notAuthorized'] = 'You are not authorized for this action.';
+$GLOBALS['TL_LANG']['RBB']['ERR']['somethingWentWrong'] = 'Ups! I\'m sorry! Something went wrong.';
 
 // Messages
 $GLOBALS['TL_LANG']['RBB']['MSG']['successfullyBookedXItems'] = 'Successfully booked for %s %s items.';

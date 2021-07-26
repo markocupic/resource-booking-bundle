@@ -69,12 +69,24 @@ final class CancelController extends AbstractController implements ControllerInt
 
         $arrIds = [];
 
-        if (null !== $this->user->getLoggedInUser() && (int) $request->request->get('id') > 0) {
+        $blnError = false;
+        $errorMsg = $this->translator->trans('RBB.ERR.somethingWentWrong', [], 'contao_default');
+
+        if (null === $this->user->getLoggedInUser() || !(int) $request->request->get('id') > 0) {
+            $blnError = true;
+            $errorMsg = $this->translator->trans('RBB.ERR.notAuthorized', [], 'contao_default');
+        } else {
             $id = $request->request->get('id');
             $objBooking = $resourceBookingModelAdapter->findByPk($id);
 
-            if (null !== $objBooking) {
-                if ((int) $objBooking->member === (int) $this->user->getLoggedInUser()->id) {
+            if (null === $objBooking) {
+                $blnError = true;
+                $errorMsg = $this->translator->trans('RBB.ERR.bookingNotFound', [$id], 'contao_default');
+            } else {
+                if ((int) $objBooking->member !== (int) $this->user->getLoggedInUser()->id) {
+                    $blnError = true;
+                    $errorMsg = $this->translator->trans('RBB.ERR.notAuthorized', [], 'contao_default');
+                } else {
                     $intId = $objBooking->id;
                     $bookingUuid = $objBooking->bookingUuid;
                     $timeSlotId = $objBooking->timeSlotId;
@@ -88,7 +100,7 @@ final class CancelController extends AbstractController implements ControllerInt
                     $arrIds[] = $objBooking->id;
                     $countRepetitionsToDelete = 0;
 
-                    // Delete repetitions with same bookingUuid and same starttime and endtime
+                    // Delete repetitions with same bookingUuid and same start time and end time
                     if ('true' === $request->request->get('deleteBookingsWithSameBookingUuid')) {
                         $arrColumns = [
                             'tl_resource_booking.bookingUuid=?',
@@ -149,12 +161,11 @@ final class CancelController extends AbstractController implements ControllerInt
                         $eventData->user = $this->user->getLoggedInUser();
                         $eventData->bookingCollection = $objBookingRemove;
                         $eventData->sessionBag = $this->sessionBag;
+
                         // Dispatch event
                         $objPostCancelingEvent = new PostCancelingEvent($eventData);
                         $this->eventDispatcher->dispatch($objPostCancelingEvent, PostCancelingEvent::NAME);
                     }
-
-                    $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
 
                     if ('true' === $request->request->get('deleteBookingsWithSameBookingUuid')) {
                         $ajaxResponse->setConfirmationMessage(
@@ -173,24 +184,17 @@ final class CancelController extends AbstractController implements ControllerInt
                             )
                         );
                     }
-                } else {
-                    $ajaxResponse->setErrorMessage(
-                        $this->translator->trans(
-                            'RBB.ERR.cancelingBookingNotAllowed',
-                            [],
-                            'contao_default',
-                        )
-                    );
                 }
-            } else {
-                $ajaxResponse->setErrorMessage(
-                    $this->translator->trans(
-                        'RBB.ERR.cancelingBookingNotAllowed',
-                        [],
-                        'contao_default',
-                    )
-                );
             }
+        }
+
+        if (!$blnError) {
+            $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
+            $ajaxResponse->setData('cancelBookingProcessSucceeded', true);
+        } else {
+            $ajaxResponse->setStatus(AjaxResponse::STATUS_ERROR);
+            $ajaxResponse->setData('cancelBookingProcessSucceeded', false);
+            $ajaxResponse->setErrorMessage($errorMsg);
         }
     }
 }
