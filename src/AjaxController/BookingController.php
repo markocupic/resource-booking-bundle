@@ -100,7 +100,7 @@ final class BookingController extends AbstractController implements ControllerIn
 
         // Dispatch event
         $objPreBookingEvent = new PreBookingEvent($eventData);
-        $this->eventDispatcher->dispatch($objPreBookingEvent);
+        $this->eventDispatcher->dispatch($objPreBookingEvent, PreBookingEvent::NAME);
 
         if (null !== $objBookings) {
             $objBookings->reset();
@@ -139,8 +139,9 @@ final class BookingController extends AbstractController implements ControllerIn
             $eventData->ajaxResponse = $ajaxResponse;
             $eventData->sessionBag = $this->sessionBag;
             // Dispatch event
+
             $objPostBookingEvent = new PostBookingEvent($eventData);
-            $this->eventDispatcher->dispatch($objPostBookingEvent);
+            $this->eventDispatcher->dispatch($objPostBookingEvent, PostBookingEvent::NAME);
         }
 
         if (null !== $objBookings) {

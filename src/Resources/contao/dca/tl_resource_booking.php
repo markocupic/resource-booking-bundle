@@ -83,7 +83,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = array(
 			'relation'   => array('type' => 'belongsTo', 'load' => 'lazy'),
 			'eval'=> array('mandatory' => true),
 			'sql'        => "int(10) unsigned NOT NULL default '0'",
-		),
+        ),
 		'tstamp'      => array(
 			'sorting'   => true,
 			'flag'      => 6,
