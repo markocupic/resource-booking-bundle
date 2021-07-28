@@ -37,6 +37,8 @@ Das Tool setzt auf [vue.js](https://vuejs.org/), [Fontawesome](https://fontaweso
 
 Anm: Bei der Installation wird neben den oben erwähnten Erweiterungen auch [codefog/contao-haste](https://github.com/codefog/contao-haste) mitinstalliert.
 
+## Benachrichtigung
+Benachrichtigung via [Contao Notification Center](https://github.com/terminal42/contao-notification_center) bei Buchung ist ein kostenpflichtiges Zusatzfeature. Bitte nehmen Sie per E-Mail mit dem Autor der Erweiterung [Kontakt](https://github.com/markocupic/resource-booking-bundle/blob/0080449a1a3fde63b1b9ad0b2fd0fd153ba82b4c/composer.json#L16) auf.
 
 ## Template mit zusätzlichen Mitgliederdaten erweitern
 Sollen zusätzliche Mitgliederdaten in der Buchungsübersicht angezeigt weden, müssen zwei Dinge angepasst werden.
