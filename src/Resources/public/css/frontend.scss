@@ -1,12 +1,15 @@
 $notBookableBg: #adb5bd8f;
 $bookableBg: rgba(115, 207, 97, 0.42);
 $fullyBookedBg: rgb(255, 222, 213);
+$bgColorAlertSuccess: $bookableBg;
+$bgColorAlertDanger: $fullyBookedBg;
 $loggedInUserIsHolderBg: rgba(3, 169, 244, 0.32);
 $iconBookingColor: #ffffff;
 $iconCancelBookingColor: #ffffff;
 $iconCancelBookingHoverColor: #98777e;
 $tableBorderColor: #ccc;
 $transitionSpeed: .8s;
+
 .custom-scroll-bar-thin {
   & {
     scrollbar-width: auto;
@@ -30,6 +33,22 @@ $transitionSpeed: .8s;
 }
 
 .mod_resourceBookingWeekcalendar {
+  .alert-danger {
+    background-color: $bgColorAlertDanger;
+    color: #000000;
+    .fas, .svg-inline--fa{
+      color: #ffffff;
+    }
+  }
+
+  .alert-success {
+    background-color: $bgColorAlertSuccess;
+    color: #000000;
+    .fas, .svg-inline--fa{
+      color: #ffffff;
+    }
+  }
+
   .resource-booking-app .vue-application {
     visibility: hidden;
   }
@@ -264,19 +283,6 @@ $transitionSpeed: .8s;
         max-width: 110px;
         word-break: break-all;
       }
-    }
-  }
-
-  .tl_error {
-    background-color: var(--danger);
-    padding: 0.5rem;
-  }
-
-  .table-no-border {
-    .layout-cell, .layout-cell {
-      border: none !important;
-      border: 0 !important;
-      border-color: transparent !important;
     }
   }
 

@@ -129,6 +129,7 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
                 ->prepareBeforeSend(true)
                 ->getAll()
         );
+
         $response->setStatusCode(200);
         $response->setPrivate();
         $response->setMaxAge(0);

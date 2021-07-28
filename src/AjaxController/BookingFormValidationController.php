@@ -56,7 +56,7 @@ final class BookingFormValidationController extends AbstractController implement
 
         $this->initialize();
 
-        $ajaxResponse->setStatus(AjaxResponse::STATUS_ERROR);
+        $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
         $ajaxResponse->setData('noDatesSelected', false);
         $ajaxResponse->setData('resourceIsAlreadyFullyBooked', false);
         $ajaxResponse->setData('bookingValidationProcessSucceeded', false);
@@ -101,6 +101,9 @@ final class BookingFormValidationController extends AbstractController implement
         }
 
         $ajaxResponse->setData('slotSelection', $slotCollection->fetchAll());
-        $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
+
+        if ($this->hasErrorMessage()) {
+            $ajaxResponse->setStatus(AjaxResponse::STATUS_ERROR);
+        }
     }
 }

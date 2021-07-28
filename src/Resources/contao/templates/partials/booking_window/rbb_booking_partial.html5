@@ -12,15 +12,15 @@
 
   <!-- Messages -->
   <template v-if="bookingWindow.response.messages">
-    <div class="message-box 1 mt-5">
-      <div class="alert alert-success pt-3 pb-3" v-if="bookingWindow.response.messages.confirmation">
-        {{ bookingWindow.response.messages.confirmation }}
+    <div class="message-box mt-5">
+      <div class="alert alert-success d-flex pt-3 pb-3" v-if="bookingWindow.response.messages.confirmation !== null">
+        <i class="fa-2x me-3 fas fa-check-circle"></i><span>{{ bookingWindow.response.messages.confirmation }}</span>
       </div>
-      <div class="alert alert-danger pt-3 pb-3" v-if="bookingWindow.response.messages.error">
-        {{ bookingWindow.response.messages.error }}
+      <div class="alert alert-danger d-flex pt-3 pb-3" v-if="bookingWindow.response.messages.error !== null">
+        <i class="fa-2x me-3 fas fa-exclamation-circle"></i><span>{{ bookingWindow.response.messages.error }}</span>
       </div>
-      <div class="alert alert-info pt-3 pb-3" v-if="bookingWindow.response.messages.info">
-        {{ bookingWindow.response.messages.info }}
+      <div class="alert alert-info d-flex pt-3 pb-3" v-if="bookingWindow.response.messages.info !== null">
+        <i class="fa-2x me-3 fas fa-info-circle"></i><span>{{ bookingWindow.response.messages.info }}</span>
       </div>
       <p v-if="bookingWindow.response.bookingProcessSucceeded">
         <small>{{trans::RBB.MSG.windowClosesAutomatically::contao_default}}</small>
