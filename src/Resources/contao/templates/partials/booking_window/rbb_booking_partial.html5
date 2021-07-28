@@ -68,7 +68,7 @@
         <!-- body -->
         <div class="layout-row" v-bind:class="row.rowData.cssRowClass" v-bind:data-row-index="rowIndex" v-for="(row, rowIndex) in rows">
           <div class="layout-cell time-slot-indicator">{{ timeSlots[rowIndex].timeSpanString }}</div>
-          <div class="layout-cell time-slot-cell" v-bind:data-day-index="slot.index" v-bind:data-isbookable="slot.isBookable && slot.isValidDate" v-bind:data-isbooked="slot.hasBookings" v-bind:data-isfullybooked="slot.isFullyBooked" v-bind:data-isinvaliddate="!slot.isValidDate" v-for="(slot, colIndex) in row.cellData">
+          <div class="layout-cell time-slot-cell" v-bind:data-day-index="slot.index" v-bind:data-isbookable="slot.isBookable && slot.isDateInPermittedRange" v-bind:data-isbooked="slot.hasBookings" v-bind:data-isfullybooked="slot.isFullyBooked" v-bind:data-isinvaliddate="!slot.isDateInPermittedRange" v-for="(slot, colIndex) in row.cellData">
             <div v-if="slot.isBookable && !slot.isFullyBooked">
               <div class="custom-control custom-checkbox">
                 <input class="custom-control-input" type="checkbox" v-bind:id="slot.bookingCheckboxId" v-bind:value="slot.bookingCheckboxValue" v-model="bookingWindow.selectedTimeSlots" v-on:change="bookingFormValidationRequest()">

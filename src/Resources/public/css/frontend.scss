@@ -225,7 +225,7 @@ $transitionSpeed: .8s;
     }
 
     // Change buttons z-index and opacity, when hovering
-    .layout-cell[data-iscancelable]:hover, .layout-cell[data-isbookable]:hover {
+    .layout-cell[data-userisloggedin][data-iscancelable]:hover, .layout-cell[data-userisloggedin][data-isbookable]:hover {
       .btn-link {
         z-index: 30;
         opacity: 1;

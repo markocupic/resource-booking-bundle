@@ -39,6 +39,7 @@ use Symfony\Component\Security\Core\Security;
  * @property string                            $startTimeString
  * @property string                            $endTimeString
  * @property MemberModel|null                  $user
+ * @property bool                              $userIsLoggedIn
  * @property string                            $timeSpanString
  * @property string                            $datimSpanString
  * @property bool                              $hasBookings
@@ -51,7 +52,7 @@ use Symfony\Component\Security\Core\Security;
  * @property ResourceBookingResourceModel|null $resource
  * @property int                               $pid
  * @property bool                              $isFullyBooked
- * @property bool                              $isValidDate
+ * @property bool                              $isDateInPermittedRange
  * @property string                            $cssClass
  * @property Collection|null                   $bookings
  * @property int                               $bookingCount
@@ -114,9 +115,9 @@ abstract class AbstractSlot implements SlotInterface
             /** @var MemberModel user */
             $memberModelAdapter = $this->framework->getAdapter(MemberModel::class);
             $this->user = $memberModelAdapter->findByPk($this->security->getUser()->id);
-            //$this->arrData['user'] = $this->user;
         }
 
+        $this->arrData['userIsLoggedIn'] = $this->user ? true : false;
         $this->arrData['resource'] = $resource;
         $this->arrData['startTime'] = $startTime;
         $this->arrData['endTime'] = $endTime;
@@ -132,7 +133,7 @@ abstract class AbstractSlot implements SlotInterface
         // This is the timestamp of a "beginn week weekday" by default this is a monday
         $this->arrData['bookingRepeatStopWeekTstamp'] = $bookingRepeatStopWeekTstamp;
         $this->arrData['pid'] = $resource->id;
-        $this->arrData['isValidDate'] = $this->hasValidDate();
+        $this->arrData['isDateInPermittedRange'] = $this->isDateInPermittedRange();
         $this->arrData['weekday'] = strtolower(date('l', $this->arrData['startTime']));
         $this->arrData['startTimeString'] = $dateAdapter->parse('H:i', $this->arrData['startTime']);
         $this->arrData['endTimeString'] = $dateAdapter->parse('H:i', $this->arrData['endTime']);
@@ -140,12 +141,10 @@ abstract class AbstractSlot implements SlotInterface
         $this->arrData['datimSpanString'] = sprintf('%s, %s: %s - %s', $dateAdapter->parse('D', $this->arrData['startTime']), $dateAdapter->parse($configAdapter->get('dateFormat'), $this->arrData['startTime']), $dateAdapter->parse('H:i', $this->arrData['startTime']), $dateAdapter->parse('H:i', $this->arrData['endTime']));
         $this->arrData['timeSpanString'] = $dateAdapter->parse('H:i', $this->arrData['startTime']).' - '.$dateAdapter->parse('H:i', $this->arrData['startTime']);
         $this->arrData['beginnWeekTimestampSelectedWeek'] = $dateHelperAdapter->getFirstDayOfCurrentWeek($appConfig, $this->arrData['startTime']);
-
         $this->arrData['isBookable'] = $this->isBookable();
         $this->arrData['enoughItemsAvailable'] = $this->enoughItemsAvailable();
         $this->arrData['itemsStillAvailable'] = $this->getItemsAvailable();
         $this->arrData['isFullyBooked'] = $this->isFullyBooked();
-
         $this->arrData['hasBookings'] = $this->hasBookings();
         $this->arrData['bookings'] = $this->getBookings();
         $this->arrData['bookingCount'] = $this->getBookingCount();
@@ -265,7 +264,7 @@ abstract class AbstractSlot implements SlotInterface
         return null;
     }
 
-    public function hasValidDate(): bool
+    public function isDateInPermittedRange(): bool
     {
         if ($this->arrData['endTime'] < time()) {
             return false;
@@ -308,7 +307,7 @@ abstract class AbstractSlot implements SlotInterface
             return false;
         }
 
-        if (!$this->hasValidDate()) {
+        if (!$this->isDateInPermittedRange()) {
             return false;
         }
 

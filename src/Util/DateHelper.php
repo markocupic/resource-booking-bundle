@@ -116,18 +116,18 @@ class DateHelper
     }
 
     /**
-     * Check if date is in range.
+     * Check if date is in the permitted range.
      */
-    public static function isValidDate(int $tstamp, array $arrAppConfig): bool
+    public static function isDateInPermittedRange(int $tstamp, array $arrAppConfig): bool
     {
         $intBackWeeks = $arrAppConfig['intBackWeeks'];
         $intAheadWeeks = $arrAppConfig['intAheadWeeks'];
 
         // Get the timestamp of the first and last possible weeks
-        $tstampFirstPossibleWeek = static::addWeeksToTime($intBackWeeks, static::getFirstDayOfCurrentWeek($arrAppConfig));
-        $tstampLastPossibleWeek = static::addWeeksToTime($intAheadWeeks, static::getFirstDayOfCurrentWeek($arrAppConfig));
+        $tstampFirstPermittedWeek = static::addWeeksToTime($intBackWeeks, static::getFirstDayOfCurrentWeek($arrAppConfig));
+        $tstampLastPermittedWeek = static::addWeeksToTime($intAheadWeeks, static::getFirstDayOfCurrentWeek($arrAppConfig));
 
-        if ($tstamp < $tstampFirstPossibleWeek || $tstamp > $tstampLastPossibleWeek) {
+        if ($tstamp < $tstampFirstPermittedWeek || $tstamp > $tstampLastPermittedWeek) {
             return false;
         }
         // Get numeric value of the weekday:  0 for sunday, 1 for monday, etc.

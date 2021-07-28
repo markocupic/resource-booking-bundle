@@ -202,7 +202,7 @@ class Initialize
         $this->sessionBag->set('activeWeekTstamp', $tstampCurrentWeek);
 
         // Get first and last possible week tstamp
-        $this->sessionBag->set('tstampFirstPossibleWeek', $dateHelperAdapter->addWeeksToTime($arrAppConfig['intBackWeeks'], $dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig)));
+        $this->sessionBag->set('tstampFirstPermittedWeek', $dateHelperAdapter->addWeeksToTime($arrAppConfig['intBackWeeks'], $dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig)));
 
         $intTstampLastPossibleWeek = $dateHelperAdapter->addWeeksToTime($arrAppConfig['intAheadWeeks'], $dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig));
 
@@ -217,6 +217,6 @@ class Initialize
                 $intTstampLastPossibleWeek = $dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig);
             }
         }
-        $this->sessionBag->set('tstampLastPossibleWeek', $intTstampLastPossibleWeek);
+        $this->sessionBag->set('tstampLastPermittedWeek', $intTstampLastPossibleWeek);
     }
 }

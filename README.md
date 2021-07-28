@@ -9,7 +9,16 @@ Ab Version 3.x kann eingestellt werden, wie viele Items einer Ressource buchbar 
 ## Rückwärtskompatibilität
 **!Achtung beim Update von Version 2.x auf 3.x ist es zu grossen Änderungen an den Templates gekommen. Unter anderem wurden die Templates für eine bessere Übersichtlichkeit gesplitet. Vorher angepasste Custom-Templates müssen neu geschrieben werden.**
 
+## Take a look
+
 ![sidebar navigation](https://github.com/markocupic/markocupic/blob/main/resource-booking-bundle/resource-booking-bundle.gif)
+
+*Buchungstabelle mit Wochenübersicht:*
+![Alt text](docs/screenshots/screenshot.png "Buchungstool im Frontend-Ansicht")
+
+*Buchungsfenster:*
+![Alt text](docs/screenshots/screenshot2.png "Buchungstool im Frontend-Ansicht")
+
 
 ## Konfiguration
 Nach der Installation mit dem Contao Manager müssen:
@@ -28,13 +37,6 @@ Das Tool setzt auf [vue.js](https://vuejs.org/), [Fontawesome](https://fontaweso
 
 Anm: Bei der Installation wird neben den oben erwähnten Erweiterungen auch [codefog/contao-haste](https://github.com/codefog/contao-haste) mitinstalliert.
 
-## Screenshots
-
-*Buchungstabelle mit Wochenübersicht:*
-![Alt text](docs/screenshots/screenshot.png "Buchungstool im Frontend-Ansicht")
-
-*Buchungsfenster:*
-![Alt text](docs/screenshots/screenshot2.png "Buchungstool im Frontend-Ansicht")
 
 ## Template mit zusätzlichen Mitgliederdaten erweitern
 Sollen zusätzliche Mitgliederdaten in der Buchungsübersicht angezeigt weden, müssen zwei Dinge angepasst werden.

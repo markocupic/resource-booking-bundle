@@ -424,7 +424,7 @@ class resourceBookingApp {
           }
 
           // Prevent bubbling invalid requests
-          if (tstamp === this.activeWeekTstamp || tstamp < this.filterBoard.tstampFirstPossibleWeek || tstamp > this.filterBoard.tstampLastPossibleWeek) {
+          if (tstamp === this.activeWeekTstamp || tstamp < this.filterBoard.tstampFirstPermittedWeek || tstamp > this.filterBoard.tstampLastPermittedWeek) {
             return false;
           }
 

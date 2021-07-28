@@ -102,25 +102,25 @@ final class ApplyFilterController extends AbstractController implements Controll
 
         // Get active week timestamp from post request
         $intTstampDate = (int) $request->request->get('date', 0);
-        $intTstampDate = $dateHelperAdapter->isValidDate($intTstampDate, $arrAppConfig) ? $intTstampDate : $dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig);
+        $intTstampDate = $dateHelperAdapter->isDateInPermittedRange($intTstampDate, $arrAppConfig) ? $intTstampDate : $dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig);
 
         // Validate $intTstampDate
-        $tstampFirstPossibleWeek = $this->sessionBag->get('tstampFirstPossibleWeek');
+        $tstampFirstPermittedWeek = $this->sessionBag->get('tstampFirstPermittedWeek');
 
-        if ($intTstampDate < $tstampFirstPossibleWeek) {
-            $intTstampDate = $tstampFirstPossibleWeek;
+        if ($intTstampDate < $tstampFirstPermittedWeek) {
+            $intTstampDate = $tstampFirstPermittedWeek;
         }
 
-        $tstampLastPossibleWeek = $this->sessionBag->get('tstampLastPossibleWeek');
+        $tstampLastPermittedWeek = $this->sessionBag->get('tstampLastPermittedWeek');
 
-        if ($intTstampDate > $tstampLastPossibleWeek) {
-            $intTstampDate = $tstampLastPossibleWeek;
+        if ($intTstampDate > $tstampLastPermittedWeek) {
+            $intTstampDate = $tstampLastPermittedWeek;
         }
 
         $this->sessionBag->set('activeWeekTstamp', (int) $intTstampDate);
 
         // Fetch refreshed data and send it to the browser
         $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
-        $ajaxResponse->setDataFromArray($this->refreshData());
+        $ajaxResponse->setDataFromArray($this->getRefreshedData());
     }
 }

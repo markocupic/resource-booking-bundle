@@ -38,7 +38,7 @@ trait RefreshDataTrait
     /**
      * @throws \Exception
      */
-    private function refreshData(): array
+    private function getRefreshedData(): array
     {
         $systemAdapter = $this->framework->getAdapter(System::class);
         $messageAdapter = $this->framework->getAdapter(Message::class);
@@ -72,7 +72,7 @@ trait RefreshDataTrait
         $arrData['filterBoard']['jumpPrevWeek'] = $this->getJumpWeekDate(-1);
 
         // Filter form: get date dropdown
-        $arrData['filterBoard']['weekSelection'] = $this->getWeekSelection((int) $this->sessionBag->get('tstampFirstPossibleWeek'), (int) $this->sessionBag->get('tstampLastPossibleWeek'), true);
+        $arrData['filterBoard']['weekSelection'] = $this->getWeekSelection((int) $this->sessionBag->get('tstampFirstPermittedWeek'), (int) $this->sessionBag->get('tstampLastPermittedWeek'), true);
 
         // Logged in user
         $arrData['userHasLoggedIn'] = false;
@@ -97,7 +97,7 @@ trait RefreshDataTrait
         ];
 
         // Get booking RepeatsSelection
-        $arrData['bookingRepeatsSelection'] = $this->getWeekSelection((int) $this->sessionBag->get('activeWeekTstamp'), (int) $this->sessionBag->get('tstampLastPossibleWeek'), false);
+        $arrData['bookingRepeatsSelection'] = $this->getWeekSelection((int) $this->sessionBag->get('activeWeekTstamp'), (int) $this->sessionBag->get('tstampLastPermittedWeek'), false);
 
         // Weekdays
         $arrData['weekdays'] = $this->getWeekdays($this->sessionBag->get('activeWeekTstamp'), $this->getModuleModelFromSession());
@@ -268,7 +268,7 @@ trait RefreshDataTrait
         // Get app config
         $arrAppConfig = $this->utils->getAppConfig();
 
-        if (!$dateHelperAdapter->isValidDate($jumpTime, $arrAppConfig)) {
+        if (!$dateHelperAdapter->isDateInPermittedRange($jumpTime, $arrAppConfig)) {
             $jumpTime = $this->sessionBag->get('activeWeekTstamp');
             $arrReturn['disabled'] = true;
         }

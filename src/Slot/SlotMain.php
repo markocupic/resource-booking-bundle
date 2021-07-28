@@ -26,7 +26,7 @@ class SlotMain extends AbstractSlot
      */
     public function isBookable(): bool
     {
-        if (!$this->hasValidDate()) {
+        if (!$this->isDateInPermittedRange()) {
             return false;
         }
 

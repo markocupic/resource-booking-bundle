@@ -47,6 +47,6 @@ final class RefreshDataController extends AbstractController implements Controll
     {
         $ajaxResponse = $ajaxRequestEvent->getAjaxResponse();
         $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
-        $ajaxResponse->setDataFromArray($this->refreshData());
+        $ajaxResponse->setDataFromArray($this->getRefreshedData());
     }
 }

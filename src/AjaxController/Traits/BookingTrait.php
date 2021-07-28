@@ -177,7 +177,7 @@ trait BookingTrait
             $slot = $slotCollection->current();
 
             if (!$slot->isBookable()) {
-                if (!$slot->hasValidDate()) {
+                if (!$slot->isDateInPermittedRange()) {
                     // Invalid time period
                     $this->setErrorMessage('RBB.ERR.invalidStartOrEndTime');
                 } elseif ($slot->isFullyBooked()) {
