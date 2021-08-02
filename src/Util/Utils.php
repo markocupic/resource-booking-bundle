@@ -28,11 +28,8 @@ class Utils
     {
         $this->framework = $framework;
 
-        $request = $requestStack->getCurrentRequest();
-
-        if (null !== $request) {
-            $this->session = $request->getSession()->getBag($bagName);
-        }
+        // Get session from request
+        $this->session = $requestStack->getSession()->getBag($bagName);
     }
 
     /**
