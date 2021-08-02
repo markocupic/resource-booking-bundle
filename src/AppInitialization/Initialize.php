@@ -51,7 +51,9 @@ class Initialize
         $this->bagName = $bagName;
 
         // Get session from request
-        $this->sessionBag = $requestStack->getSession()->getBag($bagName);
+        if (null !== ($request = $requestStack->getCurrentRequest())) {
+            $this->sessionBag = $request->getSession()->getBag($bagName);
+        }
     }
 
     /**

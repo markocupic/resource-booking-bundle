@@ -29,7 +29,9 @@ class Utils
         $this->framework = $framework;
 
         // Get session from request
-        $this->session = $requestStack->getSession()->getBag($bagName);
+        if (null !== ($request = $requestStack->getCurrentRequest())) {
+            $this->session = $request->getSession()->getBag($bagName);
+        }
     }
 
     /**
