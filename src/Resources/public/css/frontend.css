@@ -10,7 +10,7 @@
 }
 .custom-scroll-bar-thin::-webkit-scrollbar-track, .mod_resourceBookingWeekcalendar .resource-booking-table-window .layout-cell.time-slot-cell[data-isbooked=true]::-webkit-scrollbar-track, .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell.time-slot-cell[data-isbooked=true]::-webkit-scrollbar-track {
   background: #ffffff;
-}
+} 
 .custom-scroll-bar-thin::-webkit-scrollbar-thumb, .mod_resourceBookingWeekcalendar .resource-booking-table-window .layout-cell.time-slot-cell[data-isbooked=true]::-webkit-scrollbar-thumb, .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell.time-slot-cell[data-isbooked=true]::-webkit-scrollbar-thumb {
   background-color: #000000;
   border-radius: 10px;

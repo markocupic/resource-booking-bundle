@@ -27,7 +27,6 @@ use Markocupic\ResourceBookingBundle\Util\DateHelper;
 use Markocupic\ResourceBookingBundle\Util\Utils;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 
 /**
@@ -37,22 +36,24 @@ class Initialize
 {
     private ContaoFramework $framework;
     private RequestStack $requestStack;
-    private SessionInterface $session;
     private Utils $utils;
     private string $bagName;
-    private ArrayAttributeBag $sessionBag;
+    private ?ArrayAttributeBag $sessionBag = null;
 
     /**
      * Initialize constructor.
      */
-    public function __construct(ContaoFramework $framework, RequestStack $requestStack, SessionInterface $session, Utils $utils, string $bagName)
+    public function __construct(ContaoFramework $framework, RequestStack $requestStack, Utils $utils, string $bagName)
     {
         $this->framework = $framework;
         $this->requestStack = $requestStack;
-        $this->session = $session;
         $this->utils = $utils;
         $this->bagName = $bagName;
-        $this->sessionBag = $session->getBag($bagName);
+
+        // Get session from request
+        if (null !== ($request = $requestStack->getCurrentRequest())) {
+            $this->sessionBag = $request->getSession()->getBag($bagName);
+        }
     }
 
     /**

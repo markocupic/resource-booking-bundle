@@ -15,11 +15,10 @@ namespace Markocupic\ResourceBookingBundle\AjaxController;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\ModuleModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
+use Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag;
 use Markocupic\ResourceBookingBundle\User\LoggedInFrontendUser;
 use Markocupic\ResourceBookingBundle\Util\Utils;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\HttpFoundation\Session\SessionBagInterface;
-use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 /**
  * Class AbstractController.
@@ -30,7 +29,7 @@ abstract class AbstractController
     protected LoggedInFrontendUser $user;
     protected Utils $utils;
     protected RequestStack $requestStack;
-    protected SessionBagInterface $sessionBag;
+    protected ?ArrayAttributeBag $sessionBag = null;
     protected ?ResourceBookingResourceModel $activeResource = null;
     protected ?ModuleModel $moduleModel = null;
     protected ?string $errorMsg = null;
@@ -38,13 +37,17 @@ abstract class AbstractController
     /**
      * AbstractController constructor.
      */
-    public function __construct(ContaoFramework $framework, LoggedInFrontendUser $user, Utils $utils, RequestStack $requestStack, SessionInterface $session, string $bagName)
+    public function __construct(ContaoFramework $framework, LoggedInFrontendUser $user, Utils $utils, RequestStack $requestStack, string $bagName)
     {
         $this->framework = $framework;
         $this->user = $user;
         $this->utils = $utils;
         $this->requestStack = $requestStack;
-        $this->sessionBag = $session->getBag($bagName);
+
+        // Get session from request
+        if (null !== ($request = $requestStack->getCurrentRequest())) {
+            $this->sessionBag = $request->getSession()->getBag($bagName);
+        }
     }
 
     /**

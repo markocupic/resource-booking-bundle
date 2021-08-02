@@ -16,18 +16,23 @@ use Contao\Controller;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\ModuleModel;
 use Contao\System;
-use Symfony\Component\HttpFoundation\Session\SessionBagInterface;
-use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 class Utils
 {
     private ContaoFramework $framework;
-    private SessionBagInterface $session;
+    private ?ArrayAttributeBag $session = null;
 
-    public function __construct(ContaoFramework $framework, SessionInterface $session, string $bagName)
+    public function __construct(ContaoFramework $framework, RequestStack $requestStack, string $bagName)
     {
         $this->framework = $framework;
-        $this->session = $session->getBag($bagName);
+
+        $request = $requestStack->getCurrentRequest();
+
+        if (null !== $request) {
+            $this->session = $request->getSession()->getBag($bagName);
+        }
     }
 
     /**
