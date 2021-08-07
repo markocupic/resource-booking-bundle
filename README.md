@@ -1,6 +1,6 @@
 ![Logo](https://github.com/markocupic/markocupic/blob/main/logo.png)
 
-# resource-booking-bundle 
+# resource-booking-bundle
 Mit diesem Modul für Contao kann eine einfache Online-Ressourcenverwaltung betrieben werden.
 Das Modul wurde für eine Schule entwickelt, wo ein Zimmerreservations-System benötigt wurde. Natürlich kann das Plugin auch im Zusammenhang mit anderen Ressourcen betrieben werden.
 
@@ -12,6 +12,7 @@ Ab Version 3.x kann eingestellt werden, wie viele Items einer Ressource buchbar 
 ## Take a look
 
 ![preview animated](https://github.com/markocupic/markocupic/blob/main/resource-booking-bundle/resource-booking-bundle.gif)
+
 [Downlaod als mp4](https://github.com/markocupic/markocupic/blob/main/resource-booking-bundle/resource-booking-bundle.mp4?raw=true)
 
 *Buchungstabelle mit Wochenübersicht:*
@@ -272,3 +273,5 @@ markocupic_resource_booking:
             intBackWeeks: -10
             intAheadWeeks: 60
 ```
+
+
