@@ -23,7 +23,10 @@ use Doctrine\DBAL\Connection;
  */
 class AddBookingUuid extends AbstractMigration
 {
-    private Connection $connection;
+    /**
+     * @var Connection
+     */
+    private $connection;
 
     /**
      * AddBookingUuid constructor.

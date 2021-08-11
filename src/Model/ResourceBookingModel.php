@@ -13,7 +13,7 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\Model;
 
 use Contao\Model;
-use Contao\Model\Collection;
+use Model\Collection;
 
 /**
  * Class ResourceBookingModel.
@@ -45,7 +45,7 @@ class ResourceBookingModel extends Model
      *
      * @return ResourceBookingModel
      */
-    public static function findOneByResourceIdStarttimeAndEndtime($objResource, $starttime, $endtime): ?self
+    public static function findOneByResourceIdStarttimeAndEndtime($objResource, $starttime, $endtime)
     {
         $arrColumn = ['pid=?', 'startTime=?', 'endTime=?'];
         $arrValues = [$objResource->id, $starttime, $endtime];
@@ -57,24 +57,11 @@ class ResourceBookingModel extends Model
      * @param $objResource
      * @param $starttime
      * @param $endtime
-     */
-    public static function findByResourceStarttimeAndEndtime($objResource, $starttime, $endtime): ?Collection
-    {
-        $arrColumn = ['pid=?', 'startTime=?', 'endTime=?'];
-        $arrValues = [$objResource->id, $starttime, $endtime];
-
-        return self::findBy($arrColumn, $arrValues);
-    }
-
-    /**
-     * @param $objResource
-     * @param $starttime
-     * @param $endtime
      * @param $memberid
      *
      * @return ResourceBookingModel
      */
-    public static function findOneByResourceIdStarttimeEndtimeAndMember($objResource, $starttime, $endtime, $memberid): ?self
+    public static function findOneByResourceIdStarttimeEndtimeAndMember($objResource, $starttime, $endtime, $memberid)
     {
         $arrColumn = ['pid=?', 'startTime=?', 'endTime=?', 'member=?'];
         $arrValues = [$objResource->id, $starttime, $endtime, $memberid];

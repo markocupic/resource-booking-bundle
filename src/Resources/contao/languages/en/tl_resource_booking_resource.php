@@ -12,7 +12,7 @@
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['title_legend'] = 'Title settings';
 
 // Operations
-$GLOBALS['TL_LANG']['tl_resource_booking_resource']['bookings'] = 'Watch bookings from resource with ID %s';
+$GLOBALS['TL_LANG']['tl_resource_booking_resource']['bookingsmeta'] = 'Watch booking';
 
 // Global operations
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['new'] = array('New', 'Add new resource.');
@@ -22,7 +22,6 @@ $GLOBALS['TL_LANG']['tl_resource_booking_resource']['published'] = array('Publis
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['title'] = array('Title');
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['description'] = array('Description');
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['timeSlotType'] = array('Booking timetable');
-$GLOBALS['TL_LANG']['tl_resource_booking_resource']['itemsAvailable'] = array('Available items (Default: 1).', 'Please enter a natural digit larger then 0.');
 
 
 

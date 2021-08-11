@@ -141,7 +141,14 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource_type'] = array(
  */
 class tl_resource_booking_resource_type extends Backend
 {
-
+	/**
+	 * Import the back end user object
+	 */
+	public function __construct()
+	{
+		parent::__construct();
+		$this->import('BackendUser', 'User');
+	}
 
 	/**
 	 * Return the edit header button

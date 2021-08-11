@@ -13,7 +13,7 @@ use Contao\DataContainer;
 use Contao\Date;
 use Contao\Input;
 use Contao\Message;
-use Markocupic\ResourceBookingBundle\Util\UtcTimeHelper;
+use Markocupic\ResourceBookingBundle\Helper\UtcTimeHelper;
 
 /**
  * Table tl_resource_booking_time_slot
@@ -122,6 +122,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = array(
 			'sql' => "int(10) unsigned NOT NULL default '0'"
 		),
 		'title'       => array(
+			'label'     => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['title'],
 			'exclude'   => true,
 			'search'    => true,
 			'inputType' => 'text',
@@ -129,6 +130,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = array(
 			'sql'       => "varchar(255) NOT NULL default ''"
 		),
 		'published'   => array(
+			'label'     => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['published'],
 			'exclude'   => true,
 			'search'    => true,
 			'sorting'   => true,
@@ -139,6 +141,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = array(
 			'sql'       => "char(1) NOT NULL default ''",
 		),
 		'description' => array(
+			'label'     => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['description'],
 			'exclude'   => true,
 			'search'    => true,
 			'inputType' => 'textarea',
@@ -146,6 +149,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = array(
 			'sql'       => "mediumtext NULL"
 		),
 		'startTime'   => array(
+			'label'         => &$GLOBALS['TL_LANG']['tl_calendar_events']['startTime'],
 			'default'       => time(),
 			'exclude'       => true,
 			'filter'        => true,
@@ -162,6 +166,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = array(
 			'sql'           => "int(10) unsigned NOT NULL default '0'",
 		),
 		'endTime'     => array(
+			'label'         => &$GLOBALS['TL_LANG']['tl_calendar_events']['endTime'],
 			'default'       => time(),
 			'exclude'       => true,
 			'inputType'     => 'text',
@@ -185,11 +190,18 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = array(
 );
 
 /**
- * Class tl_resource_booking_time_slot
+ * Provide miscellaneous methods that are used by the data configuration array.
  */
 class tl_resource_booking_time_slot extends Backend
 {
-
+	/**
+	 * Import the back end user object
+	 */
+	public function __construct()
+	{
+		parent::__construct();
+		$this->import('Contao\BackendUser', 'User');
+	}
 
 	/**
 	 * @param  array  $row

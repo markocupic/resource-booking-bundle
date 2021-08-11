@@ -9,7 +9,6 @@
  */
 
 use Contao\Backend;
-use Markocupic\ResourceBookingBundle\Controller\FrontendModule\ResourceBookingWeekcalendarController;
 
 /**
  * Table tl_resource_booking
@@ -71,7 +70,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = array(
 	),
 	// Palettes
 	'palettes' => array(
-		'default' => '{booking_legend},title,itemsBooked,member,bookingUuid,description;{module_legend},moduleId;{time_legend},startTime,endTime',
+		'default' => '{title_legend},title,description,member,bookingUuid;{time_legend},startTime,endTime',
 	),
 	// Fields
 	'fields'   => array(
@@ -81,36 +80,27 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = array(
 		'pid'         => array(
 			'foreignKey' => 'tl_resource_booking_resource.title',
 			'relation'   => array('type' => 'belongsTo', 'load' => 'lazy'),
-			'eval'=> array('mandatory' => true),
 			'sql'        => "int(10) unsigned NOT NULL default '0'",
-        ),
+		),
 		'tstamp'      => array(
 			'sorting'   => true,
 			'flag'      => 6,
 			'sql' => "int(10) unsigned NOT NULL default '0'"
 		),
 		'timeSlotId'  => array(
-            'eval'=> array('mandatory' => true),
-            'sql' => "int(10) unsigned NOT NULL default '0'",
+			'sql' => "int(10) unsigned NOT NULL default '0'",
 		),
-        'moduleId'         => array(
-            'exclude'    => true,
-            'inputType' => 'select',
-            'options_callback' => array('tl_resource_booking','getRbbModules'),
-            'foreignKey' => 'tl_module.name',
-            'relation'   => array('type' => 'belongsTo', 'load' => 'lazy'),
-            'eval'=> array('mandatory' => true),
-            'sql'        => "int(10) unsigned NOT NULL default '0'",
-        ),
 		'bookingUuid' => array(
+			'label'     => &$GLOBALS['TL_LANG']['tl_resource_booking']['bookingUuid'],
 			'search'    => true,
 			'sorting'   => true,
 			'filter'    => true,
 			'inputType' => 'text',
-			'eval'      => array('mandatory' => true, 'readonly' => true, 'doNotCopy' => true, 'tl_class' => 'w50'),
+			'eval'      => array('readonly' => true, 'doNotCopy' => true, 'tl_class' => 'w50'),
 			'sql'       => "varchar(64) NOT NULL default ''"
 		),
 		'member'      => array(
+			'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking']['member'],
 			'exclude'    => true,
 			'search'     => false,
 			'sorting'    => false,
@@ -122,6 +112,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = array(
 			'sql'        => "int(10) unsigned NOT NULL default '0'",
 		),
 		'title'       => array(
+			'label'     => &$GLOBALS['TL_LANG']['tl_resource_booking']['title'],
 			'exclude'   => true,
 			'search'    => true,
 			'sorting'   => true,
@@ -130,22 +121,15 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = array(
 			'sql'       => "varchar(255) NOT NULL default ''"
 		),
 		'description' => array(
+			'label'     => &$GLOBALS['TL_LANG']['tl_resource_booking']['description'],
 			'exclude'   => true,
 			'search'    => true,
 			'inputType' => 'textarea',
 			'eval'      => array('tl_class' => 'clr'),
 			'sql'       => "mediumtext NULL"
 		),
-        'itemsBooked'      => array(
-            'exclude'    => true,
-            'search'     => false,
-            'sorting'    => false,
-            'filter'     => true,
-            'inputType' => 'text',
-            'eval'       => array('mandatory' => true, 'rgxp' => 'natural', 'tl_class' => 'w50'),
-            'sql'        => "int(10) unsigned NOT NULL default '1'",
-        ),
 		'startTime'   => array(
+			'label'     => &$GLOBALS['TL_LANG']['tl_resource_booking']['startTime'],
 			'default'   => time(),
 			'sorting'   => true,
 			'exclude'   => true,
@@ -155,6 +139,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = array(
 			'sql'       => "int(10) NULL"
 		),
 		'endTime'     => array(
+			'label'         => &$GLOBALS['TL_LANG']['tl_resource_booking']['endTime'],
 			'sorting'       => true,
 			'default'       => time(),
 			'exclude'       => true,
@@ -170,23 +155,16 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = array(
 );
 
 /**
- * Class tl_resource_booking
+ * Provide miscellaneous methods that are used by the data configuration array.
  */
 class tl_resource_booking extends Backend
 {
-
-	public function getRbbModules(): array
-    {
-        $opt = [];
-        $objDb = $this->Database
-            ->prepare('SELECT * FROM tl_module WHERE type=?')
-            ->execute(ResourceBookingWeekcalendarController::TYPE);
-
-        while($objDb->next())
-        {
-            $opt[$objDb->id] = $objDb->name;
-        }
-
-        return $opt;
-    }
+	/**
+	 * Import the back end user object
+	 */
+	public function __construct()
+	{
+		parent::__construct();
+		$this->import('BackendUser', 'User');
+	}
 }

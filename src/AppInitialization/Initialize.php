@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\AppInitialization;
 
+use Contao\Config;
 use Contao\Controller;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Environment;
@@ -20,13 +21,13 @@ use Contao\PageModel;
 use Contao\StringUtil;
 use Haste\Util\Url;
 use Markocupic\ResourceBookingBundle\AppInitialization\Helper\ModuleKey;
+use Markocupic\ResourceBookingBundle\Helper\DateHelper;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceTypeModel;
 use Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag;
-use Markocupic\ResourceBookingBundle\Util\DateHelper;
-use Markocupic\ResourceBookingBundle\Util\Utils;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 
 /**
@@ -34,26 +35,41 @@ use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
  */
 class Initialize
 {
-    private ContaoFramework $framework;
-    private RequestStack $requestStack;
-    private Utils $utils;
-    private string $bagName;
-    private ?ArrayAttributeBag $sessionBag = null;
+    /**
+     * @var ContaoFramework
+     */
+    private $framework;
+
+    /**
+     * @var SessionInterface
+     */
+    private $session;
+
+    /**
+     * @var RequestStack
+     */
+    private $requestStack;
+
+    /**
+     * @var string
+     */
+    private $bagName;
+
+    /**
+     * @var ArrayAttributeBag
+     */
+    private $sessionBag;
 
     /**
      * Initialize constructor.
      */
-    public function __construct(ContaoFramework $framework, RequestStack $requestStack, Utils $utils, string $bagName)
+    public function __construct(ContaoFramework $framework, SessionInterface $session, RequestStack $requestStack, string $bagName)
     {
         $this->framework = $framework;
+        $this->session = $session;
         $this->requestStack = $requestStack;
-        $this->utils = $utils;
         $this->bagName = $bagName;
-
-        // Get session from request
-        if (null !== ($request = $requestStack->getCurrentRequest())) {
-            $this->sessionBag = $request->getSession()->getBag($bagName);
-        }
+        $this->sessionBag = $session->getBag($bagName);
     }
 
     /**
@@ -72,6 +88,9 @@ class Initialize
 
         /** @var Environment $environmentAdapter */
         $environmentAdapter = $this->framework->getAdapter(Environment::class);
+
+        /** @var Config $configAdapter */
+        $configAdapter = $this->framework->getAdapter(Config::class);
 
         /** @var StringUtil $stringUtilAdapter */
         $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
@@ -114,6 +133,18 @@ class Initialize
 
         // Save page model id to session
         $this->sessionBag->set('pageModelId', $objPageModel->id);
+
+        // Set language
+        if (!empty($objPageModel->language)) {
+            $language = $objPageModel->language;
+        } elseif (!empty($objPageModel->rootLanguage)) {
+            $language = $objPageModel->rootLanguage;
+        } elseif (!empty($objPageModel->rootFallbackLanguage)) {
+            $language = $objPageModel->rootFallbackLanguage;
+        } else {
+            $language = 'en';
+        }
+        $this->sessionBag->set('language', $language);
 
         // Set resType by url param
         $blnRedirect = false;
@@ -196,28 +227,37 @@ class Initialize
             }
         }
 
-        $arrAppConfig = $this->utils->getAppConfig();
-
         // Set active week timestamp
-        $tstampCurrentWeek = (int) $this->sessionBag->get('activeWeekTstamp', $dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig));
+        $tstampCurrentWeek = (int) $this->sessionBag->get('activeWeekTstamp', $dateHelperAdapter->getMondayOfCurrentWeek());
         $this->sessionBag->set('activeWeekTstamp', $tstampCurrentWeek);
 
-        // Get first and last possible week tstamp
-        $this->sessionBag->set('tstampFirstPermittedWeek', $dateHelperAdapter->addWeeksToTime($arrAppConfig['intBackWeeks'], $dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig)));
+        // Overwrite rbb_intAheadWeeks from module settings
+        if ((int) $objModuleModel->resourceBooking_intAheadWeek > 0) {
+            $configAdapter->set('rbb_intAheadWeeks', (int) $objModuleModel->resourceBooking_intAheadWeek);
+        }
 
-        $intTstampLastPossibleWeek = $dateHelperAdapter->addWeeksToTime($arrAppConfig['intAheadWeeks'], $dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig));
+        // Get intBackWeeks && intAheadWeeks
+        $intBackWeeks = (int) $configAdapter->get('rbb_intBackWeeks');
+        $this->sessionBag->set('intBackWeeks', $intBackWeeks);
+        $intAheadWeeks = (int) $configAdapter->get('rbb_intAheadWeeks');
+        $this->sessionBag->set('intAheadWeeks', $intAheadWeeks);
+
+        // Get first and last possible week tstamp
+        $this->sessionBag->set('tstampFirstPossibleWeek', $dateHelperAdapter->addWeeksToTime($intBackWeeks, $dateHelperAdapter->getMondayOfCurrentWeek()));
+
+        $intTstampLastPossibleWeek = $dateHelperAdapter->addWeeksToTime($intAheadWeeks, $dateHelperAdapter->getMondayOfCurrentWeek());
 
         if ($objModuleModel->resourceBooking_addDateStop) {
-            $intTstampStop = $dateHelperAdapter->getFirstDayOfWeek($arrAppConfig, $objModuleModel->resourceBooking_dateStop);
+            $intTstampStop = $dateHelperAdapter->getMondayOfWeekDate($objModuleModel->resourceBooking_dateStop);
 
             if ($intTstampStop < $intTstampLastPossibleWeek) {
                 $intTstampLastPossibleWeek = $intTstampStop;
             }
 
             if ($intTstampStop < time()) {
-                $intTstampLastPossibleWeek = $dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig);
+                $intTstampLastPossibleWeek = $dateHelperAdapter->getMondayOfCurrentWeek();
             }
         }
-        $this->sessionBag->set('tstampLastPermittedWeek', $intTstampLastPossibleWeek);
+        $this->sessionBag->set('tstampLastPossibleWeek', $intTstampLastPossibleWeek);
     }
 }

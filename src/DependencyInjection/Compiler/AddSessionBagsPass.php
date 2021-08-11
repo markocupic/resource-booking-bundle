@@ -23,7 +23,7 @@ class AddSessionBagsPass implements CompilerPassInterface
 {
     public function process(ContainerBuilder $container): void
     {
-        if (!$container->has('session')) {
+        if (!$container->hasDefinition('session')) {
             return;
         }
 

@@ -22,11 +22,22 @@ use Symfony\Contracts\EventDispatcher\Event;
  */
 class PreCancelingEvent extends Event
 {
-    public const NAME = 'rbb.event.pre_canceling';
+    const NAME = 'rbb.event.pre_canceling';
 
-    private ?Collection $bookingCollection;
-    private FrontendUser $user;
-    private ArrayAttributeBag $sessionBag;
+    /**
+     * @var Collection
+     */
+    private $bookingCollection;
+
+    /**
+     * @var FrontendUser
+     */
+    private $user;
+
+    /**
+     * @var ArrayAttributeBag
+     */
+    private $sessionBag;
 
     /**
      * PreCancelingEvent constructor.

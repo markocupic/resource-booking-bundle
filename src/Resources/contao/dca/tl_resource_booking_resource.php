@@ -52,19 +52,23 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = array(
 		),
 		'operations'        => array(
 			'edit'     => array(
+				'label' => &$GLOBALS['TL_LANG']['tl_resource_booking_resource']['editmeta'],
 				'href'  => 'act=edit',
 				'icon'  => 'edit.gif',
 			),
 			'bookings' => array(
+				'label' => &$GLOBALS['TL_LANG']['tl_resource_booking_resource']['bookingsmeta'],
 				'href'  => 'table=tl_resource_booking',
-				'icon'  => RbbConfig::RBB_ASSET_PATH . '/icons/calendar.svg',
+				'icon'  => RbbConfig::MOD_RESOURCE_BOOKING_ASSET_PATH . '/icons/calendar.svg',
 			),
 			'delete'   => array(
+				'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking_resource']['delete'],
 				'href'       => 'act=delete',
 				'icon'       => 'delete.gif',
 				'attributes' => 'onclick="if(!confirm(\'' . $GLOBALS['TL_LANG']['MSC']['deleteConfirm'] . '\'))return false;Backend.getScrollOffset()"',
 			),
 			'toggle'   => array(
+				'label'                => &$GLOBALS['TL_LANG']['tl_resource_booking_resource']['toggle'],
 				'attributes'           => 'onclick="Backend.getScrollOffset();"',
 				'haste_ajax_operation' => array(
 					'field'   => 'published',
@@ -81,6 +85,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = array(
 				)
 			),
 			'show'     => array(
+				'label' => &$GLOBALS['TL_LANG']['tl_resource_booking_resource']['show'],
 				'href'  => 'act=show',
 				'icon'  => 'show.gif',
 			),
@@ -88,7 +93,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = array(
 	),
 	// Palettes
 	'palettes' => array(
-		'default' => '{title_legend},title,description,itemsAvailable,timeSlotType',
+		'default' => '{title_legend},title,description,timeSlotType',
 	),
 	// Fields
 	'fields'   => array(
@@ -104,6 +109,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = array(
 			'sql' => "int(10) unsigned NOT NULL default '0'",
 		),
 		'title'        => array(
+			'label'     => &$GLOBALS['TL_LANG']['tl_resource_booking_resource']['title'],
 			'exclude'   => true,
 			'search'    => true,
 			'inputType' => 'text',
@@ -112,6 +118,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = array(
 			'sql'       => "varchar(255) NOT NULL default ''"
 		),
 		'published'    => array(
+			'label'     => &$GLOBALS['TL_LANG']['tl_resource_booking_resource']['published'],
 			'exclude'   => true,
 			'search'    => true,
 			'sorting'   => true,
@@ -122,22 +129,15 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = array(
 			'sql'       => "char(1) NOT NULL default ''",
 		),
 		'description'  => array(
+			'label'     => &$GLOBALS['TL_LANG']['tl_resource_booking_resource']['description'],
 			'exclude'   => true,
 			'search'    => true,
 			'inputType' => 'textarea',
 			'eval'      => array('tl_class' => 'clr'),
 			'sql'       => "mediumtext NULL"
 		),
-        'itemsAvailable'      => array(
-            'exclude'    => true,
-            'search'     => false,
-            'sorting'    => false,
-            'filter'     => true,
-            'inputType' => 'text',
-            'eval'       => array('mandatory' => true, 'rgxp' => 'custom', 'customRgxp' => '/^[1-9]\d*$/', 'tl_class' => 'w50'),
-            'sql'        => "int(10) unsigned NOT NULL default '1'",
-        ),
 		'timeSlotType' => array(
+			'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking_resource']['timeSlotType'],
 			'inputType'  => 'select',
 			'foreignKey' => 'tl_resource_booking_time_slot_type.title',
 			'eval'       => array('mandatory' => true, 'tl_class' => 'clr'),
@@ -148,10 +148,18 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = array(
 );
 
 /**
- * Class tl_resource_booking_resource
+ * Provide miscellaneous methods that are used by the data configuration array.
  */
 class tl_resource_booking_resource extends Backend
 {
+	/**
+	 * Import the back end user object
+	 */
+	public function __construct()
+	{
+		parent::__construct();
+		$this->import('BackendUser', 'User');
+	}
 
 	/**
 	 * @param $row

@@ -10,10 +10,10 @@ declare(strict_types=1);
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
-namespace Markocupic\ResourceBookingBundle\Util;
+namespace Markocupic\ResourceBookingBundle\Helper;
 
+use Contao\Config;
 use Contao\Date;
-use Markocupic\ResourceBookingBundle\Config\RbbConfig;
 
 /**
  * Class DateHelper.
@@ -61,26 +61,19 @@ class DateHelper
     }
 
     /**
-     * By default this is the timestamp of a monday.
+     * @return false|int
      */
-    public static function getFirstDayOfCurrentWeek(array $arrAppConfig, int $timestamp = null): int
+    public static function getMondayOfCurrentWeek(): int
     {
-        if (!$timestamp) {
-            $timestamp = time();
-        }
-
-        $beginnWeek = $arrAppConfig['beginnWeek'];
-
-        return strtotime(sprintf('%s this week', $beginnWeek), $timestamp);
+        return strtotime('monday this week');
     }
 
     /**
-     * Return beginn weekday of the week the timestamp is in
-     * By default this is a monday.
+     * Return monday of the week the timestamp is in.
      *
      * @param null $tstamp
      */
-    public function getFirstDayOfWeek(array $arrAppConfig, $tstamp = null): int
+    public function getMondayOfWeekDate($tstamp = null): int
     {
         if (null === $tstamp) {
             $tstamp = time();
@@ -90,18 +83,14 @@ class DateHelper
 
         $date->setTime(0, 0, 0);
 
-        $beginnWeek = $arrAppConfig['beginnWeek'];
-
-        $key = array_search($beginnWeek, RbbConfig::RBB_WEEKDAYS, true);
-
-        if ($key === $date->format('N')) {
-            // If the date is already configured beginn week day, return it as-is
+        if (1 === $date->format('N')) {
+            // If the date is already a Monday, return it as-is
             return $date->getTimestamp();
         }
 
-        // Otherwise, return the date of the nearest "beginn week day" in the past
-        // by default this is a monday
-        return $date->modify(sprintf('last %s', $beginnWeek))->getTimestamp();
+        // Otherwise, return the date of the nearest Monday in the past
+        // This includes Sunday in the previous week instead of it being the start of a new week
+        return $date->modify('last monday')->getTimestamp();
     }
 
     /**
@@ -116,18 +105,18 @@ class DateHelper
     }
 
     /**
-     * Check if date is in the permitted range.
+     * Check if date is in range.
      */
-    public static function isDateInPermittedRange(int $tstamp, array $arrAppConfig): bool
+    public static function isValidDate(int $tstamp): bool
     {
-        $intBackWeeks = $arrAppConfig['intBackWeeks'];
-        $intAheadWeeks = $arrAppConfig['intAheadWeeks'];
+        $intBackWeeks = (int) Config::get('rbb_intBackWeeks');
+        $intAheadWeeks = (int) Config::get('rbb_intAheadWeeks');
 
         // Get the timestamp of the first and last possible weeks
-        $tstampFirstPermittedWeek = static::addWeeksToTime($intBackWeeks, static::getFirstDayOfCurrentWeek($arrAppConfig));
-        $tstampLastPermittedWeek = static::addWeeksToTime($intAheadWeeks, static::getFirstDayOfCurrentWeek($arrAppConfig));
+        $tstampFirstPossibleWeek = static::addWeeksToTime($intBackWeeks, static::getMondayOfCurrentWeek());
+        $tstampLastPossibleWeek = static::addWeeksToTime($intAheadWeeks, static::getMondayOfCurrentWeek());
 
-        if ($tstamp < $tstampFirstPermittedWeek || $tstamp > $tstampLastPermittedWeek) {
+        if ($tstamp < $tstampFirstPossibleWeek || $tstamp > $tstampLastPossibleWeek) {
             return false;
         }
         // Get numeric value of the weekday:  0 for sunday, 1 for monday, etc.
