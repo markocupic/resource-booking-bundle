@@ -40,7 +40,7 @@
       </div>
 
       <div class="booking-preview collapse mt-5" id="bookingPreview_<?= $this->moduleKey ?>">
-        <div class="layout-table">
+        <div class="layout-table booking-preview-table">
           <div class="layout-row d-flex" v-bind:class="!slot.isBookable ? 'not-bookable' : 'bookable'" v-for="(slot, index) in bookingWindow.response.slotSelection">
             <div class="layout-cell">
               <small>{{ slot.datimSpanString }}: </small>

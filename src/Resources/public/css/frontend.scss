@@ -328,21 +328,6 @@ $transitionSpeed: .8s;
       font-size: x-large;
     }
 
-    .booking-preview.table > tbody {
-      tr td {
-        padding-left: .25rem;
-        padding-right: .25rem;
-      }
-
-      tr.bookable td {
-        background-color: $bookableBg;
-      }
-
-      tr.not-bookable td {
-        background-color: $notBookableBg;
-      }
-    }
-
     .timeSpanSelect option[selected] {
       background-color: #149efb;
     }

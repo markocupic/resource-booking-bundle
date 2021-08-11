@@ -10,7 +10,7 @@
 }
 .custom-scroll-bar-thin::-webkit-scrollbar-track, .mod_resourceBookingWeekcalendar .resource-booking-table-window .layout-cell.time-slot-cell[data-isbooked=true]::-webkit-scrollbar-track, .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell.time-slot-cell[data-isbooked=true]::-webkit-scrollbar-track {
   background: #ffffff;
-} 
+}
 .custom-scroll-bar-thin::-webkit-scrollbar-thumb, .mod_resourceBookingWeekcalendar .resource-booking-table-window .layout-cell.time-slot-cell[data-isbooked=true]::-webkit-scrollbar-thumb, .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell.time-slot-cell[data-isbooked=true]::-webkit-scrollbar-thumb {
   background-color: #000000;
   border-radius: 10px;
@@ -234,16 +234,6 @@
   border: 0;
   border-left: 1px solid #ffffff;
   font-size: x-large;
-}
-.mod_resourceBookingWeekcalendar .booking-window .booking-preview.table > tbody tr td {
-  padding-left: 0.25rem;
-  padding-right: 0.25rem;
-}
-.mod_resourceBookingWeekcalendar .booking-window .booking-preview.table > tbody tr.bookable td {
-  background-color: rgba(115, 207, 97, 0.42);
-}
-.mod_resourceBookingWeekcalendar .booking-window .booking-preview.table > tbody tr.not-bookable td {
-  background-color: #e9ecef;
 }
 .mod_resourceBookingWeekcalendar .booking-window .timeSpanSelect option[selected] {
   background-color: #149efb;
