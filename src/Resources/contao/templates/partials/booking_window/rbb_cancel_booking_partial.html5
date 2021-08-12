@@ -29,7 +29,7 @@
       <div class="alert alert-info pt-3 pb-3" v-if="bookingWindow.response.messages.info !== null">
         <i class="fa-2x me-3 fas fa-info-circle"></i><span>{{ bookingWindow.response.messages.info }}</span>
       </div>
-      <p v-if="bookingWindow.response.cancelBookingProcessSucceeded">
+      <p v-if="bookingWindow.response.cancelBookingProcessSucceeded" class="help-info">
         <small>{{trans::RBB.MSG.windowClosesAutomatically::contao_default}}</small>
       </p>
     </div>
