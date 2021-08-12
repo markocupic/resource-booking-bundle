@@ -6,7 +6,7 @@ $bgColorAlertDanger: $fullyBookedBg;
 $loggedInUserIsHolderBg: rgba(3, 169, 244, 0.32);
 $iconBookingColor: #ffffff;
 $iconCancelBookingColor: #ffffff;
-$iconCancelBookingHoverColor: #98777e;
+$iconCancelBookingHoverColor: red;
 $tableBorderColor: #ccc;
 $transitionSpeed: .8s;
 
@@ -36,7 +36,8 @@ $transitionSpeed: .8s;
   .alert-danger {
     background-color: $bgColorAlertDanger;
     color: #000000;
-    .fas, .svg-inline--fa{
+
+    .fas, .svg-inline--fa {
       color: #ffffff;
     }
   }
@@ -44,7 +45,8 @@ $transitionSpeed: .8s;
   .alert-success {
     background-color: $bgColorAlertSuccess;
     color: #000000;
-    .fas, .svg-inline--fa{
+
+    .fas, .svg-inline--fa {
       color: #ffffff;
     }
   }
@@ -69,6 +71,11 @@ $transitionSpeed: .8s;
 
   // filter form (restype-, res- and week selector
   .resource-booking-form {
+    > .row {
+      display: flex;
+      align-items: baseline;
+    }
+
     .week-select {
       option.past-week {
         color: #8e8e8e;

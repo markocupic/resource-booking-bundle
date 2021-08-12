@@ -46,6 +46,10 @@
 .mod_resourceBookingWeekcalendar .resource-booking-app .loading-spinner {
   color: #d8d8d8;
 }
+.mod_resourceBookingWeekcalendar .resource-booking-form > .row {
+  display: flex;
+  align-items: baseline;
+}
 .mod_resourceBookingWeekcalendar .resource-booking-form .week-select option.past-week {
   color: #8e8e8e;
 }
@@ -182,7 +186,7 @@
   opacity: 1;
 }
 .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell[data-userisloggedin][data-iscancelable]:hover .btn-link > .icon-cancel-booking, .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell[data-userisloggedin][data-isbookable]:hover .btn-link > .icon-cancel-booking {
-  color: #98777e !important;
+  color: red !important;
   transition: color 0.8s;
 }
 .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell[data-userisloggedin][data-iscancelable]:hover .description-box, .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell[data-userisloggedin][data-iscancelable]:hover .owner-box, .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell[data-userisloggedin][data-iscancelable]:hover .item-counter-box, .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell[data-userisloggedin][data-iscancelable]:hover .still-available-box, .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell[data-userisloggedin][data-isbookable]:hover .description-box, .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell[data-userisloggedin][data-isbookable]:hover .owner-box, .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell[data-userisloggedin][data-isbookable]:hover .item-counter-box, .mod_resourceBookingWeekcalendar .resource-booking-table-main .layout-cell[data-userisloggedin][data-isbookable]:hover .still-available-box {

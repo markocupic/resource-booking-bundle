@@ -22,7 +22,7 @@
       <div class="alert alert-info d-flex pt-3 pb-3" v-if="bookingWindow.response.messages.info !== null">
         <i class="fa-2x me-3 fas fa-info-circle"></i><span>{{ bookingWindow.response.messages.info }}</span>
       </div>
-      <p v-if="bookingWindow.response.bookingProcessSucceeded">
+      <p v-if="bookingWindow.response.bookingProcessSucceeded" class="help-info">
         <small>{{trans::RBB.MSG.windowClosesAutomatically::contao_default}}</small>
       </p>
     </div>
@@ -86,13 +86,13 @@
         <select class="items-booked form-control timeSpanSelect" id="itemsBooked_<?= $this->moduleKey ?>" name="itemsBooked" v-on:change="bookingFormValidationRequest()">
           <option v-bind:value="i" v-for="i in parseInt(activeResource.itemsAvailable)"> {{ i }} {{trans::RBB.pieces::contao_default}}</option>
         </select>
-        <small class="booking-description-help" class="form-text text-muted">{{trans::RBB.formHelpItems::contao_default}}</small>
+        <small class="form-text booking-description-help help-info">{{trans::RBB.formHelpItems::contao_default}}</small>
       </div>
 
       <div class="form-group mt-4">
         <label class="" for="bookingDescription_<?= $this->moduleKey ?>">{{trans::RBB.formLegendDescription::contao_default}}</label>
         <input aria-describedby="bookingDescriptionHelp" class="form-control" id="ctrlBookingDescription_<?= $this->moduleKey ?>" maxlength="50" name="bookingDescription" placeholder="Kurzbeschreibung eingeben" type="text">
-        <small class="booking-description-help" class="form-text text-muted">{{trans::RBB.formHelpDescription::contao_default}}</small>
+        <small class="form-text booking-description-help help-info">{{trans::RBB.formHelpDescription::contao_default}}</small>
       </div>
 
       <div class="form-group mt-4">
