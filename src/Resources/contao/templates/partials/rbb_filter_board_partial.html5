@@ -1,6 +1,6 @@
 <!-- filter board -->
 <form class="rbb-filter-board-form mt-5" action="{{env::request}}" method="get">
-  <div v-if="filterBoard" class="row">
+  <div v-if="filterBoard" class="row gx-2">
     <div class="rbb-go-back-one-week col-sm-1 mb-2">
       <button v-on:click="jumpWeekRequest(filterBoard.jumpPrevWeek.tstamp,$event)" v-bind:data-tstamp="filterBoard.jumpPrevWeek.tstamp" role="button" class="btn btn-primary w-100" title="{{trans::RBB.1WeekBack::contao_default}}" v-bind:class="filterBoard.jumpPrevWeek.disabled ? 'disabled' : ''" v-bind:aria-disabled="filterBoard.jumpPrevWeek.disabled ? 'true' : 'false'" :disabled="filterBoard.jumpPrevWeek.disabled"><i class="fas fa-chevron-left"></i></button>
     </div>

@@ -58,8 +58,6 @@ $GLOBALS['TL_LANG']['RBB']['fullname'] = 'Name';
 $GLOBALS['TL_LANG']['RBB']['bookingIdAndUuid'] = 'booking id/uuid';
 $GLOBALS['TL_LANG']['RBB']['deleteRepetitions'] = 'Delete repetitions';
 $GLOBALS['TL_LANG']['RBB']['invalidDate'] = 'invalid date';
-$GLOBALS['TL_LANG']['RBB']['generalError'] = 'An error has occured. Please check connectivity.';
-$GLOBALS['TL_LANG']['RBB']['error401'] = 'An error has occured. You are not authorized. Please try to log in.';
 $GLOBALS['TL_LANG']['RBB']['pieces'] = 'piece(s)';
 $GLOBALS['TL_LANG']['RBB']['anonymous'] = 'Anonymous';
 
@@ -75,6 +73,8 @@ $GLOBALS['TL_LANG']['RBB']['ERR']['thisSlotHasNotEnoughItemsAvailable'] = 'There
 $GLOBALS['TL_LANG']['RBB']['ERR']['bookingNotFound'] = 'Could not find booking with ID %s.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['notAuthorized'] = 'You are not authorized for this action.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['somethingWentWrong'] = 'Ups! I\'m sorry! Something went wrong.';
+$GLOBALS['TL_LANG']['RBB']['ERR']['401'] = 'Your session has expired. Access was denied. Please log in again.';
+$GLOBALS['TL_LANG']['RBB']['ERR']['general'] = 'An error has occured. Please check connectivity.';
 
 // Messages
 $GLOBALS['TL_LANG']['RBB']['MSG']['successfullyBookedXItems'] = 'Successfully booked for %s %s items.';

@@ -1,6 +1,6 @@
 <!-- booking table -->
 <template v-if="rows.length > 0">
-  <div class="rbb-layout-table rbb-table-main mt-5">
+  <div class="rbb-layout-table rbb-booking-table-main mt-5">
     <div class="rbb-layout-box-inner">
       <div class="d-flex">
         <div class="rbb-layout-cell rbb-cell-headline rbb-time-slot-indicator"><strong>{{trans::RBB.time::contao_default}}</strong></div>

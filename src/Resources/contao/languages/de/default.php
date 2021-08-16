@@ -58,8 +58,6 @@ $GLOBALS['TL_LANG']['RBB']['fullname'] = 'Name';
 $GLOBALS['TL_LANG']['RBB']['bookingIdAndUuid'] = 'Buchungs-Id/Uuid';
 $GLOBALS['TL_LANG']['RBB']['deleteRepetitions'] = 'Wiederholungen mitlöschen.';
 $GLOBALS['TL_LANG']['RBB']['invalidDate'] = 'Ungültiges Datum.';
-$GLOBALS['TL_LANG']['RBB']['generalError'] = 'Es ist ein Fehler aufgetreten. Bitte überprüfen Sie die Verbindung.';
-$GLOBALS['TL_LANG']['RBB']['error401'] = 'Es ist ein Fehler aufgetreten. Sie haben nicht die benötigen Rechte für diesen Seiteninhalt. Bitte versuchen Sie sich anzumelden.';
 $GLOBALS['TL_LANG']['RBB']['pieces'] = 'Stück';
 $GLOBALS['TL_LANG']['RBB']['anonymous'] = 'Anonym';
 
@@ -75,6 +73,8 @@ $GLOBALS['TL_LANG']['RBB']['ERR']['thisSlotHasNotEnoughItemsAvailable'] = 'Nicht
 $GLOBALS['TL_LANG']['RBB']['ERR']['bookingNotFound'] = 'Buchung mit ID %s nicht gefunden.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['notAuthorized'] = 'Für diesen Vorgang verfügen Sie nicht über die nötigen Rechte.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['somethingWentWrong'] = 'Ups! Etwas ist schief gelaufen.';
+$GLOBALS['TL_LANG']['RBB']['ERR']['401'] = 'Ihre Sitzung ist abgelaufen. Der Zugang wurde verweigert. Bitte melden Sie sich erneut an.';
+$GLOBALS['TL_LANG']['RBB']['ERR']['general'] = 'Es ist ein Fehler aufgetreten. Bitte überprüfen Sie die Verbindung.';
 
 // Messages
 $GLOBALS['TL_LANG']['RBB']['MSG']['successfullyBookedXItems'] = 'Für %s konnte(n) erfolgreich %s Buchung(en) angelegt werden.';

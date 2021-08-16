@@ -4,7 +4,7 @@
       {{trans::RBB.cancel::contao_default}}: {{ activeResource.title }}
     </h3>
 
-    <button type="button" v-on:click="hideBookingWindow" class="rbb-close-window bg-primary" aria-label="Close">
+    <button type="button" v-on:click="hideBookingWindow" class="rbb-close-window bg-primary" aria-label="Close" title="{{trans::RBB.close::contao_default}}">
       <span aria-hidden="true">&times;</span>
     </button>
   </div>

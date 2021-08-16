@@ -13,7 +13,7 @@
 
   <div class="rbb-logged-in-user-data mb-2"><strong>{{trans::RBB.loggedInAs::contao_default}}:</strong> {{user::firstname}} {{user::lastname}}</div>
 
-  <template v-if="isReady === false && lastResponseStatus === 200">
+  <template v-if="isReady === false && lastResponseCode === 200">
     <div class="text-center mt-5">
       <div class="fa-5x rbb-loading-spinner">
         <i class="fas fa-sync fa-spin"></i>
@@ -24,12 +24,12 @@
     </div>
   </template>
 
-  <template v-if="isReady === false && lastResponseStatus !== 200">
-    <div class="text-muted mt-2" v-if="lastResponseStatus === 401">
-      {{trans::RBB.error401::contao_default}}
+  <template v-if="isReady === false && lastResponseCode !== 200">
+    <div class="text-muted mt-2" v-if="lastResponseCode === 401">
+      {{trans::RBB.ERR.401::contao_default}}
     </div>
     <div class="text-muted mt-2" v-else>
-      {{trans::RBB.generalError::contao_default}}
+      {{trans::RBB.ERR.general::contao_default}}
     </div>
   </template>
 

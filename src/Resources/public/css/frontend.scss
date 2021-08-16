@@ -74,7 +74,7 @@ $transitionSpeed: .8s;
   .rbb-filter-board-form {
     > .row {
       display: flex;
-      align-items: baseline;
+      align-items: start;
     }
 
     .rbb-week-select {
@@ -90,10 +90,12 @@ $transitionSpeed: .8s;
       option.future-week {
         /** **/
       }
+
+
     }
   }
 
-  .rbb-booking-table-window, .rbb-table-main {
+  .rbb-booking-table-booking-form, .rbb-booking-table-main {
     overflow-x: auto;
 
     * {
@@ -139,7 +141,7 @@ $transitionSpeed: .8s;
     }
   }
 
-  .rbb-table-main {
+  .rbb-booking-table-main {
     .rbb-layout-cell.rbb-time-slot-cell {
       display: flex;
       flex-direction: column;
@@ -148,7 +150,7 @@ $transitionSpeed: .8s;
     }
   }
 
-  .rbb-booking-table-window {
+  .rbb-booking-table-booking-form {
     .rbb-layout-cell.rbb-time-slot-cell {
       align-items: center;
       justify-content: center;
@@ -165,7 +167,7 @@ $transitionSpeed: .8s;
   }
 
   // Wrap long words
-  .rbb-table-main {
+  .rbb-booking-table-main {
     .rbb-layout-cell {
       min-width: 180px;
       max-width: 250px;
@@ -267,7 +269,7 @@ $transitionSpeed: .8s;
 
 
   /** Booking table **/
-  .rbb-booking-table-window {
+  .rbb-booking-table-booking-form {
     .rbb-layout-cell {
       height: auto !important;
       min-height: 2.5rem;

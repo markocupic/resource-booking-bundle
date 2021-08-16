@@ -39,8 +39,8 @@ class resourceBookingApp {
         isReady: false,
         // Indicate the mode
         mode: 'main-window',
-        // Contains the last response code
-        lastResponseStatus: 200,
+        // Indicates the last response code
+        lastResponseCode: 200,
         // Contains data about available resource types, resources and weeks (week selector)
         filterBoard: null,
         // Indicates if the current user hass logged in as a frontend user
@@ -190,6 +190,7 @@ class resourceBookingApp {
             },
           })
             .then(async response => {
+              this.lastResponseCode = response.status;
               let data = await response.json();
               if (!response.ok) {
                 let error = response.statusText;
@@ -241,6 +242,7 @@ class resourceBookingApp {
             },
           })
             .then(async response => {
+              this.lastResponseCode = response.status;
               let data = await response.json();
               if (!response.ok) {
                 let error = response.statusText;
@@ -299,6 +301,7 @@ class resourceBookingApp {
                 },
               })
               .then(async response => {
+                this.lastResponseCode = response.status;
                 let data = await response.json();
                 if (!response.ok) {
                   let error = response.statusText;
@@ -359,6 +362,7 @@ class resourceBookingApp {
               },
             })
             .then(async response => {
+              this.lastResponseCode = response.status;
               let data = await response.json();
               if (!response.ok) {
                 let error = response.statusText;
@@ -406,6 +410,7 @@ class resourceBookingApp {
             },
           })
             .then(async response => {
+              this.lastResponseCode = response.status;
               let data = await response.json();
               if (!response.ok) {
                 let error = response.statusText;
@@ -520,7 +525,7 @@ class resourceBookingApp {
          * @param res
          */
         checkResponse: function checkResponse(res) {
-          this.lastResponseStatus = res.status;
+          this.lastResponseCode = res.status;
           if (res.status != 200) {
             this.isReady = false;
           } else {
