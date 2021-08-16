@@ -15,10 +15,14 @@ Ab Version 3.x kann eingestellt werden, wie viele Items einer Ressource buchbar 
 
 [Downlaod als mp4](https://github.com/markocupic/markocupic/blob/main/resource-booking-bundle/resource-booking-bundle.mp4?raw=true)
 
+
 *Buchungstabelle mit Wochenübersicht:*
+
 ![preview frontend](docs/screenshots/screenshot.png "Buchungstool im Frontend-Ansicht")
 
+
 *Buchungsfenster:*
+
 ![preview frontend](docs/screenshots/screenshot2.png "Buchungstool im Frontend-Ansicht")
 
 
