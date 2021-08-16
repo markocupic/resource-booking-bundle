@@ -368,7 +368,7 @@ trait RefreshDataTrait
                 $objRow = new \stdClass();
 
                 $cssRowId = sprintf('timeSlotModId_%s_%s', $moduleModel->id, $objTimeslots->id);
-                $cssRowClass = 'time-slot-'.$objTimeslots->id;
+                $cssRowClass = 'rbb-time-slot-'.$objTimeslots->id;
 
                 // Get the CSS ID
                 $arrCssCellID = $stringUtilAdapter->deserialize($objTimeslots->cssID, true);

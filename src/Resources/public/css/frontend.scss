@@ -12,13 +12,13 @@ $transitionSpeed: .8s;
 
 .custom-scroll-bar-thin {
   & {
-    scrollbar-width: auto;
+    scrollbar-width: 5px;
     scrollbar-color: #000000 #ffffff;
   }
 
   /* Chrome, Edge, and Safari */
   &::-webkit-scrollbar {
-    width: 10px;
+    width: 5px;
   }
 
   &::-webkit-scrollbar-track {
@@ -27,12 +27,13 @@ $transitionSpeed: .8s;
 
   &::-webkit-scrollbar-thumb {
     background-color: #000000;
-    border-radius: 10px;
-    border: 3px solid #ffffff;
+    border-radius: 3px;
+    border: 1px solid #ffffff;
   }
 }
 
 .mod_resourceBookingWeekcalendar {
+
   .alert-danger {
     background-color: $bgColorAlertDanger;
     color: #000000;
@@ -51,32 +52,32 @@ $transitionSpeed: .8s;
     }
   }
 
-  .resource-booking-app .vue-application {
+  .rbb-app .rbb-vue-application {
     visibility: hidden;
   }
 
-  .resource-booking-app[v-cloak] {
+  .rbb-app[v-cloak] {
     display: none;
   }
 
-  .resource-booking-app.is-ready .vue-application {
+  .rbb-app.is-ready .rbb-vue-application {
     visibility: visible;
   }
 
-  .resource-booking-app {
-    .loading-spinner {
+  .rbb-app {
+    .rbb-loading-spinner {
       color: #d8d8d8;
     }
   }
 
   // filter form (restype-, res- and week selector
-  .resource-booking-form {
+  .rbb-filter-board-form {
     > .row {
       display: flex;
       align-items: baseline;
     }
 
-    .week-select {
+    .rbb-week-select {
       option.past-week {
         color: #8e8e8e;
       }
@@ -92,18 +93,14 @@ $transitionSpeed: .8s;
     }
   }
 
-  .resource-booking-table-window, .resource-booking-table-main {
+  .rbb-booking-table-window, .rbb-table-main {
     overflow-x: auto;
 
     * {
       font-size: small;
     }
 
-    .layout-row {
-      display: flex;
-    }
-
-    .layout-cell {
+    .rbb-layout-cell {
       // Set equal width
       flex-grow: 1;
       flex-basis: 0;
@@ -112,38 +109,38 @@ $transitionSpeed: .8s;
       border: 3px solid #ffffff;
       padding: .25rem;
 
-      &.time-slot-cell {
+      &.rbb-time-slot-cell {
         background-color: $bookableBg;
         height: 6rem;
         display: flex;
       }
 
-      &.time-slot-cell[data-isbooked="true"] {
+      &.rbb-time-slot-cell[data-isbooked="true"] {
         background-color: $bookableBg;
         overflow-y: auto;
         @extend .custom-scroll-bar-thin;
       }
 
-      &.time-slot-cell[data-isbookable="true"] {
+      &.rbb-time-slot-cell[data-isbookable="true"] {
         background-color: $bookableBg;
       }
 
-      &.time-slot-cell[data-isinvaliddate="true"] {
+      &.rbb-time-slot-cell[data-isinvaliddate="true"] {
         background-color: $notBookableBg;
       }
 
-      &.time-slot-cell[data-isfullybooked="true"] {
+      &.rbb-time-slot-cell[data-isfullybooked="true"] {
         background-color: $fullyBookedBg;
       }
 
-      &.cell-headline {
+      &.rbb-cell-headline {
         background-color: #ffffff;
       }
     }
   }
 
-  .resource-booking-table-main {
-    .layout-cell.time-slot-cell {
+  .rbb-table-main {
+    .rbb-layout-cell.rbb-time-slot-cell {
       display: flex;
       flex-direction: column;
       align-items: flex-start;
@@ -151,8 +148,8 @@ $transitionSpeed: .8s;
     }
   }
 
-  .resource-booking-table-window {
-    .layout-cell.time-slot-cell {
+  .rbb-booking-table-window {
+    .rbb-layout-cell.rbb-time-slot-cell {
       align-items: center;
       justify-content: center;
 
@@ -168,14 +165,14 @@ $transitionSpeed: .8s;
   }
 
   // Wrap long words
-  .resource-booking-table-main {
-    .layout-cell {
+  .rbb-table-main {
+    .rbb-layout-cell {
       min-width: 180px;
       max-width: 250px;
       word-break: break-all;
       position: relative;
 
-      .time-slot-cell-inner {
+      .rbb-time-slot-cell-inner {
         position: relative;
         width: 100%;
         margin: 0;
@@ -183,7 +180,7 @@ $transitionSpeed: .8s;
         height: 100%
       }
 
-      .still-available-box {
+      .rbb-cell-booking-still-available-box {
         font-size: xx-small;
       }
 
@@ -204,65 +201,65 @@ $transitionSpeed: .8s;
         transition: opacity $transitionSpeed;
       }
 
-      .btn-link > .icon-cancel-booking {
+      .rbb-btn-cancel-booking, .rbb-icon-cancel-booking {
         font-size: 2rem;
         color: $iconCancelBookingColor;
       }
 
-      .btn-booking, .icon-booking {
+      .rbb-btn-booking, .rbb-icon-booking {
         font-size: 2rem;
         color: $iconBookingColor;
       }
 
-      .btn-booking .icon-cancel-booking {
+      .rbb-btn-booking .rbb-icon-cancel-booking {
         font-size: 2rem;
         color: $iconCancelBookingColor;
       }
 
-      .btn-booking .icon-cancel-booking {
+      .rbb-btn-booking .rbb-icon-cancel-booking {
         display: none;
       }
 
-      .btn-cancel-booking .icon-booking {
+      .rbb-btn-cancel-booking .rbb-icon-booking {
         display: none;
       }
 
-      &.time-slot-indicator {
+      &.rbb-time-slot-indicator {
         width: 110px;
         min-width: 110px;
         max-width: 110px;
         word-break: break-all;
       }
 
-      &.time-slot-cell {
-        .owner-box {
+      &.rbb-time-slot-cell {
+        .rbb-cell-booking-owner-box {
           font-weight: bold;
         }
 
-        .owner-box, .description-box, .item-counter-box {
+        .rbb-cell-booking-owner-box, .rbb-cell-booking-description-box, .item-counter-box {
           position: relative;
           z-index: 20;
         }
 
-        .description-box small {
+        .rbb-cell-booking-description-box small {
           font-size: 0.75rem;
         }
       }
     }
 
     // Change buttons z-index and opacity, when hovering
-    .layout-cell[data-userisloggedin][data-iscancelable]:hover, .layout-cell[data-userisloggedin][data-isbookable]:hover {
+    .rbb-layout-cell[data-userisloggedin][data-iscancelable]:hover, .rbb-layout-cell[data-userisloggedin][data-isbookable]:hover {
       .btn-link {
         z-index: 30;
         opacity: 1;
       }
 
-      .btn-link > .icon-cancel-booking {
+      .btn-link > .rbb-icon-cancel-booking {
         color: $iconCancelBookingHoverColor !important;
         transition: color $transitionSpeed;
       }
 
-      .description-box, .owner-box, .item-counter-box, .still-available-box {
+      .rbb-cell-booking-description-box, .rbb-cell-booking-owner-box, .item-counter-box, .rbb-cell-booking-still-available-box {
         opacity: 0.3;
       }
     }
@@ -270,8 +267,8 @@ $transitionSpeed: .8s;
 
 
   /** Booking table **/
-  .resource-booking-table-window {
-    .layout-cell {
+  .rbb-booking-table-window {
+    .rbb-layout-cell {
       height: auto !important;
       min-height: 2.5rem;
       display: flex;
@@ -282,7 +279,7 @@ $transitionSpeed: .8s;
       width: 100px;
       max-width: 100px;
 
-      &.time-slot-indicator {
+      &.rbb-time-slot-indicator {
         justify-content: left;
         background-color: #ffffff;
         width: 110px;
@@ -294,30 +291,28 @@ $transitionSpeed: .8s;
   }
 
   // Booking window
-  .booking-window {
-    .booking-window-header-title {
+  .rbb-booking-window {
+    .rbb-booking-window-header-title {
       color: #ffffff;
     }
 
-    .info-table, .booking-preview {
-      .layout-row {
-        border-top: 1px solid $tableBorderColor;
+    .rbb-info-table, .rbb-booking-preview-table {
+      border-top: 1px solid $tableBorderColor;
 
-        &.row-last {
-          border-bottom: 1px solid $tableBorderColor;
-        }
+      &.rbb-row-last {
+        border-bottom: 1px solid $tableBorderColor;
+      }
 
-        .layout-cell {
-          padding: .35rem .25rem;
+      .rbb-layout-cell {
+        padding: .35rem .25rem;
 
-          &.column-first {
-            width: 150px;
-          }
+        &.rbb-column-first {
+          width: 150px;
         }
       }
     }
 
-    .booking-preview {
+    .rbb-booking-preview-table {
       .bookable {
         background-color: $bookableBg;
       }
@@ -327,7 +322,7 @@ $transitionSpeed: .8s;
       }
     }
 
-    button.close-window {
+    button.rbb-close-window {
       padding: 0 30px;
       color: #ffffff;
       border: 0;
@@ -335,7 +330,7 @@ $transitionSpeed: .8s;
       font-size: x-large;
     }
 
-    .timeSpanSelect option[selected] {
+    .rbb-time-span-select option[selected] {
       background-color: #149efb;
     }
   }

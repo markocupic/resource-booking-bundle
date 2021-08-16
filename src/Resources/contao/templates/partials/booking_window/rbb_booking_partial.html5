@@ -1,9 +1,9 @@
 <template v-if="bookingWindow.action === 'showBookingForm'">
-  <div class="booking-window-header bg-primary d-flex justify-content-between">
-    <h3 class="booking-window-header-title m-3" v-if="bookingWindow.action === 'showBookingForm'">
+  <div class="rbb-booking-window-header bg-primary d-flex justify-content-between">
+    <h3 class="rbb-booking-window-header-title m-3" v-if="bookingWindow.action === 'showBookingForm'">
       {{trans::RBB.book::contao_default}}: {{ activeResource.title }}
     </h3>
-    <button aria-label="Close" class="close-window bg-primary" type="button" v-on:click="hideBookingWindow">
+    <button aria-label="Close" class="rbb-close-window bg-primary" type="button" v-on:click="hideBookingWindow">
       <span aria-hidden="true">&times;</span>
     </button>
   </div>
@@ -12,7 +12,7 @@
 
   <!-- Messages -->
   <template v-if="bookingWindow.response.messages">
-    <div class="message-box mt-5">
+    <div class="rbb-message-box mt-5">
       <div class="alert alert-success d-flex pt-3 pb-3" v-if="bookingWindow.response.messages.confirmation !== null">
         <i class="fa-2x me-3 fas fa-check-circle"></i><span>{{ bookingWindow.response.messages.confirmation }}</span>
       </div>
@@ -22,7 +22,7 @@
       <div class="alert alert-info d-flex pt-3 pb-3" v-if="bookingWindow.response.messages.info !== null">
         <i class="fa-2x me-3 fas fa-info-circle"></i><span>{{ bookingWindow.response.messages.info }}</span>
       </div>
-      <p v-if="bookingWindow.response.bookingProcessSucceeded" class="help-info">
+      <p v-if="bookingWindow.response.bookingProcessSucceeded" class="rbb-input-help-text">
         <small>{{trans::RBB.MSG.windowClosesAutomatically::contao_default}}</small>
       </p>
     </div>
@@ -39,13 +39,13 @@
         </button>
       </div>
 
-      <div class="booking-preview collapse mt-5" id="bookingPreview_<?= $this->moduleKey ?>">
-        <div class="layout-table booking-preview-table">
-          <div class="layout-row d-flex" v-bind:class="!slot.isBookable ? 'not-bookable' : 'bookable'" v-for="(slot, index) in bookingWindow.response.slotSelection">
-            <div class="layout-cell">
+      <div class="rbb-booking-preview-table rbb-layout-table collapse mt-5" id="bookingPreview_<?= $this->moduleKey ?>">
+        <div class="rbb-layout-box-inner">
+          <div class="d-flex" v-bind:class="!slot.isBookable ? 'not-bookable' : 'bookable'" v-for="(slot, index) in bookingWindow.response.slotSelection">
+            <div class="rbb-layout-cell">
               <small>{{ slot.datimSpanString }}: </small>
             </div>
-            <div class="layout-cell">
+            <div class="rbb-layout-cell">
               <span v-if="slot.invalidDate"><small>{{trans::RBB.ERR.invalidStartOrEndTime::contao_default}}</small></span>
               <span v-else-if="!slot.enoughItemsAvailable"><small>{{trans::RBB.ERR.thisSlotHasNotEnoughItemsAvailable::contao_default}}</small></span>
               <span v-else-if="slot.isFullyBooked"><small>{{trans::RBB.ERR.resourceIsAlreadyFullyBooked::contao_default}}</small></span>
@@ -57,56 +57,66 @@
       <!-- end collapse -->
     </template>
 
-    <form>
-      <!-- start booking table -->
-      <div class="layout-table resource-booking-table-window mt-5" v-if="rows.length > 0">
-        <!-- headline -->
-        <div class="layout-row">
-          <div class="layout-cell cell-headline time-slot-indicator"><strong>{{trans::RBB.time::contao_default}}</strong></div>
-          <div class="layout-cell cell-headline" v-bind:data-day-index="weekday.index" v-for="(weekday, index) in weekdays"><strong>{{ weekday.titleShort }}</strong></div>
-        </div>
-        <!-- body -->
-        <div class="layout-row" v-bind:class="row.rowData.cssRowClass" v-bind:data-row-index="rowIndex" v-for="(row, rowIndex) in rows">
-          <div class="layout-cell time-slot-indicator">{{ timeSlots[rowIndex].timeSpanString }}</div>
-          <div class="layout-cell time-slot-cell" v-bind:data-day-index="slot.index" v-bind:data-isbookable="slot.isBookable && slot.isDateInPermittedRange" v-bind:data-isbooked="slot.hasBookings" v-bind:data-isfullybooked="slot.isFullyBooked" v-bind:data-isinvaliddate="!slot.isDateInPermittedRange" v-for="(slot, colIndex) in row.cellData">
-            <div v-if="slot.isBookable && !slot.isFullyBooked">
-              <div class="custom-control custom-checkbox">
-                <input class="custom-control-input" type="checkbox" v-bind:id="slot.bookingCheckboxId" v-bind:value="slot.bookingCheckboxValue" v-model="bookingWindow.selectedTimeSlots" v-on:change="bookingFormValidationRequest()">
-                <label class="custom-control-label" v-bind:for="slot.bookingCheckboxId"></label>
+    <form class="rbb-booking-form rbb-js-booking-form mt-5">
+      <div class="row">
+        <!-- start booking table -->
+        <div class="rbb-layout-table rbb-booking-table-window col-12 col-xl-6" v-if="rows.length > 0">
+          <div class="rbb-layout-box-inner">
+
+            <!-- headline -->
+            <div class="d-flex">
+              <div class="rbb-layout-cell rbb-cell-headline rbb-time-slot-indicator"><strong>{{trans::RBB.time::contao_default}}</strong></div>
+              <div class="rbb-layout-cell rbb-cell-headline" v-bind:data-day-index="weekday.index" v-for="(weekday, index) in weekdays"><strong>{{ weekday.titleShort }}</strong></div>
+            </div>
+
+            <!-- body -->
+            <div class="d-flex" v-bind:class="row.rowData.cssRowClass" v-bind:data-row-index="rowIndex" v-for="(row, rowIndex) in rows">
+              <div class="rbb-layout-cell rbb-time-slot-indicator">{{ timeSlots[rowIndex].timeSpanString }}</div>
+              <div class="rbb-layout-cell rbb-time-slot-cell" v-bind:data-day-index="slot.index" v-bind:data-isbookable="slot.isBookable && slot.isDateInPermittedRange" v-bind:data-isbooked="slot.hasBookings" v-bind:data-isfullybooked="slot.isFullyBooked" v-bind:data-isinvaliddate="!slot.isDateInPermittedRange" v-for="(slot, colIndex) in row.cellData">
+                <div v-if="slot.isBookable && !slot.isFullyBooked">
+                  <div class="custom-control custom-checkbox">
+                    <input class="custom-control-input" type="checkbox" v-bind:id="slot.bookingCheckboxId" v-bind:value="slot.bookingCheckboxValue" v-model="bookingWindow.selectedTimeSlots" v-on:change="bookingFormValidationRequest()">
+                    <label class="custom-control-label" v-bind:for="slot.bookingCheckboxId"></label>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-      <!-- end booking table -->
+        <!-- end booking table -->
 
-      <!-- booking form inputs -->
-      <div class="form-group mt-4" v-if="parseInt(activeResource.itemsAvailable) > 1">
-        <label class="" for="itemsBooked_<?= $this->moduleKey ?>">{{trans::RBB.formLegendItems::contao_default}}</label>
-        <select class="items-booked form-control timeSpanSelect" id="itemsBooked_<?= $this->moduleKey ?>" name="itemsBooked" v-on:change="bookingFormValidationRequest()">
-          <option v-bind:value="i" v-for="i in parseInt(activeResource.itemsAvailable)"> {{ i }} {{trans::RBB.pieces::contao_default}}</option>
-        </select>
-        <small class="form-text booking-description-help help-info">{{trans::RBB.formHelpItems::contao_default}}</small>
-      </div>
+        <!-- booking form inputs -->
+        <div class="rbb-layout-box col-12 col-xl-6">
+          <div class="rbb-layout-box-inner">
+            <div class="form-group" v-if="parseInt(activeResource.itemsAvailable) > 1">
+              <label for="ctrlItemsBooked_<?= $this->moduleKey ?>">{{trans::RBB.formLegendItems::contao_default}}</label>
+              <select class="rbb-ctrl-items-booked form-control" id="ctrlItemsBooked_<?= $this->moduleKey ?>" name="itemsBooked" v-on:change="bookingFormValidationRequest()">
+                <option v-bind:value="i" v-for="i in parseInt(activeResource.itemsAvailable)"> {{ i }} {{trans::RBB.pieces::contao_default}}</option>
+              </select>
+              <small class="rbb-items-booked-help rbb-input-help-text">{{trans::RBB.formHelpItems::contao_default}}</small>
+            </div>
 
-      <div class="form-group mt-4">
-        <label class="" for="bookingDescription_<?= $this->moduleKey ?>">{{trans::RBB.formLegendDescription::contao_default}}</label>
-        <input aria-describedby="bookingDescriptionHelp" class="form-control" id="ctrlBookingDescription_<?= $this->moduleKey ?>" maxlength="50" name="bookingDescription" placeholder="Kurzbeschreibung eingeben" type="text">
-        <small class="form-text booking-description-help help-info">{{trans::RBB.formHelpDescription::contao_default}}</small>
-      </div>
+            <div class="form-group mt-4">
+              <label for="ctrlBookingDescription_<?= $this->moduleKey ?>">{{trans::RBB.formLegendDescription::contao_default}}</label>
+              <input class="rbb-ctrl-booking-description form-control" id="ctrlBookingDescription_<?= $this->moduleKey ?>" maxlength="50" name="bookingDescription" placeholder="Kurzbeschreibung eingeben" type="text">
+              <small class="rbb-booking-description-help rbb-input-help-text">{{trans::RBB.formHelpDescription::contao_default}}</small>
+            </div>
 
-      <div class="form-group mt-4">
-        <label for="bookingRepeatStopWeekTstamp_<?= $this->moduleKey ?>">{{trans::RBB.formLegendRepetitions::contao_default}}</label>
-        <select class="booking-repeat-stop-week-tstamp form-control timeSpanSelect" id="CtrlBookingRepeatStopWeekTstamp_<?= $this->moduleKey ?>" name="bookingRepeatStopWeekTstamp" v-on:change="bookingFormValidationRequest()">
-          <option v-bind:value="row.tstamp" v-for="(row, rowIndex) in bookingRepeatsSelection">{{ row.optionText }}</option>
-        </select>
+            <div class="form-group mt-4">
+              <label for="ctrlBookingRepeatStopWeekTstamp_<?= $this->moduleKey ?>">{{trans::RBB.formLegendRepetitions::contao_default}}</label>
+              <select class="rbb-js-booking-repeat-stop-week-tstamp rbb-time-span-select form-control " id="ctrlBookingRepeatStopWeekTstamp_<?= $this->moduleKey ?>" name="bookingRepeatStopWeekTstamp" v-on:change="bookingFormValidationRequest()">
+                <option v-bind:value="row.tstamp" v-for="(row, rowIndex) in bookingRepeatsSelection">{{ row.optionText }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
       </div>
       <!-- end booking form inputs -->
     </form>
   </template>
 
   <!-- footer -->
-  <div class="booking-window-footer mt-5">
+  <div class="rbb-booking-window-footer mt-5">
     <button class="btn btn-primary" type="button" v-if="bookingWindow.response.bookingValidationProcessSucceeded && !bookingWindow.response.bookingProcessSucceeded" v-on:click="bookingRequest">
       {{trans::RBB.bookResource::contao_default}}
     </button>

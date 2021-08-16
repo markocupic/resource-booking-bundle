@@ -273,7 +273,7 @@ class resourceBookingApp {
 
           let action = 'bookingRequest';
 
-          let form = this.$el.querySelector('.booking-window form');
+          let form = this.$el.querySelector('.rbb-js-booking-form');
           if (!form) {
             console.error('Form not found');
           }
@@ -342,7 +342,7 @@ class resourceBookingApp {
           data.append('REQUEST_TOKEN', this.options.requestToken);
           data.append('action', action);
           data.append('resourceId', this.bookingWindow.activeTimeSlot.pid);
-          data.append('bookingRepeatStopWeekTstamp', this.$el.querySelector('.booking-repeat-stop-week-tstamp').value);
+          data.append('bookingRepeatStopWeekTstamp', this.$el.querySelector('.rbb-js-booking-repeat-stop-week-tstamp').value);
           data.append('moduleKey', this.options.moduleKey);
           data.append('itemsBooked', this.$el.querySelector('[name="itemsBooked"]') ? this.$el.querySelector('[name="itemsBooked"]').value : '1');
 
@@ -494,12 +494,12 @@ class resourceBookingApp {
 
           // Wrap this code, otherwise querySelector will not find dom elements
           window.setTimeout(() => {
-            let inputBookingDescription = this.$el.querySelector('.booking-window input[name="bookingDescription"]');
+            let inputBookingDescription = this.$el.querySelector('.rbb-js-booking-form input[name="bookingDescription"]');
             if (inputBookingDescription !== null) {
               inputBookingDescription.setAttribute('value', '');
             }
 
-            let weekRepeatOptions = this.$el.querySelectorAll('.booking-window .booking-repeat-stop-week-tstamp option');
+            let weekRepeatOptions = this.$el.querySelectorAll('.rbb-js-booking-form .rbb-js-booking-repeat-stop-week-tstamp option');
             if (weekRepeatOptions.length > 0) {
               weekRepeatOptions.forEach(elOption => elOption.removeAttribute('selected'));
             }
