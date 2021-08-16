@@ -61,7 +61,7 @@
       'requestToken': '{{REQUEST_TOKEN}}',
       'moduleKey': '<?= $this->moduleKey ?>',
       'audio': {
-        'notifyOnNewBookingsAudio': 'bundles/markocupicresourcebooking/audio/bell.mp3'
+        'notifyOnNewBookingsAudio': 'bundles/markocupicresourcebooking/audio/booking-alert.mp3'
       },
       'autocloseWindowsAfter': 5000,
       'enableAudio': true,
