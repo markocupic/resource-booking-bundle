@@ -9,7 +9,7 @@
 
 <?php $this->block('content'); ?>
 
-<div id="resourceBookingApp_<?= $this->moduleKey ?>" v-cloak class="rbb-app" v-bind:class="{ 'is-ready': isReady }">
+<div id="resourceBookingApp_<?= $this->moduleKey ?>" v-cloak class="rbb-app" v-bind:class="{ 'rbb-is-ready': isReady }">
 
   <div class="rbb-logged-in-user-data mb-2"><strong>{{trans::RBB.loggedInAs::contao_default}}:</strong> {{user::firstname}} {{user::lastname}}</div>
 

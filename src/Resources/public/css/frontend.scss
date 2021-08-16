@@ -10,7 +10,7 @@ $iconCancelBookingHoverColor: red;
 $tableBorderColor: #ccc;
 $transitionSpeed: .8s;
 
-.custom-scroll-bar-thin {
+.rbb-custom-scroll-bar-thin {
   & {
     scrollbar-width: 5px;
     scrollbar-color: #000000 #ffffff;
@@ -60,7 +60,7 @@ $transitionSpeed: .8s;
     display: none;
   }
 
-  .rbb-app.is-ready .rbb-vue-application {
+  .rbb-app.rbb-is-ready .rbb-vue-application {
     visibility: visible;
   }
 
@@ -118,7 +118,7 @@ $transitionSpeed: .8s;
       &.rbb-time-slot-cell[data-isbooked="true"] {
         background-color: $bookableBg;
         overflow-y: auto;
-        @extend .custom-scroll-bar-thin;
+        @extend .rbb-custom-scroll-bar-thin;
       }
 
       &.rbb-time-slot-cell[data-isbookable="true"] {

@@ -57,8 +57,8 @@
       <!-- end collapse -->
     </template>
 
-    <form class="rbb-booking-form rbb-js-booking-form mt-5">
-      <div class="row">
+    <form class="rbb-booking-form rbb-js-booking-form">
+      <div class="row gy-4">
         <!-- start booking table -->
         <div class="rbb-layout-table rbb-booking-table-window col-12 col-xl-6" v-if="rows.length > 0">
           <div class="rbb-layout-box-inner">

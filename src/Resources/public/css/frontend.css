@@ -1,17 +1,17 @@
-.custom-scroll-bar-thin, .mod_resourceBookingWeekcalendar .rbb-booking-table-window .rbb-layout-cell.rbb-time-slot-cell[data-isbooked=true], .mod_resourceBookingWeekcalendar .rbb-table-main .rbb-layout-cell.rbb-time-slot-cell[data-isbooked=true] {
+.rbb-custom-scroll-bar-thin, .mod_resourceBookingWeekcalendar .rbb-booking-table-window .rbb-layout-cell.rbb-time-slot-cell[data-isbooked=true], .mod_resourceBookingWeekcalendar .rbb-table-main .rbb-layout-cell.rbb-time-slot-cell[data-isbooked=true] {
   /* Chrome, Edge, and Safari */
 }
-.custom-scroll-bar-thin, .mod_resourceBookingWeekcalendar .rbb-booking-table-window .rbb-layout-cell.rbb-time-slot-cell[data-isbooked=true], .mod_resourceBookingWeekcalendar .rbb-table-main .rbb-layout-cell.rbb-time-slot-cell[data-isbooked=true] {
+.rbb-custom-scroll-bar-thin, .mod_resourceBookingWeekcalendar .rbb-booking-table-window .rbb-layout-cell.rbb-time-slot-cell[data-isbooked=true], .mod_resourceBookingWeekcalendar .rbb-table-main .rbb-layout-cell.rbb-time-slot-cell[data-isbooked=true] {
   scrollbar-width: 5px;
   scrollbar-color: #000000 #ffffff;
 }
-.custom-scroll-bar-thin::-webkit-scrollbar, .mod_resourceBookingWeekcalendar .rbb-booking-table-window .rbb-layout-cell.rbb-time-slot-cell[data-isbooked=true]::-webkit-scrollbar, .mod_resourceBookingWeekcalendar .rbb-table-main .rbb-layout-cell.rbb-time-slot-cell[data-isbooked=true]::-webkit-scrollbar {
-  width: 5px; 
+.rbb-custom-scroll-bar-thin::-webkit-scrollbar, .mod_resourceBookingWeekcalendar .rbb-booking-table-window .rbb-layout-cell.rbb-time-slot-cell[data-isbooked=true]::-webkit-scrollbar, .mod_resourceBookingWeekcalendar .rbb-table-main .rbb-layout-cell.rbb-time-slot-cell[data-isbooked=true]::-webkit-scrollbar {
+  width: 5px;
 }
-.custom-scroll-bar-thin::-webkit-scrollbar-track, .mod_resourceBookingWeekcalendar .rbb-booking-table-window .rbb-layout-cell.rbb-time-slot-cell[data-isbooked=true]::-webkit-scrollbar-track, .mod_resourceBookingWeekcalendar .rbb-table-main .rbb-layout-cell.rbb-time-slot-cell[data-isbooked=true]::-webkit-scrollbar-track {
+.rbb-custom-scroll-bar-thin::-webkit-scrollbar-track, .mod_resourceBookingWeekcalendar .rbb-booking-table-window .rbb-layout-cell.rbb-time-slot-cell[data-isbooked=true]::-webkit-scrollbar-track, .mod_resourceBookingWeekcalendar .rbb-table-main .rbb-layout-cell.rbb-time-slot-cell[data-isbooked=true]::-webkit-scrollbar-track {
   background: #ffffff;
 }
-.custom-scroll-bar-thin::-webkit-scrollbar-thumb, .mod_resourceBookingWeekcalendar .rbb-booking-table-window .rbb-layout-cell.rbb-time-slot-cell[data-isbooked=true]::-webkit-scrollbar-thumb, .mod_resourceBookingWeekcalendar .rbb-table-main .rbb-layout-cell.rbb-time-slot-cell[data-isbooked=true]::-webkit-scrollbar-thumb {
+.rbb-custom-scroll-bar-thin::-webkit-scrollbar-thumb, .mod_resourceBookingWeekcalendar .rbb-booking-table-window .rbb-layout-cell.rbb-time-slot-cell[data-isbooked=true]::-webkit-scrollbar-thumb, .mod_resourceBookingWeekcalendar .rbb-table-main .rbb-layout-cell.rbb-time-slot-cell[data-isbooked=true]::-webkit-scrollbar-thumb {
   background-color: #000000;
   border-radius: 3px;
   border: 1px solid #ffffff;
@@ -40,7 +40,7 @@
 .mod_resourceBookingWeekcalendar .rbb-app[v-cloak] {
   display: none;
 }
-.mod_resourceBookingWeekcalendar .rbb-app.is-ready .rbb-vue-application {
+.mod_resourceBookingWeekcalendar .rbb-app.rbb-is-ready .rbb-vue-application {
   visibility: visible;
 }
 .mod_resourceBookingWeekcalendar .rbb-app .rbb-loading-spinner {
