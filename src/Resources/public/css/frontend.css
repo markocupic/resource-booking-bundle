@@ -6,7 +6,7 @@
   scrollbar-color: #000000 #ffffff;
 }
 .rbb-custom-scroll-bar-thin::-webkit-scrollbar, .mod_resourceBookingWeekcalendar .rbb-booking-table-booking-form .rbb-layout-cell.rbb-time-slot-cell[data-isbooked=true]::-webkit-scrollbar, .mod_resourceBookingWeekcalendar .rbb-booking-table-main .rbb-layout-cell.rbb-time-slot-cell[data-isbooked=true]::-webkit-scrollbar {
-  width: 5px;
+  width: 5px; 
 }
 .rbb-custom-scroll-bar-thin::-webkit-scrollbar-track, .mod_resourceBookingWeekcalendar .rbb-booking-table-booking-form .rbb-layout-cell.rbb-time-slot-cell[data-isbooked=true]::-webkit-scrollbar-track, .mod_resourceBookingWeekcalendar .rbb-booking-table-main .rbb-layout-cell.rbb-time-slot-cell[data-isbooked=true]::-webkit-scrollbar-track {
   background: #ffffff;
@@ -41,7 +41,7 @@
   display: none;
 }
 .mod_resourceBookingWeekcalendar .rbb-app.rbb-is-ready .rbb-vue-application {
-  visibility: visible; 
+  visibility: visible;
 }
 .mod_resourceBookingWeekcalendar .rbb-app .rbb-loading-spinner {
   color: #d8d8d8;
@@ -111,6 +111,12 @@
 .mod_resourceBookingWeekcalendar .rbb-booking-table-booking-form .rbb-layout-cell.rbb-time-slot-cell .custom-control label {
   margin: 0;
   display: none;
+}
+.mod_resourceBookingWeekcalendar .rbb-booking-table-booking-form .rbb-booking-form-inputs .form-group > label {
+  margin-top: 2rem;
+}
+.mod_resourceBookingWeekcalendar .rbb-booking-table-booking-form .rbb-booking-form-inputs .form-group:first-child > label {
+  margin-top: 0;
 }
 .mod_resourceBookingWeekcalendar .rbb-booking-table-main .rbb-layout-cell {
   min-width: 180px;

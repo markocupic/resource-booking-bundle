@@ -164,6 +164,14 @@ $transitionSpeed: .8s;
         }
       }
     }
+
+    .rbb-booking-form-inputs .form-group > label {
+      margin-top: 2rem;
+    }
+
+    .rbb-booking-form-inputs .form-group:first-child > label {
+      margin-top: 0;
+    }
   }
 
   // Wrap long words

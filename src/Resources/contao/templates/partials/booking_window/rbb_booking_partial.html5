@@ -86,10 +86,10 @@
         <!-- end booking table -->
 
         <!-- booking form inputs -->
-        <div class="rbb-layout-box col-12 col-xl-6">
+        <div class="rbb-layout-box rbb-booking-form-inputs col-12 col-xl-6">
           <div class="rbb-layout-box-inner">
             <div class="form-group" v-if="parseInt(activeResource.itemsAvailable) > 1">
-              <label for="ctrlItemsBooked_<?= $this->moduleKey ?>" class="mt-0">{{trans::RBB.formLegendItems::contao_default}}</label>
+              <label for="ctrlItemsBooked_<?= $this->moduleKey ?>">{{trans::RBB.formLegendItems::contao_default}}</label>
               <select class="rbb-ctrl-items-booked form-control" id="ctrlItemsBooked_<?= $this->moduleKey ?>" name="itemsBooked" v-on:change="bookingFormValidationRequest()">
                 <option v-bind:value="i" v-for="i in parseInt(activeResource.itemsAvailable)"> {{ i }} {{trans::RBB.pieces::contao_default}}</option>
               </select>
@@ -97,13 +97,13 @@
             </div>
 
             <div class="form-group mt-4">
-              <label for="ctrlBookingDescription_<?= $this->moduleKey ?>" class="mt-4">{{trans::RBB.formLegendDescription::contao_default}}</label>
+              <label for="ctrlBookingDescription_<?= $this->moduleKey ?>">{{trans::RBB.formLegendDescription::contao_default}}</label>
               <input class="rbb-ctrl-booking-description form-control" id="ctrlBookingDescription_<?= $this->moduleKey ?>" maxlength="50" name="bookingDescription" placeholder="Kurzbeschreibung eingeben" type="text">
               <small class="rbb-booking-description-help rbb-input-help-text">{{trans::RBB.formHelpDescription::contao_default}}</small>
             </div>
 
             <div class="form-group mt-4">
-              <label for="ctrlBookingRepeatStopWeekTstamp_<?= $this->moduleKey ?>" class="mt-4">{{trans::RBB.formLegendRepetitions::contao_default}}</label>
+              <label for="ctrlBookingRepeatStopWeekTstamp_<?= $this->moduleKey ?>">{{trans::RBB.formLegendRepetitions::contao_default}}</label>
               <select class="rbb-js-booking-repeat-stop-week-tstamp rbb-time-span-select form-control " id="ctrlBookingRepeatStopWeekTstamp_<?= $this->moduleKey ?>" name="bookingRepeatStopWeekTstamp" v-on:change="bookingFormValidationRequest()">
                 <option v-bind:value="row.tstamp" v-for="(row, rowIndex) in bookingRepeatsSelection">{{ row.optionText }}</option>
               </select>
