@@ -81,7 +81,7 @@ trait RefreshDataTrait
         if (null !== $this->user->getLoggedInUser()) {
             $arrData['userHasLoggedIn'] = true;
             $arrData['loggedInUser'] = array_map(static fn ($v) => $strAdapter->convertBinUuidsToStringUuids($v), $this->user->getModel()->row());
-            $arrData['loggedInUser']['gender'] = $this->translator->trans('MSC.'.$this->user->getModel()->gender, [], 'contao_default');
+            $arrData['loggedInUser']['gender'] = !empty($this->user->getModel()->gender) ? $this->translator->trans('MSC.'.$this->user->getModel()->gender, [], 'contao_default') : '';
             unset($arrData['loggedInUser']['password']);
         }
 
