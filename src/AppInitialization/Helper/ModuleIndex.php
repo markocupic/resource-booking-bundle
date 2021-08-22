@@ -16,30 +16,30 @@ namespace Markocupic\ResourceBookingBundle\AppInitialization\Helper;
  * Class ModuleIndex.
  *
  * The module key is necessary to run multiple rbb applications on the same page
- * and is sent as a post parameter in every xhr request.
+ * and is sent as a post parameter on every xhr request.
  *
- * The session data of each rbb instance is stored under $_SESSION[_resource_booking_bundle_attributes][#moduleKey#]
+ * The session data of each rbb instance is stored under $_SESSION[_resource_booking_bundle_attributes][$sessionId.'_'.$userId.'_'.$moduleKey.'_'.$token]
  *
  * The module key (#moduleId_#moduleIndex f.ex. 33_0) contains the module id and the module index
  * The module index is 0, if the current module is the first rbb module on the current page
  * The module index is 1, if the current module is the first rbb module on the current page, etc.
  *
- * Do only run once ModuleIndex::setModuleIndex() per module instance;
+ * Do only run once ModuleIndex::generateModuleIndex() per module instance;
  */
 class ModuleIndex
 {
-    /**
-     * @var int
-     */
-    private static $moduleIndex;
+    private static int $moduleIndex = -1;
 
-    public static function setModuleIndex(): void
+    private static ?int $initTime = null;
+
+    public static function generateModuleIndex(): void
     {
-        if (null === static::$moduleIndex) {
-            static::$moduleIndex = 0;
-        } else {
-            ++static::$moduleIndex;
-        }
+        ++static::$moduleIndex;
+    }
+
+    public static function generateInitTime(): void
+    {
+        static::$initTime = time();
     }
 
     /**
@@ -50,7 +50,16 @@ class ModuleIndex
     public static function getModuleIndex(): int
     {
         if (null === static::$moduleIndex) {
-            throw new \Exception('Module index not set. Please use ModuleIndex::setModuleIndex() first.');
+            throw new \Exception('Module index not set. Please use ModuleIndex::generateModuleIndex() first.');
+        }
+
+        return static::$moduleIndex;
+    }
+
+    public static function getInitTime(): int
+    {
+        if (null === static::$initTime) {
+            throw new \Exception('Init time not set. Please use ModuleIndex::generateInitTime() first.');
         }
 
         return static::$moduleIndex;

@@ -9,13 +9,13 @@
 
 <?php $this->block('content'); ?>
 
-<div id="resourceBookingApp_<?= $this->moduleKey ?>" v-cloak class="resource-booking-app" v-bind:class="{ 'is-ready': isReady }">
+<div id="resourceBookingApp_<?= $this->moduleKey ?>" v-cloak class="rbb-app" v-bind:class="{ 'rbb-is-ready': isReady }">
 
-  <div class="logged-in-user-data mb-2"><strong>{{trans::RBB.loggedInAs::contao_default}}:</strong> {{user::firstname}} {{user::lastname}}</div>
+  <div class="rbb-logged-in-user-data mb-2"><strong>{{trans::RBB.loggedInAs::contao_default}}:</strong> {{user::firstname}} {{user::lastname}}</div>
 
-  <template v-if="isReady === false && lastResponseStatus === 200">
+  <template v-if="isReady === false && lastResponseCode === 200">
     <div class="text-center mt-5">
-      <div class="fa-5x loading-spinner">
+      <div class="fa-5x rbb-loading-spinner">
         <i class="fas fa-sync fa-spin"></i>
       </div>
       <div role="status">
@@ -24,20 +24,20 @@
     </div>
   </template>
 
-  <template v-if="isReady === false && lastResponseStatus !== 200">
-    <div class="text-muted mt-2" v-if="lastResponseStatus === 401">
-      {{trans::RBB.error401::contao_default}}
+  <template v-if="isReady === false && lastResponseCode !== 200">
+    <div class="text-muted mt-2" v-if="lastResponseCode === 401">
+      {{trans::RBB.ERR.401::contao_default}}
     </div>
     <div class="text-muted mt-2" v-else>
-      {{trans::RBB.generalError::contao_default}}
+      {{trans::RBB.ERR.general::contao_default}}
     </div>
   </template>
 
   <!-- vue application container -->
-  <div class="vue-application">
+  <div class="rbb-vue-application">
 
     <!-- main window / mode === 'main-window'-->
-    <div class="main-window" v-if="mode === 'main-window'">
+    <div class="rbb-main-window" v-if="mode === 'main-window'">
 
       <?php $this->insert('rbb_filter_board_partial', $this->getData()); ?>
       <?php $this->insert('rbb_booking_table_partial', $this->getData()); ?>
@@ -46,14 +46,13 @@
     <!-- end main window / mode === 'main-window'-->
 
     <!-- booking window mode === 'booking-window'-->
-    <div class="booking-window" v-if="mode === 'booking-window'" v-if="userHasLoggedIn">
+    <div class="rbb-booking-window" v-if="mode === 'booking-window'" v-if="userHasLoggedIn">
       <?php $this->insert('rbb_booking_window_partial', $this->getData()); ?>
     </div>
     <!-- End booking window -->
 
   </div>
 </div>
-
 
 <script>
   $(document).ready(function () {

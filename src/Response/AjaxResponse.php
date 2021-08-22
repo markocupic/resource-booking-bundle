@@ -88,6 +88,24 @@ class AjaxResponse
         return $this->arrData['status'];
     }
 
+
+    /**
+     * @param string $strAction
+     */
+    public function setAction(string $strAction): void
+    {
+        $this->arrData['action'] = $strAction;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getAction(): ?string
+    {
+        return $this->arrData['action'] ?? null;
+    }
+
+
     public function hasConfirmationMessage(): bool
     {
         return !empty($this->arrData['data']['messages'][static::MESSAGE_CONFIRMATION]);
