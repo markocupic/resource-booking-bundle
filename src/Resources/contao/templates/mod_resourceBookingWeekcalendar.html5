@@ -35,9 +35,15 @@
 
   <!-- vue application container -->
   <div class="rbb-vue-application">
-
     <!-- main window / mode === 'main-window'-->
     <div class="rbb-main-window" v-if="mode === 'main-window'">
+
+      <div v-if="activeResource.description" class="rbb-message-box mt-4">
+        <div class="rbb-resource-description alert alert-info d-flex pt-3 pb-3">
+          <i class="fa-2x me-3 fas fa-exclamation-circle"></i>
+          <span>{{ activeResource.description }}</span>
+        </div>
+      </div>
 
       <?php $this->insert('rbb_filter_board_partial', $this->getData()); ?>
       <?php $this->insert('rbb_booking_table_partial', $this->getData()); ?>
