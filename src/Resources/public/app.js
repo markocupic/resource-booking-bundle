@@ -277,16 +277,18 @@ class resourceBookingApp {
               return data;
             })
             .then(response => {
+
               if (response.status === 'success') {
 
+                if (this.activeResourceTypeId != 'undefined' && this.activeResourceTypeId != response.data['activeResourceTypeId']) {
+                  return;
+                }
 
-                if (this.activeResourceTypeId != response.data['activeResourceTypeId']) {
+                if (this.activeResourceId != 'undefined' && this.activeResourceId != response.data['activeResourceId']) {
                   return;
                 }
-                if (this.activeResourceId != response.data['activeResourceId']) {
-                  return;
-                }
-                if (this.activeWeekTstamp != response.data['activeWeekTstamp']) {
+
+                if (this.activeWeekTstamp != 'undefined' && this.activeWeekTstamp != response.data['activeWeekTstamp']) {
                   return;
                 }
 
