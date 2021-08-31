@@ -81,6 +81,8 @@ class resourceBookingApp {
         messages: null,
         // Indicates if user is idle
         isIdle: false,
+        // Use an array to store the requests
+        requestQueue: [],
       },
 
       created: function created() {
@@ -107,6 +109,21 @@ class resourceBookingApp {
           }
         }, 15000);
 
+        // Use a queue/stack to store the requests.
+        // The last item (request) in the stack will be fired and
+        // the items below will be deleted.
+        // Do this each 300 ms
+        // In this way we can minimize the number of unnecessary requests.
+        window.setInterval(() => {
+          let length = this.requestQueue.length;
+          if (!length) {
+            return;
+          }
+          let current = this.requestQueue[length - 1];
+          this.requestQueue.splice(0, length);
+          this.applyFilterRequest(...current);
+        }, 300);
+
         // Initialize idle detector
         // Idle after 5 min (300000 ms)
         let idleAfter = 300000;
@@ -128,13 +145,16 @@ class resourceBookingApp {
           //
         },
         activeResourceTypeId: function activeResourceTypeId(newVal, oldVal) {
-          this.applyFilterRequest(newVal, this.activeResourceId, this.activeWeekTstamp);
+          this.requestQueue.push([newVal, this.activeResourceId, this.activeWeekTstamp]);
+          //this.applyFilterRequest(newVal, this.activeResourceId, this.activeWeekTstamp);
         },
         activeResourceId: function activeResourceId(newVal, oldVal) {
-          this.applyFilterRequest(this.activeResourceTypeId, newVal, this.activeWeekTstamp);
+          this.requestQueue.push([this.activeResourceTypeId, newVal, this.activeWeekTstamp]);
+          //this.applyFilterRequest(this.activeResourceTypeId, newVal, this.activeWeekTstamp);
         },
         activeWeekTstamp: function activeWeekTstamp(newVal, oldVal) {
-          this.applyFilterRequest(this.activeResourceTypeId, this.activeResourceId, newVal);
+          this.requestQueue.push([this.activeResourceTypeId, this.activeResourceId, newVal]);
+          //this.applyFilterRequest(this.activeResourceTypeId, this.activeResourceId, newVal);
         },
         rows: async function (newVal, oldVal) {
 
@@ -258,6 +278,18 @@ class resourceBookingApp {
             })
             .then(response => {
               if (response.status === 'success') {
+
+
+                if (this.activeResourceTypeId != response.data['activeResourceTypeId']) {
+                  return;
+                }
+                if (this.activeResourceId != response.data['activeResourceId']) {
+                  return;
+                }
+                if (this.activeWeekTstamp != response.data['activeWeekTstamp']) {
+                  return;
+                }
+
                 Object.keys(response.data).forEach(key => {
                   this[key] = response.data[key];
                 });

@@ -89,6 +89,9 @@ class AjaxResponse
     }
 
 
+
+
+
     /**
      * @param string $strAction
      */
