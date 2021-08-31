@@ -280,15 +280,15 @@ class resourceBookingApp {
 
               if (response.status === 'success') {
 
-                if (this.activeResourceTypeId != 'undefined' && this.activeResourceTypeId != response.data['activeResourceTypeId']) {
+                if (this.activeResourceTypeId && this.activeResourceTypeId != response.data['activeResourceTypeId']) {
                   return;
                 }
 
-                if (this.activeResourceId != 'undefined' && this.activeResourceId != response.data['activeResourceId']) {
+                if (this.activeResourceId && this.activeResourceId != response.data['activeResourceId']) {
                   return;
                 }
 
-                if (this.activeWeekTstamp != 'undefined' && this.activeWeekTstamp != response.data['activeWeekTstamp']) {
+                if (this.activeWeekTstamp && this.activeWeekTstamp != response.data['activeWeekTstamp']) {
                   return;
                 }
 
