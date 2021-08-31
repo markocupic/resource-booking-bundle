@@ -112,7 +112,7 @@ class resourceBookingApp {
         // Use a queue/stack to store the requests.
         // The last item (request) in the stack will be fired and
         // the items below will be deleted.
-        // Do this each 300 ms
+        // Do this each 200 ms
         // In this way we can minimize the number of unnecessary requests.
         window.setInterval(() => {
           let length = this.requestQueue.length;
@@ -122,7 +122,7 @@ class resourceBookingApp {
           let current = this.requestQueue[length - 1];
           this.requestQueue.splice(0, length);
           this.applyFilterRequest(...current);
-        }, 300);
+        }, 200);
 
         // Initialize idle detector
         // Idle after 5 min (300000 ms)
