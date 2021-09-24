@@ -32,6 +32,7 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
+use Contao\CoreBundle\Exception\ResponseException;
 
 /**
  * @FrontendModule(type=ResourceBookingWeekcalendarController::TYPE, category="resourceBooking")
@@ -102,8 +103,7 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
 
                 if ($request->request->get('moduleKey') === $moduleKey) {
                     // Send JSON response on xhr requests
-                    $this->getAjaxResponse()->send();
-                    exit;
+                    throw new ResponseException($this->getAjaxResponse());
                 }
             }
         }
