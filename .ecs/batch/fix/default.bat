@@ -7,4 +7,5 @@ cd..
 cd..
 cd..
 vendor\bin\ecs check vendor/markocupic/resource-booking-bundle/src --fix --config vendor/markocupic/resource-booking-bundle/.ecs/config/default.php
+
 cd vendor/markocupic/resource-booking-bundle/.ecs./batch/fix
