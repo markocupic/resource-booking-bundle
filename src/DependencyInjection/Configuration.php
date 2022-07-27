@@ -5,8 +5,10 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2021 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
  * @license MIT
+ * For the full copyright and license information,
+ * please view the LICENSE file that was distributed with this source code.
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
@@ -29,16 +31,16 @@ class Configuration implements ConfigurationInterface
                     ->addDefaultsIfNotSet()
                     ->children()
                         ->scalarNode('attribute_bag_name')
-                        ->cannotBeEmpty()
-                        ->cannotBeOverwritten()
+                            ->cannotBeEmpty()
+                            ->cannotBeOverwritten()
                         ->end()
                         ->scalarNode('attribute_bag_key')
-                        ->cannotBeEmpty()
-                        ->cannotBeOverwritten()
+                            ->cannotBeEmpty()
+                            ->cannotBeOverwritten()
                         ->end()
                         ->scalarNode('flash_bag_key')
-                        ->cannotBeEmpty()
-                        ->cannotBeOverwritten()
+                            ->cannotBeEmpty()
+                            ->cannotBeOverwritten()
                         ->end()
                     ->end()
                 ->end()
@@ -46,8 +48,8 @@ class Configuration implements ConfigurationInterface
                     ->addDefaultsIfNotSet()
                     ->children()
                         ->scalarNode('name')
-                        ->cannotBeEmpty()
-                        ->cannotBeOverwritten()
+                            ->cannotBeEmpty()
+                            ->cannotBeOverwritten()
                         ->end()
                     ->end()
                 ->end()
@@ -67,14 +69,14 @@ class Configuration implements ConfigurationInterface
             ->prototype('array')
                 ->children()
                     ->enumNode('beginnWeek')
-                    ->values(RbbConfig::RBB_WEEKDAYS)
-                    ->isRequired()
+                        ->values(RbbConfig::RBB_WEEKDAYS)
+                        ->isRequired()
                     ->end()
                     ->integerNode('intBackWeeks')
-                    ->isRequired()
+                        ->isRequired()
                     ->end()
                     ->integerNode('intAheadWeeks')
-                    ->isRequired()
+                        ->isRequired()
                     ->end()
                 ->end()
             ->end()

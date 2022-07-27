@@ -39,8 +39,8 @@ class resourceBookingApp {
         isReady: false,
         // Indicate the mode
         mode: 'main-window',
-        // Contains the last response code
-        lastResponseStatus: 200,
+        // Indicates the last response code
+        lastResponseCode: 200,
         // Contains data about available resource types, resources and weeks (week selector)
         filterBoard: null,
         // Indicates if the current user hass logged in as a frontend user
@@ -81,7 +81,9 @@ class resourceBookingApp {
         messages: null,
         // Indicates if user is idle
         isIdle: false,
-        // Do not run refreshDataRequest() if there is a pending request
+        // Queue the requests
+        requestQueue: [],
+        // true if there is a pending request
         isBusy: false,
       },
 
@@ -99,15 +101,42 @@ class resourceBookingApp {
 
         // Show the loading spinner for 2s
         window.setTimeout(() => {
-          this.refreshDataRequest();
-        }, 2000);
+          this.refreshDataRequest(true);
+        }, 500);
 
         // Fetch data from server each 15s
         this.intervals.refreshDataRequest = window.setInterval(() => {
-          if (!this.isIdle && !this.isBusy) {
+          if (!this.isIdle) {
             this.refreshDataRequest();
           }
         }, 15000);
+
+        // Use a queue/stack to store the requests.
+        // The last item (request) in the stack will be fired and
+        // the items below will be deleted.
+        // Do this each 200 ms
+        // In this way we can minimize the number of unnecessary requests.
+        this.intervals.applyFilterRequest = window.setInterval(() => {
+          if (this.isBusy) {
+            return;
+          }
+
+          let length = this.requestQueue.length;
+
+          if (length === 0) {
+            return;
+          }
+
+          if (length > 5) {
+            let delItems = length - 3;
+            this.requestQueue.splice(0, delItems);
+            length = this.requestQueue.length;
+          }
+
+          let current = this.requestQueue[length - 1];
+          this.requestQueue.splice(0, length);
+          this.applyFilterRequest(...current);
+        }, 200);
 
         // Initialize idle detector
         // Idle after 5 min (300000 ms)
@@ -130,13 +159,16 @@ class resourceBookingApp {
           //
         },
         activeResourceTypeId: function activeResourceTypeId(newVal, oldVal) {
-          this.applyFilterRequest(newVal, this.activeResourceId, this.activeWeekTstamp);
+          //this.applyFilterRequest(newVal, this.activeResourceId, this.activeWeekTstamp);
+          this.requestQueue.push([newVal, this.activeResourceId, this.activeWeekTstamp]);
         },
         activeResourceId: function activeResourceId(newVal, oldVal) {
-          this.applyFilterRequest(this.activeResourceTypeId, newVal, this.activeWeekTstamp);
+          //this.applyFilterRequest(this.activeResourceTypeId, newVal, this.activeWeekTstamp);
+          this.requestQueue.push([this.activeResourceTypeId, newVal, this.activeWeekTstamp]);
         },
         activeWeekTstamp: function activeWeekTstamp(newVal, oldVal) {
-          this.applyFilterRequest(this.activeResourceTypeId, this.activeResourceId, newVal);
+          this.requestQueue.push([this.activeResourceTypeId, this.activeResourceId, newVal]);
+          //this.applyFilterRequest(this.activeResourceTypeId, this.activeResourceId, newVal);
         },
         rows: async function (newVal, oldVal) {
 
@@ -146,17 +178,19 @@ class resourceBookingApp {
 
           let newBooking = false;
 
-          Object.keys(newVal).forEach(rowIndex => {
-            Object.keys(newVal[rowIndex]['cellData']).forEach(colIndex => {
-              if (parseInt(newVal[rowIndex]['cellData'][colIndex]['bookingCount']) > parseInt(oldVal[rowIndex]['cellData'][colIndex]['bookingCount'])) {
-                if (newVal[rowIndex]['cellData'][colIndex]['beginnWeekTimestampSelectedWeek'] === oldVal[rowIndex]['cellData'][colIndex]['beginnWeekTimestampSelectedWeek']) {
-                  if (newVal[rowIndex]['cellData'][colIndex]['pid'] === oldVal[rowIndex]['cellData'][colIndex]['pid']) {
-                    newBooking = true;
+          await (function () {
+            Object.keys(newVal).forEach(rowIndex => {
+              Object.keys(newVal[rowIndex]['cellData']).forEach(colIndex => {
+                if (parseInt(newVal[rowIndex]['cellData'][colIndex]['bookingCount']) > parseInt(oldVal[rowIndex]['cellData'][colIndex]['bookingCount'])) {
+                  if (newVal[rowIndex]['cellData'][colIndex]['beginnWeekTimestampSelectedWeek'] === oldVal[rowIndex]['cellData'][colIndex]['beginnWeekTimestampSelectedWeek']) {
+                    if (newVal[rowIndex]['cellData'][colIndex]['pid'] === oldVal[rowIndex]['cellData'][colIndex]['pid']) {
+                      newBooking = true;
+                    }
                   }
                 }
-              }
+              });
             });
-          });
+          })();
 
           if (newBooking === true) {
             if (this.options.enableAudio) {
@@ -171,10 +205,9 @@ class resourceBookingApp {
         /**
          * Fetch all the data from the server and refresh the booking table
          */
-        refreshDataRequest: function refreshDataRequest() {
+        refreshDataRequest: function refreshDataRequest(blnInitial = false) {
 
           let action = 'refreshDataRequest';
-          this.isBusy = true;
 
           let data = new FormData();
           data.append('REQUEST_TOKEN', this.options.requestToken);
@@ -188,33 +221,37 @@ class resourceBookingApp {
             headers: {
               'x-requested-with': 'XMLHttpRequest'
             },
-          })
-            .then(async response => {
-              let data = await response.json();
-              if (!response.ok) {
-                let error = response.statusText;
-                return Promise.reject(error);
+          }).then(async response => {
+            this.lastResponseCode = response.status;
+            let data = await response.json();
+            if (!response.ok) {
+              let error = response.statusText;
+              return Promise.reject(error);
+            }
+            this.checkResponse(response);
+            return data;
+          }).then(response => {
+            if (response.status === 'success') {
+              for (let key in response['data']) {
+
+                // Prevent competing requests
+                if (!blnInitial && key === 'activeResourceId') continue;
+                if (!blnInitial && key === 'activeResource') continue;
+                if (!blnInitial && key === 'activeResourceTypeId') continue;
+                if (!blnInitial && key === 'activeResourceType') continue;
+                if (!blnInitial && key === 'activeWeek') continue;
+                if (!blnInitial && key === 'activeWeekTstamp') continue;
+
+                this[key] = response['data'][key];
               }
-              this.checkResponse(response);
-              return data;
-            })
-            .then(response => {
-              if (response.status === 'success') {
-                for (let key in response['data']) {
-                  this[key] = response['data'][key];
-                }
-              }
-              return response;
-            })
-            .then(response => {
-              this.isReady = true;
-              this.isBusy = false;
-            })
-            .catch(error => {
-              this.isReady = false;
-              this.isBusy = false;
-              console.error("There was en error: " + error);
-            });
+            }
+            return response;
+          }).then(response => {
+            this.isReady = true;
+          }).catch(error => {
+            this.isReady = false;
+            console.error("There was en error: " + error);
+          });
         },
 
         /**
@@ -222,8 +259,8 @@ class resourceBookingApp {
          */
         applyFilterRequest: function applyFilterRequest(activeResourceTypeId, activeResourceId, activeWeekTstamp) {
 
-          let action = 'applyFilterRequest';
           this.isBusy = true;
+          let action = 'applyFilterRequest';
 
           let data = new FormData();
           data.append('REQUEST_TOKEN', this.options.requestToken);
@@ -239,31 +276,31 @@ class resourceBookingApp {
             headers: {
               'x-requested-with': 'XMLHttpRequest'
             },
-          })
-            .then(async response => {
-              let data = await response.json();
-              if (!response.ok) {
-                let error = response.statusText;
-                return Promise.reject(error);
+          }).then(async response => {
+            this.lastResponseCode = response.status;
+            let data = await response.json();
+            if (!response.ok) {
+              let error = response.statusText;
+              return Promise.reject(error);
+            }
+            this.checkResponse(response);
+            return data;
+          }).then(response => {
+            if (response.status === 'success') {
+              if (this.activeWeekTstamp && this.activeWeekTstamp != response.data['activeWeekTstamp']) {
+                this.isBusy = false;
+                return;
               }
-              this.checkResponse(response);
-              return data;
-            })
-            .then(response => {
-              if (response.status === 'success') {
-                Object.keys(response.data).forEach(key => {
-                  this[key] = response.data[key];
-                });
-              }
-              return response;
-            })
-            .then(response => {
-              this.isBusy = false;
-            })
-            .catch(response => {
-              this.isBusy = false;
-              console.error("There was en error: " + error);
-            });
+              Object.keys(response.data).forEach(key => {
+                this[key] = response.data[key];
+              });
+            }
+            this.isBusy = false;
+            return response;
+          }).catch(response => {
+            this.isBusy = false;
+            console.error("There was en error: " + error);
+          });
         },
 
         /**
@@ -273,7 +310,7 @@ class resourceBookingApp {
 
           let action = 'bookingRequest';
 
-          let form = this.$el.querySelector('.booking-window form');
+          let form = this.$el.querySelector('.rbb-js-booking-form');
           if (!form) {
             console.error('Form not found');
           }
@@ -297,38 +334,35 @@ class resourceBookingApp {
                 headers: {
                   'x-requested-with': 'XMLHttpRequest'
                 },
-              })
-              .then(async response => {
-                let data = await response.json();
-                if (!response.ok) {
-                  let error = response.statusText;
-                  return Promise.reject(error);
-                }
-                this.checkResponse(response);
-                return data;
-              })
-              .then(response => {
-                this.bookingWindow.response = response.data;
+              }).then(async response => {
+              this.lastResponseCode = response.status;
+              let data = await response.json();
+              if (!response.ok) {
+                let error = response.statusText;
+                return Promise.reject(error);
+              }
+              this.checkResponse(response);
+              return data;
+            }).then(response => {
+              this.bookingWindow.response = response.data;
 
-                if (response.status === 'success') {
-                  this.autoCloseBookingWindowTimeout = window.setTimeout(() => {
-                    this.mode = 'main-window';
-                  }, this.options.autocloseWindowsAfter);
-                }
+              if (response.status === 'success') {
+                this.autoCloseBookingWindowTimeout = window.setTimeout(() => {
+                  this.mode = 'main-window';
+                }, this.options.autocloseWindowsAfter);
+              }
 
-                // Always
-                this.refreshDataRequest();
-              })
-              .then(response => {
-                // Call onAfterBookingRequest callback
-                this.options.callbacks.onAfterBookingRequest.call(this, data);
-              })
-              .catch(response => {
-                this.isReady = false;
-                console.error("There was en error: " + error);
-                // Always
-                this.refreshDataRequest();
-              });
+              // Always
+              this.refreshDataRequest();
+            }).then(response => {
+              // Call onAfterBookingRequest callback
+              this.options.callbacks.onAfterBookingRequest.call(this, data);
+            }).catch(response => {
+              this.isReady = false;
+              console.error("There was en error: " + error);
+              // Always
+              this.refreshDataRequest();
+            });
           }
         },
 
@@ -342,7 +376,7 @@ class resourceBookingApp {
           data.append('REQUEST_TOKEN', this.options.requestToken);
           data.append('action', action);
           data.append('resourceId', this.bookingWindow.activeTimeSlot.pid);
-          data.append('bookingRepeatStopWeekTstamp', this.$el.querySelector('.booking-repeat-stop-week-tstamp').value);
+          data.append('bookingRepeatStopWeekTstamp', this.$el.querySelector('.rbb-js-booking-repeat-stop-week-tstamp').value);
           data.append('moduleKey', this.options.moduleKey);
           data.append('itemsBooked', this.$el.querySelector('[name="itemsBooked"]') ? this.$el.querySelector('[name="itemsBooked"]').value : '1');
 
@@ -357,36 +391,33 @@ class resourceBookingApp {
               headers: {
                 'x-requested-with': 'XMLHttpRequest'
               },
-            })
-            .then(async response => {
-              let data = await response.json();
-              if (!response.ok) {
-                let error = response.statusText;
-                return Promise.reject(error);
-              }
-              this.checkResponse(response);
-              return data;
-            })
-            .then(response => {
-              if (response.status) {
-                this.bookingWindow.response = response.data;
-              }
+            }).then(async response => {
+            this.lastResponseCode = response.status;
+            let data = await response.json();
+            if (!response.ok) {
+              let error = response.statusText;
+              return Promise.reject(error);
+            }
+            this.checkResponse(response);
+            return data;
+          }).then(response => {
+            if (response.status) {
+              this.bookingWindow.response = response.data;
+            }
 
-              if (response.status === 'success') {
-                this.isReady = true;
-              }
-            })
-            .catch(response => {
-              this.isReady = false;
-              console.error("There was en error: " + error);
-            });
+            if (response.status === 'success') {
+              this.isReady = true;
+            }
+          }).catch(response => {
+            this.isReady = false;
+            console.error("There was en error: " + error);
+          });
         },
 
         /**
          * Send cancel booking request
          */
         cancelBookingRequest: function cancelBookingRequest() {
-          this.isBusy = true;
           this.bookingWindow.showCancelBookingForm = false;
           this.bookingWindow.showCancelBookingButton = false;
 
@@ -404,40 +435,36 @@ class resourceBookingApp {
             headers: {
               'x-requested-with': 'XMLHttpRequest'
             },
-          })
-            .then(async response => {
-              let data = await response.json();
-              if (!response.ok) {
-                let error = response.statusText;
-                return Promise.reject(error);
-              }
-              this.checkResponse(response);
-              return data;
-            })
-            .then(response => {
-              if (response.status === 'success') {
-                this.bookingWindow.response = response.data;
-                this.autoCloseBookingWindowTimeout = window.setTimeout(() => {
-                  this.mode = 'main-window';
-                }, this.options.autocloseWindowsAfter);
-              } else {
-                this.bookingWindow.response = response.data;
-              }
+          }).then(async response => {
+            this.lastResponseCode = response.status;
+            let data = await response.json();
+            if (!response.ok) {
+              let error = response.statusText;
+              return Promise.reject(error);
+            }
+            this.checkResponse(response);
+            return data;
+          }).then(response => {
+            if (response.status === 'success') {
+              this.bookingWindow.response = response.data;
+              this.autoCloseBookingWindowTimeout = window.setTimeout(() => {
+                this.mode = 'main-window';
+              }, this.options.autocloseWindowsAfter);
+            } else {
+              this.bookingWindow.response = response.data;
+            }
 
-              // Always
-              self.isBusy = false;
-              this.bookingWindow.deleteBookingsWithSameBookingUuid = false;
-              this.refreshDataRequest();
-            })
-            .catch(response => {
-              this.isReady = false;
-              this.isBusy = false;
-              console.error("There was en error: " + error);
+            // Always
+            this.bookingWindow.deleteBookingsWithSameBookingUuid = false;
+            this.refreshDataRequest();
+          }).catch(response => {
+            this.isReady = false;
+            console.error("There was en error: " + error);
 
-              // Always
-              this.refreshDataRequest();
-              this.bookingWindow.deleteBookingsWithSameBookingUuid = false;
-            });
+            // Always
+            this.refreshDataRequest();
+            this.bookingWindow.deleteBookingsWithSameBookingUuid = false;
+          });
         },
 
         /**
@@ -449,10 +476,6 @@ class resourceBookingApp {
 
           evt.preventDefault();
           evt.stopPropagation();
-
-          if (this.isBusy) {
-            return false;
-          }
 
           // Prevent bubbling invalid requests
           if (tstamp === this.activeWeekTstamp || tstamp < this.filterBoard.tstampFirstPermittedWeek || tstamp > this.filterBoard.tstampLastPermittedWeek) {
@@ -494,12 +517,12 @@ class resourceBookingApp {
 
           // Wrap this code, otherwise querySelector will not find dom elements
           window.setTimeout(() => {
-            let inputBookingDescription = this.$el.querySelector('.booking-window input[name="bookingDescription"]');
+            let inputBookingDescription = this.$el.querySelector('.rbb-js-booking-form input[name="bookingDescription"]');
             if (inputBookingDescription !== null) {
               inputBookingDescription.setAttribute('value', '');
             }
 
-            let weekRepeatOptions = this.$el.querySelectorAll('.booking-window .booking-repeat-stop-week-tstamp option');
+            let weekRepeatOptions = this.$el.querySelectorAll('.rbb-js-booking-form .rbb-js-booking-repeat-stop-week-tstamp option');
             if (weekRepeatOptions.length > 0) {
               weekRepeatOptions.forEach(elOption => elOption.removeAttribute('selected'));
             }
@@ -514,35 +537,17 @@ class resourceBookingApp {
           this.mode = 'main-window';
         },
 
-
         /**
          * Check json response
-         * @param res
+         * @param response
          */
-        checkResponse: function checkResponse(res) {
-          this.lastResponseStatus = res.status;
-          if (res.status != 200) {
+        checkResponse: function checkResponse(response) {
+          this.lastResponseCode = response.status;
+          if (response.status !== 200) {
             this.isReady = false;
           } else {
             this.isReady = true;
           }
-        },
-
-        /**
-         * Initialize idle detector
-         */
-        initializeIdleDetectorOld: function initializeIdleDetectorOld(idleAfter) {
-
-          $(document).idle({
-            onIdle: () => {
-              this.isIdle = true;
-            },
-            onActive: () => {
-              this.isIdle = false;
-              this.refreshDataRequest();
-            },
-            idle: idleAfter,
-          });
         },
 
         /**
@@ -568,7 +573,7 @@ class resourceBookingApp {
             }, false);
           });
 
-          window.setInterval(() => {
+          this.intervals.isIdle = window.setInterval(() => {
             if (this.isIdle) {
               return;
             }

@@ -1,40 +1,40 @@
 <!-- filter board -->
-<form class="resource-booking-form mt-5" action="{{env::request}}" method="get">
-  <div v-if="filterBoard" class="row">
-    <div class="col-sm-1 mb-2">
+<form class="rbb-filter-board-form mt-5" action="{{env::request}}" method="get">
+  <div v-if="filterBoard" class="row gx-2">
+    <div class="rbb-go-back-one-week col-sm-1 mb-2">
       <button v-on:click="jumpWeekRequest(filterBoard.jumpPrevWeek.tstamp,$event)" v-bind:data-tstamp="filterBoard.jumpPrevWeek.tstamp" role="button" class="btn btn-primary w-100" title="{{trans::RBB.1WeekBack::contao_default}}" v-bind:class="filterBoard.jumpPrevWeek.disabled ? 'disabled' : ''" v-bind:aria-disabled="filterBoard.jumpPrevWeek.disabled ? 'true' : 'false'" :disabled="filterBoard.jumpPrevWeek.disabled"><i class="fas fa-chevron-left"></i></button>
     </div>
 
-    <div class="col-sm-3 ressource-type-select mb-2">
-      <label for="resType_<?= $this->moduleKey ?>" class="d-none">Typ</label>
-      <select id="resType_<?= $this->moduleKey ?>" class="form-control w-100" name="resType" v-model="activeResourceTypeId">
+    <div class="rbb-ressource-type-select col-sm-3 mb-2">
+      <label for="ctrlResType_<?= $this->moduleKey ?>" class="d-none">{{trans::RBB.resourceType::contao_default}}</label>
+      <select id="ctrlResType_<?= $this->moduleKey ?>" class="form-control w-100" name="resType" v-model="activeResourceTypeId">
         <option value="undefined">{{trans::RBB.formOptionSelectResourceType::contao_default}}</option>
         <option v-for="(resourceType, index) in filterBoard.resourceTypes" v-bind:value="resourceType.id">{{ resourceType.title }}</option>
       </select>
     </div>
 
-    <div class="col-sm-3 ressource-select mb-2">
-      <label for="res_<?= $this->moduleKey ?>" class="d-none">{{trans::RBB.resource::contao_default}}</label>
-      <select id="res_<?= $this->moduleKey ?>" class="shake-chunk form-control w-100" name="res" v-model="activeResourceId" :disabled="activeResourceTypeId ==='undefined'">
+    <div class="rbb-ressource-select col-sm-3 mb-2">
+      <label for="ctrlRes_<?= $this->moduleKey ?>" class="d-none">{{trans::RBB.resource::contao_default}}</label>
+      <select id="ctrlRes_<?= $this->moduleKey ?>" class="form-control w-100" name="res" v-model="activeResourceId" :disabled="activeResourceTypeId === 'undefined'">
         <option value="undefined">{{trans::RBB.formOptionSelectResource::contao_default}}</option>
         <option v-for="(resource, index) in filterBoard.resources" v-bind:value="resource.id">{{ resource.title }}</option>
       </select>
     </div>
 
-    <div class="col-sm-4 week-select mb-2">
+    <div class="rbb-week-select col-sm-4 mb-2">
       <label for="date_<?= $this->moduleKey ?>" class="d-none">{{trans::RBB.timeSpan::contao_default}}</label>
-      <select id="date_<?= $this->moduleKey ?>" :disabled="!rows" class="form-control  w-100 timeSpanSelect" name="date" v-model="activeWeekTstamp">
+      <select id="date_<?= $this->moduleKey ?>" :disabled="!rows.length" class="rbb-time-span-select form-control w-100" name="date" v-model="activeWeekTstamp">
         <option v-for="(week, index) in filterBoard.weekSelection" v-bind:class="week.cssClass" v-bind:value="week.tstampBeginnWeek">{{ week.optionText }}</option>
       </select>
     </div>
 
-    <div class="col-sm-1 mb-2">
+    <div class="rbb-go-ahead-one-week col-sm-1 mb-2">
       <button v-on:click="jumpWeekRequest(filterBoard.jumpNextWeek.tstamp,$event)" v-bind:data-tstamp="filterBoard.jumpNextWeek.tstamp" role="button" class="btn btn-primary w-100" title="{{trans::RBB.1WeekAhead::contao_default}}" v-bind:class="filterBoard.jumpNextWeek.disabled ? 'disabled' : ''" v-bind:aria-disabled="filterBoard.jumpNextWeek.disabled ? 'true' : 'false'" :disabled="filterBoard.jumpNextWeek.disabled"><i class="fas fa-chevron-right"></i></button>
     </div>
   </div>
 
   <!-- Error & info messages -->
-  <div class="mt-5 form-messages" v-if="messages">
+  <div class="rbb-filter-form-messages mt-5" v-if="messages">
     <div v-if="messages.info" class="alert alert-info">{{ messages.info }}</div>
     <div v-if="messages.error" class="alert alert-error">{{ messages.error }}</div>
     <div v-if="messages.confirmation" class="alert alert-success">{{ messages.confirmation }}</div>

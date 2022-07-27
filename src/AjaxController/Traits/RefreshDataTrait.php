@@ -5,8 +5,10 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2021 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
  * @license MIT
+ * For the full copyright and license information,
+ * please view the LICENSE file that was distributed with this source code.
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
@@ -145,7 +147,7 @@ trait RefreshDataTrait
         return $arrData;
     }
 
-    private function getResourceTypeSelectOptions(?ModuleModel $objModule = null): array
+    private function getResourceTypeSelectOptions(ModuleModel $objModule = null): array
     {
         /** @var ResourceBookingResourceTypeModel $resourceBookingResourceTypeModelAdapter */
         $resourceBookingResourceTypeModelAdapter = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class);
@@ -162,14 +164,14 @@ trait RefreshDataTrait
         return $rows;
     }
 
-    private function getResourceSelectOptions(?ResourceBookingResourceTypeModel $ResType = null): array
+    private function getResourceSelectOptions(ResourceBookingResourceTypeModel $resType = null): array
     {
         /** @var ResourceBookingResourceModel $resourceBookingResourceModelAdapter */
         $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
 
         $rows = [];
 
-        if (null !== ($objResources = $resourceBookingResourceModelAdapter->findPublishedByPid($ResType->id))) {
+        if (null !== $resType && null !== ($objResources = $resourceBookingResourceModelAdapter->findPublishedByPid($resType->id))) {
             while ($objResources->next()) {
                 $rows[] = $objResources->row();
             }
@@ -282,36 +284,39 @@ trait RefreshDataTrait
         return $arrReturn;
     }
 
-    private function getTimeslotData(?ResourceBookingResourceModel $resourceBookingResourceModel = null)
+    private function getTimeslotData(ResourceBookingResourceModel $resourceBookingResourceModel = null)
     {
         $resourceBookingTimeSlotModelAdapter = $this->framework->getAdapter(ResourceBookingTimeSlotModel::class);
         $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
         $utcTimeHelperAdapter = $this->framework->getAdapter(UtcTimeHelper::class);
 
-        $objTimeslots = $resourceBookingTimeSlotModelAdapter->findPublishedByPid($resourceBookingResourceModel->timeSlotType);
         $timeSlots = [];
 
-        if (null !== $objTimeslots) {
-            while ($objTimeslots->next()) {
-                // Get the CSS ID
-                $arrCssCellID = $stringUtilAdapter->deserialize($objTimeslots->cssID, true);
+        if (null !== $resourceBookingResourceModel) {
+            $objTimeslots = $resourceBookingTimeSlotModelAdapter->findPublishedByPid($resourceBookingResourceModel->timeSlotType);
 
-                // Override the CSS ID
-                $cssCellClass = null;
+            if (null !== $objTimeslots) {
+                while ($objTimeslots->next()) {
+                    // Get the CSS ID
+                    $arrCssCellID = $stringUtilAdapter->deserialize($objTimeslots->cssID, true);
 
-                if (!empty($arrCssCellID[1])) {
-                    $cssCellClass = $arrCssCellID[1];
+                    // Override the CSS ID
+                    $cssCellClass = null;
+
+                    if (!empty($arrCssCellID[1])) {
+                        $cssCellClass = $arrCssCellID[1];
+                    }
+                    $startTime = (int) $objTimeslots->startTime;
+                    $endTime = (int) $objTimeslots->endTime;
+                    $objTs = new \stdClass();
+                    $objTs->cssClass = $cssCellClass;
+                    $objTs->startTimeString = $utcTimeHelperAdapter->parse('H:i', $startTime);
+                    $objTs->startTime = (int) $startTime;
+                    $objTs->endTimeString = $utcTimeHelperAdapter->parse('H:i', $endTime);
+                    $objTs->timeSpanString = $utcTimeHelperAdapter->parse('H:i', $startTime).' - '.$utcTimeHelperAdapter->parse('H:i', $endTime);
+                    $objTs->endTime = (int) $endTime;
+                    $timeSlots[] = $objTs;
                 }
-                $startTime = (int) $objTimeslots->startTime;
-                $endTime = (int) $objTimeslots->endTime;
-                $objTs = new \stdClass();
-                $objTs->cssClass = $cssCellClass;
-                $objTs->startTimeString = $utcTimeHelperAdapter->parse('H:i', $startTime);
-                $objTs->startTime = (int) $startTime;
-                $objTs->endTimeString = $utcTimeHelperAdapter->parse('H:i', $endTime);
-                $objTs->timeSpanString = $utcTimeHelperAdapter->parse('H:i', $startTime).' - '.$utcTimeHelperAdapter->parse('H:i', $endTime);
-                $objTs->endTime = (int) $endTime;
-                $timeSlots[] = $objTs;
             }
         }
 
@@ -346,7 +351,7 @@ trait RefreshDataTrait
         return $arrWeek;
     }
 
-    private function getBookingTableData(array $arrWeekdays, int $activeWeekTstamp, ?ModuleModel $moduleModel = null, ?ResourceBookingResourceModel $resourceModel = null, ?FrontendUser $user = null): array
+    private function getBookingTableData(array $arrWeekdays, int $activeWeekTstamp, ModuleModel $moduleModel = null, ResourceBookingResourceModel $resourceModel = null, FrontendUser $user = null): array
     {
         $resourceBookingTimeSlotModelAdapter = $this->framework->getAdapter(ResourceBookingTimeSlotModel::class);
         $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
@@ -368,7 +373,7 @@ trait RefreshDataTrait
                 $objRow = new \stdClass();
 
                 $cssRowId = sprintf('timeSlotModId_%s_%s', $moduleModel->id, $objTimeslots->id);
-                $cssRowClass = 'time-slot-'.$objTimeslots->id;
+                $cssRowClass = 'rbb-time-slot-'.$objTimeslots->id;
 
                 // Get the CSS ID
                 $arrCssCellID = $stringUtilAdapter->deserialize($objTimeslots->cssID, true);

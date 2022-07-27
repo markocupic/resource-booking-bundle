@@ -5,8 +5,10 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2021 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
  * @license MIT
+ * For the full copyright and license information,
+ * please view the LICENSE file that was distributed with this source code.
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
@@ -16,6 +18,7 @@ use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Environment;
 use Contao\FrontendUser;
 use Markocupic\ResourceBookingBundle\AppInitialization\Helper\ModuleKey;
+use Markocupic\ResourceBookingBundle\AppInitialization\Helper\TokenManager;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\Attribute\AttributeBag;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
@@ -25,15 +28,15 @@ use Symfony\Component\Security\Core\Security;
  * Class ArrayAttributeBag.
  *
  * The module key is necessary to run multiple rbb applications on the same page
- * and is sent as a post parameter in every xhr request.
+ * and is sent as a post parameter on every xhr request.
  *
- * The session data of each rbb instance is stored under $_SESSION[_resource_booking_bundle_attributes][#moduleKey#]
+ * The session data of each rbb instance is stored under $_SESSION[_resource_booking_bundle_attributes][$sessionId.'_'.$userId.'_'.$moduleKey.'_'.$token]
  *
  * The module key (#moduleId_#moduleIndex f.ex. 33_0) contains the module id and the module index
  * The module index is 0, if the current module is the first rbb module on the current page
  * The module index is 1, if the current module is the first rbb module on the current page, etc.
  *
- * Do only run once ModuleIndex::setModuleIndex() per module instance;
+ * Do only run once ModuleIndex::generateModuleIndex() per module instance;
  */
 class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
 {
@@ -214,15 +217,15 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
 
         /**
          * The module key is necessary to run multiple rbb applications on the same page
-         * and is sent as a post parameter in every xhr request.
+         * and is sent as a post parameter on every xhr request.
          *
-         * The session data of each rbb instance is stored under $_SESSION[_resource_booking_bundle_attributes][#moduleKey#]
+         * The session data of each rbb instance is stored under $_SESSION[_resource_booking_bundle_attributes][$sessionId.'_'.$userId.'_'.$moduleKey.'_'.$token]
          *
          * The module key (#moduleId_#moduleIndex f.ex. 33_0) contains the module id and the module index
          * The module index is 0, if the current module is the first rbb module on the current page
          * The module index is 1, if the current module is the first rbb module on the current page, etc.
          *
-         * Do only run once ModuleIndex::setModuleIndex() per module instance;
+         * Do only run once ModuleIndex::generateModuleIndex() per module instance;
          */
         $sessionId = '';
         $userId = '';
@@ -240,14 +243,23 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
             }
         }
 
+        $request = $this->requestStack->getCurrentRequest();
+
         if ($environmentAdapter->get('isAjaxRequest')) {
-            $moduleKey = $this->requestStack->getCurrentRequest()->request->get('moduleKey');
-        } elseif (!$environmentAdapter->get('isAjaxRequest') && \strlen((string) ModuleKey::getModuleKey())) {
+            $moduleKey = $request->request->get('moduleKey');
+        } elseif (!$environmentAdapter->get('isAjaxRequest') && \strlen((string) ModuleKey::getModuleKey()) && \strlen((string) TokenManager::getToken())) {
             $moduleKey = ModuleKey::getModuleKey();
         } else {
             return '';
         }
 
-        return sha1($sessionId.'_'.$userId.'_'.$moduleKey);
+        // Get the token from url
+        if (!$request->query->has('token_'.$moduleKey)) {
+            return '';
+        }
+
+        $token = $request->query->get('token_'.$moduleKey);
+
+        return sha1($sessionId.'_'.$userId.'_'.$moduleKey.'_'.$token);
     }
 }
