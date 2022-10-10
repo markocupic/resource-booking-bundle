@@ -132,7 +132,7 @@ trait BookingTrait
         // Add data from POST, thus the extension can easily be extended
         foreach (array_keys($_POST) as $k) {
             if (!isset($arrUserInput[$k])) {
-                $arrUserInput[$k] = true === $dca['fields'][$k]['eval']['decodeEntities'] ? $stringUtilAdapter->decodeEntities($inputAdapter->post($k)) : $inputAdapter->post($k);
+                $arrUserInput[$k] = isset($dca['fields'][$k]['eval']['decodeEntities']) && true === $dca['fields'][$k]['eval']['decodeEntities'] ? $stringUtilAdapter->decodeEntities($inputAdapter->post($k)) : $inputAdapter->post($k);
             }
         }
 
