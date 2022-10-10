@@ -23,11 +23,11 @@
     "source": "https://github.com/markocupic/resource-booking-bundle"
   },
   "require": {
-    "php": "^7.4|^8.0",
-    "contao/core-bundle": "^4.11",
+    "php": "^8.0",
+    "contao/core-bundle": "^4.13",
     "codefog/contao-haste": "^4.23",
     "markocupic/contao-component-bootstrap": "^5.0",
-    "markocupic/contao-component-fontawesome-free": "^5.13",
+    "markocupic/contao-component-fontawesome-free": "^5.13 || ^6.0",
     "markocupic/contao-component-vue-js": "^2.6",
     "ramsey/uuid": "^3.0 || ^4.0"
   },
