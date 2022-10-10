@@ -101,7 +101,7 @@ class Utils
                 }
             }
 
-            throw new \Exception('Could not find app configuration array. Please check your config.yml file an make sure you have created correctly your custom configuration.');
+            throw new \Exception('Could not find app configuration array. Please check your config.yml file an make sure you have created correctly your custom configuration. Howto: https://github.com/markocupic/resource-booking-bundle#app-konfiguration-anpassen');
         }
 
         throw new \Exception('Initialize RBB application must be initialized first, before you can call '.__METHOD__.'.');
