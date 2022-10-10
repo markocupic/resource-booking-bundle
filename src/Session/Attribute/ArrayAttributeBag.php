@@ -70,10 +70,8 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
 
     /**
      * @param mixed $key
-     *
-     * @return mixed
      */
-    public function &offsetGet($key)
+    public function &offsetGet($key): mixed
     {
         return $this->attributes[$key];
     }
