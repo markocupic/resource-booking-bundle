@@ -12,7 +12,6 @@ declare(strict_types=1);
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
-use Markocupic\ResourceBookingBundle\Config\RbbConfig;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceTypeModel;
@@ -35,8 +34,3 @@ $GLOBALS['TL_MODELS']['tl_resource_booking_resource'] = ResourceBookingResourceM
 $GLOBALS['TL_MODELS']['tl_resource_booking_resource_type'] = ResourceBookingResourceTypeModel::class;
 $GLOBALS['TL_MODELS']['tl_resource_booking_time_slot'] = ResourceBookingTimeSlotModel::class;
 $GLOBALS['TL_MODELS']['tl_resource_booking_time_slot_type'] = ResourceBookingTimeSlotTypeModel::class;
-
-// Backend Stylesheets
-if (TL_MODE === 'BE') {
-    $GLOBALS['TL_CSS'][] = RbbConfig::RBB_ASSET_PATH.'/css/backend.css';
-}

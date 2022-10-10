@@ -13,19 +13,16 @@ declare(strict_types=1);
  */
 
 use Contao\Backend;
+use Contao\DC_Table;
 use Contao\DataContainer;
 use Contao\Date;
 use Contao\Input;
 use Contao\Message;
 use Markocupic\ResourceBookingBundle\Util\UtcTimeHelper;
 
-/*
- * Table tl_resource_booking_time_slot
- */
 $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = [
-    // Config
     'config'   => [
-        'dataContainer'     => 'Table',
+        'dataContainer'     => DC_Table::class,
         'ptable'            => 'tl_resource_booking_time_slot_type',
         'enableVersioning'  => true,
         'sql'               => [
@@ -37,11 +34,9 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = [
         'ondelete_callback' => [['tl_resource_booking_time_slot', 'removeChildRecords']],
         'onsubmit_callback' => [['tl_resource_booking_time_slot', 'adaptBookingsStartAndEndtime']],
     ],
-
-    // List
     'list'     => [
         'sorting'           => [
-            'mode'                  => 4,
+            'mode'                  => DataContainer::MODE_PARENT,
             'fields'                => ['sorting'],
             'panelLayout'           => 'filter;search,limit',
             'headerFields'          => ['title'],
@@ -77,7 +72,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = [
                 'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['delete'],
                 'href'       => 'act=delete',
                 'icon'       => 'delete.svg',
-                'attributes' => 'onclick="if(!confirm(\''.$GLOBALS['TL_LANG']['MSC']['deleteConfirm'].'\'))return false;Backend.getScrollOffset()"',
+                'attributes' => 'onclick="if(!confirm(\''.($GLOBALS['TL_LANG']['MSC']['deleteConfirm'] ?? null).'\'))return false;Backend.getScrollOffset()"',
             ],
             'toggle' => [
                 'label'                => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['toggle'],
@@ -103,13 +98,9 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = [
             ],
         ],
     ],
-
-    // Palettes
     'palettes' => [
         'default' => '{title_legend},title,description;{time_legend},startTime,endTime;{expert_legend:hide},cssID',
     ],
-
-    // Fields
     'fields'   => [
         'id'          => [
             'sql' => 'int(10) unsigned NOT NULL auto_increment',
@@ -137,7 +128,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = [
             'search'    => true,
             'sorting'   => true,
             'filter'    => true,
-            'flag'      => 2,
+            'flag'      => DataContainer::SORT_INITIAL_LETTER_DESC,
             'inputType' => 'checkbox',
             'eval'      => ['doNotCopy' => true, 'tl_class' => 'clr'],
             'sql'       => "char(1) NOT NULL default ''",
@@ -154,7 +145,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = [
             'exclude'       => true,
             'filter'        => true,
             'sorting'       => true,
-            'flag'          => 8,
+            'flag'          => DataContainer::SORT_MONTH_DESC,
             'inputType'     => 'text',
             'eval'          => ['rgxp' => 'resourceBookingTime', 'mandatory' => true, 'tl_class' => 'w50'],
             'load_callback' => [

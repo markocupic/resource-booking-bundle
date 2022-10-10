@@ -16,6 +16,11 @@ services:
         resource: ../../
         exclude: ../../{DependencyInjection,Resources,Model,Config,Event}
 
+    # Subscribers: Add backend assets
+    Markocupic\ResourceBookingBundle\EventSubscriber\KernelRequestSubscriber:
+        tags:
+            - { name: kernel.event_subscriber }
+
     # Subscribers: Handle ajay requests
     Markocupic\ResourceBookingBundle\EventSubscriber\AjaxRequestEventSubscriber:
         tags:

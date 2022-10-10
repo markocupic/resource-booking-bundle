@@ -14,14 +14,12 @@ declare(strict_types=1);
 
 use Contao\Backend;
 use Markocupic\ResourceBookingBundle\Config\RbbConfig;
+use Contao\DC_Table;
+use Contao\DataContainer;
 
-/*
- * Table tl_resource_booking_resource
- */
 $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = [
-    // Config
     'config'   => [
-        'dataContainer'    => 'Table',
+        'dataContainer'    => DC_Table::class,
         'switchToEdit'     => true,
         'ptable'           => 'tl_resource_booking_resource_type',
         'enableVersioning' => true,
@@ -32,10 +30,9 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = [
             ],
         ],
     ],
-    // List
     'list'     => [
         'sorting'           => [
-            'mode'                  => 4,
+            'mode'                  => DataContainer::MODE_PARENT,
             'fields'                => ['title ASC'],
             'headerFields'          => ['title'],
             'panelLayout'           => 'filter;sort,search,limit',
@@ -65,7 +62,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = [
             'delete'   => [
                 'href'       => 'act=delete',
                 'icon'       => 'delete.gif',
-                'attributes' => 'onclick="if(!confirm(\''.$GLOBALS['TL_LANG']['MSC']['deleteConfirm'].'\'))return false;Backend.getScrollOffset()"',
+                'attributes' => 'onclick="if(!confirm(\''.($GLOBALS['TL_LANG']['MSC']['deleteConfirm'] ?? null).'\'))return false;Backend.getScrollOffset()"',
             ],
             'toggle'   => [
                 'attributes'           => 'onclick="Backend.getScrollOffset();"',
@@ -89,11 +86,9 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = [
             ],
         ],
     ],
-    // Palettes
     'palettes' => [
         'default' => '{title_legend},title,description,itemsAvailable,timeSlotType',
     ],
-    // Fields
     'fields'   => [
         'id'             => [
             'sql' => 'int(10) unsigned NOT NULL auto_increment',
@@ -110,7 +105,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = [
             'exclude'   => true,
             'search'    => true,
             'inputType' => 'text',
-            'flag'      => 1,
+            'flag'      => DataContainer::SORT_INITIAL_LETTER_ASC,
             'eval'      => ['mandatory' => true, 'maxlength' => 255, 'tl_class' => 'clr'],
             'sql'       => "varchar(255) NOT NULL default ''",
         ],
@@ -119,7 +114,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = [
             'search'    => true,
             'sorting'   => true,
             'filter'    => true,
-            'flag'      => 2,
+            'flag'      => DataContainer::SORT_INITIAL_LETTER_DESC,
             'inputType' => 'checkbox',
             'eval'      => ['doNotCopy' => true, 'tl_class' => 'clr'],
             'sql'       => "char(1) NOT NULL default ''",
@@ -150,9 +145,6 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = [
     ],
 ];
 
-/**
- * Class tl_resource_booking_resource.
- */
 class tl_resource_booking_resource extends Backend
 {
     /**

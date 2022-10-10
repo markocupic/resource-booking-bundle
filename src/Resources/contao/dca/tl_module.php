@@ -16,26 +16,20 @@ use Contao\Backend;
 use Contao\System;
 use Markocupic\ResourceBookingBundle\Config\RbbConfig;
 
-/*
- * Add palettes to tl_module
- */
+// Palettes
 $GLOBALS['TL_DCA']['tl_module']['palettes']['resourceBookingWeekcalendar'] = '{title_legend},name,headline,type;{config_legend},resourceBooking_appConfig,resourceBooking_resourceTypes,resourceBooking_hideDays,resourceBooking_addDateStop,resourceBooking_displayClientPersonalData,resourceBooking_setBookingSubmittedFields;{template_legend:hide},customTpl;{protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space';
 $GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'resourceBooking_hideDays';
 $GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'resourceBooking_addDateStop';
 $GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'resourceBooking_displayClientPersonalData';
 $GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'resourceBooking_setBookingSubmittedFields';
 
-/*
- * Add subpalettes to tl_module
- */
+// Subpalettes
 $GLOBALS['TL_DCA']['tl_module']['subpalettes']['resourceBooking_hideDays'] = 'resourceBooking_hideDaysSelection';
 $GLOBALS['TL_DCA']['tl_module']['subpalettes']['resourceBooking_addDateStop'] = 'resourceBooking_dateStop';
 $GLOBALS['TL_DCA']['tl_module']['subpalettes']['resourceBooking_displayClientPersonalData'] = 'resourceBooking_clientPersonalData';
 $GLOBALS['TL_DCA']['tl_module']['subpalettes']['resourceBooking_setBookingSubmittedFields'] = 'resourceBooking_bookingSubmittedFields';
 
-/*
- * Add fields to tl_module
- */
+// Fields
 $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_resourceTypes'] = [
     'exclude'          => true,
     'inputType'        => 'checkbox',
@@ -74,6 +68,7 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_dateStop'] = [
     'eval'      => ['rgxp' => 'date', 'datepicker' => true, 'tl_class' => 'w50 wizard'],
     'sql'       => "varchar(11) NOT NULL default ''",
 ];
+
 $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_dateStop'] = [
     'exclude'   => true,
     'default'   => time(),
@@ -122,9 +117,6 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_appConfig'] = [
     'sql'              => "varchar(64) NOT NULL default 'default'",
 ];
 
-/**
- * Class tl_module_resource_booking.
- */
 class tl_module_resource_booking extends Backend
 {
     public function getResourceTypes(): array

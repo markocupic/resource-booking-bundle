@@ -77,7 +77,7 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
                 $controller = $this->get($alias);
                 $controller->generateResponse($ajaxRequestEvent);
             } else {
-                throw new \Exception(sprintf('Could not find Controller for action "%s".', $action));
+                throw new \Exception(sprintf('Could not find the controller class for action "%s".', $action));
             }
         }
     }

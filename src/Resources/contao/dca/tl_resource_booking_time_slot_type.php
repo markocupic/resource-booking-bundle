@@ -13,17 +13,14 @@ declare(strict_types=1);
  */
 
 use Contao\Backend;
+use Contao\DC_Table;
 use Contao\DataContainer;
 use Contao\Image;
 use Contao\StringUtil;
 
-/*
- * Table tl_resource_booking_time_slot_type
- */
 $GLOBALS['TL_DCA']['tl_resource_booking_time_slot_type'] = [
-    // Config
     'config'   => [
-        'dataContainer'     => 'Table',
+        'dataContainer'     => DC_Table::class,
         'ctable'            => ['tl_resource_booking_time_slot'],
         'switchToEdit'      => true,
         'enableVersioning'  => true,
@@ -34,13 +31,11 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot_type'] = [
         ],
         'ondelete_callback' => [['tl_resource_booking_time_slot_type', 'removeChildRecords']],
     ],
-
-    // List
     'list'     => [
         'sorting'           => [
-            'mode'        => 1,
+            'mode'        => DataContainer::MODE_SORTED,
             'fields'      => ['title'],
-            'flag'        => 1,
+            'flag'        => DataContainer::SORT_INITIAL_LETTER_ASC,
             'panelLayout' => 'filter;search,limit',
         ],
         'label'             => [
@@ -71,7 +66,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot_type'] = [
             'delete'     => [
                 'href'       => 'act=delete',
                 'icon'       => 'delete.svg',
-                'attributes' => 'onclick="if(!confirm(\''.$GLOBALS['TL_LANG']['MSC']['deleteConfirm'].'\'))return false;Backend.getScrollOffset()"',
+                'attributes' => 'onclick="if(!confirm(\''.($GLOBALS['TL_LANG']['MSC']['deleteConfirm'] ?? null).'\'))return false;Backend.getScrollOffset()"',
             ],
             'toggle'     => [
                 'attributes'           => 'onclick="Backend.getScrollOffset();"',
@@ -95,13 +90,9 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot_type'] = [
             ],
         ],
     ],
-
-    // Palettes
     'palettes' => [
         'default' => '{title_legend},title,description',
     ],
-
-    // Fields
     'fields'   => [
         'id'          => [
             'label'  => ['ID'],
@@ -123,7 +114,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot_type'] = [
             'search'    => true,
             'sorting'   => true,
             'filter'    => true,
-            'flag'      => 2,
+            'flag'      => DataContainer::SORT_INITIAL_LETTER_DESC,
             'inputType' => 'checkbox',
             'eval'      => ['doNotCopy' => true, 'tl_class' => 'clr'],
             'sql'       => "char(1) NOT NULL default ''",

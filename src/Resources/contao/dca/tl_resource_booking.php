@@ -13,15 +13,13 @@ declare(strict_types=1);
  */
 
 use Contao\Backend;
+use Contao\DC_Table;
+use Contao\DataContainer;
 use Markocupic\ResourceBookingBundle\Controller\FrontendModule\ResourceBookingWeekcalendarController;
 
-/*
- * Table tl_resource_booking
- */
 $GLOBALS['TL_DCA']['tl_resource_booking'] = [
-    // Config
     'config'   => [
-        'dataContainer'    => 'Table',
+        'dataContainer'    => DC_Table::class,
         'switchToEdit'     => true,
         'ptable'           => 'tl_resource_booking_resource',
         'enableVersioning' => true,
@@ -35,10 +33,9 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = [
             ],
         ],
     ],
-    // List
     'list'     => [
         'sorting'           => [
-            'mode'        => 2,
+            'mode'        => DataContainer::MODE_SORTABLE,
             'fields'      => ['startTime'],
             'panelLayout' => 'filter;sort,search,limit',
         ],
@@ -64,7 +61,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = [
                 'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking']['delete'],
                 'href'       => 'act=delete',
                 'icon'       => 'delete.gif',
-                'attributes' => 'onclick="if(!confirm(\''.$GLOBALS['TL_LANG']['MSC']['deleteConfirm'].'\'))return false;Backend.getScrollOffset()"',
+                'attributes' => 'onclick="if(!confirm(\''.($GLOBALS['TL_LANG']['MSC']['deleteConfirm'] ?? null).'\'))return false;Backend.getScrollOffset()"',
             ],
             'show'   => [
                 'label' => &$GLOBALS['TL_LANG']['tl_resource_booking']['show'],
@@ -73,11 +70,9 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = [
             ],
         ],
     ],
-    // Palettes
     'palettes' => [
         'default' => '{booking_legend},title,itemsBooked,member,bookingUuid,description;{module_legend},moduleId;{time_legend},startTime,endTime',
     ],
-    // Fields
     'fields'   => [
         'id'          => [
             'sql' => 'int(10) unsigned NOT NULL auto_increment',
@@ -90,7 +85,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = [
         ],
         'tstamp'      => [
             'sorting' => true,
-            'flag'    => 6,
+            'flag'    => DataContainer::SORT_DAY_DESC,
             'sql'     => "int(10) unsigned NOT NULL default '0'",
         ],
         'timeSlotId'  => [
@@ -153,7 +148,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = [
             'default'   => time(),
             'sorting'   => true,
             'exclude'   => true,
-            'flag'      => 5,
+            'flag'      => DataContainer::SORT_DAY_ASC,
             'inputType' => 'text',
             'eval'      => ['readonly' => true, 'rgxp' => 'datim', 'mandatory' => true, 'doNotCopy' => true, 'datepicker' => false, 'tl_class' => 'w50 wizard'],
             'sql'       => 'int(10) NULL',
@@ -162,7 +157,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = [
             'sorting'       => true,
             'default'       => time(),
             'exclude'       => true,
-            'flag'          => 5,
+            'flag'          => DataContainer::SORT_DAY_ASC,
             'inputType'     => 'text',
             'eval'          => ['readonly' => true, 'rgxp' => 'datim', 'mandatory' => true, 'doNotCopy' => true, 'datepicker' => false, 'tl_class' => 'w50 wizard'],
             'save_callback' => [
@@ -173,9 +168,6 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = [
     ],
 ];
 
-/**
- * Class tl_resource_booking.
- */
 class tl_resource_booking extends Backend
 {
     public function getRbbModules(): array
