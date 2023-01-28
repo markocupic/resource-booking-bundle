@@ -28,7 +28,7 @@ services:
             - '@markocupic.rbb.session.factory.inner'
             - '@markocupic.rbb.session_bag'
 
-    # Subscribers: Handle ajay requests
+    # Subscribers: Handle ajax requests
     Markocupic\ResourceBookingBundle\EventSubscriber\AjaxRequestEventSubscriber:
         tags:
             - { name: kernel.event_subscriber }
@@ -57,8 +57,3 @@ services:
     Markocupic\ResourceBookingBundle\AjaxController\RefreshDataController:
         tags:
             - { name: markocupic_resource_booking.ajax_controller, alias: refreshData }
-
-        # Migration class: Add booking uuid
-    Markocupic\ResourceBookingBundle\Migration\AddBookingUuid\AddBookingUuid:
-        tags:
-            - { name: contao.migration, priority: 0 }
