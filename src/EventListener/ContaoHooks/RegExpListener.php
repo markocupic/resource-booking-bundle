@@ -19,11 +19,11 @@ use Contao\Validator;
 use Contao\Widget;
 use Markocupic\ResourceBookingBundle\Util\DateHelper;
 
-class RegExp
+class RegExpListener
 {
     public const REGEX_RESOURCE_BOOKING_TIME = 'resourceBookingTime';
 
-    #[AsHook('addCustomRegexp', priority: 100)]
+    #[AsHook('addCustomRegexp')]
     public function onCustomRegexp(string $strRegexp, string $varValue, Widget $objWidget): bool
     {
         if (self::REGEX_RESOURCE_BOOKING_TIME === $strRegexp) {
