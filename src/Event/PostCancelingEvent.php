@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
  * @license MIT
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -19,9 +19,6 @@ use Contao\Model\Collection;
 use Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag;
 use Symfony\Contracts\EventDispatcher\Event;
 
-/**
- * Class PostCancelingEvent.
- */
 class PostCancelingEvent extends Event
 {
     public const NAME = 'rbb.event.post_canceling';
@@ -30,9 +27,6 @@ class PostCancelingEvent extends Event
     private FrontendUser $user;
     private ArrayAttributeBag $sessionBag;
 
-    /**
-     * PostCancelingEvent constructor.
-     */
     public function __construct(\stdClass $event)
     {
         $this->bookingCollection = $event->bookingCollection;

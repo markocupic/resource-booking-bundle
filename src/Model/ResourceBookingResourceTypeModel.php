@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
  * @license MIT
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -17,9 +17,6 @@ namespace Markocupic\ResourceBookingBundle\Model;
 use Contao\Model;
 use Contao\Model\Collection;
 
-/**
- * Class ResourceBookingResourceTypeModel.
- */
 class ResourceBookingResourceTypeModel extends Model
 {
     /**
@@ -29,12 +26,7 @@ class ResourceBookingResourceTypeModel extends Model
      */
     protected static $strTable = 'tl_resource_booking_resource_type';
 
-    /**
-     * @param $intId
-     *
-     * @return ResourceBookingResourceTypeModel
-     */
-    public static function findPublishedByPk($intId)
+    public static function findPublishedByPk(int $intId): ?static
     {
         $arrColumn = ['id=?', 'published=?'];
         $arrValues = [$intId, '1'];
@@ -42,12 +34,7 @@ class ResourceBookingResourceTypeModel extends Model
         return self::findOneBy($arrColumn, $arrValues);
     }
 
-    /**
-     * @param $arrIds
-     *
-     * @return Collection|null
-     */
-    public static function findPublishedByIds($arrIds)
+    public static function findPublishedByIds(array $arrIds): ?Collection
     {
         $arrIdsNew = [];
 

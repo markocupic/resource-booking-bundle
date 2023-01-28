@@ -1,0 +1,87 @@
+<?php $GLOBALS['TL_JAVASCRIPT'][] = 'assets/contao-component-bootstrap/bootstrap/dist/js/bootstrap.bundle.min.js|static'; ?>
+<?php $GLOBALS['TL_JAVASCRIPT'][] = 'assets/contao-component-vue-js/vue/dist/vue.min.js'; ?>
+<?php $GLOBALS['TL_JAVASCRIPT'][] = \Markocupic\ResourceBookingBundle\Config\RbbConfig::RBB_ASSET_PATH.'/app.js|static'; ?>
+<?php $GLOBALS['TL_CSS'][] = 'assets/contao-component-bootstrap/bootstrap/dist/css/bootstrap.min.css'; ?>
+<?php $GLOBALS['TL_CSS'][] = 'assets/contao-component-fontawesome-free/fontawesomefree/css/all.min.css'; ?>
+<?php $GLOBALS['TL_CSS'][] = \Markocupic\ResourceBookingBundle\Config\RbbConfig::RBB_ASSET_PATH.'/css/frontend.min.css|static'; ?>
+
+<?php $this->extend('block_unsearchable'); ?>
+
+<?php $this->block('content'); ?>
+
+<div id="resourceBookingApp_<?= $this->moduleKey ?>" v-cloak class="rbb-app" v-bind:class="{ 'rbb-is-ready': isReady }">
+
+  <div class="rbb-logged-in-user-data mb-2"><strong>{{trans::RBB.loggedInAs::contao_default}}:</strong> {{user::firstname}} {{user::lastname}}</div>
+
+  <template v-if="isReady === false && lastResponseCode === 200">
+    <div class="text-center mt-5">
+      <div class="fa-5x rbb-loading-spinner">
+        <i class="fas fa-sync fa-spin"></i>
+      </div>
+      <div role="status">
+        <span class="sr-only">{{trans::RBB.loading::contao_default}}</span>
+      </div>
+    </div>
+  </template>
+
+  <template v-if="isReady === false && lastResponseCode !== 200">
+    <div class="text-muted mt-2" v-if="lastResponseCode === 401">
+      {{trans::RBB.ERR.401::contao_default}}
+    </div>
+    <div class="text-muted mt-2" v-else>
+      {{trans::RBB.ERR.general::contao_default}}
+    </div>
+  </template>
+
+  <!-- vue application container -->
+  <div class="rbb-vue-application">
+    <!-- main window / mode === 'main-window'-->
+    <div class="rbb-main-window" v-if="mode === 'main-window'">
+
+      <div v-if="activeResource.description" class="rbb-message-box mt-4">
+        <div class="rbb-resource-description alert alert-info d-flex pt-3 pb-3">
+          <i class="fa-2x me-3 fas fa-exclamation-circle"></i>
+          <span>{{ activeResource.description }}</span>
+        </div>
+      </div>
+
+      <?php $this->insert('rbb_filter_board_partial', $this->getData()); ?>
+      <?php $this->insert('rbb_booking_table_partial', $this->getData()); ?>
+
+    </div>
+    <!-- end main window / mode === 'main-window'-->
+
+    <!-- booking window mode === 'booking-window'-->
+    <div class="rbb-booking-window" v-if="mode === 'booking-window'" v-if="userHasLoggedIn">
+      <?php $this->insert('rbb_booking_window_partial', $this->getData()); ?>
+    </div>
+    <!-- End booking window -->
+
+  </div>
+</div>
+
+<script>
+  $(document).ready(function () {
+    new resourceBookingApp('#resourceBookingApp_<?= $this->moduleKey ?>', {
+      'requestToken': '<?= $this->csrfToken ?>',
+      'moduleKey': '<?= $this->moduleKey ?>',
+      'audio': {
+        'notifyOnNewBookingsAudio': 'bundles/markocupicresourcebooking/audio/booking-alert.mp3'
+      },
+      'autocloseWindowsAfter': 5000,
+      'enableAudio': true,
+      'callbacks': {
+        // Callback function to be executed before a booking request is fired
+        onBeforeBookingRequest: function (objFormData) {
+          // return false will prevent submitting
+          return true;
+        },
+        // Callback function to be executed after a booking request was fired
+        onAfterBookingRequest: function () {
+        },
+      }
+    });
+  });
+</script>
+
+<?php $this->endblock(); ?>

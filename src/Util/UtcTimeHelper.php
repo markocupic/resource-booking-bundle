@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
  * @license MIT
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -14,16 +14,10 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\Util;
 
-/**
- * Class UtcTimeHelper.
- */
 class UtcTimeHelper
 {
     /**
-     * Return a formated time/date string based on the UTC timezone.
-     *
-     * @param $strFormat
-     * @param $tstamp
+     * Return a formatted time/date string based on the UTC timezone.
      */
     public static function parse(string $strFormat, int $tstamp): string
     {
@@ -32,8 +26,10 @@ class UtcTimeHelper
 
     /**
      * Return a timestamp based on the UTC timezone.
+     *
+     * @throws \Exception
      */
-    public static function strtotime(string $strDate): int
+    public static function strToTime(string $strDate): int
     {
         $utc = new \DateTimeZone('UTC');
         $dt = new \DateTime($strDate, $utc);

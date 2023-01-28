@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
  * @license MIT
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -15,8 +15,6 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\AppInitialization\Helper;
 
 /**
- * Class ModuleIndex.
- *
  * The module key is necessary to run multiple rbb applications on the same page
  * and is sent as a post parameter on every xhr request.
  *
@@ -58,6 +56,9 @@ class ModuleIndex
         return static::$moduleIndex;
     }
 
+    /**
+     * @throws \Exception
+     */
     public static function getInitTime(): int
     {
         if (null === static::$initTime) {

@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
  * @license MIT
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -21,7 +21,7 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 class Configuration implements ConfigurationInterface
 {
-    public function getConfigTreeBuilder()
+    public function getConfigTreeBuilder(): TreeBuilder
     {
         $treeBuilder = new TreeBuilder('markocupic_resource_booking');
 
@@ -32,15 +32,17 @@ class Configuration implements ConfigurationInterface
                     ->children()
                         ->scalarNode('attribute_bag_name')
                             ->cannotBeEmpty()
-                            ->cannotBeOverwritten()
+                            ->defaultValue('resource_booking_bundle_attributes')
                         ->end()
                         ->scalarNode('attribute_bag_key')
                             ->cannotBeEmpty()
                             ->cannotBeOverwritten()
+                            ->defaultValue('_resource_booking_bundle_attributes')
                         ->end()
                         ->scalarNode('flash_bag_key')
                             ->cannotBeEmpty()
                             ->cannotBeOverwritten()
+                            ->defaultValue('_resource_booking_bundle_flash_bag')
                         ->end()
                     ->end()
                 ->end()
@@ -50,6 +52,7 @@ class Configuration implements ConfigurationInterface
                         ->scalarNode('name')
                             ->cannotBeEmpty()
                             ->cannotBeOverwritten()
+                            ->defaultValue('_contao_resource_booking_token')
                         ->end()
                     ->end()
                 ->end()

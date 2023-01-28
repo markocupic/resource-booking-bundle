@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
  * @license MIT
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -14,23 +14,21 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\Cron;
 
+use Contao\CoreBundle\DependencyInjection\Attribute\AsCronJob;
 use Contao\CoreBundle\Framework\ContaoFramework;
-use Contao\CoreBundle\ServiceAnnotation\CronJob;
 use Contao\Database;
 use Contao\Date;
 use Contao\ModuleModel;
 use Contao\System;
+use Psr\Log\LoggerInterface;
 
-/**
- * @CronJob("daily")
- */
+#[AsCronJob('daily')]
 class Cron
 {
-    private ContaoFramework $framework;
-
-    public function __construct(ContaoFramework $framework)
-    {
-        $this->framework = $framework;
+    public function __construct(
+        private readonly ContaoFramework $framework,
+        private readonly LoggerInterface $contaoCronLogger,
+    ) {
     }
 
     /**
@@ -46,9 +44,6 @@ class Cron
 
         /** @var ModuleModel $moduleAdapter */
         $moduleAdapter = $this->framework->getAdapter(ModuleModel::class);
-
-        /** @var System $systemAdapter */
-        $systemAdapter = $this->framework->getAdapter(System::class);
 
         // Get all app configurations
         $arrAppConfigs = System::getContainer()->getParameter('markocupic_resource_booking.apps');
@@ -98,7 +93,7 @@ class Cron
         }
 
         if ($intAffectedRows > 0) {
-            $systemAdapter->log(sprintf('CRON: tl_resource_booking has been cleared from %s old entries.', $intAffectedRows), __METHOD__, TL_CRON);
+            $this->contaoCronLogger->info(sprintf('CRON: tl_resource_booking has been cleared from %s old entries.', $intAffectedRows));
         }
     }
 }

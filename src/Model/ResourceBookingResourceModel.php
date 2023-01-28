@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
  * @license MIT
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -18,9 +18,6 @@ use Contao\Database;
 use Contao\Model;
 use Contao\Model\Collection;
 
-/**
- * Class ResourceBookingResourceModel.
- */
 class ResourceBookingResourceModel extends Model
 {
     /**
@@ -30,12 +27,7 @@ class ResourceBookingResourceModel extends Model
      */
     protected static $strTable = 'tl_resource_booking_resource';
 
-    /**
-     * @param $intId
-     *
-     * @return Collection|null
-     */
-    public static function findPublishedByPid($intId)
+    public static function findPublishedByPid(int $intId): ?Collection
     {
         $arrIds = [];
         $objDb = static::findByPid($intId);
@@ -59,13 +51,9 @@ class ResourceBookingResourceModel extends Model
     }
 
     /**
-     * @param $intId
-     *
      * @throws \Exception
-     *
-     * @return ResourceBookingResourceModel|null
      */
-    public static function findPublishedByPk($intId)
+    public static function findPublishedByPk(int $intId): ?static
     {
         $arrColumn = ['id=?', 'published=?'];
         $arrValues = [$intId, '1'];
@@ -86,14 +74,9 @@ class ResourceBookingResourceModel extends Model
     }
 
     /**
-     * @param $intId
-     * @param $intPid
-     *
      * @throws \Exception
-     *
-     * @return ResourceBookingResourceModel|null
      */
-    public static function findPublishedByPkAndPid($intId, $intPid)
+    public static function findPublishedByPkAndPid(int $intId, int $intPid): ?static
     {
         $arrColumn = ['id=?', 'pid=?', 'published=?'];
         $arrValues = [$intId, $intPid, '1'];
@@ -114,12 +97,7 @@ class ResourceBookingResourceModel extends Model
         return null;
     }
 
-    /**
-     * @param $arrIds
-     *
-     * @return Collection|null
-     */
-    public static function findPublishedByIds($arrIds)
+    public static function findPublishedByIds(array $arrIds): ?Collection
     {
         $arrIdsNew = [];
 
@@ -141,10 +119,7 @@ class ResourceBookingResourceModel extends Model
         return static::findMultipleByIds($arrIdsNew);
     }
 
-    /**
-     * @return Collection|null
-     */
-    public static function findMultipleAndPublishedByPids(array $arrPids)
+    public static function findMultipleAndPublishedByPids(array $arrPids): ?Collection
     {
         if (empty($arrPids)) {
             return null;

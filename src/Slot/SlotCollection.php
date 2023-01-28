@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
  * @license MIT
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -39,7 +39,7 @@ class SlotCollection implements \ArrayAccess, \Countable, \IteratorAggregate
      * @param string $strKey   The property name
      * @param mixed  $varValue The property value
      */
-    public function __set(string $strKey, $varValue): void
+    public function __set(string $strKey, mixed $varValue): void
     {
         if ($this->intIndex < 0) {
             $this->first();
@@ -155,10 +155,8 @@ class SlotCollection implements \ArrayAccess, \Countable, \IteratorAggregate
 
     /**
      * Go to the previous row.
-     *
-     * @return SlotCollection|false The model collection object or false if there is no previous row
      */
-    public function prev(): self
+    public function prev(): bool|self
     {
         if ($this->intIndex < 1) {
             return false;
@@ -185,10 +183,8 @@ class SlotCollection implements \ArrayAccess, \Countable, \IteratorAggregate
 
     /**
      * Go to the next row.
-     *
-     * @return SlotCollection|false The model collection object or false if there is no next row
      */
-    public function next()
+    public function next(): bool|self
     {
         if (!isset($this->arrSlots[$this->intIndex + 1])) {
             return false;
@@ -286,12 +282,9 @@ class SlotCollection implements \ArrayAccess, \Countable, \IteratorAggregate
     /**
      * Set a particular offset.
      *
-     * @param int   $offset The offset
-     * @param mixed $value  The value to set
-     *
      * @throws \RuntimeException The collection is immutable
      */
-    public function offsetSet($offset, $value): void
+    public function offsetSet($offset, mixed $value): void
     {
         throw new \RuntimeException('This collection is immutable');
     }

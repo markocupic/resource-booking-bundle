@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
  * @license MIT
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -14,31 +14,21 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\EventSubscriber;
 
-use Contao\CoreBundle\Framework\ContaoFramework;
 use Markocupic\ResourceBookingBundle\AjaxController\ControllerInterface;
 use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
-/**
- * Class AjaxRequestEventSubscriber.
- */
 final class AjaxRequestEventSubscriber implements EventSubscriberInterface
 {
     public const PRIORITY = 1000;
 
-    private ContaoFramework $framework;
-    private RequestStack $requestStack;
-    private $services = [];
-    private $resources = [];
+    private array $services = [];
+    private array $resources = [];
 
-    /**
-     * AjaxRequestEventSubscriber constructor.
-     */
-    public function __construct(ContaoFramework $framework, RequestStack $requestStack)
-    {
-        $this->framework = $framework;
-        $this->requestStack = $requestStack;
+    public function __construct(
+        private readonly RequestStack $requestStack,
+    ) {
     }
 
     public function add(ControllerInterface $resource, string $alias, string $id): void
@@ -55,6 +45,8 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
         if (\array_key_exists($alias, $this->resources)) {
             return $this->resources[$alias];
         }
+
+        throw new \LogicException(sprintf('Resource with alias "%s" not found.', $alias));
     }
 
     public static function getSubscribedEvents(): array
@@ -64,20 +56,22 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
         ];
     }
 
+    /**
+     * @throws \Exception
+     */
     public function onXmlHttpRequest(AjaxRequestEvent $ajaxRequestEvent): void
     {
         $request = $this->requestStack->getCurrentRequest();
 
         if ($request->isXmlHttpRequest()) {
-            $action = $request->request->get('action', null);
+            $action = $request->request->get('action', '');
             $alias = str_replace('Request', '', $action);
 
             if (\array_key_exists($alias, $this->resources)) {
-                /** @var ControllerInterface $controller */
                 $controller = $this->get($alias);
                 $controller->generateResponse($ajaxRequestEvent);
             } else {
-                throw new \Exception(sprintf('Could not find the controller class for action "%s".', $action));
+                throw new \Exception(sprintf('Could not find Controller for action "%s".', $action));
             }
         }
     }

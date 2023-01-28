@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
  * @license MIT
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -19,9 +19,6 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 
-/**
- * Class MarkocupicResourceBookingExtension.
- */
 class MarkocupicResourceBookingExtension extends Extension
 {
     /**
@@ -34,10 +31,10 @@ class MarkocupicResourceBookingExtension extends Extension
 
         $loader = new YamlFileLoader(
             $container,
-            new FileLocator(__DIR__.'/../Resources/config')
+            new FileLocator(__DIR__.'/../../config')
         );
 
-        $loader->load('services.yml');
+        $loader->load('services.yaml');
 
         $container->setParameter('markocupic_resource_booking.session.attribute_bag_name', $config['session']['attribute_bag_name']);
         $container->setParameter('markocupic_resource_booking.session.attribute_bag_key', $config['session']['attribute_bag_key']);
@@ -46,7 +43,7 @@ class MarkocupicResourceBookingExtension extends Extension
         $container->setParameter('markocupic_resource_booking.apps', $config['apps']);
     }
 
-    public function getAlias()
+    public function getAlias(): string
     {
         return 'markocupic_resource_booking';
     }

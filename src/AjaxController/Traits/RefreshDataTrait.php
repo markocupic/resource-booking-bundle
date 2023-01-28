@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
  * @license MIT
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -120,7 +120,7 @@ trait RefreshDataTrait
         }
 
         $arrData['rows'] = $this->getBookingTableData(
-            $this->getDaysOfWeek(), // Get all seven days of one week, the week will start with the  the day that has been configured (config.yml).
+            $this->getDaysOfWeek(), // Get all seven days of one week, the week will start with the day that has been configured (config.yml).
             $this->sessionBag->get('activeWeekTstamp'),
             $this->getModuleModelFromSession(),
             $this->getActiveResourceFromSession(),
@@ -171,7 +171,7 @@ trait RefreshDataTrait
 
         $rows = [];
 
-        if (null !== $resType && null !== ($objResources = $resourceBookingResourceModelAdapter->findPublishedByPid($resType->id))) {
+        if (null !== $resType && null !== ($objResources = $resourceBookingResourceModelAdapter->findPublishedByPid((int) $resType->id))) {
             while ($objResources->next()) {
                 $rows[] = $objResources->row();
             }
@@ -284,7 +284,7 @@ trait RefreshDataTrait
         return $arrReturn;
     }
 
-    private function getTimeslotData(ResourceBookingResourceModel $resourceBookingResourceModel = null)
+    private function getTimeslotData(ResourceBookingResourceModel $resourceBookingResourceModel = null): array
     {
         $resourceBookingTimeSlotModelAdapter = $this->framework->getAdapter(ResourceBookingTimeSlotModel::class);
         $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
@@ -293,7 +293,7 @@ trait RefreshDataTrait
         $timeSlots = [];
 
         if (null !== $resourceBookingResourceModel) {
-            $objTimeslots = $resourceBookingTimeSlotModelAdapter->findPublishedByPid($resourceBookingResourceModel->timeSlotType);
+            $objTimeslots = $resourceBookingTimeSlotModelAdapter->findPublishedByPid((int) $resourceBookingResourceModel->timeSlotType);
 
             if (null !== $objTimeslots) {
                 while ($objTimeslots->next()) {
@@ -311,10 +311,10 @@ trait RefreshDataTrait
                     $objTs = new \stdClass();
                     $objTs->cssClass = $cssCellClass;
                     $objTs->startTimeString = $utcTimeHelperAdapter->parse('H:i', $startTime);
-                    $objTs->startTime = (int) $startTime;
+                    $objTs->startTime = $startTime;
                     $objTs->endTimeString = $utcTimeHelperAdapter->parse('H:i', $endTime);
                     $objTs->timeSpanString = $utcTimeHelperAdapter->parse('H:i', $startTime).' - '.$utcTimeHelperAdapter->parse('H:i', $endTime);
-                    $objTs->endTime = (int) $endTime;
+                    $objTs->endTime = $endTime;
                     $timeSlots[] = $objTs;
                 }
             }
@@ -323,6 +323,9 @@ trait RefreshDataTrait
         return $timeSlots;
     }
 
+    /**
+     * @throws \Exception
+     */
     private function getWeekdays(int $activeWeekTstamp, ModuleModel $moduleModel): array
     {
         $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
@@ -351,6 +354,9 @@ trait RefreshDataTrait
         return $arrWeek;
     }
 
+    /**
+     * @throws \Exception
+     */
     private function getBookingTableData(array $arrWeekdays, int $activeWeekTstamp, ModuleModel $moduleModel = null, ResourceBookingResourceModel $resourceModel = null, FrontendUser $user = null): array
     {
         $resourceBookingTimeSlotModelAdapter = $this->framework->getAdapter(ResourceBookingTimeSlotModel::class);
@@ -364,7 +370,7 @@ trait RefreshDataTrait
             return $rows;
         }
 
-        $objTimeslots = $resourceBookingTimeSlotModelAdapter->findPublishedByPid($resourceModel->timeSlotType);
+        $objTimeslots = $resourceBookingTimeSlotModelAdapter->findPublishedByPid((int) $resourceModel->timeSlotType);
         $rowCount = 0;
 
         if (null !== $objTimeslots) {
@@ -421,8 +427,8 @@ trait RefreshDataTrait
                                     // Do not transmit and display sensitive data if user is not holder
                                     if ($user && (int) $user->id !== (int) $objBooking->member) {
                                         if ($moduleModel->resourceBooking_displayClientPersonalData && !empty($arrAllowedMemberFields)) {
-                                            foreach ($arrAllowedMemberFields as $fieldname) {
-                                                $objBooking->{'bookedBy'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($objMember->$fieldname);
+                                            foreach ($arrAllowedMemberFields as $fieldName) {
+                                                $objBooking->{'bookedBy'.ucfirst($fieldName)} = $stringUtilAdapter->decodeEntities($objMember->$fieldName);
                                             }
 
                                             if (\in_array('firstname', $arrAllowedMemberFields, true) && \in_array('lastname', $arrAllowedMemberFields, true)) {
@@ -430,11 +436,11 @@ trait RefreshDataTrait
                                             }
                                         }
                                     } else {
-                                        foreach (array_keys($objMember->row()) as $fieldname) {
-                                            $varData = $strAdapter->convertBinUuidsToStringUuids($objMember->$fieldname);
+                                        foreach (array_keys($objMember->row()) as $fieldName) {
+                                            $varData = $strAdapter->convertBinUuidsToStringUuids($objMember->$fieldName);
 
-                                            $objBooking->{'bookedBy'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($varData);
-                                            $objBooking->{'bookedBy'.ucfirst($fieldname)} = $stringUtilAdapter->decodeEntities($varData);
+                                            $objBooking->{'bookedBy'.ucfirst($fieldName)} = $stringUtilAdapter->decodeEntities($varData);
+                                            $objBooking->{'bookedBy'.ucfirst($fieldName)} = $stringUtilAdapter->decodeEntities($varData);
                                         }
                                         $objBooking->bookedByFullname = $stringUtilAdapter->decodeEntities($objMember->firstname.' '.$objMember->lastname);
                                     }
@@ -484,6 +490,9 @@ trait RefreshDataTrait
         return $rows;
     }
 
+    /**
+     * @throws \Exception
+     */
     private function getDaysOfWeek(): array
     {
         // $arrWeekdays[0] should be the weekday defined in the application configuration

@@ -1,45 +1,44 @@
 {
-  "name": "markocupic/resource-booking-bundle",
-  "description": "Resource-booking-plugin for schools or other institutions. Book a resource for a predefined amount of time. This extension is a plugin for Contao CMS.",
-  "keywords": [
-    "contao",
-    "resource",
-    "room",
-    "booking",
-    "school"
-  ],
-  "type": "contao-module",
-  "license": "MIT",
-  "authors": [
-    {
-      "name": "Marko Cupic",
-      "email": "m.cupic@gmx.ch",
-      "homepage": "https://github.com/markocupic",
-      "role": "Developer"
+    "name": "markocupic/resource-booking-bundle",
+    "description": "Resource-booking-plugin for schools or other institutions. Book a resource for a predefined amount of time. This extension is a plugin for Contao CMS.",
+    "keywords": [
+        "contao",
+        "resource",
+        "room",
+        "booking",
+        "school"
+    ],
+    "type": "contao-module",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Marko Cupic",
+            "email": "m.cupic@gmx.ch",
+            "homepage": "https://github.com/markocupic",
+            "role": "Developer"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/markocupic/resource-booking-bundle/issues",
+        "source": "https://github.com/markocupic/resource-booking-bundle"
+    },
+    "require": {
+        "php": "^8.1",
+        "contao/core-bundle": "^4.13 || ^5.0",
+        "markocupic/contao-component-bootstrap": "^5.0",
+        "markocupic/contao-component-fontawesome-free": "^5.0 || ^6.0",
+        "markocupic/contao-component-vue-js": "^2.6",
+        "ramsey/uuid": "^3.0 || ^4.0"
+    },
+    "require-dev": {
+        "contao/easy-coding-standard": "^5.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Markocupic\\ResourceBookingBundle\\": "src/"
+        }
+    },
+    "extra": {
+        "contao-manager-plugin": "Markocupic\\ResourceBookingBundle\\ContaoManager\\Plugin"
     }
-  ],
-  "support": {
-    "issues": "https://github.com/markocupic/resource-booking-bundle/issues",
-    "source": "https://github.com/markocupic/resource-booking-bundle"
-  },
-  "require": {
-    "php": "^8.0",
-    "contao/core-bundle": "^4.13",
-    "codefog/contao-haste": "^4.23",
-    "markocupic/contao-component-bootstrap": "^5.0",
-    "markocupic/contao-component-fontawesome-free": "^5.13 || ^6.0",
-    "markocupic/contao-component-vue-js": "^2.6",
-    "ramsey/uuid": "^3.0 || ^4.0"
-  },
-  "require-dev": {
-    "contao/easy-coding-standard": "^5.0"
-  },
-  "autoload": {
-    "psr-4": {
-      "Markocupic\\ResourceBookingBundle\\": "src/"
-    }
-  },
-  "extra": {
-    "contao-manager-plugin": "Markocupic\\ResourceBookingBundle\\ContaoManager\\Plugin"
-  }
 }

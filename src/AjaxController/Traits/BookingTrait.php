@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
  * @license MIT
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -25,9 +25,6 @@ use Markocupic\ResourceBookingBundle\Slot\SlotCollection;
 use Markocupic\ResourceBookingBundle\Slot\SlotMain;
 use Markocupic\ResourceBookingBundle\Util\DateHelper;
 
-/**
- * Trait BookingTrait.
- */
 trait BookingTrait
 {
     /**
@@ -59,7 +56,9 @@ trait BookingTrait
         $resource = $this->getActiveResource();
         $itemsBooked = (int) $request->request->get('itemsBooked', 1);
         $description = $request->request->has('bookingDescription') ? $stringUtilAdapter->decodeEntities($inputAdapter->post('bookingDescription')) : '';
-        $arrDateSelection = $request->request->get('bookingDateSelection', []);
+        // $request->request->get('bookingDateSelection') won't work, because
+        // Symfony doesn't allow non-scalar values in the input bag (design change since Symfony 6)
+        $arrDateSelection = $request->request->all()['bookingDateSelection'] ?: [];
         $this->bookingUuid = $this->getBookingUuid();
 
         if (!empty($arrDateSelection) && \is_array($arrDateSelection)) {
@@ -78,7 +77,7 @@ trait BookingTrait
                     $startTime,
                     $endTime,
                     $itemsBooked,
-                    (int) $this->bookingRepeatStopWeekTstamp
+                    $this->bookingRepeatStopWeekTstamp
                 );
 
                 $slot->timeSlotId = $timeSlotId;
@@ -100,7 +99,7 @@ trait BookingTrait
                             $startTime,
                             $endTime,
                             $itemsBooked,
-                            (int) $this->bookingRepeatStopWeekTstamp
+                            $this->bookingRepeatStopWeekTstamp
                         );
                         $slot->timeSlotId = $timeSlotId;
 
@@ -132,7 +131,8 @@ trait BookingTrait
         // Add data from POST, thus the extension can easily be extended
         foreach (array_keys($_POST) as $k) {
             if (!isset($arrUserInput[$k])) {
-                $arrUserInput[$k] = isset($dca['fields'][$k]['eval']['decodeEntities']) && true === $dca['fields'][$k]['eval']['decodeEntities'] ? $stringUtilAdapter->decodeEntities($inputAdapter->post($k)) : $inputAdapter->post($k);
+                $blnDecode = isset($dca['fields'][$k]['eval']['decodeEntities']) && true === $dca['fields'][$k]['eval']['decodeEntities'];
+                $arrUserInput[$k] = $blnDecode ? $stringUtilAdapter->decodeEntities($inputAdapter->post($k)) : $inputAdapter->post($k);
             }
         }
 
@@ -160,6 +160,9 @@ trait BookingTrait
         return $slotCollection;
     }
 
+    /**
+     * @throws \Exception
+     */
     private function isBookingPossible(?SlotCollection $slotCollection): bool
     {
         if (null === $slotCollection) {
@@ -183,10 +186,10 @@ trait BookingTrait
                     // Invalid time period
                     $this->setErrorMessage('RBB.ERR.invalidStartOrEndTime');
                 } elseif ($slot->isFullyBooked()) {
-                    // Resource has already been booked by an other user
+                    // Resource has already been booked by another user
                     $this->setErrorMessage('RBB.ERR.resourceIsAlreadyFullyBooked');
                 } elseif (!$slot->isBookable()) {
-                    // Resource has already been booked by an other user
+                    // Resource has already been booked by another user
                     $this->setErrorMessage('RBB.ERR.notEnoughItemsAvailable');
                 } else {
                     // This case normally should not happen

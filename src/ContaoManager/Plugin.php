@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
  * @license MIT
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -25,15 +25,12 @@ use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\Config\Loader\LoaderResolverInterface;
 use Symfony\Component\HttpKernel\KernelInterface;
 
-/**
- * Class Plugin.
- */
 class Plugin implements ConfigPluginInterface, BundlePluginInterface, RoutingPluginInterface
 {
     /**
      * {@inheritdoc}
      */
-    public function getBundles(ParserInterface $parser)
+    public function getBundles(ParserInterface $parser): array
     {
         return [
             BundleConfig::create(MarkocupicResourceBookingBundle::class)
@@ -44,9 +41,9 @@ class Plugin implements ConfigPluginInterface, BundlePluginInterface, RoutingPlu
     /**
      * {@inheritdoc}
      */
-    public function registerContainerConfiguration(LoaderInterface $loader, array $config): void
+    public function registerContainerConfiguration(LoaderInterface $loader, array $managerConfig): void
     {
-        $loader->load('@MarkocupicResourceBookingBundle/Resources/config/config.yml');
+        $loader->load(__DIR__.'/../../config/config.yaml');
     }
 
     /**
@@ -55,8 +52,8 @@ class Plugin implements ConfigPluginInterface, BundlePluginInterface, RoutingPlu
     public function getRouteCollection(LoaderResolverInterface $resolver, KernelInterface $kernel)
     {
         return $resolver
-            ->resolve(__DIR__.'/../Resources/config/routing.yml')
-            ->load(__DIR__.'/../Resources/config/routing.yml')
+            ->resolve(__DIR__.'/../../config/routes.yaml')
+            ->load(__DIR__.'/../../config/routes.yaml')
         ;
     }
 }

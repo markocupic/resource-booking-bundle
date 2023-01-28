@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
  * @license MIT
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -17,9 +17,6 @@ namespace Markocupic\ResourceBookingBundle\Model;
 use Contao\Model;
 use Contao\Model\Collection;
 
-/**
- * Class ResourceBookingModel.
- */
 class ResourceBookingModel extends Model
 {
     /**
@@ -41,45 +38,31 @@ class ResourceBookingModel extends Model
     }
 
     /**
-     * @param $objResource
-     * @param $starttime
-     * @param $endtime
-     *
-     * @return ResourceBookingModel
+     * @return static|null
      */
-    public static function findOneByResourceIdStarttimeAndEndtime($objResource, $starttime, $endtime): ?self
+    public static function findOneByResourceIdStartTimeAndEndTime(ResourceBookingResourceModel $objResource, int $startTime, int $endTime): ?self
     {
         $arrColumn = ['pid=?', 'startTime=?', 'endTime=?'];
-        $arrValues = [$objResource->id, $starttime, $endtime];
+        $arrValues = [$objResource->id, $startTime, $endTime];
 
         return self::findOneBy($arrColumn, $arrValues);
     }
 
-    /**
-     * @param $objResource
-     * @param $starttime
-     * @param $endtime
-     */
-    public static function findByResourceStarttimeAndEndtime($objResource, $starttime, $endtime): ?Collection
+    public static function findByResourceStartTimeAndEndTime(ResourceBookingResourceModel $objResource, int $startTime, int $endTime): ?Collection
     {
         $arrColumn = ['pid=?', 'startTime=?', 'endTime=?'];
-        $arrValues = [$objResource->id, $starttime, $endtime];
+        $arrValues = [$objResource->id, $startTime, $endTime];
 
         return self::findBy($arrColumn, $arrValues);
     }
 
     /**
-     * @param $objResource
-     * @param $starttime
-     * @param $endtime
-     * @param $memberid
-     *
-     * @return ResourceBookingModel
+     * @return static|null
      */
-    public static function findOneByResourceIdStarttimeEndtimeAndMember($objResource, $starttime, $endtime, $memberid): ?self
+    public static function findOneByResourceIdStartTimeEndTimeAndMember(ResourceBookingResourceModel $objResource, int $startTime, int $endTime, int $memberId): ?self
     {
         $arrColumn = ['pid=?', 'startTime=?', 'endTime=?', 'member=?'];
-        $arrValues = [$objResource->id, $starttime, $endtime, $memberid];
+        $arrValues = [$objResource->id, $startTime, $endTime, $memberId];
 
         return self::findOneBy($arrColumn, $arrValues);
     }

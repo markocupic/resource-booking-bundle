@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
  * @license MIT
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -26,9 +26,6 @@ use Psr\Log\LogLevel;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-/**
- * Class CancelController.
- */
 final class CancelController extends AbstractController implements ControllerInterface
 {
     private TranslatorInterface $translator;
@@ -151,9 +148,7 @@ final class CancelController extends AbstractController implements ControllerInt
                                     $strLog = sprintf('Resource Booking for "%s" (with ID %s) has been deleted.', $resourceTitle, $objBookingRemove->id);
                                     $logger = $systemAdapter->getContainer()->get('monolog.logger.contao');
 
-                                    if ($logger) {
-                                        $logger->log(LogLevel::INFO, $strLog, ['contao' => new ContaoContext(__METHOD__, 'INFO')]);
-                                    }
+                                    $logger?->log(LogLevel::INFO, $strLog, ['contao' => new ContaoContext(__METHOD__, 'INFO')]);
                                 }
                             }
                         }

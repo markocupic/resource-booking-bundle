@@ -7,7 +7,7 @@ Das Modul wurde für eine Schule entwickelt, wo ein Zimmerreservations-System be
 Ab Version 3.x kann eingestellt werden, wie viele Items einer Ressource buchbar sein können. Damit wird es möglich eine Ressource von mehreren Personen buchen zu lassen, bis diese ausgebucht ist. Ein typischer use case können buchbare Geräte/Computer sein.
 
 ## Rückwärtskompatibilität
-**!Achtung beim Update von Version 3.x auf 4.x ist es zu grossen Änderungen an den Templates gekommen. Unter anderem wurden die Templates für eine bessere Übersichtlichkeit gesplitet. Vorher angepasste Custom-Templates müssen neu geschrieben werden.**
+**!Achtung beim Update von Version 2.x auf 3.x ist es zu grossen Änderungen an den Templates gekommen. Unter anderem wurden die Templates für eine bessere Übersichtlichkeit gesplitet. Vorher angepasste Custom-Templates müssen neu geschrieben werden.**
 
 ## Take a look
 
@@ -91,10 +91,6 @@ use Contao\Date;
 use Markocupic\ResourceBookingBundle\Event\PostBookingEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-
-/**
- * Class PostBookingEventSubscriber.
- */
 final class PostBookingEventSubscriber implements EventSubscriberInterface
 {
    const priority = 10000;
@@ -111,7 +107,6 @@ final class PostBookingEventSubscriber implements EventSubscriberInterface
         // For demo usage only
         $objBookingCollection = $objPostBookingEvent->getBookingCollection();
         $objUser = $objPostBookingEvent->getUser();
-        // $sessionBag = $objPostBookingEvent->getSessionBag();
 
         while ($objBookingCollection->next()) {
             if (null !== $objUser) {
@@ -168,25 +163,12 @@ use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
-
-/**
- * Class AjaxRequestEventSubscriber.
- */
 final class AjaxRequestEventSubscriber implements EventSubscriberInterface
 {
     const priority = 1010;
 
-    /**
-     * @var RequestStack
-     */
-    private $requestStack;
-
-    /**
-     * AjaxRequestEventSubscriber constructor.
-     */
-    public function __construct(RequestStack $requestStack)
+    public function __construct(private readonly RequestStack $requestStack)
     {
-        $this->requestStack = $requestStack;
     }
 
     public static function getSubscribedEvents(): array

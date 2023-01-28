@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
  * @license MIT
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -18,18 +18,18 @@ use Contao\Controller;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\ModuleModel;
 use Contao\System;
-use Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\HttpFoundation\Session\SessionBagInterface;
 
 class Utils
 {
-    private ContaoFramework $framework;
-    private ?ArrayAttributeBag $session = null;
+    private ?SessionBagInterface $session = null;
 
-    public function __construct(ContaoFramework $framework, RequestStack $requestStack, string $bagName)
-    {
-        $this->framework = $framework;
-
+    public function __construct(
+        private readonly ContaoFramework $framework,
+        RequestStack $requestStack,
+        string $bagName,
+    ) {
         // Get session from request
         if (null !== ($request = $requestStack->getCurrentRequest())) {
             $this->session = $request->getSession()->getBag($bagName);
@@ -48,28 +48,23 @@ class Utils
     }
 
     /**
-     * @param $arrData
-     * @param $strDcaTable
-     *
      * @throws \Exception
-     *
-     * @return bool|string
      */
-    public function areMandatoryFieldsSet($arrData, $strDcaTable)
+    public function checkMandatoryFieldsSet(array $arrData, string $strTable): bool|string
     {
         $controllerAdapter = $this->framework->getAdapter(Controller::class);
-        $controllerAdapter->loadDataContainer($strDcaTable);
+        $controllerAdapter->loadDataContainer($strTable);
 
-        if (empty($GLOBALS['TL_DCA'][$strDcaTable])) {
-            throw new \Exception('Data container array for table '.$strDcaTable.' not found.');
+        if (empty($GLOBALS['TL_DCA'][$strTable])) {
+            throw new \Exception('Data container array for table '.$strTable.' not found.');
         }
 
-        $dca = $GLOBALS['TL_DCA'][$strDcaTable]['fields'];
+        $dca = $GLOBALS['TL_DCA'][$strTable]['fields'];
 
-        foreach ($dca as $fieldname => $fieldConfig) {
+        foreach ($dca as $fieldName => $fieldConfig) {
             if (isset($fieldConfig['eval']['mandatory']) && true === $fieldConfig['eval']['mandatory']) {
-                if (!isset($arrData[$fieldname]) || empty($arrData[$fieldname])) {
-                    return $strDcaTable.'.'.$fieldname;
+                if (empty($arrData[$fieldName])) {
+                    return $strTable.'.'.$fieldName;
                 }
             }
         }
@@ -101,7 +96,7 @@ class Utils
                 }
             }
 
-            throw new \Exception('Could not find app configuration array. Please check your config.yml file an make sure you have created correctly your custom configuration. Howto: https://github.com/markocupic/resource-booking-bundle#app-konfiguration-anpassen');
+            throw new \Exception('Could not find app configuration array. Please check your config.yml file and make sure you have created correctly your custom configuration.');
         }
 
         throw new \Exception('Initialize RBB application must be initialized first, before you can call '.__METHOD__.'.');

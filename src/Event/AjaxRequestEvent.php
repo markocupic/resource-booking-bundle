@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
  * @license MIT
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -18,9 +18,6 @@ use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Contracts\EventDispatcher\Event;
 
-/**
- * Class AjaxRequestEvent.
- */
 class AjaxRequestEvent extends Event
 {
     public const NAME = 'xml_http_request';
@@ -28,9 +25,6 @@ class AjaxRequestEvent extends Event
     private AjaxResponse $ajaxResponse;
     private Request $request;
 
-    /**
-     * AjaxRequestEvent constructor.
-     */
     public function __construct(\stdClass $event)
     {
         $this->ajaxResponse = $event->ajaxResponse;

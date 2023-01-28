@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
  * @license MIT
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -18,19 +18,17 @@ use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\FrontendUser;
 use Contao\MemberModel;
 use Symfony\Component\Security\Core\Security;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 class LoggedInFrontendUser
 {
-    private Security $security;
-    private ContaoFramework $framework;
-
-    public function __construct(Security $security, ContaoFramework $framework)
-    {
-        $this->security = $security;
-        $this->framework = $framework;
+    public function __construct(
+        private readonly Security $security,
+        private readonly ContaoFramework $framework,
+    ) {
     }
 
-    public function getLoggedInUser(): ?FrontendUser
+    public function getLoggedInUser(): ?UserInterface
     {
         if ($this->security->getUser() instanceof FrontendUser) {
             /** @var FrontendUser $user */

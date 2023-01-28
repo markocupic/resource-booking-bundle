@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
  * @license MIT
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -30,9 +30,6 @@ use Psr\Log\LogLevel;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-/**
- * Class BookingController.
- */
 final class BookingController extends AbstractController implements ControllerInterface
 {
     use BookingTrait;
@@ -104,16 +101,14 @@ final class BookingController extends AbstractController implements ControllerIn
         $objPreBookingEvent = new PreBookingEvent($eventData);
         $this->eventDispatcher->dispatch($objPreBookingEvent, PreBookingEvent::NAME);
 
-        if (null !== $objBookings) {
-            $objBookings->reset();
-        }
+        $objBookings?->reset();
 
         if (null !== $objBookings) {
             while ($objBookings->next()) {
                 $objBooking = $objBookings->current();
 
                 // Check if mandatory fields are all filled out, see dca mandatory key
-                if (true !== ($success = $this->utils->areMandatoryFieldsSet($objBooking->row(), 'tl_resource_booking'))) {
+                if (true !== ($success = $this->utils->checkMandatoryFieldsSet($objBooking->row(), 'tl_resource_booking'))) {
                     throw new \Exception('No value detected for the mandatory field '.$success);
                 }
 
@@ -170,9 +165,7 @@ final class BookingController extends AbstractController implements ControllerIn
         }
 
         // Add booking selection to response
-        if (null !== $objBookings) {
-            $objBookings->reset();
-        }
+        $objBookings?->reset();
 
         $ajaxResponse->setData('bookingSelection', $objBookings ? $objBookings->fetchAll() : []);
     }

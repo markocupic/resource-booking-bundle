@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
  * @license MIT
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -24,9 +24,6 @@ use Markocupic\ResourceBookingBundle\Util\DateHelper;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-/**
- * Class ApplyFilterController.
- */
 final class ApplyFilterController extends AbstractController implements ControllerInterface
 {
     use RefreshDataTrait;
@@ -88,7 +85,7 @@ final class ApplyFilterController extends AbstractController implements Controll
 
         if (null !== ($objRes = $resourceBookingResourceModelAdapter->findByPk($intRes))) {
             // ... and if res is in the current resType container
-            if ((int) $objRes->pid === (int) $intResType) {
+            if ((int) $objRes->pid === $intResType) {
                 $this->sessionBag->set('res', $intRes);
                 $invalidRes = false;
             }

@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
  * @license MIT
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -15,14 +15,15 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\Controller\FrontendModule;
 
 use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController;
+use Contao\CoreBundle\Csrf\ContaoCsrfTokenManager;
+use Contao\CoreBundle\DependencyInjection\Attribute\AsFrontendModule;
 use Contao\CoreBundle\Exception\ResponseException;
 use Contao\CoreBundle\Framework\ContaoFramework;
-use Contao\CoreBundle\ServiceAnnotation\FrontendModule;
+use Contao\CoreBundle\Routing\ScopeMatcher;
 use Contao\Environment;
 use Contao\ModuleModel;
 use Contao\PageModel;
 use Contao\Template;
-use Haste\Util\Url;
 use Markocupic\ResourceBookingBundle\AppInitialization\Helper\ModuleIndex;
 use Markocupic\ResourceBookingBundle\AppInitialization\Helper\ModuleKey;
 use Markocupic\ResourceBookingBundle\AppInitialization\Helper\TokenManager;
@@ -36,29 +37,20 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 
-/**
- * @FrontendModule(type=ResourceBookingWeekcalendarController::TYPE, category="resourceBooking")
- */
+#[AsFrontendModule(ResourceBookingWeekcalendarController::TYPE, category: 'resourceBooking', template: 'mod_resourceBookingWeekcalendar')]
 class ResourceBookingWeekcalendarController extends AbstractFrontendModuleController
 {
     public const TYPE = 'resourceBookingWeekcalendar';
 
-    private ContaoFramework $framework;
-    private RequestStack $requestStack;
-    private EventDispatcherInterface $eventDispatcher;
-    private Initialize $appInitializer;
-    private AjaxResponse $ajaxResponse;
-
-    /**
-     * ResourceBookingWeekcalendarController constructor.
-     */
-    public function __construct(ContaoFramework $framework, RequestStack $requestStack, EventDispatcherInterface $eventDispatcher, Initialize $appInitializer, AjaxResponse $ajaxResponse)
-    {
-        $this->framework = $framework;
-        $this->requestStack = $requestStack;
-        $this->eventDispatcher = $eventDispatcher;
-        $this->appInitializer = $appInitializer;
-        $this->ajaxResponse = $ajaxResponse;
+    public function __construct(
+        private readonly ContaoFramework $framework,
+        private readonly RequestStack $requestStack,
+        private readonly ScopeMatcher $scopeMatcher,
+        private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly Initialize $appInitializer,
+        private readonly AjaxResponse $ajaxResponse,
+        private readonly ContaoCsrfTokenManager $contaoCsrfTokenManager,
+    ) {
     }
 
     /**
@@ -67,7 +59,7 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
     public function __invoke(Request $request, ModuleModel $model, string $section, array $classes = null, PageModel $page = null): Response
     {
         // Is frontend
-        if ($page instanceof PageModel && $this->get('contao.routing.scope_matcher')->isFrontendRequest($request)) {
+        if ($this->scopeMatcher->isFrontendRequest($request) && null !== $page) {
             /** @var Environment $environmentAdapter */
             $environmentAdapter = $this->framework->getAdapter(Environment::class);
 
@@ -90,9 +82,10 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
 
             if (!$environmentAdapter->get('isAjaxRequest') && !$request->query->has('token_'.$moduleKey)) {
                 TokenManager::generateToken();
-                $url = Url::addQueryString('token_'.$moduleKey.'='.TokenManager::getToken());
+                $request->query->add(['token_'.$moduleKey => TokenManager::getToken()]);
+                $request->overrideGlobals();
 
-                return new RedirectResponse($url);
+                return new RedirectResponse($request->getUri());
             }
 
             TokenManager::setToken($request->query->get('token_'.$moduleKey));
@@ -114,10 +107,14 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
         return parent::__invoke($request, $model, $section, $classes);
     }
 
-    protected function getResponse(Template $template, ModuleModel $model, Request $request): ?Response
+    /**
+     * @throws \Exception
+     */
+    protected function getResponse(Template $template, ModuleModel $model, Request $request): Response
     {
         // Used, if multiple rbb modules are used on the same page
         $template->moduleKey = ModuleKey::getModuleKey();
+        $template->csrfToken = $this->contaoCsrfTokenManager->getDefaultTokenValue();
 
         // Let vue.js do the rest ;-)
         return $template->getResponse();

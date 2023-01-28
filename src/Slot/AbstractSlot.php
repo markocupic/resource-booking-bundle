@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
  * @license MIT
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -28,8 +28,6 @@ use Markocupic\ResourceBookingBundle\Util\Utils;
 use Symfony\Component\Security\Core\Security;
 
 /**
- * Class AbstractSlot.
- *
  * @property int                               $index
  * @property string                            $weekday
  * @property int                               $startTime
@@ -68,38 +66,22 @@ use Symfony\Component\Security\Core\Security;
  */
 abstract class AbstractSlot implements SlotInterface
 {
-    protected ContaoFramework $framework;
-
-    protected Security $security;
-
-    protected Utils $utils;
-
     protected array $arrData = [];
-
     protected ?MemberModel $user = null;
 
-    /**
-     * @required
-     */
-    public function __construct(ContaoFramework $framework, Security $security, Utils $utils)
-    {
-        $this->framework = $framework;
-        $this->security = $security;
-        $this->utils = $utils;
+    public function __construct(
+        protected ContaoFramework $framework,
+        protected Security $security,
+        protected Utils $utils,
+    ) {
     }
 
-    /**
-     * @param $strKey
-     * @param mixed $value
-     */
-    public function __set(string $strKey, $value): void
+    public function __set(string $strKey, mixed $value): void
     {
         $this->arrData[$strKey] = $value;
     }
 
     /**
-     * @param $strKey
-     *
      * @return mixed|null
      */
     public function __get(string $strKey)
@@ -107,23 +89,25 @@ abstract class AbstractSlot implements SlotInterface
         return $this->arrData[$strKey] ?? null;
     }
 
-    public function create(ResourceBookingResourceModel $resource, int $startTime, int $endTime, int $itemsBooked = 1, int $bookingRepeatStopWeekTstamp = null): SlotInterface
+    /**
+     * @throws \Exception
+     */
+    public function create(ResourceBookingResourceModel $resource, int $startTime, int $endTime, int $desiredItems = 1, int $bookingRepeatStopWeekTstamp = null): SlotInterface
     {
         $dateAdapter = $this->framework->getAdapter(Date::class);
         $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
         $configAdapter = $this->framework->getAdapter(Config::class);
 
         if ($this->security->getUser() instanceof FrontendUser) {
-            /** @var MemberModel user */
             $memberModelAdapter = $this->framework->getAdapter(MemberModel::class);
             $this->user = $memberModelAdapter->findByPk($this->security->getUser()->id);
         }
 
-        $this->arrData['userIsLoggedIn'] = $this->user ? true : false;
+        $this->arrData['userIsLoggedIn'] = (bool) $this->user;
         $this->arrData['resource'] = $resource;
         $this->arrData['startTime'] = $startTime;
         $this->arrData['endTime'] = $endTime;
-        $this->arrData['itemsBooked'] = $itemsBooked;
+        $this->arrData['itemsBooked'] = $desiredItems;
 
         $appConfig = $this->utils->getAppConfig();
 
@@ -169,10 +153,10 @@ abstract class AbstractSlot implements SlotInterface
         $resourceBookingModelAdapter = $this->framework->getAdapter(ResourceBookingModel::class);
 
         return $resourceBookingModelAdapter
-            ->findByResourceStarttimeAndEndtime(
+            ->findByResourceStartTimeAndEndTime(
                 $this->arrData['resource'],
-                $this->arrData['startTime'],
-                $this->arrData['endTime']
+                (int) $this->arrData['startTime'],
+                (int) $this->arrData['endTime']
             )
         ;
     }
@@ -249,7 +233,7 @@ abstract class AbstractSlot implements SlotInterface
         return false;
     }
 
-    public function getBookingRelatedToLoggedInUser(): ?ResourceBookingModel
+    public function getBookingRelatedToLoggedInUser(): ?Model
     {
         if (!$this->isBookedByUser()) {
             return null;
@@ -266,6 +250,9 @@ abstract class AbstractSlot implements SlotInterface
         return null;
     }
 
+    /**
+     * @throws \Exception
+     */
     public function isDateInPermittedRange(): bool
     {
         if ($this->arrData['endTime'] < time()) {
@@ -285,7 +272,7 @@ abstract class AbstractSlot implements SlotInterface
         return true;
     }
 
-    public function row()
+    public function row(): array
     {
         $arrReturn = [];
 
@@ -301,6 +288,9 @@ abstract class AbstractSlot implements SlotInterface
         return $arrReturn;
     }
 
+    /**
+     * @throws \Exception
+     */
     public function isCancelable(): bool
     {
         $bookings = $this->getBookings();

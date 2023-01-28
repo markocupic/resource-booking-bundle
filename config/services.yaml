@@ -1,0 +1,64 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: true
+        bind:
+            $bagName: '%markocupic_resource_booking.session.attribute_bag_name%'
+            $contaoCsrfTokenManager: '@contao.csrf.token_manager'
+
+    Markocupic\ResourceBookingBundle\:
+        resource: ../src/
+        exclude: ../src/{DependencyInjection,Session,Config,Model,Event}
+
+    # Register session bag
+    markocupic.rbb.session_bag:
+        class: Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag
+        arguments:
+            - '@request_stack'
+            - '@security.helper'
+            - _resource_booking_bundle_attributes
+        calls:
+            - [ 'setName', [ resource_booking_bundle_attributes ] ]
+
+    markocupic.rbb.session.factory:
+        class: Markocupic\ResourceBookingBundle\Session\SessionFactory
+        decorates: session.factory
+        arguments:
+            - '@markocupic.rbb.session.factory.inner'
+            - '@markocupic.rbb.session_bag'
+
+    # Subscribers: Handle ajay requests
+    Markocupic\ResourceBookingBundle\EventSubscriber\AjaxRequestEventSubscriber:
+        tags:
+            - { name: kernel.event_subscriber }
+
+    # Ajax controller
+    Markocupic\ResourceBookingBundle\AjaxController\BookingController:
+        tags:
+            - { name: markocupic_resource_booking.ajax_controller, alias: booking }
+
+    # Ajax controller
+    Markocupic\ResourceBookingBundle\AjaxController\CancelController:
+        tags:
+            - { name: markocupic_resource_booking.ajax_controller, alias: cancelBooking }
+
+    # Ajax controller
+    Markocupic\ResourceBookingBundle\AjaxController\ApplyFilterController:
+        tags:
+            - { name: markocupic_resource_booking.ajax_controller, alias: applyFilter }
+
+    # Ajax controller
+    Markocupic\ResourceBookingBundle\AjaxController\BookingFormValidationController:
+        tags:
+            - { name: markocupic_resource_booking.ajax_controller, alias: bookingFormValidation }
+
+    # Ajax controller
+    Markocupic\ResourceBookingBundle\AjaxController\RefreshDataController:
+        tags:
+            - { name: markocupic_resource_booking.ajax_controller, alias: refreshData }
+
+        # Migration class: Add booking uuid
+    Markocupic\ResourceBookingBundle\Migration\AddBookingUuid\AddBookingUuid:
+        tags:
+            - { name: contao.migration, priority: 0 }

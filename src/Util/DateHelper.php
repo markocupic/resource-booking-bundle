@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
  * @license MIT
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -17,13 +17,13 @@ namespace Markocupic\ResourceBookingBundle\Util;
 use Contao\Date;
 use Markocupic\ResourceBookingBundle\Config\RbbConfig;
 
-/**
- * Class DateHelper.
- */
 class DateHelper
 {
     /**
-     * @return false|int
+     * @param int $intDays
+     * @param int|null $time
+     * @return int
+     * @throws \Exception
      */
     public static function addDaysToTime(int $intDays = 0, int $time = null): int
     {
@@ -38,15 +38,22 @@ class DateHelper
             $strAddDays = '+'.$intDays.' days';
         }
 
-        return strtotime(Date::parse('Y-m-d H:i:s', $time).' '.$strAddDays);
+        $tstamp = strtotime(Date::parse('Y-m-d H:i:s', $time).' '.$strAddDays);
+        if(false !== $tstamp)
+        {
+            return $tstamp;
+        }
+
+        throw new \Exception('Could not generate a valid timestamp.');
     }
 
     /**
-     * @param null $time
-     *
-     * @return false|int
+     * @param int $intWeeks
+     * @param int|null $time
+     * @return int
+     * @throws \Exception
      */
-    public static function addWeeksToTime(int $intWeeks = 0, int $time = null)
+    public static function addWeeksToTime(int $intWeeks = 0, int $time = null): int
     {
         if (null === $time) {
             $time = time();
@@ -59,11 +66,17 @@ class DateHelper
             $strAddWeeks = '+'.$intWeeks.' weeks';
         }
 
-        return strtotime(Date::parse('Y-m-d H:i:s', $time).' '.$strAddWeeks);
+        $tstamp = strtotime(Date::parse('Y-m-d H:i:s', $time).' '.$strAddWeeks);
+        if(false !== $tstamp)
+        {
+            return $tstamp;
+        }
+
+        throw new \Exception('Could not generate a valid timestamp.');
     }
 
     /**
-     * By default this is the timestamp of a monday.
+     * By default, this is the timestamp of a monday.
      */
     public static function getFirstDayOfCurrentWeek(array $arrAppConfig, int $timestamp = null): int
     {
@@ -80,7 +93,10 @@ class DateHelper
      * Return beginn weekday of the week the timestamp is in
      * By default this is a monday.
      *
-     * @param null $tstamp
+     * @param array $arrAppConfig
+     * @param $tstamp
+     * @return int
+     * @throws \Exception
      */
     public static function getFirstDayOfWeek(array $arrAppConfig, $tstamp = null): int
     {
@@ -107,7 +123,8 @@ class DateHelper
     }
 
     /**
-     * @param $dateString
+     * @param string $dateString
+     * @return bool
      */
     public static function isValidBookingTime(string $dateString): bool
     {
@@ -119,6 +136,11 @@ class DateHelper
 
     /**
      * Check if date is in the permitted range.
+     *
+     * @param int $tstamp
+     * @param array $arrAppConfig
+     * @return bool
+     * @throws \Exception
      */
     public static function isDateInPermittedRange(int $tstamp, array $arrAppConfig): bool
     {

@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
  * @license MIT
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -17,21 +17,21 @@ namespace Markocupic\ResourceBookingBundle\Slot;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Util\Utils;
+use Symfony\Component\PasswordHasher\Exception\LogicException;
 use Symfony\Component\Security\Core\Security;
 
 class SlotFactory
 {
-    private ContaoFramework $framework;
-    private Security $security;
-    private Utils $utils;
-
-    public function __construct(ContaoFramework $framework, Security $security, Utils $utils)
-    {
-        $this->framework = $framework;
-        $this->security = $security;
-        $this->utils = $utils;
+    public function __construct(
+        private readonly ContaoFramework $framework,
+        private readonly Security $security,
+        private readonly Utils $utils,
+    ) {
     }
 
+    /**
+     * @throws \Exception
+     */
     public function get(string $mode, ResourceBookingResourceModel $resource, int $startTime, int $endTime, int $desiredItems = 1, int $bookingRepeatStopWeekTstamp = null): SlotInterface
     {
         if (SlotMain::MODE === $mode) {
@@ -45,5 +45,7 @@ class SlotFactory
 
             return $slotEntity->create($resource, $startTime, $endTime, $desiredItems, $bookingRepeatStopWeekTstamp);
         }
+
+        throw new LogicException(sprintf('Variable $mode should either be "%s" or "%s" "%s" given.', SlotMain::MODE, SlotBooking::MODE, $mode));
     }
 }
