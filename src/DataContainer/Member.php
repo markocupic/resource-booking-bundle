@@ -14,13 +14,12 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\DataContainer;
 
-use Contao\Backend;
 use Contao\CoreBundle\DependencyInjection\Attribute\AsCallback;
 use Contao\DataContainer;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 
-class Member extends Backend
+class Member
 {
     public function __construct(
         private readonly Connection $connection,

@@ -14,18 +14,17 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\DataContainer;
 
-use Contao\Backend;
 use Contao\CoreBundle\DependencyInjection\Attribute\AsCallback;
+use Contao\Database;
 use Contao\System;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 
-class Module extends Backend
+class Module
 {
     public function __construct(
         private readonly Connection $connection,
     ) {
-        parent::__construct();
     }
 
     /**
@@ -50,7 +49,7 @@ class Module extends Backend
     #[AsCallback(table: 'tl_module', target: 'fields.resourceBooking_clientPersonalData.options')]
     public function getTlMemberFields(): array
     {
-        $arrFieldNames = $this->Database->getFieldNames('tl_member');
+        $arrFieldNames = Database::getInstance()->getFieldNames('tl_member');
 
         System::loadLanguageFile('tl_member');
         $arrOpt = [];
@@ -68,9 +67,10 @@ class Module extends Backend
     }
 
     #[AsCallback(table: 'tl_module', target: 'fields.getTlResourceBookingFields.options')]
+    #[AsCallback(table: 'tl_module', target: 'fields.resourceBooking_bookingSubmittedFields.options')]
     public function getTlResourceBookingFields(): array
     {
-        $arrFieldNames = $this->Database->getFieldNames('tl_resource_booking');
+        $arrFieldNames = Database::getInstance()->getFieldNames('tl_resource_booking');
         System::loadLanguageFile('tl_resource_booking');
 
         return $arrFieldNames;

@@ -47,7 +47,7 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
         protected readonly Security $security,
         string $storageKey = '_sf2_attributes'
     ) {
-        parent::__construct();
+        parent::__construct($storageKey);
     }
 
     /**

@@ -78,7 +78,6 @@ class AddBookingUuid extends AbstractMigration
     private function addBookingUuid(): void
     {
         $this->framework->initialize();
-
         $result = $this->connection->executeQuery('SELECT id FROM tl_resource_booking WHERE bookingUuid = ?', ['']);
 
         while (false !== ($id = $result->fetchOne())) {

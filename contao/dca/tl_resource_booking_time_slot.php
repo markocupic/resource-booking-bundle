@@ -13,7 +13,7 @@ declare(strict_types=1);
  */
 
 use Contao\DataContainer;
-use Markocupic\ResourceBookingBundle\EventListener\ContaoHooks\RegExp;
+use Markocupic\ResourceBookingBundle\EventListener\ContaoHooks\RegExpListener;
 use Contao\DC_Table;
 
 $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = [
@@ -133,14 +133,14 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = [
             'sorting'   => true,
             'flag'      => DataContainer::SORT_MONTH_DESC,
             'inputType' => 'text',
-            'eval'      => ['rgxp' => RegExp::REGEX_RESOURCE_BOOKING_TIME, 'mandatory' => true, 'tl_class' => 'w50'],
+            'eval'      => ['rgxp' => RegExpListener::REGEX_RESOURCE_BOOKING_TIME, 'mandatory' => true, 'tl_class' => 'w50'],
             'sql'       => "int(10) unsigned NOT NULL default '0'",
         ],
         'endTime'     => [
             'default'   => time(),
             'exclude'   => true,
             'inputType' => 'text',
-            'eval'      => ['rgxp' => RegExp::REGEX_RESOURCE_BOOKING_TIME, 'mandatory' => true, 'tl_class' => 'w50'],
+            'eval'      => ['rgxp' => RegExpListener::REGEX_RESOURCE_BOOKING_TIME, 'mandatory' => true, 'tl_class' => 'w50'],
             'sql'       => "int(10) unsigned NOT NULL default '0'",
         ],
         'cssID'       => [

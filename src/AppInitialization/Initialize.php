@@ -16,6 +16,7 @@ namespace Markocupic\ResourceBookingBundle\AppInitialization;
 
 use Contao\Controller;
 use Contao\CoreBundle\Framework\ContaoFramework;
+use Contao\CoreBundle\Util\LocaleUtil;
 use Contao\Environment;
 use Contao\ModuleModel;
 use Contao\PageModel;
@@ -185,23 +186,37 @@ class Initialize
         // Set active week timestamp.
         $tstampCurrentWeek = (int) $this->sessionBag->get('activeWeekTstamp', $dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig));
         $this->sessionBag->set('activeWeekTstamp', $tstampCurrentWeek);
+        $this->sessionBag->set('activeWeekDate', date('Y-m-d', $tstampCurrentWeek));
 
         // Get first and last possible week tstamp.
-        $this->sessionBag->set('tstampFirstPermittedWeek', $dateHelperAdapter->addWeeksToTime($arrAppConfig['intBackWeeks'], $dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig)));
+        $tstampFirstPermittedWeek = $dateHelperAdapter->addWeeksToTime($arrAppConfig['intBackWeeks'], $dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig));
+        $this->sessionBag->set('tstampFirstPermittedWeek', $tstampFirstPermittedWeek);
+        $this->sessionBag->set('tstampFirstPermittedDate', date('Y-m-d', $tstampFirstPermittedWeek));
 
-        $intTstampLastPossibleWeek = $dateHelperAdapter->addWeeksToTime($arrAppConfig['intAheadWeeks'], $dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig));
+        $intTstampLastPermittedWeek = $dateHelperAdapter->addWeeksToTime($arrAppConfig['intAheadWeeks'], $dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig));
 
         if ($objModuleModel->resourceBooking_addDateStop) {
             $intTstampStop = $dateHelperAdapter->getFirstDayOfWeek($arrAppConfig, $objModuleModel->resourceBooking_dateStop);
 
-            if ($intTstampStop < $intTstampLastPossibleWeek) {
-                $intTstampLastPossibleWeek = $intTstampStop;
+            if ($intTstampStop < $intTstampLastPermittedWeek) {
+                $intTstampLastPermittedWeek = $intTstampStop;
             }
 
             if ($intTstampStop < time()) {
-                $intTstampLastPossibleWeek = $dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig);
+                $intTstampLastPermittedWeek = $dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig);
             }
         }
-        $this->sessionBag->set('tstampLastPermittedWeek', $intTstampLastPossibleWeek);
+
+        $this->sessionBag->set('tstampLastPermittedWeek', $intTstampLastPermittedWeek);
+        $this->sessionBag->set('tstampLastPermittedWeekDate', date('Y-m-d', $intTstampLastPermittedWeek));
+
+        // The locale is used by Notification Center.
+        $language = 'en';
+
+        if (null !== $request) {
+            $language = LocaleUtil::formatAsLanguageTag($request->getLocale());
+        }
+
+        $this->sessionBag->set('language', $language);
     }
 }

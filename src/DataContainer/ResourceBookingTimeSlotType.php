@@ -14,7 +14,7 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\DataContainer;
 
-use Contao\Backend;
+use Contao\Controller;
 use Contao\CoreBundle\DependencyInjection\Attribute\AsCallback;
 use Contao\DataContainer;
 use Contao\Image;
@@ -22,18 +22,17 @@ use Contao\StringUtil;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 
-class ResourceBookingTimeSlotType extends Backend
+class ResourceBookingTimeSlotType
 {
     public function __construct(
         private readonly Connection $connection,
     ) {
-        parent::__construct();
     }
 
     #[AsCallback(table: 'tl_resource_booking_time_slot_type', target: 'list.operations.editheader.button')]
     public function editHeader(array $row, string $href, string $label, string $title, string $icon, string $attributes): string
     {
-        return '<a href="'.$this->addToUrl($href.'&amp;id='.$row['id']).'" title="'.StringUtil::specialchars($title).'"'.$attributes.'>'.Image::getHtml($icon, $label).'</a> ';
+        return '<a href="'.Controller::addToUrl($href.'&amp;id='.$row['id']).'" title="'.StringUtil::specialchars($title).'"'.$attributes.'>'.Image::getHtml($icon, $label).'</a> ';
     }
 
     /**

@@ -14,17 +14,17 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\DataContainer;
 
-use Contao\Backend;
 use Contao\CoreBundle\DependencyInjection\Attribute\AsCallback;
+use Contao\Database;
 use Markocupic\ResourceBookingBundle\Controller\FrontendModule\ResourceBookingWeekcalendarController;
 
-class ResourceBooking extends Backend
+class ResourceBooking
 {
     #[AsCallback(table: 'tl_resource_booking', target: 'fields.moduleId.options')]
     public function getRbbModules(): array
     {
         $opt = [];
-        $objDb = $this->Database
+        $objDb = Database::getInstance()
             ->prepare('SELECT * FROM tl_module WHERE type=?')
             ->execute(ResourceBookingWeekcalendarController::TYPE)
         ;

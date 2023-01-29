@@ -17,7 +17,6 @@ namespace Markocupic\ResourceBookingBundle\DataContainer;
 use Contao\CoreBundle\DependencyInjection\Attribute\AsCallback;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
-use Markocupic\ResourceBookingBundle\Controller\FrontendModule\ResourceBookingWeekcalendarController;
 
 class ResourceBookingResource
 {
@@ -30,10 +29,8 @@ class ResourceBookingResource
      * @throws Exception
      */
     #[AsCallback(table: 'tl_resource_booking_resource', target: 'list.sorting.child_record')]
-    public function getRbbModules(): array
+    public function childRecordCallback(array $row): string
     {
-        $result = $this->connection->executeQuery('SELECT id,name FROM tl_module WHERE type = ?', [ResourceBookingWeekcalendarController::TYPE]);
-
-        return $result->fetchAllKeyValue();
+        return '<div class="tl_content_left">'.$row['title'].'</div>';
     }
 }

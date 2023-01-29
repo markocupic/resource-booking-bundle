@@ -15,21 +15,23 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\DataContainer;
 
 use Contao\Backend;
+use Contao\CoreBundle\DependencyInjection\Attribute\AsCallback;
 use Contao\DataContainer;
 use Contao\Date;
 use Contao\Input;
 use Contao\Message;
 use Markocupic\ResourceBookingBundle\Util\UtcTimeHelper;
+use Contao\Database;
 
-class ResourceBookingTimeSlot extends Backend
+class ResourceBookingTimeSlot
 {
-    #[AsCallback(table: 'tl_resource_booking_time_slot', target: 'list.child_record')]
+    #[AsCallback(table: 'tl_resource_booking_time_slot', target: 'list.sorting.child_record')]
     public function childRecordCallback(array $row): string
     {
         return sprintf('<div class="tl_content_left"><span style="color:#999;padding-left:3px">'.$row['title'].'</span> %s-%s</div>', UtcTimeHelper::parse('H:i', $row['startTime']), UtcTimeHelper::parse('H:i', $row['endTime']));
     }
 
-    #[AsCallback(table: 'tl_resource_booking_time_slot', target: 'fields.startTime.load')]
+    #[AsCallback(table: 'tl_resource_booking_time_slot', target: 'fields.startTime.load', priority: 100)]
     #[AsCallback(table: 'tl_resource_booking_time_slot', target: 'fields.endTime.load')]
     public function loadTime(int $timestamp): string
     {
@@ -83,12 +85,8 @@ class ResourceBookingTimeSlot extends Backend
         if (!empty($strStartTime)) {
             $startTime = UtcTimeHelper::strToTime('01-01-1970 '.$strStartTime);
 
-            if (false !== $startTime) {
-                if ($timestamp <= $startTime) {
-                    $timestamp = $startTime + 60;
-                }
-            } else {
-                $timestamp = 0;
+            if ($timestamp <= $startTime) {
+                $timestamp = $startTime + 60;
             }
         } else {
             $timestamp = 0;
@@ -104,12 +102,12 @@ class ResourceBookingTimeSlot extends Backend
             return;
         }
 
-        $objBooking = $this->Database->prepare('SELECT id FROM tl_resource_booking WHERE timeSlotId=?')->execute($dc->id);
+        $objBooking = Database::getInstance()->prepare('SELECT id FROM tl_resource_booking WHERE timeSlotId=?')->execute($dc->id);
 
         if ($objBooking->numRows) {
             $arrIdsDel = $objBooking->fetchEach('id');
             // Delete child bookings
-            $this->Database->prepare('DELETE FROM tl_resource_booking WHERE timeSlotId=?')->execute($dc->id);
+            Database::getInstance()->prepare('DELETE FROM tl_resource_booking WHERE timeSlotId=?')->execute($dc->id);
             Message::addInfo('Deleted bookings with ids '.implode(',', $arrIdsDel));
         }
     }
@@ -123,11 +121,11 @@ class ResourceBookingTimeSlot extends Backend
             return;
         }
 
-        $objSlot = $this->Database->prepare('SELECT * FROM tl_resource_booking_time_slot WHERE id=?')->execute($intId);
+        $objSlot = Database::getInstance()->prepare('SELECT * FROM tl_resource_booking_time_slot WHERE id=?')->execute($intId);
 
         if ($objSlot->numRows) {
             $arrAdapted = [];
-            $objBooking = $this->Database->prepare('SELECT * FROM tl_resource_booking WHERE timeSlotId=?')->execute($objSlot->id);
+            $objBooking = Database::getInstance()->prepare('SELECT * FROM tl_resource_booking WHERE timeSlotId=?')->execute($objSlot->id);
 
             while ($objBooking->next()) {
                 $set = [];
@@ -141,7 +139,7 @@ class ResourceBookingTimeSlot extends Backend
                     $set[$field] = strtotime($strDateNew);
                 }
                 $arrAdapted[] = $objBooking->id;
-                $this->Database->prepare('UPDATE tl_resource_booking %s WHERE id=?')
+                Database::getInstance()->prepare('UPDATE tl_resource_booking %s WHERE id=?')
                     ->set($set)
                     ->execute($objBooking->id)
                 ;
