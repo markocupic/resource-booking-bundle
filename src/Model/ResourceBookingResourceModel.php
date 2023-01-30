@@ -27,7 +27,7 @@ class ResourceBookingResourceModel extends Model
      */
     protected static $strTable = 'tl_resource_booking_resource';
 
-    public static function findPublishedByPid(int $intId): ?Collection
+    public static function findPublishedByPid(int $intId): Collection|null
     {
         $arrIds = [];
         $objDb = static::findByPid($intId);
@@ -53,7 +53,7 @@ class ResourceBookingResourceModel extends Model
     /**
      * @throws \Exception
      */
-    public static function findPublishedByPk(int $intId): ?static
+    public static function findPublishedByPk(int $intId): static|null
     {
         $arrColumn = ['id=?', 'published=?'];
         $arrValues = [$intId, '1'];
@@ -76,7 +76,7 @@ class ResourceBookingResourceModel extends Model
     /**
      * @throws \Exception
      */
-    public static function findPublishedByPkAndPid(int $intId, int $intPid): ?static
+    public static function findPublishedByPkAndPid(int $intId, int $intPid): static|null
     {
         $arrColumn = ['id=?', 'pid=?', 'published=?'];
         $arrValues = [$intId, $intPid, '1'];
@@ -97,7 +97,7 @@ class ResourceBookingResourceModel extends Model
         return null;
     }
 
-    public static function findPublishedByIds(array $arrIds): ?Collection
+    public static function findPublishedByIds(array $arrIds): Collection|null
     {
         $arrIdsNew = [];
 
@@ -119,7 +119,7 @@ class ResourceBookingResourceModel extends Model
         return static::findMultipleByIds($arrIdsNew);
     }
 
-    public static function findMultipleAndPublishedByPids(array $arrPids): ?Collection
+    public static function findMultipleAndPublishedByPids(array $arrPids): Collection|null
     {
         if (empty($arrPids)) {
             return null;

@@ -26,7 +26,7 @@ class ResourceBookingModel extends Model
      */
     protected static $strTable = 'tl_resource_booking';
 
-    public static function findByIds(array $arrIds, array $arrOptions = []): ?Collection
+    public static function findByIds(array $arrIds, array $arrOptions = []): Collection|null
     {
         if (empty($arrIds)) {
             return null;
@@ -40,7 +40,7 @@ class ResourceBookingModel extends Model
     /**
      * @return static|null
      */
-    public static function findOneByResourceIdStartTimeAndEndTime(ResourceBookingResourceModel $objResource, int $startTime, int $endTime): ?self
+    public static function findOneByResourceIdStartTimeAndEndTime(ResourceBookingResourceModel $objResource, int $startTime, int $endTime): self|null
     {
         $arrColumn = ['pid=?', 'startTime=?', 'endTime=?'];
         $arrValues = [$objResource->id, $startTime, $endTime];
@@ -48,7 +48,7 @@ class ResourceBookingModel extends Model
         return self::findOneBy($arrColumn, $arrValues);
     }
 
-    public static function findByResourceStartTimeAndEndTime(ResourceBookingResourceModel $objResource, int $startTime, int $endTime): ?Collection
+    public static function findByResourceStartTimeAndEndTime(ResourceBookingResourceModel $objResource, int $startTime, int $endTime): Collection|null
     {
         $arrColumn = ['pid=?', 'startTime=?', 'endTime=?'];
         $arrValues = [$objResource->id, $startTime, $endTime];
@@ -59,7 +59,7 @@ class ResourceBookingModel extends Model
     /**
      * @return static|null
      */
-    public static function findOneByResourceIdStartTimeEndTimeAndMember(ResourceBookingResourceModel $objResource, int $startTime, int $endTime, int $memberId): ?self
+    public static function findOneByResourceIdStartTimeEndTimeAndMember(ResourceBookingResourceModel $objResource, int $startTime, int $endTime, int $memberId): self|null
     {
         $arrColumn = ['pid=?', 'startTime=?', 'endTime=?', 'member=?'];
         $arrValues = [$objResource->id, $startTime, $endTime, $memberId];

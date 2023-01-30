@@ -38,7 +38,7 @@ class ModuleKey
     /**
      * @throws \Exception
      */
-    public static function getModuleKey(): ?string
+    public static function getModuleKey(): string|null
     {
         return static::$moduleKey;
     }

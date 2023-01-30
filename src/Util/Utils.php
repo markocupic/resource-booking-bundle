@@ -23,7 +23,7 @@ use Symfony\Component\HttpFoundation\Session\SessionBagInterface;
 
 class Utils
 {
-    private ?SessionBagInterface $session = null;
+    private SessionBagInterface|null $session = null;
 
     public function __construct(
         private readonly ContaoFramework $framework,
@@ -39,7 +39,7 @@ class Utils
     /**
      * @throws \Exception
      */
-    public function getModuleModel(): ?ModuleModel
+    public function getModuleModel(): ModuleModel|null
     {
         /** @var ModuleModel $moduleModelAdapter */
         $moduleModelAdapter = $this->framework->getAdapter(ModuleModel::class);

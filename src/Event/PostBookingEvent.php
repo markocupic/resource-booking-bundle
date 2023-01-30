@@ -24,7 +24,7 @@ class PostBookingEvent extends Event
 {
     public const NAME = 'rbb.event.post_booking';
 
-    private ?Collection $bookingCollection;
+    private Collection|null $bookingCollection;
     private FrontendUser $user;
     private ArrayAttributeBag $sessionBag;
     private AjaxResponse $ajaxResponse;

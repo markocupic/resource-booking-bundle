@@ -24,7 +24,7 @@ class PreBookingEvent extends Event
 {
     public const NAME = 'rbb.event.pre_booking';
 
-    private ?Collection $bookingCollection;
+    private Collection|null $bookingCollection;
     private FrontendUser $user;
     private ArrayAttributeBag $sessionBag;
     private AjaxResponse $ajaxResponse;
@@ -37,7 +37,7 @@ class PreBookingEvent extends Event
         $this->sessionBag = $event->sessionBag;
     }
 
-    public function getBookingCollection(): ?Collection
+    public function getBookingCollection(): Collection|null
     {
         return $this->bookingCollection;
     }

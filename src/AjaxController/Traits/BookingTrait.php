@@ -30,7 +30,7 @@ trait BookingTrait
     /**
      * @throws \Exception
      */
-    private function getSlotCollectionFromRequest(): ?SlotCollection
+    private function getSlotCollectionFromRequest(): SlotCollection|null
     {
         /** @var StringUtil $stringUtilAdapter */
         $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
@@ -163,7 +163,7 @@ trait BookingTrait
     /**
      * @throws \Exception
      */
-    private function isBookingPossible(?SlotCollection $slotCollection): bool
+    private function isBookingPossible(SlotCollection|null $slotCollection): bool
     {
         if (null === $slotCollection) {
             return false;

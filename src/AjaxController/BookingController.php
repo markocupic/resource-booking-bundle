@@ -37,7 +37,7 @@ final class BookingController extends AbstractController implements ControllerIn
     private EventDispatcherInterface $eventDispatcher;
     private SlotFactory $slotFactory;
     private TranslatorInterface $translator;
-    private ?string $bookingUuid = null;
+    private string|null $bookingUuid = null;
 
     /**
      * @required
@@ -170,7 +170,7 @@ final class BookingController extends AbstractController implements ControllerIn
         $ajaxResponse->setData('bookingSelection', $objBookings ? $objBookings->fetchAll() : []);
     }
 
-    private function getBookingCollection(SlotCollection $slotCollection): ?Collection
+    private function getBookingCollection(SlotCollection $slotCollection): Collection|null
     {
         $bookingCollection = [];
 

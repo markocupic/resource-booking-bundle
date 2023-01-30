@@ -126,7 +126,7 @@ class SlotCollection implements \ArrayAccess, \Countable, \IteratorAggregate
     /**
      * Return the slots as array.
      */
-    public function getSlots(): ?array
+    public function getSlots(): array|null
     {
         return $this->arrSlots;
     }
@@ -156,7 +156,7 @@ class SlotCollection implements \ArrayAccess, \Countable, \IteratorAggregate
     /**
      * Go to the previous row.
      */
-    public function prev(): bool|self
+    public function prev(): self|bool
     {
         if ($this->intIndex < 1) {
             return false;
@@ -184,7 +184,7 @@ class SlotCollection implements \ArrayAccess, \Countable, \IteratorAggregate
     /**
      * Go to the next row.
      */
-    public function next(): bool|self
+    public function next(): self|bool
     {
         if (!isset($this->arrSlots[$this->intIndex + 1])) {
             return false;
@@ -274,7 +274,7 @@ class SlotCollection implements \ArrayAccess, \Countable, \IteratorAggregate
      *
      * @return SlotInterface|null The model or null
      */
-    public function offsetGet($offset): ?SlotInterface
+    public function offsetGet($offset): SlotInterface|null
     {
         return $this->arrSlots[$offset];
     }

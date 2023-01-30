@@ -508,7 +508,7 @@ trait RefreshDataTrait
     /**
      * @throws \Exception
      */
-    private function getActiveResourceFromSession(): ?ResourceBookingResourceModel
+    private function getActiveResourceFromSession(): ResourceBookingResourceModel|null
     {
         /** @var ResourceBookingResourceModel $resourceBookingResourceModelAdapter */
         $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
@@ -519,7 +519,7 @@ trait RefreshDataTrait
     /**
      * @throws \Exception
      */
-    private function getActiveResourceTypeFromSession(): ?ResourceBookingResourceTypeModel
+    private function getActiveResourceTypeFromSession(): ResourceBookingResourceTypeModel|null
     {
         /** @var ResourceBookingResourceTypeModel $resourceBookingResourceTypeModelAdapter */
         $resourceBookingResourceTypeModelAdapter = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class);
@@ -530,7 +530,7 @@ trait RefreshDataTrait
     /**
      * @throws \Exception
      */
-    private function getModuleModelFromSession(): ?ModuleModel
+    private function getModuleModelFromSession(): ModuleModel|null
     {
         /** @var ModuleModel $moduleModelAdapter */
         $moduleModelAdapter = $this->framework->getAdapter(ModuleModel::class);

@@ -27,7 +27,7 @@ final class BookingFormValidationController extends AbstractController implement
 
     private SlotFactory $slotFactory;
     private TranslatorInterface $translator;
-    private ?string $bookingUuid = null;
+    private string|null $bookingUuid = null;
 
     /**
      * @required

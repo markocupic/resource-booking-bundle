@@ -30,7 +30,7 @@ class ModuleIndex
 {
     private static int $moduleIndex = -1;
 
-    private static ?int $initTime = null;
+    private static int|null $initTime = null;
 
     public static function generateModuleIndex(): void
     {

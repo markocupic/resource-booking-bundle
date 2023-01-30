@@ -26,7 +26,7 @@ class ResourceBookingTimeSlotModel extends Model
      */
     protected static $strTable = 'tl_resource_booking_time_slot';
 
-    public static function findPublishedByPid(int $intPid): ?Collection
+    public static function findPublishedByPid(int $intPid): Collection|null
     {
         $arrIds = [];
 

@@ -67,7 +67,7 @@ use Symfony\Component\Security\Core\Security;
 abstract class AbstractSlot implements SlotInterface
 {
     protected array $arrData = [];
-    protected ?MemberModel $user = null;
+    protected MemberModel|null $user = null;
 
     public function __construct(
         protected ContaoFramework $framework,
@@ -147,7 +147,7 @@ abstract class AbstractSlot implements SlotInterface
         return null !== $this->getBookings();
     }
 
-    public function getBookings(): ?Collection
+    public function getBookings(): Collection|null
     {
         /** @var ResourceBookingModel $resourceBookingModelAdapter */
         $resourceBookingModelAdapter = $this->framework->getAdapter(ResourceBookingModel::class);
@@ -233,7 +233,7 @@ abstract class AbstractSlot implements SlotInterface
         return false;
     }
 
-    public function getBookingRelatedToLoggedInUser(): ?Model
+    public function getBookingRelatedToLoggedInUser(): Model|null
     {
         if (!$this->isBookedByUser()) {
             return null;

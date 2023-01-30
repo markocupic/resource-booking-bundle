@@ -26,7 +26,7 @@ class ResourceBookingResourceTypeModel extends Model
      */
     protected static $strTable = 'tl_resource_booking_resource_type';
 
-    public static function findPublishedByPk(int $intId): ?static
+    public static function findPublishedByPk(int $intId): static|null
     {
         $arrColumn = ['id=?', 'published=?'];
         $arrValues = [$intId, '1'];
@@ -34,7 +34,7 @@ class ResourceBookingResourceTypeModel extends Model
         return self::findOneBy($arrColumn, $arrValues);
     }
 
-    public static function findPublishedByIds(array $arrIds): ?Collection
+    public static function findPublishedByIds(array $arrIds): Collection|null
     {
         $arrIdsNew = [];
 

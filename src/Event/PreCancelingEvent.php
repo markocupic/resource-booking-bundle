@@ -23,7 +23,7 @@ class PreCancelingEvent extends Event
 {
     public const NAME = 'rbb.event.pre_canceling';
 
-    private ?Collection $bookingCollection;
+    private Collection|null $bookingCollection;
     private FrontendUser $user;
     private ArrayAttributeBag $sessionBag;
 
@@ -34,7 +34,7 @@ class PreCancelingEvent extends Event
         $this->sessionBag = $event->sessionBag;
     }
 
-    public function getBookingCollection(): ?Collection
+    public function getBookingCollection(): Collection|null
     {
         return $this->bookingCollection;
     }

@@ -28,7 +28,7 @@ class LoggedInFrontendUser
     ) {
     }
 
-    public function getLoggedInUser(): ?UserInterface
+    public function getLoggedInUser(): UserInterface|null
     {
         if ($this->security->getUser() instanceof FrontendUser) {
             /** @var FrontendUser $user */
@@ -38,7 +38,7 @@ class LoggedInFrontendUser
         return null;
     }
 
-    public function getModel(): ?MemberModel
+    public function getModel(): MemberModel|null
     {
         $memberModelAdapter = $this->framework->getAdapter(MemberModel::class);
         $user = $this->getLoggedInUser();

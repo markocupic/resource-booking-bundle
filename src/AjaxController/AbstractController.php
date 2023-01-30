@@ -24,10 +24,10 @@ use Symfony\Component\HttpFoundation\Session\SessionBagInterface;
 
 abstract class AbstractController
 {
-    protected ?SessionBagInterface $sessionBag = null;
-    protected ?ResourceBookingResourceModel $activeResource = null;
-    protected ?ModuleModel $moduleModel = null;
-    protected ?string $errorMsg = null;
+    protected SessionBagInterface|null $sessionBag = null;
+    protected ResourceBookingResourceModel|null $activeResource = null;
+    protected ModuleModel|null $moduleModel = null;
+    protected string|null $errorMsg = null;
 
     public function __construct(
         protected ContaoFramework $framework,
@@ -79,7 +79,7 @@ abstract class AbstractController
     /**
      * @throws \Exception
      */
-    protected function getActiveResource(): ?ResourceBookingResourceModel
+    protected function getActiveResource(): ResourceBookingResourceModel|null
     {
         if (!$this->activeResource) {
             /** @var ResourceBookingResourceModel $resourceBookingResourceModelAdapter */
@@ -98,7 +98,7 @@ abstract class AbstractController
         return (bool) $this->errorMsg;
     }
 
-    protected function getErrorMessage(): ?string
+    protected function getErrorMessage(): string|null
     {
         return $this->errorMsg;
     }

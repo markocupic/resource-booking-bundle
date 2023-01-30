@@ -26,7 +26,7 @@ use Ramsey\Uuid\Uuid;
  */
 class TokenManager
 {
-    private static ?string $token = null;
+    private static string|null $token = null;
 
     public static function generateToken(): void
     {

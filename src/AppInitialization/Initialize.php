@@ -33,7 +33,7 @@ use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 
 class Initialize
 {
-    private ?SessionBagInterface $sessionBag = null;
+    private SessionBagInterface|null $sessionBag = null;
 
     public function __construct(
         private readonly ContaoFramework $framework,
