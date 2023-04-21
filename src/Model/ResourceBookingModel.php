@@ -5,17 +5,15 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2021 <m.cupic@gmx.ch>
  * @license MIT
- * For the full copyright and license information,
- * please view the LICENSE file that was distributed with this source code.
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
 namespace Markocupic\ResourceBookingBundle\Model;
 
 use Contao\Model;
-use Contao\Model\Collection;
+use Model\Collection;
 
 /**
  * Class ResourceBookingModel.
@@ -47,7 +45,7 @@ class ResourceBookingModel extends Model
      *
      * @return ResourceBookingModel
      */
-    public static function findOneByResourceIdStarttimeAndEndtime($objResource, $starttime, $endtime): ?self
+    public static function findOneByResourceIdStarttimeAndEndtime($objResource, $starttime, $endtime)
     {
         $arrColumn = ['pid=?', 'startTime=?', 'endTime=?'];
         $arrValues = [$objResource->id, $starttime, $endtime];
@@ -59,24 +57,11 @@ class ResourceBookingModel extends Model
      * @param $objResource
      * @param $starttime
      * @param $endtime
-     */
-    public static function findByResourceStarttimeAndEndtime($objResource, $starttime, $endtime): ?Collection
-    {
-        $arrColumn = ['pid=?', 'startTime=?', 'endTime=?'];
-        $arrValues = [$objResource->id, $starttime, $endtime];
-
-        return self::findBy($arrColumn, $arrValues);
-    }
-
-    /**
-     * @param $objResource
-     * @param $starttime
-     * @param $endtime
      * @param $memberid
      *
      * @return ResourceBookingModel
      */
-    public static function findOneByResourceIdStarttimeEndtimeAndMember($objResource, $starttime, $endtime, $memberid): ?self
+    public static function findOneByResourceIdStarttimeEndtimeAndMember($objResource, $starttime, $endtime, $memberid)
     {
         $arrColumn = ['pid=?', 'startTime=?', 'endTime=?', 'member=?'];
         $arrValues = [$objResource->id, $starttime, $endtime, $memberid];

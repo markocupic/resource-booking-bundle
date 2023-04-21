@@ -5,10 +5,8 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2021 <m.cupic@gmx.ch>
  * @license MIT
- * For the full copyright and license information,
- * please view the LICENSE file that was distributed with this source code.
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
@@ -19,13 +17,35 @@ namespace Markocupic\ResourceBookingBundle\Response;
  */
 class AjaxResponse
 {
+    /**
+     * @var string
+     */
     public const STATUS_SUCCESS = 'success';
+
+    /**
+     * @var string
+     */
     public const STATUS_ERROR = 'error';
+
+    /**
+     * @var string
+     */
     public const MESSAGE_CONFIRMATION = 'confirmation';
+
+    /**
+     * @var string
+     */
     public const MESSAGE_INFO = 'info';
+
+    /**
+     * @var string
+     */
     public const MESSAGE_ERROR = 'error';
 
-    private array $arrData;
+    /**
+     * @var array
+     */
+    private $arrData;
 
     /**
      * JsonResponse constructor.
@@ -42,31 +62,6 @@ class AjaxResponse
                 ],
             ],
         ];
-    }
-
-    public function prepareBeforeSend(bool $delInfAndConfMsgIfThereAreErrMsg = false): self
-    {
-        if ($delInfAndConfMsgIfThereAreErrMsg && $this->hasErrorMessage()) {
-            $this->deleteInfoMessage();
-            $this->deleteConfirmationMessage();
-        }
-
-        return $this;
-    }
-
-    public function hasErrorMessage(): bool
-    {
-        return !empty($this->arrData['data']['messages'][static::MESSAGE_ERROR]);
-    }
-
-    public function deleteInfoMessage(): void
-    {
-        $this->arrData['data']['messages'][static::MESSAGE_INFO] = null;
-    }
-
-    public function deleteConfirmationMessage(): void
-    {
-        $this->arrData['data']['messages'][static::MESSAGE_CONFIRMATION] = null;
     }
 
     public function getAll(): array
@@ -90,21 +85,6 @@ class AjaxResponse
         return $this->arrData['status'];
     }
 
-    public function setAction(string $strAction): void
-    {
-        $this->arrData['action'] = $strAction;
-    }
-
-    public function getAction(): ?string
-    {
-        return $this->arrData['action'] ?? null;
-    }
-
-    public function hasConfirmationMessage(): bool
-    {
-        return !empty($this->arrData['data']['messages'][static::MESSAGE_CONFIRMATION]);
-    }
-
     public function setConfirmationMessage(string $strMessage): void
     {
         $this->arrData['data']['messages'][static::MESSAGE_CONFIRMATION] = $strMessage;
@@ -113,11 +93,6 @@ class AjaxResponse
     public function getConfirmationMessage(): ?string
     {
         return $this->arrData['data']['messages'][static::MESSAGE_CONFIRMATION];
-    }
-
-    public function hasInfoMessage(): bool
-    {
-        return !empty($this->arrData['data']['messages'][static::MESSAGE_INFO]);
     }
 
     public function setInfoMessage(string $strMessage): void
@@ -133,11 +108,6 @@ class AjaxResponse
     public function setErrorMessage(string $strMessage): void
     {
         $this->arrData['data']['messages'][static::MESSAGE_ERROR] = $strMessage;
-    }
-
-    public function deleteErrorMessage(): void
-    {
-        $this->arrData['data']['messages'][static::MESSAGE_ERROR] = null;
     }
 
     public function getErrorMessage(): ?string

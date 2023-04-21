@@ -5,10 +5,8 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2021 <m.cupic@gmx.ch>
  * @license MIT
- * For the full copyright and license information,
- * please view the LICENSE file that was distributed with this source code.
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
@@ -25,12 +23,27 @@ use Symfony\Contracts\EventDispatcher\Event;
  */
 class PreBookingEvent extends Event
 {
-    public const NAME = 'rbb.event.pre_booking';
+    const NAME = 'rbb.event.pre_booking';
 
-    private ?Collection $bookingCollection;
-    private FrontendUser $user;
-    private ArrayAttributeBag $sessionBag;
-    private AjaxResponse $ajaxResponse;
+    /**
+     * @var Collection
+     */
+    private $bookingCollection;
+
+    /**
+     * @var FrontendUser
+     */
+    private $user;
+
+    /**
+     * @var ArrayAttributeBag
+     */
+    private $sessionBag;
+
+    /**
+     * @var AjaxRequestEvent;
+     */
+    private $ajaxResponse;
 
     /**
      * PreBookingEvent constructor.

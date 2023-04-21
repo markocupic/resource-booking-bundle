@@ -5,20 +5,18 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2022 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2021 <m.cupic@gmx.ch>
  * @license MIT
- * For the full copyright and license information,
- * please view the LICENSE file that was distributed with this source code.
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
 namespace Markocupic\ResourceBookingBundle\Cron;
 
+use Contao\Config;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\ServiceAnnotation\CronJob;
 use Contao\Database;
 use Contao\Date;
-use Contao\ModuleModel;
 use Contao\System;
 
 /**
@@ -26,7 +24,10 @@ use Contao\System;
  */
 class Cron
 {
-    private ContaoFramework $framework;
+    /**
+     * @var ContaoFramework
+     */
+    private $framework;
 
     public function __construct(ContaoFramework $framework)
     {
@@ -34,71 +35,34 @@ class Cron
     }
 
     /**
-     * Delete old entries.
+     * Delete old entries
+     * Cronjob.
      */
     public function __invoke(): void
     {
+        /** @var Config $configAdapter */
+        $configAdapter = $this->framework->getAdapter(Config::class);
+
         /** @var Date $dateAdapter */
         $dateAdapter = $this->framework->getAdapter(Date::class);
 
         /** @var Database $databaseAdapter */
         $databaseAdapter = $this->framework->getAdapter(Database::class);
 
-        /** @var ModuleModel $moduleAdapter */
-        $moduleAdapter = $this->framework->getAdapter(ModuleModel::class);
-
         /** @var System $systemAdapter */
         $systemAdapter = $this->framework->getAdapter(System::class);
 
-        // Get all app configurations
-        $arrAppConfigs = System::getContainer()->getParameter('markocupic_resource_booking.apps');
+        if (($intWeeks = (int) $configAdapter->get('rbb_intBackWeeks')) < 0) {
+            $intWeeks = abs($intWeeks);
+            $dateMonThisWeek = $dateAdapter->parse('d-m-Y', strtotime('monday this week'));
 
-        $arrAppConfig = [];
-        $intAffectedRows = 0;
+            if (false !== ($tstampLimit = strtotime($dateMonThisWeek.' -'.$intWeeks.' weeks'))) {
+                $objStmt = $databaseAdapter->getInstance()->prepare('DELETE FROM tl_resource_booking WHERE endTime<?')->execute($tstampLimit);
 
-        $objStmt = $databaseAdapter->getInstance()
-            ->execute('SELECT * FROM tl_resource_booking GROUP BY moduleId')
-        ;
-
-        while ($objStmt->next()) {
-            $moduleId = $objStmt->moduleId;
-
-            if ((int) $moduleId > 0) {
-                if (!isset($arrAppConfig[$moduleId])) {
-                    if (null !== ($objModule = $moduleAdapter->findByPk($moduleId))) {
-                        $strConfig = $objModule->resourceBooking_appConfig ?? null;
-
-                        if (null !== $strConfig && isset($arrAppConfigs[$strConfig])) {
-                            $arrAppConfig[$moduleId] = $arrAppConfigs[$strConfig];
-                        }
-                    }
-                }
-
-                if (isset($arrAppConfig[$moduleId])) {
-                    $appConfig = $arrAppConfig[$moduleId];
-                    $intWeeks = $appConfig['intBackWeeks'];
-
-                    if ($intWeeks < 0) {
-                        $intWeeks = abs($intWeeks);
-                        $beginnWeek = $appConfig['beginnWeek'];
-                        $dateBeginnCurrentWeek = $dateAdapter->parse('d-m-Y', strtotime(sprintf('%s this week', $beginnWeek)));
-
-                        // Calculate the limit from which we can delete the entries
-                        if (false !== ($tstampLimit = strtotime($dateBeginnCurrentWeek.' -'.$intWeeks.' weeks'))) {
-                            $objStmtDel = $databaseAdapter->getInstance()
-                                ->prepare('DELETE FROM tl_resource_booking WHERE moduleId=? AND endTime<?')
-                                ->execute($moduleId, $tstampLimit)
-                            ;
-
-                            $intAffectedRows += $objStmtDel->affectedRows;
-                        }
-                    }
+                if (($intRows = $objStmt->affectedRows) > 0) {
+                    $systemAdapter->log(sprintf('CRON: tl_resource_booking has been cleared from %s old entries.', $intRows), __METHOD__, TL_CRON);
                 }
             }
-        }
-
-        if ($intAffectedRows > 0) {
-            $systemAdapter->log(sprintf('CRON: tl_resource_booking has been cleared from %s old entries.', $intAffectedRows), __METHOD__, TL_CRON);
         }
     }
 }
