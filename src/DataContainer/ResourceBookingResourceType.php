@@ -14,7 +14,7 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\DataContainer;
 
-use Contao\Controller;
+use Contao\Backend;
 use Contao\CoreBundle\DependencyInjection\Attribute\AsCallback;
 use Contao\Image;
 use Contao\StringUtil;
@@ -24,6 +24,6 @@ class ResourceBookingResourceType
     #[AsCallback(table: 'tl_resource_booking_resource_type', target: 'list.operations.editheader.button')]
     public function editHeader(array $row, string $href, string $label, string $title, string $icon, string $attributes): string
     {
-        return '<a href="'.Controller::addToUrl($href.'&amp;id='.$row['id']).'" title="'.StringUtil::specialchars($title).'"'.$attributes.'>'.Image::getHtml($icon, $label).'</a> ';
+        return '<a href="'.Backend::addToUrl($href.'&amp;id='.$row['id']).'" title="'.StringUtil::specialchars($title).'"'.$attributes.'>'.Image::getHtml($icon, $label).'</a> ';
     }
 }

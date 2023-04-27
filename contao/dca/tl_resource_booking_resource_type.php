@@ -56,7 +56,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource_type'] = [
             ],
             'editheader' => [
                 'label' => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot_type']['editheader'],
-                'href'  => 'table=tl_resource_booking_resource_type&amp;act=edit',
+                'href'  => 'act=edit',
                 'icon'  => 'header.svg',
             ],
             'cut'        => [

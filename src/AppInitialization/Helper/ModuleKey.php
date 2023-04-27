@@ -28,7 +28,7 @@ namespace Markocupic\ResourceBookingBundle\AppInitialization\Helper;
  */
 class ModuleKey
 {
-    private static string $moduleKey;
+    private static string|null $moduleKey = null;
 
     public static function setModuleKey(string $str): void
     {
