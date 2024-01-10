@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2024 <m.cupic@gmx.ch>
  * @license MIT
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -79,7 +79,7 @@ class AjaxResponse
         $this->arrData['status'] = $strStatus;
     }
 
-    public function getStatus(): ?string
+    public function getStatus(): string|null
     {
         return $this->arrData['status'];
     }
@@ -89,7 +89,7 @@ class AjaxResponse
         $this->arrData['action'] = $strAction;
     }
 
-    public function getAction(): ?string
+    public function getAction(): string|null
     {
         return $this->arrData['action'] ?? null;
     }
@@ -104,7 +104,7 @@ class AjaxResponse
         $this->arrData['data']['messages'][static::MESSAGE_CONFIRMATION] = $strMessage;
     }
 
-    public function getConfirmationMessage(): ?string
+    public function getConfirmationMessage(): string|null
     {
         return $this->arrData['data']['messages'][static::MESSAGE_CONFIRMATION];
     }
@@ -119,7 +119,7 @@ class AjaxResponse
         $this->arrData['data']['messages'][static::MESSAGE_INFO] = $strMessage;
     }
 
-    public function getInfoMessage(): ?string
+    public function getInfoMessage(): string|null
     {
         return $this->arrData['data']['messages'][static::MESSAGE_INFO];
     }
@@ -134,7 +134,7 @@ class AjaxResponse
         $this->arrData['data']['messages'][static::MESSAGE_ERROR] = null;
     }
 
-    public function getErrorMessage(): ?string
+    public function getErrorMessage(): string|null
     {
         return $this->arrData['data']['messages'][static::MESSAGE_ERROR];
     }
@@ -147,7 +147,7 @@ class AjaxResponse
         $this->arrData['data'][$key] = $value;
     }
 
-    public function getData(string $key): ?array
+    public function getData(string $key): array|null
     {
         if (isset($this->arrData['data'][$key])) {
             return $this->arrData['data'][$key];

@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2024 <m.cupic@gmx.ch>
  * @license MIT
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -14,7 +14,6 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\Session\Attribute;
 
-use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Environment;
 use Contao\FrontendUser;
 use Contao\System;
@@ -22,11 +21,9 @@ use Markocupic\ResourceBookingBundle\AppInitialization\Helper\ModuleKey;
 use Markocupic\ResourceBookingBundle\AppInitialization\Helper\TokenManager;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\Attribute\AttributeBag;
-use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Security\Core\Security;
 
 /**
- *
  * The module key is necessary to run multiple rbb applications on the same page
  * and is sent as a post parameter on every xhr request.
  *
@@ -40,19 +37,16 @@ use Symfony\Component\Security\Core\Security;
  */
 class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
 {
-
     public function __construct(
         //protected readonly ContaoFramework $framework,
         protected readonly RequestStack $requestStack,
         protected readonly Security $security,
-        string $storageKey = '_sf2_attributes'
+        string $storageKey = '_sf2_attributes',
     ) {
         parent::__construct($storageKey);
     }
 
     /**
-     * @param mixed $offset
-     * @return bool
      * @throws \Exception
      */
     public function offsetExists(mixed $offset): bool
@@ -62,7 +56,6 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
 
     /**
      * @param $offset
-     * @return mixed
      */
     public function &offsetGet($offset): mixed
     {
@@ -70,9 +63,6 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
     }
 
     /**
-     * @param mixed $offset
-     * @param mixed $value
-     * @return void
      * @throws \Exception
      */
     public function offsetSet(mixed $offset, mixed $value): void
@@ -81,8 +71,6 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
     }
 
     /**
-     * @param mixed $offset
-     * @return void
      * @throws \Exception
      */
     public function offsetUnset(mixed $offset): void
@@ -92,7 +80,7 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
 
     /**
      * @param $name
-     * @return bool
+     *
      * @throws \Exception
      */
     public function has($name): bool
@@ -104,9 +92,6 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
     }
 
     /**
-     * @param string $name
-     * @param mixed|null $default
-     * @return mixed
      * @throws \Exception
      */
     public function get(string $name, mixed $default = null): mixed
@@ -120,7 +105,7 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
     /**
      * @param $name
      * @param $value
-     * @return void
+     *
      * @throws \Exception
      */
     public function set($name, $value): void
@@ -133,8 +118,6 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
     }
 
     /**
-     * @param array $attributes
-     * @return void
      * @throws \Exception
      */
     public function replace(array $attributes): void
@@ -146,8 +129,6 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
     }
 
     /**
-     * @param string $name
-     * @return mixed
      * @throws \Exception
      */
     public function remove(string $name): mixed
@@ -164,7 +145,6 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
     }
 
     /**
-     * @return mixed
      * @throws \Exception
      */
     public function clear(): mixed
@@ -184,7 +164,6 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
     }
 
     /**
-     * @return int
      * @throws \Exception
      */
     public function count(): int
@@ -200,13 +179,11 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
     }
 
     /**
-     * @return string
      * @throws \Exception
      */
     private function getSessionBagSubkey(): string
     {
         /** @var Environment $environmentAdapter */
-
         $framework = System::getContainer()->get('contao.framework');
         $framework->initialize();
         $environmentAdapter = $framework->getAdapter(Environment::class);

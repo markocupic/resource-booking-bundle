@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2024 <m.cupic@gmx.ch>
  * @license MIT
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -20,9 +20,6 @@ use Markocupic\ResourceBookingBundle\Config\RbbConfig;
 class DateHelper
 {
     /**
-     * @param int $intDays
-     * @param int|null $time
-     * @return int
      * @throws \Exception
      */
     public static function addDaysToTime(int $intDays = 0, int $time = null): int
@@ -39,8 +36,8 @@ class DateHelper
         }
 
         $tstamp = strtotime(Date::parse('Y-m-d H:i:s', $time).' '.$strAddDays);
-        if(false !== $tstamp)
-        {
+
+        if (false !== $tstamp) {
             return $tstamp;
         }
 
@@ -48,9 +45,6 @@ class DateHelper
     }
 
     /**
-     * @param int $intWeeks
-     * @param int|null $time
-     * @return int
      * @throws \Exception
      */
     public static function addWeeksToTime(int $intWeeks = 0, int $time = null): int
@@ -67,8 +61,8 @@ class DateHelper
         }
 
         $tstamp = strtotime(Date::parse('Y-m-d H:i:s', $time).' '.$strAddWeeks);
-        if(false !== $tstamp)
-        {
+
+        if (false !== $tstamp) {
             return $tstamp;
         }
 
@@ -93,9 +87,8 @@ class DateHelper
      * Return beginn weekday of the week the timestamp is in
      * By default this is a monday.
      *
-     * @param array $arrAppConfig
      * @param $tstamp
-     * @return int
+     *
      * @throws \Exception
      */
     public static function getFirstDayOfWeek(array $arrAppConfig, $tstamp = null): int
@@ -122,10 +115,6 @@ class DateHelper
         return $date->modify(sprintf('last %s', $beginnWeek))->getTimestamp();
     }
 
-    /**
-     * @param string $dateString
-     * @return bool
-     */
     public static function isValidBookingTime(string $dateString): bool
     {
         $format = 'H:i';
@@ -137,9 +126,6 @@ class DateHelper
     /**
      * Check if date is in the permitted range.
      *
-     * @param int $tstamp
-     * @param array $arrAppConfig
-     * @return bool
      * @throws \Exception
      */
     public static function isDateInPermittedRange(int $tstamp, array $arrAppConfig): bool
