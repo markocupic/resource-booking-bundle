@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * This file is part of Resource Booking Bundle.
  *
- * (c) Marko Cupic 2023 <m.cupic@gmx.ch>
+ * (c) Marko Cupic 2024 <m.cupic@gmx.ch>
  * @license MIT
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed with this source code.
@@ -78,9 +78,9 @@ class AddBookingUuid extends AbstractMigration
     private function addBookingUuid(): void
     {
         $this->framework->initialize();
-        $result = $this->connection->executeQuery('SELECT id FROM tl_resource_booking WHERE bookingUuid = ?', ['']);
+        $arrIds = $this->connection->fetchFirstColumn('SELECT id FROM tl_resource_booking WHERE bookingUuid = ?', ['']);
 
-        while (false !== ($id = $result->fetchOne())) {
+        foreach ($arrIds as $id) {
             $set = [
                 'bookingUuid' => StringUtil::binToUuid(Database::getInstance()->getUuid()),
             ];
