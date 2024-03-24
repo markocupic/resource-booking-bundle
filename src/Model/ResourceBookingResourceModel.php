@@ -56,7 +56,7 @@ class ResourceBookingResourceModel extends Model
     public static function findPublishedByPk(int $intId): static|null
     {
         $arrColumn = ['id=?', 'published=?'];
-        $arrValues = [$intId, '1'];
+        $arrValues = [$intId, 1];
         $objDb = self::findOneBy($arrColumn, $arrValues);
 
         if (null !== $objDb) {
@@ -79,7 +79,7 @@ class ResourceBookingResourceModel extends Model
     public static function findPublishedByPkAndPid(int $intId, int $intPid): static|null
     {
         $arrColumn = ['id=?', 'pid=?', 'published=?'];
-        $arrValues = [$intId, $intPid, '1'];
+        $arrValues = [$intId, $intPid, 1];
 
         $objDb = self::findOneBy($arrColumn, $arrValues);
 
@@ -125,7 +125,7 @@ class ResourceBookingResourceModel extends Model
             return null;
         }
 
-        $objDb = Database::getInstance()->prepare('SELECT id FROM tl_resource_booking_resource WHERE pid IN('.implode(',', $arrPids).') AND published=?')->execute('1');
+        $objDb = Database::getInstance()->prepare('SELECT id FROM tl_resource_booking_resource WHERE pid IN('.implode(',', $arrPids).') AND published=?')->execute(1);
         $arrIds = $objDb->fetchEach('id');
 
         return static::findMultipleByIds($arrIds);

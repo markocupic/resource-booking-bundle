@@ -29,7 +29,7 @@ class ResourceBookingResourceTypeModel extends Model
     public static function findPublishedByPk(int $intId): static|null
     {
         $arrColumn = ['id=?', 'published=?'];
-        $arrValues = [$intId, '1'];
+        $arrValues = [$intId, 1];
 
         return self::findOneBy($arrColumn, $arrValues);
     }
