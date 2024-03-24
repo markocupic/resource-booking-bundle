@@ -17,7 +17,6 @@ use Markocupic\ResourceBookingBundle\EventListener\ContaoHooks\RegExpListener;
 use Contao\DC_Table;
 
 $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = [
-    // Config
     'config'   => [
         'dataContainer'    => DC_Table::class,
         'ptable'           => 'tl_resource_booking_time_slot_type',
@@ -29,7 +28,6 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = [
             ],
         ],
     ],
-    // List
     'list'     => [
         'sorting'           => [
             'mode'         => DataContainer::MODE_PARENT,
@@ -81,7 +79,6 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = [
             ],
         ],
     ],
-    // Palettes
     'palettes' => [
         'default' => '
         {title_legend},title,description;
@@ -89,7 +86,6 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = [
         {expert_legend:hide},cssID
         ',
     ],
-    // Fields
     'fields'   => [
         'id'          => [
             'sql' => 'int(10) unsigned NOT NULL auto_increment',

@@ -16,7 +16,6 @@ use Contao\DC_Table;
 use Contao\DataContainer;
 
 $GLOBALS['TL_DCA']['tl_resource_booking'] = [
-    // Config
     'config'   => [
         'dataContainer'    => DC_Table::class,
         'switchToEdit'     => true,
@@ -32,7 +31,6 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = [
             ],
         ],
     ],
-    // List
     'list'     => [
         'sorting'           => [
             'mode'        => DataContainer::MODE_SORTABLE,
@@ -70,11 +68,9 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = [
             ],
         ],
     ],
-    // Palettes
     'palettes' => [
         'default' => '{booking_legend},title,itemsBooked,member,bookingUuid,description;{module_legend},moduleId;{time_legend},startTime,endTime',
     ],
-    // Fields
     'fields'   => [
         'id'          => [
             'sql' => 'int(10) unsigned NOT NULL auto_increment',
@@ -161,9 +157,6 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = [
             'flag'          => DataContainer::SORT_DAY_ASC,
             'inputType'     => 'text',
             'eval'          => ['readonly' => true, 'rgxp' => 'datim', 'mandatory' => true, 'doNotCopy' => true, 'datepicker' => false, 'tl_class' => 'w50 wizard'],
-            'save_callback' => [
-                ['tl_resource_booking', 'setCorrectEndTime'],
-            ],
             'sql'           => 'int(10) NULL',
         ],
     ],

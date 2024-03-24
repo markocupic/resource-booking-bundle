@@ -18,18 +18,16 @@ use Contao\DC_Table;
 $GLOBALS['TL_DCA']['tl_resource_booking_time_slot_type'] = [
     // Config
     'config'   => [
-        'dataContainer'     => DC_Table::class,
-        'ctable'            => ['tl_resource_booking_time_slot'],
-        'switchToEdit'      => true,
-        'enableVersioning'  => true,
-        'sql'               => [
+        'dataContainer'    => DC_Table::class,
+        'ctable'           => ['tl_resource_booking_time_slot'],
+        'switchToEdit'     => true,
+        'enableVersioning' => true,
+        'sql'              => [
             'keys' => [
                 'id' => 'primary',
             ],
         ],
-        'ondelete_callback' => [['tl_resource_booking_time_slot_type', 'removeChildRecords']],
     ],
-    // List
     'list'     => [
         'sorting'           => [
             'mode'        => DataContainer::MODE_SORTED,
@@ -54,9 +52,8 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot_type'] = [
                 'icon' => 'edit.svg',
             ],
             'editheader' => [
-                'href'            => 'table=tl_resource_booking_time_slot_type&amp;act=edit',
-                'icon'            => 'header.svg',
-                'button_callback' => ['tl_resource_booking_time_slot_type', 'editHeader'],
+                'href' => 'act=edit',
+                'icon' => 'header.svg',
             ],
             'copy'       => [
                 'href' => 'act=copy',
@@ -78,13 +75,9 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot_type'] = [
             ],
         ],
     ],
-
-    // Palettes
     'palettes' => [
         'default' => '{title_legend},title,description',
     ],
-
-    // Fields
     'fields'   => [
         'id'          => [
             'label'  => ['ID'],
@@ -117,5 +110,3 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot_type'] = [
         ],
     ],
 ];
-
-
