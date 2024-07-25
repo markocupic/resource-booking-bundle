@@ -69,7 +69,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = [
         ],
     ],
     'palettes' => [
-        'default' => '{booking_legend},title,itemsBooked,member,bookingUuid,description;{module_legend},moduleId;{time_legend},startTime,endTime',
+        'default' => '{booking_legend},title,itemsBooked,member,bookingUuid,description,confirmed;{module_legend},moduleId;{time_legend},startTime,endTime',
     ],
     'fields'   => [
         'id'          => [
@@ -158,6 +158,12 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = [
             'inputType'     => 'text',
             'eval'          => ['readonly' => true, 'rgxp' => 'datim', 'mandatory' => true, 'doNotCopy' => true, 'datepicker' => false, 'tl_class' => 'w50 wizard'],
             'sql'           => 'int(10) NULL',
+        ],
+        'confirmed' => [
+            'exclude'   => true,
+            'inputType' => 'checkbox',
+            'eval'      => ['tl_class' => 'clr'],
+            'sql'       => "char(1) NOT NULL default ''",
         ],
     ],
 ];

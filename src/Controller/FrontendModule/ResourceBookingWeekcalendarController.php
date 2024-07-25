@@ -116,7 +116,7 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
         $template->moduleKey = ModuleKey::getModuleKey();
         $template->csrfToken = $this->contaoCsrfTokenManager->getDefaultTokenValue();
 
-        // Let vue.js do the rest ;-)
+        // Let vue.js take care of the rest ;-)
         return $template->getResponse();
     }
 

@@ -53,7 +53,7 @@ Erstens muss in der Moduleinstellung das Feld, welches zusätzlich angezeigt wer
 
 ![Alt text](docs/screenshots/screenshot3.png "Weitere Mitgliederfelder anzeigen")
 
-Weiter muss zusätzlich das Template angepasst werden. Mit *{{ booking.bookedByCompany }}* kann der Firmenname oder mit *{{ booking.bookedByCity }}* der Wohnort mitangezeigt werden. Achtung! Hierbei handelt es sich nicht um einen Contao Inserttag, sondern um die "vue.js-Mustache-Syntax-Schreibweise". Das Leerzeichen nach bzw. vor der geschweiften Klammer ist nötig.
+Weiter muss zusätzlich das Template angepasst werden. Mit *[[ booking.bookedByCompany ]]* kann der Firmenname oder mit *[[ booking.bookedByCity ]]* der Wohnort mitangezeigt werden. Achtung! Hierbei handelt es sich nicht um einen Contao Inserttag, sondern um die "vue.js-Mustache-Syntax-Schreibweise". Das Leerzeichen nach bzw. vor der geschweiften Klammer ist nötig.
 
 ![Alt text](docs/screenshots/screenshot4.png "Weitere Mitgliederfelder anzeigen")
 

@@ -31,3 +31,4 @@ $GLOBALS['TL_LANG']['tl_resource_booking']['endTime'] = ['End time'];
 $GLOBALS['TL_LANG']['tl_resource_booking']['bookingUuid'] = ['Booking Id'];
 $GLOBALS['TL_LANG']['tl_resource_booking']['itemsBooked'] = ['Booked units'];
 $GLOBALS['TL_LANG']['tl_resource_booking']['moduleId'] = ['Frontend module'];
+$GLOBALS['TL_LANG']['tl_resource_booking']['confirmed'] = ['Confirmed'];

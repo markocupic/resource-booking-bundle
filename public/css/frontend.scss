@@ -38,7 +38,7 @@ $transitionSpeed: .8s;
     background-color: $bgColorAlertDanger;
     color: #000000;
 
-    .fas, .svg-inline--fa {
+    .fa-solid, .svg-inline--fa {
       color: #ffffff;
     }
   }
@@ -47,7 +47,7 @@ $transitionSpeed: .8s;
     background-color: $bgColorAlertSuccess;
     color: #000000;
 
-    .fas, .svg-inline--fa {
+    .fa-solid, .svg-inline--fa {
       color: #ffffff;
     }
   }
@@ -90,7 +90,6 @@ $transitionSpeed: .8s;
       option.future-week {
         /** **/
       }
-
 
     }
   }
@@ -152,13 +151,21 @@ $transitionSpeed: .8s;
 
   .rbb-booking-table-booking-form {
     .rbb-layout-cell.rbb-time-slot-cell {
-      align-items: center;
-      justify-content: center;
 
-      .custom-control {
+      .form-check {
         line-height: 0;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
 
-        label {
+        .form-check-input {
+          margin: 0;
+          padding: 0;
+        }
+
+        .form-check-label {
           margin: 0;
           display: none;
         }
@@ -206,7 +213,7 @@ $transitionSpeed: .8s;
         right: 0;
         left: 0;
         z-index: 10;
-        opacity: 0.4;
+        opacity: 0.7;
         border: 0;
         transition: opacity $transitionSpeed;
       }
@@ -275,7 +282,6 @@ $transitionSpeed: .8s;
     }
   }
 
-
   /** Booking table **/
   .rbb-booking-table-booking-form {
     .rbb-layout-cell {
@@ -307,12 +313,6 @@ $transitionSpeed: .8s;
     }
 
     .rbb-info-table, .rbb-booking-preview-table {
-      border-top: 1px solid $tableBorderColor;
-
-      &.rbb-row-last {
-        border-bottom: 1px solid $tableBorderColor;
-      }
-
       .rbb-layout-cell {
         padding: .35rem .25rem;
 
@@ -346,4 +346,3 @@ $transitionSpeed: .8s;
   }
 
 }
-

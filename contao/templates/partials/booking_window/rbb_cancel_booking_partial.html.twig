@@ -1,0 +1,50 @@
+{% trans_default_domain "contao_default" %}
+
+<template v-if="bookingWindow.action === 'showCancelBookingForm'">
+    <div class="rbb-booking-window-header bg-primary d-flex justify-content-between">
+        <h3 class="rbb-booking-window-header-title m-3">
+            {{ ('RBB.cancel')|trans }}: [[ activeResource.title ]]
+        </h3>
+
+        <button type="button" v-on:click="hideBookingWindow" class="rbb-close-window bg-primary" aria-label="Close" title="{{ ('RBB.close')|trans }}">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+
+    {% include('@Contao_MarkocupicResourceBookingBundle/rbb_info_table_partial.html.twig') %}
+
+    <!-- switch delete repetitions -->
+    <div v-if="bookingWindow.showCancelBookingForm" class="form-check mt-5">
+        <input v-model="bookingWindow.deleteBookingsWithSameBookingUuid" type="checkbox" class="form-check-input" id="deleteSiblingsWithSameBookingIdSwitch">
+        <label class="form-check-label" for="deleteSiblingsWithSameBookingIdSwitch">{{ ('RBB.deleteRepetitions')|trans }}</label>
+    </div>
+
+    <!-- Messages -->
+    <template v-if="bookingWindow.response.messages">
+        <div class="rbb-message-box mt-5">
+            <div class="alert alert-success d-flex pt-3 pb-3" v-if="bookingWindow.response.messages.confirmation !== null">
+                <i class="fa-2x me-3 fa-solid fa-check-circle"></i><span>[[ bookingWindow.response.messages.confirmation ]]</span>
+            </div>
+            <div class="alert alert-danger d-flex pt-3 pb-3" v-if="bookingWindow.response.messages.error !== null">
+                <i class="fa-2x me-3 fa-solid fa-exclamation-circle"></i><span>[[ bookingWindow.response.messages.error ]]</span>
+            </div>
+            <div class="alert alert-info pt-3 pb-3" v-if="bookingWindow.response.messages.info !== null">
+                <i class="fa-2x me-3 fa-solid fa-info-circle"></i><span>[[ bookingWindow.response.messages.info ]]</span>
+            </div>
+            <p v-if="bookingWindow.response.cancelBookingProcessSucceeded" class="rbb-input-help-text">
+                <small>{{ ('RBB.MSG.windowClosesAutomatically')|trans }}</small>
+            </p>
+        </div>
+    </template>
+
+    <!-- footer -->
+    <div class="rbb-booking-window-footer mt-5">
+        <button type="button" class="me-3 btn btn-danger" v-if="bookingWindow.showCancelBookingButton" v-on:click="cancelBookingRequest">
+            {{ ('RBB.cancelResource')|trans }}
+        </button>
+        <button type="button" class="btn btn-secondary" v-on:click="hideBookingWindow">
+            {{ ('RBB.close')|trans }}
+        </button>
+    </div>
+
+</template>
