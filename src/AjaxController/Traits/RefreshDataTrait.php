@@ -19,7 +19,6 @@ use Contao\Database;
 use Contao\Date;
 use Contao\FrontendUser;
 use Contao\MemberModel;
-use Contao\Message;
 use Contao\ModuleModel;
 use Contao\StringUtil;
 use Contao\System;
@@ -406,69 +405,75 @@ trait RefreshDataTrait
                                 // Fallback
                                 $objBooking->bookedByFullname = $stringUtilAdapter->decodeEntities($this->translator->trans('RBB.anonymous', [], 'contao_default'));
 
-                                $arrAllowedMemberFields = $stringUtilAdapter->deserialize($moduleModel->resourceBooking_clientPersonalData, true);
+                                $arrAllowed = $stringUtilAdapter->deserialize($moduleModel->resourceBooking_clientPersonalData, true);
 
                                 $objMember = $memberModelAdapter->findByPk($objBooking->member);
 
+                                // Send data about the booking owner (tl_member)
                                 if (null !== $objMember) {
-                                    // Do not transmit and display sensitive data if user is not holder
-                                    if ($user && (int) $user->id !== (int) $objBooking->member) {
-                                        if ($moduleModel->resourceBooking_displayClientPersonalData && !empty($arrAllowedMemberFields)) {
-                                            foreach ($arrAllowedMemberFields as $fieldName) {
-                                                $objBooking->{'bookedBy'.ucfirst($fieldName)} = $stringUtilAdapter->decodeEntities($objMember->$fieldName);
-                                            }
-
-                                            if (\in_array('firstname', $arrAllowedMemberFields, true) && \in_array('lastname', $arrAllowedMemberFields, true)) {
-                                                $objBooking->bookedByFullname = $stringUtilAdapter->decodeEntities($objMember->firstname.' '.$objMember->lastname);
-                                            }
+                                    // However, only show the fields that have been permitted in the module settings (tl_module.resourceBooking_displayClientPersonalData).
+                                    if ($moduleModel->resourceBooking_displayClientPersonalData) {
+                                        foreach ($arrAllowed as $fieldName) {
+                                            $objBooking->{'bookedBy'.ucfirst($fieldName)} = $stringUtilAdapter->decodeEntities($objMember->$fieldName);
                                         }
-                                    } else {
-                                        foreach (array_keys($objMember->row()) as $fieldName) {
-                                            $varData = $strAdapter->convertBinUuidsToStringUuids($objMember->$fieldName);
 
-                                            $objBooking->{'bookedBy'.ucfirst($fieldName)} = $stringUtilAdapter->decodeEntities($varData);
-                                            $objBooking->{'bookedBy'.ucfirst($fieldName)} = $stringUtilAdapter->decodeEntities($varData);
+                                        if (\in_array('firstname', $arrAllowed, true) && \in_array('lastname', $arrAllowed, true)) {
+                                            $objBooking->bookedByFullname = $stringUtilAdapter->decodeEntities($objMember->firstname.' '.$objMember->lastname);
                                         }
+                                    }
+
+                                    // Show first- and lastname of the booking owner is the currently logged in frontend user.
+                                    if (null !== $user && (int) $user->id === (int) $objMember->id) {
                                         $objBooking->bookedByFullname = $stringUtilAdapter->decodeEntities($objMember->firstname.' '.$objMember->lastname);
                                     }
+
+                                    // Newer send the password or session data.
                                     $objBooking->bookedBySession = null;
                                     $objBooking->bookedByPassword = null;
                                 }
 
-                                // Send sensitive data if it has been permitted in tl_module
+                                // Send booking details (tl_resource_booking)
                                 $databaseAdapter = $this->framework->getAdapter(Database::class);
                                 $arrAvailable = $databaseAdapter->getInstance()->listFields('tl_resource_booking');
 
+                                // However, only show the fields that have been permitted in the module settings (tl_module.resourceBooking_bookingSubmittedFields).
                                 if ($moduleModel->resourceBooking_setBookingSubmittedFields) {
-                                    $arrAllowedBookingFields = $stringUtilAdapter->deserialize($moduleModel->resourceBooking_bookingSubmittedFields, true);
+                                    $arrAllowed = $stringUtilAdapter->deserialize($moduleModel->resourceBooking_bookingSubmittedFields, true);
 
                                     foreach ($arrAvailable as $arrField) {
                                         $field = $arrField['name'];
 
-                                        if (\in_array($field, $arrAllowedBookingFields, true)) {
+                                        if (\in_array($field, $arrAllowed, true)) {
                                             $objBooking->{'booking'.ucfirst((string) $field)} = $stringUtilAdapter->decodeEntities((string) $objBooking->$field);
                                         } else {
                                             $objBooking->{'booking'.ucfirst((string) $field)} = null;
+                                            $objBooking->{$field} = null;
                                         }
                                     }
                                 } else {
                                     foreach ($arrAvailable as $arrField) {
                                         $field = $arrField['name'];
                                         $objBooking->{'booking'.ucfirst((string) $field)} = null;
+                                        $objBooking->{$field} = null;
                                     }
                                 }
 
-                                $objBooking->title = null;
-                                $objBooking->description = null;
-                                $objBooking->moduleId = null;
-                                $objBooking->bookingId = null;
-                                $objBooking->bookingPid = null;
                                 $objBooking->canCancel = $slot->isCancelable() && (int) $user->id === (int) $objMember->id;
                             }
                         }
                     }
+
                     $cells[] = $slot->row();
+
+                    // Reset the model
+                    if ($slot->hasBookings) {
+                        while ($slot->bookings->next()) {
+                            $objBooking = $slot->bookings->current();
+                            $objBooking->refresh();
+                        }
+                    }
                 }
+
                 $rows[] = ['cellData' => $cells, 'rowData' => $objRow];
                 ++$rowCount;
             }
