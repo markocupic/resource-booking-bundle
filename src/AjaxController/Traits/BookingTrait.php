@@ -132,7 +132,7 @@ trait BookingTrait
         foreach (array_keys($_POST) as $k) {
             if (!isset($arrUserInput[$k])) {
                 $blnDecode = isset($dca['fields'][$k]['eval']['decodeEntities']) && true === $dca['fields'][$k]['eval']['decodeEntities'];
-                $arrUserInput[$k] = $blnDecode ? $stringUtilAdapter->decodeEntities($inputAdapter->post($k)) : $inputAdapter->post($k);
+                $arrUserInput[$k] = $blnDecode ? $inputAdapter->post($k, true) : $inputAdapter->post($k);
             }
         }
 
@@ -154,7 +154,8 @@ trait BookingTrait
                 $dateAdapter->parse($configAdapter->get('datimFormat'), $slot->startTime),
                 $dateAdapter->parse($configAdapter->get('datimFormat'), $slot->endTime)
             );
-            $slotCollection->newBooking = $arrUserInput;
+
+            $slotCollection->dataBooking = $arrUserInput;
         }
 
         return $slotCollection;

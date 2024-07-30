@@ -1,3 +1,5 @@
+// noinspection ExceptionCaughtLocallyJS
+
 /*
  * This file is part of Resource Booking Bundle.
  *
@@ -8,7 +10,6 @@
 
 "use strict";
 if (typeof ResourceBookingApp !== 'function') {
-
 
     window.ResourceBookingApp = class {
         constructor(elId, opt) {
@@ -28,35 +29,25 @@ if (typeof ResourceBookingApp !== 'function') {
                             },
                             enableAudio: true,
                             autocloseWindowsAfter: 2500,
-                            // Callback functions
-                            callbacks: {
-                                // Callback function to be executed before booking request is fired
-                                onBeforeBookingRequest: objFormData => {
-                                    return true;
-                                },
-                                // Callback function to be executed after booking request was fired
-                                onAfterBookingRequest: () => {
-                                },
-                            },
                         },
                         // indicates if application is initialized, switches to true, when refreshData request was fired first time
                         // and the request status is 200
                         isReady: false,
                         // Indicate the mode
-                        mode: 'main-window',
+                        mode: 'week-calendar',
                         // Indicates the last response code
                         lastResponseCode: 200,
                         // Contains data about available resource types, resources and weeks (week selector)
                         filterBoard: null,
                         // Indicates if the current user hass logged in as a frontend user
-                        userHasLoggedIn: false,
-                        // Contains the logged in user data
+                        hasLoggedInUser: false,
+                        // Contains the logged-in user data
                         loggedInUser: [],
                         // Contains the weekdays
                         weekdays: [],
                         // Contains the time slots (first col in the booking table)
                         timeSlots: [],
-                        // The cell data of a each row in the booking table
+                        // The cell data of each row in the booking table
                         rows: [],
                         // Contains the id
                         activeResourceTypeId: 'undefined',
@@ -83,7 +74,7 @@ if (typeof ResourceBookingApp !== 'function') {
                         },
                         intervals: [],
                         autoCloseBookingWindowTimeout: null,
-                        messages: null,
+                        messages: ['confirm'],
                         // Indicates if user is idle
                         isIdle: false,
                         // Queue the requests
@@ -152,7 +143,7 @@ if (typeof ResourceBookingApp !== 'function') {
                     }, 10000);
 
                     document.addEventListener('keyup', evt => {
-                        if (evt.keyCode === 27 && this.mode === 'booking-window') {
+                        if (evt.code === 'Escape' && this.mode === 'booking-window') {
                             this.hideBookingWindow();
                         }
                     });
@@ -183,23 +174,25 @@ if (typeof ResourceBookingApp !== 'function') {
                             return;
                         }
 
-                        let newBooking = false;
+                        let hasNewBooking = false;
 
-                        await (function () {
-                            Object.keys(newVal).forEach(rowIndex => {
-                                Object.keys(newVal[rowIndex]['cellData']).forEach(colIndex => {
+                        await (async function () {
+                            for await (const rowIndex of Object.keys(newVal)) {
+
+                                for (const colIndex of Object.keys(newVal[rowIndex]['cellData'])) {
+
                                     if (parseInt(newVal[rowIndex]['cellData'][colIndex]['bookingCount']) > parseInt(oldVal[rowIndex]['cellData'][colIndex]['bookingCount'])) {
                                         if (newVal[rowIndex]['cellData'][colIndex]['beginnWeekTimestampSelectedWeek'] === oldVal[rowIndex]['cellData'][colIndex]['beginnWeekTimestampSelectedWeek']) {
                                             if (newVal[rowIndex]['cellData'][colIndex]['pid'] === oldVal[rowIndex]['cellData'][colIndex]['pid']) {
-                                                newBooking = true;
+                                                hasNewBooking = true;
                                             }
                                         }
                                     }
-                                });
-                            });
+                                }
+                            }
                         })();
 
-                        if (newBooking === true) {
+                        if (hasNewBooking === true) {
                             if (this.options.enableAudio) {
                                 this.playAudio(this.options.audio.notifyOnNewBookingsAudio);
                             }
@@ -210,38 +203,49 @@ if (typeof ResourceBookingApp !== 'function') {
                 methods: {
 
                     /**
-                     * Fetch all the data from the server and refresh the booking table
+                     * Fetch data from the server and refresh the booking table.
                      */
-                    refreshDataRequest: function refreshDataRequest(blnInitial = false) {
+                    refreshDataRequest: async function (blnInitial = false) {
 
                         let action = 'refreshDataRequest';
 
-                        let data = new FormData();
-                        data.append('REQUEST_TOKEN', this.options.requestToken);
-                        data.append('action', action);
-                        data.append('moduleKey', this.options.moduleKey);
+                        const formData = new FormData();
+                        formData.append('REQUEST_TOKEN', this.options.requestToken);
+                        formData.append('action', action);
+                        formData.append('moduleKey', this.options.moduleKey);
 
-                        // Fetch
-                        fetch(window.location.href, {
-                            method: "POST",
-                            body: data,
-                            headers: {
-                                'x-requested-with': 'XMLHttpRequest'
-                            },
-                        }).then(async response => {
+                        try {
+                            const response = await fetch(window.location.href, {
+                                method: "POST",
+                                body: formData,
+                                headers: {
+                                    'x-requested-with': 'XMLHttpRequest'
+                                },
+                            });
                             this.lastResponseCode = response.status;
-                            let data = await response.json();
-                            if (!response.ok) {
-                                let error = response.statusText;
-                                return Promise.reject(error);
-                            }
-                            this.checkResponse(response);
-                            return data;
-                        }).then(response => {
-                            if (response.status === 'success') {
-                                for (let key in response['data']) {
 
+                            if (!response.ok) {
+                                // Custom message for failed HTTP codes
+                                if (response.status === 404) {
+                                    throw new Error('404, Not found');
+                                }
+
+                                if (response.status === 500) {
+                                    throw new Error('500, internal server error');
+                                }
+
+                                // For any other server error
+                                throw new Error(response.statusText);
+                            }
+
+                            this.checkResponse(response);
+
+                            const json = await response.json();
+
+                            if (json.status === 'success') {
+                                for (let key in json['data']) {
                                     // Prevent competing requests
+                                    if (key === 'messages') continue;
                                     if (!blnInitial && key === 'activeResourceId') continue;
                                     if (!blnInitial && key === 'activeResource') continue;
                                     if (!blnInitial && key === 'activeResourceTypeId') continue;
@@ -249,229 +253,314 @@ if (typeof ResourceBookingApp !== 'function') {
                                     if (!blnInitial && key === 'activeWeek') continue;
                                     if (!blnInitial && key === 'activeWeekTstamp') continue;
 
-                                    this[key] = response['data'][key];
+                                    this[key] = json['data'][key];
                                 }
                             }
-                            return response;
-                        }).then(response => {
+
                             this.isReady = true;
-                        }).catch(error => {
+
+                            return response;
+                        } catch (error) {
                             this.isReady = false;
-                            console.error("There was en error: " + error);
-                        });
+                            console.error('Fetch', error);
+                        }
                     },
 
                     /**
                      * Apply the filter changes
                      */
-                    applyFilterRequest: function applyFilterRequest(activeResourceTypeId, activeResourceId, activeWeekTstamp) {
+                    applyFilterRequest: async function (activeResourceTypeId, activeResourceId, activeWeekTstamp) {
+
+                        this.deleteMessages();
 
                         this.isBusy = true;
                         let action = 'applyFilterRequest';
 
-                        let data = new FormData();
-                        data.append('REQUEST_TOKEN', this.options.requestToken);
-                        data.append('action', action);
-                        data.append('resType', activeResourceTypeId);
-                        data.append('res', activeResourceId);
-                        data.append('date', activeWeekTstamp);
-                        data.append('moduleKey', this.options.moduleKey);
+                        const formData = new FormData();
+                        formData.append('REQUEST_TOKEN', this.options.requestToken);
+                        formData.append('action', action);
+                        formData.append('resType', activeResourceTypeId);
+                        formData.append('res', activeResourceId);
+                        formData.append('date', activeWeekTstamp);
+                        formData.append('moduleKey', this.options.moduleKey);
 
-                        fetch(window.location.href, {
-                            method: "POST",
-                            body: data,
-                            headers: {
-                                'x-requested-with': 'XMLHttpRequest'
-                            },
-                        }).then(async response => {
+                        try {
+                            const response = await fetch(window.location.href, {
+                                method: "POST",
+                                body: formData,
+                                headers: {
+                                    'x-requested-with': 'XMLHttpRequest'
+                                },
+                            });
                             this.lastResponseCode = response.status;
-                            let data = await response.json();
+
                             if (!response.ok) {
-                                let error = response.statusText;
-                                return Promise.reject(error);
+                                // Custom message for failed HTTP codes
+                                if (response.status === 404) {
+                                    throw new Error('404, Not found');
+                                }
+
+                                if (response.status === 500) {
+                                    throw new Error('500, internal server error');
+                                }
+
+                                // For any other server error
+                                throw new Error(response.statusText);
                             }
+
                             this.checkResponse(response);
-                            return data;
-                        }).then(response => {
-                            if (response.status === 'success') {
-                                if (this.activeWeekTstamp && this.activeWeekTstamp != response.data['activeWeekTstamp']) {
+
+                            const json = await response.json();
+
+                            if (json.status === 'success') {
+                                if (this.activeWeekTstamp && parseInt(this.activeWeekTstamp) !== parseInt(json.data['activeWeekTstamp'])) {
                                     this.isBusy = false;
                                     return;
                                 }
-                                Object.keys(response.data).forEach(key => {
-                                    this[key] = response.data[key];
-                                });
+
+                                this.messages = json.messages ? json.messages : [];
+
+                                for (const key of Object.keys(json.data)) {
+                                    this[key] = json.data[key];
+                                }
                             }
-                            this.isBusy = false;
-                            return response;
-                        }).catch(response => {
-                            this.isBusy = false;
-                            console.error("There was en error: " + error);
-                        });
+                        } catch (error) {
+                            console.error('Fetch', error);
+                        }
+                        this.isBusy = false;
                     },
 
                     /**
                      * Send booking request
                      */
-                    bookingRequest: function bookingRequest() {
-
+                    bookingRequest: async function () {
+                        this.deleteMessages();
                         let action = 'bookingRequest';
+                        this.isBusy = true;
 
                         let form = this.$el.querySelector('.rbb-js-booking-form');
+
                         if (!form) {
                             console.error('Form not found');
                         }
 
-                        let data = new FormData(form);
-                        data.append('REQUEST_TOKEN', this.options.requestToken);
-                        data.append('action', action);
-                        data.append('resourceId', this.bookingWindow.activeTimeSlot.pid);
-                        data.append('moduleKey', this.options.moduleKey);
+                        const formData = new FormData(form);
+                        formData.append('REQUEST_TOKEN', this.options.requestToken);
+                        formData.append('action', action);
+                        formData.append('resourceId', this.bookingWindow.activeTimeSlot.pid);
+                        formData.append('moduleKey', this.options.moduleKey);
 
-                        Object.keys(this.bookingWindow.selectedTimeSlots).forEach(key => {
-                            data.append('bookingDateSelection[]', this.bookingWindow.selectedTimeSlots[key]);
+                        for (const selectedTimeSlot of this.bookingWindow.selectedTimeSlots) {
+                            formData.append('bookingDateSelection[]', selectedTimeSlot);
+                        }
+
+                        const event = new CustomEvent('rbb_before_booking_request', {
+                            detail: {
+                                'instance': this,
+                                'formData': formData,
+                                'blnSend': true,
+                            }
                         });
 
-                        // Call onBeforeBookingRequest callback
-                        if (this.options.callbacks.onBeforeBookingRequest.call(this, data) === true) {
-                            fetch(window.location.href,
-                                {
-                                    method: "POST",
-                                    body: data,
-                                    headers: {
-                                        'x-requested-with': 'XMLHttpRequest'
-                                    },
-                                }).then(async response => {
+                        await (() => {
+                            document.dispatchEvent(event);
+                        })();
+
+                        if (event.detail.blnSend === true) {
+                            try {
+                                const response = await fetch(window.location.href,
+                                    {
+                                        method: "POST",
+                                        body: formData,
+                                        headers: {
+                                            'x-requested-with': 'XMLHttpRequest'
+                                        },
+                                    });
                                 this.lastResponseCode = response.status;
-                                let data = await response.json();
+
                                 if (!response.ok) {
-                                    let error = response.statusText;
-                                    return Promise.reject(error);
+                                    // Custom message for failed HTTP codes
+                                    if (response.status === 404) {
+                                        throw new Error('404, Not found');
+                                    }
+
+                                    if (response.status === 500) {
+                                        throw new Error('500, internal server error');
+                                    }
+
+                                    // For any other server error
+                                    throw new Error(response.statusText);
                                 }
+
                                 this.checkResponse(response);
-                                return data;
-                            }).then(response => {
-                                this.bookingWindow.response = response.data;
 
-                                if (response.status === 'success') {
+                                const json = await response.json();
+
+                                this.bookingWindow.response = json.data;
+                                this.messages = json.messages ? json.messages : [];
+
+                                if (json.status === 'success') {
                                     this.autoCloseBookingWindowTimeout = window.setTimeout(() => {
-                                        this.mode = 'main-window';
+                                        this.hideBookingWindow();
                                     }, this.options.autocloseWindowsAfter);
+
+                                    const event = new CustomEvent('rbb_after_booking_request', {
+                                        detail: {
+                                            'instance': this,
+                                            'formData': formData,
+                                            'response': response,
+                                        }
+                                    });
+
+                                    await this.refreshDataRequest();
+
+                                    await (() => {
+                                        document.dispatchEvent(event);
+                                    })();
                                 }
+                            } catch (error) {
+                                this.isReady = false;
+                                console.error('Fetch', error);
 
                                 // Always
-                                this.refreshDataRequest();
-                            }).then(response => {
-                                // Call onAfterBookingRequest callback
-                                this.options.callbacks.onAfterBookingRequest.call(this, data);
-                            }).catch(response => {
-                                this.isReady = false;
-                                console.error("There was en error: " + error);
-                                // Always
-                                this.refreshDataRequest();
-                            });
+                                await this.refreshDataRequest();
+                            }
                         }
+                        this.isBusy = false;
                     },
 
                     /**
                      * Send resource availability request
                      */
-                    bookingFormValidationRequest: function bookingFormValidationRequest() {
-                        let action = 'bookingFormValidationRequest';
+                    bookingFormValidationRequest: async function () {
+                        this.deleteMessages();
+                        const action = 'bookingFormValidationRequest';
+                        this.isBusy = true;
 
-                        let data = new FormData();
-                        data.append('REQUEST_TOKEN', this.options.requestToken);
-                        data.append('action', action);
-                        data.append('resourceId', this.bookingWindow.activeTimeSlot.pid);
-                        data.append('bookingRepeatStopWeekTstamp', this.$el.querySelector('.rbb-js-booking-repeat-stop-week-tstamp').value);
-                        data.append('moduleKey', this.options.moduleKey);
-                        data.append('itemsBooked', this.$el.querySelector('[name="itemsBooked"]') ? this.$el.querySelector('[name="itemsBooked"]').value : '1');
+                        const formData = new FormData();
+                        formData.append('REQUEST_TOKEN', this.options.requestToken);
+                        formData.append('action', action);
+                        formData.append('resourceId', this.bookingWindow.activeTimeSlot.pid);
+                        formData.append('bookingRepeatStopWeekTstamp', this.$el.querySelector('.rbb-js-booking-repeat-stop-week-tstamp').value);
+                        formData.append('moduleKey', this.options.moduleKey);
+                        formData.append('itemsBooked', this.$el.querySelector('[name="itemsBooked"]') ? this.$el.querySelector('[name="itemsBooked"]').value : '1');
 
-                        Object.keys(this.bookingWindow.selectedTimeSlots).forEach(key => {
-                            data.append('bookingDateSelection[]', this.bookingWindow.selectedTimeSlots[key]);
-                        });
+                        for (const selectedTimeSlot of this.bookingWindow.selectedTimeSlots) {
+                            formData.append('bookingDateSelection[]', selectedTimeSlot);
+                        }
 
-                        fetch(window.location.href,
-                            {
-                                method: "POST",
-                                body: data,
-                                headers: {
-                                    'x-requested-with': 'XMLHttpRequest'
-                                },
-                            }).then(async response => {
+                        try {
+                            const response = await fetch(window.location.href,
+                                {
+                                    method: "POST",
+                                    body: formData,
+                                    headers: {
+                                        'x-requested-with': 'XMLHttpRequest'
+                                    }
+                                });
+
                             this.lastResponseCode = response.status;
-                            let data = await response.json();
+
                             if (!response.ok) {
-                                let error = response.statusText;
-                                return Promise.reject(error);
-                            }
-                            this.checkResponse(response);
-                            return data;
-                        }).then(response => {
-                            if (response.status) {
-                                this.bookingWindow.response = response.data;
+                                // Custom message for failed HTTP codes
+                                if (response.status === 404) {
+                                    throw new Error('404, Not found');
+                                }
+
+                                if (response.status === 500) {
+                                    throw new Error('500, internal server error');
+                                }
+
+                                // For any other server error
+                                throw new Error(response.statusText);
                             }
 
-                            if (response.status === 'success') {
+                            await this.checkResponse(response);
+
+                            const json = await response.json();
+
+                            if (json.status) {
+                                this.messages = json.messages ? json.messages : [];
+                                this.bookingWindow.response = json.data;
+                            }
+
+                            if (json.status === 'success') {
                                 this.isReady = true;
                             }
-                        }).catch(response => {
+                        } catch (error) {
                             this.isReady = false;
-                            console.error("There was en error: " + error);
-                        });
+                            console.error('Fetch', error);
+                        }
+                        this.isBusy = false;
                     },
 
                     /**
                      * Send cancel booking request
                      */
-                    cancelBookingRequest: function cancelBookingRequest() {
+                    cancelBookingRequest: async function () {
+                        this.deleteMessages();
+                        let action = 'cancelBookingRequest';
+
                         this.bookingWindow.showCancelBookingForm = false;
                         this.bookingWindow.showCancelBookingButton = false;
 
-                        let action = 'cancelBookingRequest';
-                        let data = new FormData();
-                        data.append('REQUEST_TOKEN', this.options.requestToken);
-                        data.append('action', action);
-                        data.append('id', this.bookingWindow.booking.id);
-                        data.append('deleteBookingsWithSameBookingUuid', this.bookingWindow.deleteBookingsWithSameBookingUuid);
-                        data.append('moduleKey', this.options.moduleKey);
+                        const formData = new FormData();
+                        formData.append('REQUEST_TOKEN', this.options.requestToken);
+                        formData.append('action', action);
+                        formData.append('id', this.bookingWindow.booking.id);
+                        formData.append('deleteBookingsWithSameBookingUuid', this.bookingWindow.deleteBookingsWithSameBookingUuid);
+                        formData.append('moduleKey', this.options.moduleKey);
 
-                        fetch(window.location.href, {
-                            method: "POST",
-                            body: data,
-                            headers: {
-                                'x-requested-with': 'XMLHttpRequest'
-                            },
-                        }).then(async response => {
+                        try {
+                            const response = await fetch(window.location.href, {
+                                method: "POST",
+                                body: formData,
+                                headers: {
+                                    'x-requested-with': 'XMLHttpRequest'
+                                },
+                            });
+
                             this.lastResponseCode = response.status;
-                            let data = await response.json();
+
                             if (!response.ok) {
-                                let error = response.statusText;
-                                return Promise.reject(error);
+                                // Custom message for failed HTTP codes
+                                if (response.status === 404) {
+                                    throw new Error('404, Not found');
+                                }
+
+                                if (response.status === 500) {
+                                    throw new Error('500, internal server error');
+                                }
+
+                                // For any other server error
+                                throw new Error(response.statusText);
                             }
+
                             this.checkResponse(response);
-                            return data;
-                        }).then(response => {
-                            if (response.status === 'success') {
-                                this.bookingWindow.response = response.data;
+
+                            const json = await response.json();
+
+                            this.bookingWindow.response = json.data;
+
+                            if (json.status === 'success') {
                                 this.autoCloseBookingWindowTimeout = window.setTimeout(() => {
-                                    this.mode = 'main-window';
+                                    this.hideBookingWindow();
                                 }, this.options.autocloseWindowsAfter);
-                            } else {
-                                this.bookingWindow.response = response.data;
                             }
 
                             // Always
+                            this.messages = json.messages ? json.messages : [];
                             this.bookingWindow.deleteBookingsWithSameBookingUuid = false;
-                            this.refreshDataRequest();
-                        }).catch(response => {
+                            await this.refreshDataRequest();
+
+                        } catch (error) {
                             this.isReady = false;
                             console.error("There was en error: " + error);
 
                             // Always
                             this.refreshDataRequest();
                             this.bookingWindow.deleteBookingsWithSameBookingUuid = false;
-                        });
+                        }
                     },
 
                     /**
@@ -479,7 +568,9 @@ if (typeof ResourceBookingApp !== 'function') {
                      * @param tstamp
                      * @param evt
                      */
-                    jumpWeekRequest: function jumpWeekRequest(tstamp, evt) {
+                    jumpWeekRequest: function (tstamp, evt) {
+
+                        this.deleteMessages();
 
                         evt.preventDefault();
                         evt.stopPropagation();
@@ -498,63 +589,72 @@ if (typeof ResourceBookingApp !== 'function') {
                      * @param action
                      * @param booking
                      */
-                    openBookingWindow: function openBookingWindow(slot, action, booking = null) {
+                    openBookingWindow: async function (slot, action, booking = null) {
+                        this.deleteMessages();
                         this.mode = 'booking-window';
+                        this.isBusy = true;
 
                         // Reset
-                        this.bookingWindow = {
-                            'action': action,
-                            'activeTimeSlot': slot,
-                            'booking': booking,
-                            'response': {},
-                            'deleteBookingsWithSameBookingUuid': false,
-                            'selectedTimeSlots': [],
-                        }
+                        await (() => {
+                            this.bookingWindow = {
+                                'action': action,
+                                'activeTimeSlot': slot,
+                                'booking': booking,
+                                'response': {},
+                                'deleteBookingsWithSameBookingUuid': false,
+                                'selectedTimeSlots': [],
+                            }
+                        })();
 
-                        this.bookingWindow.selectedTimeSlots.push(slot.bookingCheckboxValue);
+                        await (() => {
+                            this.bookingWindow.selectedTimeSlots.push(slot.bookingCheckboxValue);
+                        })();
 
-                        if (action === 'showBookingForm') {
-                            window.setTimeout(() => {
-                                this.bookingFormValidationRequest();
-                            }, 100);
-                        } else if (action === 'showCancelBookingForm') {
-                            this.bookingWindow.showCancelBookingButton = true;
-                            this.bookingWindow.showCancelBookingForm = true;
-                        }
+                        await (async () => {
+                            if (action === 'showBookingForm') {
+                                await this.bookingFormValidationRequest();
+                            } else if (action === 'showCancelBookingForm') {
+                                this.bookingWindow.showCancelBookingButton = true;
+                                this.bookingWindow.showCancelBookingForm = true;
+                            }
+                        })();
 
-                        // Wrap this code, otherwise querySelector will not find dom elements
-                        window.setTimeout(() => {
+                        await (() => {
+                            // Wrap this code, otherwise querySelector will not find dom elements
                             let inputBookingDescription = this.$el.querySelector('.rbb-js-booking-form input[name="bookingDescription"]');
+
                             if (inputBookingDescription !== null) {
                                 inputBookingDescription.setAttribute('value', '');
                             }
 
                             let weekRepeatOptions = this.$el.querySelectorAll('.rbb-js-booking-form .rbb-js-booking-repeat-stop-week-tstamp option');
+
                             if (weekRepeatOptions.length > 0) {
-                                weekRepeatOptions.forEach(elOption => elOption.removeAttribute('selected'));
+                                for (const elOption of weekRepeatOptions) {
+                                    elOption.removeAttribute('selected')
+                                }
                             }
-                        }, 20);
+                        })();
+
+                        this.isBusy = false;
                     },
 
                     /**
                      * Hide booking window
                      */
-                    hideBookingWindow: function hideBookingWindow() {
+                    hideBookingWindow: function () {
+                        this.deleteMessages();
+                        this.mode = 'week-calendar';
                         clearTimeout(this.autoCloseBookingWindowTimeout);
-                        this.mode = 'main-window';
                     },
 
                     /**
                      * Check json response
                      * @param response
                      */
-                    checkResponse: function checkResponse(response) {
+                    checkResponse: function (response) {
                         this.lastResponseCode = response.status;
-                        if (response.status !== 200) {
-                            this.isReady = false;
-                        } else {
-                            this.isReady = true;
-                        }
+                        this.isReady = response.status === 200;
                     },
 
                     /**
@@ -562,13 +662,12 @@ if (typeof ResourceBookingApp !== 'function') {
                      * @param el
                      * @param idleTimeout
                      */
-                    initializeIdleDetector: function initializeIdleDetector(el, idleTimeout) {
+                    initializeIdleDetector: function (el, idleTimeout) {
 
                         let idleSecondsCounter = idleTimeout;
                         let listenerType = ['keydown', 'mousemove', 'mousedown', 'touchstart'];
 
-                        listenerType.forEach(type => {
-
+                        for (const type of listenerType) {
                             el.addEventListener(type, () => {
                                 if (this.isIdle) {
                                     // On active again
@@ -578,7 +677,7 @@ if (typeof ResourceBookingApp !== 'function') {
 
                                 idleSecondsCounter = idleTimeout;
                             }, false);
-                        });
+                        }
 
                         this.intervals.isIdle = window.setInterval(() => {
                             if (this.isIdle) {
@@ -597,15 +696,52 @@ if (typeof ResourceBookingApp !== 'function') {
                      * Play audio file
                      * @param src
                      */
-                    playAudio: function playAudio(src) {
+                    playAudio: function (src) {
                         (new Audio(src)).play();
+                    },
+
+                    /**
+                     * @param type (can be 'error', 'confirm', 'warning', 'info')
+                     */
+                    getMessage: function (type) {
+                        return this.messages[type] ? this.messages[type] : null;
+                    },
+
+                    /**
+                     * @param type (can be 'error', 'confirm', 'warning', 'info')
+                     * @param message
+                     */
+                    setMessage: function (type, message) {
+                        const accepted = ['error', 'confirm', 'warning', 'info'];
+
+                        if (-1 === accepted.indexOf(type)) {
+                            alert(`Invalid message type "${type}" detected!`);
+                        }
+
+                        this.messages[type] = message;
+                    },
+
+                    deleteMessage: function (type) {
+                        const accepted = ['error', 'confirm', 'warning', 'info'];
+
+                        if (-1 === accepted.indexOf(type)) {
+                            alert(`Invalid message type "${type}" detected!`);
+                        }
+
+                        this.messages[type] = null;
+                    },
+
+                    deleteMessages: function () {
+                        this.messages['error'] = null;
+                        this.messages['confirm'] = null;
+                        this.messages['warning'] = null;
+                        this.messages['info'] = null;
                     }
                 }
             });
+
             app.config.compilerOptions.delimiters = ['[[ ', ' ]]'];
             app.mount(elId);
         }
     }
 }
-
-

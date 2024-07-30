@@ -1,0 +1,60 @@
+{% trans_default_domain "contao_default" %}
+
+{% block rbb_week_calendar_window__filter_board %}
+    <form class="rbb-filter-board-form mt-5" action="{{ app.request.getUri() }}" method="get">
+        <div v-if="filterBoard" class="row gx-2">
+            {% block rbb_filter_board__button_prev %}
+                <div class="rbb-go-back-one-week col-sm-1 mb-2">
+                    <button @click="jumpWeekRequest(filterBoard.jumpPrevWeek.tstamp,$event)" :data-tstamp="filterBoard.jumpPrevWeek.tstamp" role="button" class="btn btn-primary w-100" title="{{ ('RBB.1WeekBack')|trans }}" :class="filterBoard.jumpPrevWeek.disabled ? 'disabled' : ''" :aria-disabled="filterBoard.jumpPrevWeek.disabled ? 'true' : 'false'" :disabled="filterBoard.jumpPrevWeek.disabled">
+                        {{ rbb_icon('fa-chevron-left')|raw }}
+                    </button>
+                </div>
+            {% endblock %}
+
+            {% block rbb_filter_board__resource_type_select %}
+                <div class="rbb-ressource-type-select col-sm-3 mb-2">
+                    <label for="ctrlResType_{{ moduleKey }}" class="d-none">{{ ('RBB.resourceType')|trans }}</label>
+                    <select id="ctrlResType_{{ moduleKey }}" class="form-control w-100" name="resType" v-model="activeResourceTypeId">
+                        <option value="undefined">{{ ('RBB.formOptionSelectResourceType')|trans }}</option>
+                        <option v-for="(resourceType, index) in filterBoard.resourceTypes" :value="resourceType.id">[[ resourceType.title ]]</option>
+                    </select>
+                </div>
+            {% endblock %}
+
+            {% block rbb_filter_board__resource_select %}
+                <div class="rbb-ressource-select col-sm-3 mb-2">
+                    <label for="ctrlRes_{{ moduleKey }}" class="d-none">{{ ('RBB.resource')|trans }}</label>
+                    <select id="ctrlRes_{{ moduleKey }}" class="form-control w-100" name="res" v-model="activeResourceId" :disabled="activeResourceTypeId === 'undefined'">
+                        <option value="undefined">{{ ('RBB.formOptionSelectResource')|trans }}</option>
+                        <option v-for="(resource, index) in filterBoard.resources" :value="resource.id">[[ resource.title ]]</option>
+                    </select>
+                </div>
+            {% endblock %}
+
+            {% block rbb_filter_board__week_select %}
+                <div class="rbb-week-select col-sm-4 mb-2">
+                    <label for="date_{{ moduleKey }}" class="d-none">{{ ('RBB.timeSpan')|trans }}</label>
+                    <select id="date_{{ moduleKey }}" :disabled="!rows.length" class="rbb-time-span-select form-control w-100" name="date" v-model="activeWeekTstamp">
+                        <option v-for="(week, index) in filterBoard.weekSelection" :class="week.cssClass" :value="week.tstampBeginnWeek">[[ week.optionText ]]</option>
+                    </select>
+                </div>
+            {% endblock %}
+
+            {% block rbb_filter_board__button_next %}
+                <div class="rbb-go-ahead-one-week col-sm-1 mb-2">
+                    <button @click="jumpWeekRequest(filterBoard.jumpNextWeek.tstamp,$event)" :data-tstamp="filterBoard.jumpNextWeek.tstamp" role="button" class="btn btn-primary w-100" title="{{ ('RBB.1WeekAhead')|trans }}" :class="filterBoard.jumpNextWeek.disabled ? 'disabled' : ''" :aria-disabled="filterBoard.jumpNextWeek.disabled ? 'true' : 'false'" :disabled="filterBoard.jumpNextWeek.disabled">
+                        {{ rbb_icon('fa-chevron-right')|raw }}
+                    </button>
+                </div>
+            {% endblock %}
+        </div>
+        {% block rbb_filter_board__messages %}
+            <div class="rbb-filter-form-messages mt-5" v-if="messages">
+                <div v-if="messages.info" class="alert alert-info">[[ messages.info ]]</div>
+                <div v-if="messages.error" class="alert alert-error">[[ messages.error ]]</div>
+                <div v-if="messages.confirm" class="alert alert-success">[[ messages.confirm ]]</div>
+                <div v-if="messages.warning" class="alert alert-warning">[[ messages.warning ]]</div>
+            </div>
+        {% endblock %}
+    </form>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% trans_default_domain "contao_default" %}
+
+{% block rbb_booking_window__cancel_booking_form %}
+    {# Start header #}
+    {% block rbb_booking_window__cancel_booking_form__header %}
+        <div class="rbb-booking-window-header bg-primary d-flex justify-content-between">
+            <h3 class="rbb-booking-window-header-title m-3">
+                {{ ('RBB.cancel')|trans }}: [[ activeResource.title ]]
+            </h3>
+            <button type="button" @click="hideBookingWindow" class="rbb-close-window bg-primary" aria-label="Close" title="{{ ('RBB.close')|trans }}">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    {% endblock %}
+    {# Stop header #}
+
+    {# Start info table #}
+    {{ info_table|raw }}
+    {# End info table #}
+
+    {# Start delete repetitions switch #}
+    {% block rbb_booking_window__cancel_booking_form__delete_repetitions_switch %}
+        <div v-if="bookingWindow.showCancelBookingForm" class="form-check mt-5">
+            <input v-model="bookingWindow.deleteBookingsWithSameBookingUuid" type="checkbox" class="form-check-input" id="deleteSiblingsWithSameBookingIdSwitch">
+            <label class="form-check-label" for="deleteSiblingsWithSameBookingIdSwitch">{{ ('RBB.deleteRepetitions')|trans }}</label>
+        </div>
+    {% endblock %}
+    {# End delete repetitions switch #}
+
+    {{ messages|raw }}
+
+    {# Start footer #}
+    {% block rbb_booking_window__cancel_booking_form__footer %}
+        <div class="rbb-booking-window-footer mt-5">
+            <button type="button" class="me-3 btn btn-danger" v-if="bookingWindow.showCancelBookingButton" @click="cancelBookingRequest">
+                {{ ('RBB.cancelResource')|trans }}
+            </button>
+            <button type="button" class="btn btn-secondary" @click="hideBookingWindow">
+                {{ ('RBB.close')|trans }}
+            </button>
+        </div>
+    {% endblock %}
+    {# End footer #}
+{% endblock %}

@@ -16,11 +16,13 @@ namespace Markocupic\ResourceBookingBundle\Response;
 
 class AjaxResponse
 {
-    public const STATUS_SUCCESS = 'success';
-    public const STATUS_ERROR = 'error';
-    public const MESSAGE_CONFIRMATION = 'confirmation';
-    public const MESSAGE_INFO = 'info';
+    public const MESSAGE_CONFIRM = 'confirm';
     public const MESSAGE_ERROR = 'error';
+    public const MESSAGE_INFO = 'info';
+    public const MESSAGE_WARNING = 'warning';
+    public const STATUS_ERROR = 'error';
+    public const STATUS_SUCCESS = 'success';
+    public const STATUS_WARNING = 'warning';
 
     private array $arrData;
 
@@ -28,13 +30,13 @@ class AjaxResponse
     {
         $this->arrData = [
             'status' => null,
-            'data' => [
-                'messages' => [
-                    static::MESSAGE_ERROR => null,
-                    static::MESSAGE_CONFIRMATION => null,
-                    static::MESSAGE_INFO => null,
-                ],
+            'messages' => [
+                static::MESSAGE_WARNING => null,
+                static::MESSAGE_ERROR => null,
+                static::MESSAGE_CONFIRM => null,
+                static::MESSAGE_INFO => null,
             ],
+            'data' => [],
         ];
     }
 
@@ -48,21 +50,6 @@ class AjaxResponse
         return $this;
     }
 
-    public function hasErrorMessage(): bool
-    {
-        return !empty($this->arrData['data']['messages'][static::MESSAGE_ERROR]);
-    }
-
-    public function deleteInfoMessage(): void
-    {
-        $this->arrData['data']['messages'][static::MESSAGE_INFO] = null;
-    }
-
-    public function deleteConfirmationMessage(): void
-    {
-        $this->arrData['data']['messages'][static::MESSAGE_CONFIRMATION] = null;
-    }
-
     public function getAll(): array
     {
         return $this->arrData;
@@ -73,9 +60,10 @@ class AjaxResponse
      */
     public function setStatus(string $strStatus): void
     {
-        if ($strStatus !== static::STATUS_ERROR && $strStatus !== static::STATUS_SUCCESS) {
-            throw new \Exception(sprintf('Status must be either %s or %s and can not be "%s"', static::STATUS_ERROR, static::STATUS_SUCCESS, $strStatus));
+        if ($strStatus !== static::STATUS_ERROR && $strStatus !== static::STATUS_SUCCESS && $strStatus !== static::STATUS_WARNING) {
+            throw new \Exception(sprintf('Status must be either %s, %s or %s and can not be "%s"', static::STATUS_ERROR, static::STATUS_WARNING, static::STATUS_SUCCESS, $strStatus));
         }
+
         $this->arrData['status'] = $strStatus;
     }
 
@@ -94,49 +82,84 @@ class AjaxResponse
         return $this->arrData['action'] ?? null;
     }
 
-    public function hasConfirmationMessage(): bool
+    public function deleteConfirmationMessage(): void
     {
-        return !empty($this->arrData['data']['messages'][static::MESSAGE_CONFIRMATION]);
-    }
-
-    public function setConfirmationMessage(string $strMessage): void
-    {
-        $this->arrData['data']['messages'][static::MESSAGE_CONFIRMATION] = $strMessage;
+        $this->arrData['messages'][static::MESSAGE_CONFIRM] = null;
     }
 
     public function getConfirmationMessage(): string|null
     {
-        return $this->arrData['data']['messages'][static::MESSAGE_CONFIRMATION];
+        return $this->arrData['messages'][static::MESSAGE_CONFIRM];
     }
 
-    public function hasInfoMessage(): bool
+    public function hasConfirmationMessage(): bool
     {
-        return !empty($this->arrData['data']['messages'][static::MESSAGE_INFO]);
+        return !empty($this->arrData['messages'][static::MESSAGE_CONFIRM]);
     }
 
-    public function setInfoMessage(string $strMessage): void
+    public function setConfirmationMessage(string $strMessage): void
     {
-        $this->arrData['data']['messages'][static::MESSAGE_INFO] = $strMessage;
+        $this->arrData['messages'][static::MESSAGE_CONFIRM] = $strMessage;
+    }
+
+    public function deleteInfoMessage(): void
+    {
+        $this->arrData['messages'][static::MESSAGE_INFO] = null;
     }
 
     public function getInfoMessage(): string|null
     {
-        return $this->arrData['data']['messages'][static::MESSAGE_INFO];
+        return $this->arrData['messages'][static::MESSAGE_INFO];
     }
 
-    public function setErrorMessage(string $strMessage): void
+    public function hasInfoMessage(): bool
     {
-        $this->arrData['data']['messages'][static::MESSAGE_ERROR] = $strMessage;
+        return !empty($this->arrData['messages'][static::MESSAGE_INFO]);
+    }
+
+    public function setInfoMessage(string $strMessage): void
+    {
+        $this->arrData['messages'][static::MESSAGE_INFO] = $strMessage;
     }
 
     public function deleteErrorMessage(): void
     {
-        $this->arrData['data']['messages'][static::MESSAGE_ERROR] = null;
+        $this->arrData['messages'][static::MESSAGE_ERROR] = null;
     }
 
     public function getErrorMessage(): string|null
     {
-        return $this->arrData['data']['messages'][static::MESSAGE_ERROR];
+        return $this->arrData['messages'][static::MESSAGE_ERROR];
+    }
+
+    public function hasErrorMessage(): bool
+    {
+        return !empty($this->arrData['messages'][static::MESSAGE_ERROR]);
+    }
+
+    public function setErrorMessage(string $strMessage): void
+    {
+        $this->arrData['messages'][static::MESSAGE_ERROR] = $strMessage;
+    }
+
+    public function deleteWarningMessage(): void
+    {
+        $this->arrData['messages'][static::MESSAGE_WARNING] = null;
+    }
+
+    public function getWarningMessage(): string|null
+    {
+        return $this->arrData['messages'][static::MESSAGE_WARNING];
+    }
+
+    public function hasWarningMessage(): bool
+    {
+        return !empty($this->arrData['messages'][static::MESSAGE_WARNING]);
+    }
+
+    public function setWarningMessage(string $strMessage): void
+    {
+        $this->arrData['messages'][static::MESSAGE_WARNING] = $strMessage;
     }
 
     /**

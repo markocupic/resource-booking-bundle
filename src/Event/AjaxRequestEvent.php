@@ -20,8 +20,6 @@ use Symfony\Contracts\EventDispatcher\Event;
 
 class AjaxRequestEvent extends Event
 {
-    public const NAME = 'xml_http_request';
-
     private AjaxResponse $ajaxResponse;
     private Request $request;
 

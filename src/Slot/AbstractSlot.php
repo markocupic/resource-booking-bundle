@@ -57,7 +57,7 @@ use Symfony\Component\Security\Core\Security;
  * @property Collection|null                   $bookings
  * @property int                               $bookingCount
  * @property string                            $bookingUuid
- * @property array                             $newBooking
+ * @property array                             $dataBooking
  * @property int                               $itemsAvailable
  *
  * properties from booking main
@@ -136,7 +136,7 @@ abstract class AbstractSlot implements SlotInterface
         $this->arrData['bookingCount'] = $this->getBookingCount();
         $this->arrData['userHasBooked'] = $this->isBookedByUser();
         $this->arrData['bookingRelatedToLoggedInUser'] = $this->getBookingRelatedToLoggedInUser();
-        $this->arrData['newBooking'] = [];
+        $this->arrData['dataBooking'] = [];
         $this->arrData['isCancelable'] = $this->isCancelable();
 
         return $this;

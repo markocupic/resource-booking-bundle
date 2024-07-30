@@ -1,0 +1,23 @@
+{% trans_default_domain "contao_default" %}
+
+{% block rbb_messages %}
+    <template v-if="messages">
+        <div class="rbb-message-box mt-5">
+            <div class="alert alert-warning d-flex pt-3 pb-3" v-if="messages.warning">
+                {{ rbb_icon('fa-exclamation-circle','rbb-icon-2x me-3')|raw }}<span>[[ messages.warning ]]</span>
+            </div>
+            <div class="alert alert-success d-flex pt-3 pb-3" v-if="messages.confirm">
+                {{ rbb_icon('fa-check-circle','me-3 rbb-icon-2x')|raw }}<span>[[ messages.confirm ]]</span>
+            </div>
+            <div class="alert alert-danger d-flex pt-3 pb-3" v-if="messages.error">
+                {{ rbb_icon('fa-exclamation-circle','rbb-icon-2x me-3')|raw }}<span>[[ messages.error ]]</span>
+            </div>
+            <div class="alert alert-info pt-3 pb-3" v-if="messages.info">
+                {{ rbb_icon('fa-info-circle','rbb-icon-2x me-3')|raw }}<span>[[ messages.info ]]</span>
+            </div>
+        </div>
+    </template>
+    <p v-if="bookingWindow.response.cancelBookingProcessSucceeded || bookingWindow.response.bookingProcessSucceeded" class="rbb-input-help-text">
+        <small>{{ ('RBB.MSG.windowClosesAutomatically')|trans }}</small>
+    </p>
+{% endblock %}

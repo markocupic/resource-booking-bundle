@@ -4,3 +4,5 @@ markocupic_resource_booking:
             beginnWeek: 'monday'
             intBackWeeks: -10
             intAheadWeeks: 60
+            autoConfirm: true
+            permittedUploadFields: [bookingDescription,itemsBooked,bookingRepeatStopWeekTstamp]

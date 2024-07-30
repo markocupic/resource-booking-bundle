@@ -23,6 +23,7 @@ $GLOBALS['TL_LANG']['tl_resource_booking']['new'] = ['New', 'Add new booking.'];
 // Fields
 $GLOBALS['TL_LANG']['tl_resource_booking']['pid'] = ['Resource'];
 $GLOBALS['TL_LANG']['tl_resource_booking']['timeSlotId'] = ['Time slot'];
+$GLOBALS['TL_LANG']['tl_resource_booking']['bookingTime'] = ['Booking time'];
 $GLOBALS['TL_LANG']['tl_resource_booking']['member'] = ['Booked by frontend user'];
 $GLOBALS['TL_LANG']['tl_resource_booking']['title'] = ['Title'];
 $GLOBALS['TL_LANG']['tl_resource_booking']['description'] = ['Description'];
@@ -32,3 +33,4 @@ $GLOBALS['TL_LANG']['tl_resource_booking']['bookingUuid'] = ['Booking Id'];
 $GLOBALS['TL_LANG']['tl_resource_booking']['itemsBooked'] = ['Booked units'];
 $GLOBALS['TL_LANG']['tl_resource_booking']['moduleId'] = ['Frontend module'];
 $GLOBALS['TL_LANG']['tl_resource_booking']['confirmed'] = ['Confirmed'];
+$GLOBALS['TL_LANG']['tl_resource_booking']['upcoming'] = ['Upcoming reservation'];

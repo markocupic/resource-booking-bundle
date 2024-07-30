@@ -27,6 +27,7 @@ use Markocupic\ResourceBookingBundle\Config\RbbConfig;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceTypeModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotModel;
+use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Markocupic\ResourceBookingBundle\Slot\SlotMain;
 use Markocupic\ResourceBookingBundle\Util\DateHelper;
 use Markocupic\ResourceBookingBundle\Util\Str;
@@ -40,10 +41,9 @@ trait RefreshDataTrait
     /**
      * @throws \Exception
      */
-    private function getRefreshedData(): array
+    private function getRefreshedData(AjaxResponse $ajaxResponse): array
     {
         $systemAdapter = $this->framework->getAdapter(System::class);
-        $messageAdapter = $this->framework->getAdapter(Message::class);
         $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
         $dateAdapter = $this->framework->getAdapter(Date::class);
         $configAdapter = $this->framework->getAdapter(Config::class);
@@ -55,12 +55,12 @@ trait RefreshDataTrait
         $systemAdapter->loadLanguageFile('default', $this->translator->getLocale());
 
         // Messages
-        if (null === $this->getActiveResourceTypeFromSession() && !$messageAdapter->hasMessages()) {
-            $messageAdapter->addInfo($this->translator->trans('RBB.MSG.selectResourceTypePlease', [], 'contao_default'));
+        if (null === $this->getActiveResourceTypeFromSession()) {
+            $ajaxResponse->setInfoMessage($this->translator->trans('RBB.MSG.selectResourceTypePlease', [], 'contao_default'));
         }
 
-        if (null === $this->getActiveResourceFromSession() && !$messageAdapter->hasMessages()) {
-            $messageAdapter->addInfo($this->translator->trans('RBB.MSG.selectResourcePlease', [], 'contao_default'));
+        if (null === $this->getActiveResourceFromSession()) {
+            $ajaxResponse->setInfoMessage($this->translator->trans('RBB.MSG.selectResourcePlease', [], 'contao_default'));
         }
 
         // Filter form: get resource types dropdown
@@ -77,11 +77,11 @@ trait RefreshDataTrait
         $arrData['filterBoard']['weekSelection'] = $this->getWeekSelection((int) $this->sessionBag->get('tstampFirstPermittedWeek'), (int) $this->sessionBag->get('tstampLastPermittedWeek'), true);
 
         // Logged in user
-        $arrData['userHasLoggedIn'] = false;
+        $arrData['hasLoggedInUser'] = false;
         $arrData['loggedInUser'] = null;
 
         if (null !== $this->user->getLoggedInUser()) {
-            $arrData['userHasLoggedIn'] = true;
+            $arrData['hasLoggedInUser'] = true;
             $arrData['loggedInUser'] = array_map(static fn ($v) => $strAdapter->convertBinUuidsToStringUuids($v), $this->user->getModel()->row());
             $arrData['loggedInUser']['gender'] = !empty($this->user->getModel()->gender) ? $this->translator->trans('MSC.'.$this->user->getModel()->gender, [], 'contao_default') : '';
             unset($arrData['loggedInUser']['password']);
@@ -128,19 +128,6 @@ trait RefreshDataTrait
         );
 
         $arrData['timeSlots'] = $this->getTimeslotData($this->getActiveResourceFromSession());
-
-        // Get messages
-        $arrData['messages'] = [];
-
-        if ($messageAdapter->hasMessages()) {
-            if ($messageAdapter->hasInfo()) {
-                $arrData['messages']['info'] = $messageAdapter->generateUnwrapped('FE', true);
-            }
-
-            if ($messageAdapter->hasError()) {
-                $arrData['messages']['error'] = $messageAdapter->generateUnwrapped('FE', true);
-            }
-        }
 
         $arrData['isReady'] = true;
 

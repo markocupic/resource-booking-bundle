@@ -1,0 +1,23 @@
+{% trans_default_domain "contao_default" %}
+
+{% block rbb_week_calendar_window__table %}
+    <template v-if="rows.length > 0">
+        <div class="rbb-layout-table rbb-booking-table-main mt-5">
+            <div class="rbb-layout-box-inner pb-4">
+                <div class="d-flex">
+                    <div class="rbb-layout-cell rbb-cell-headline rbb-time-slot-indicator"><strong>{{ ('RBB.time')|trans }}</strong></div>
+                    <div class="rbb-layout-cell rbb-cell-headline" v-for="(weekday, index) in weekdays" :data-day-index="weekday.index"><strong>[[ weekday.title ]]</strong><br>[[ weekday.date ]]</div>
+                </div>
+
+                <div v-for="(row, rowIndex) in rows" :data-row-index="rowIndex" :id="row.rowData.cssRowId" class="d-flex" :class="row.rowData.cssRowClass">
+                    <!-- time indicator -->
+                    <div class="rbb-layout-cell rbb-time-slot-indicator" :class="timeSlots[rowIndex].cssClass ? timeSlots[rowIndex].cssClass : ''">[[ timeSlots[rowIndex].timeSpanString ]]</div>
+                    <!-- slots -->
+                    <div class="rbb-layout-cell rbb-time-slot-cell" v-for="(slot, colIndex) in row.cellData" :class="timeSlots[rowIndex].cssClass ? timeSlots[rowIndex].cssClass : ''" :data-day-index="slot.index" :data-userisloggedin="slot.userIsLoggedIn" :data-iscancelable="slot.isCancelable" :data-isfullybooked="slot.isFullyBooked" :data-isbookable="!slot.isCancelable && slot.isBookable" :data-isbooked="slot.hasBookings" :data-bookingcount="slot.bookingCount" :data-isinvaliddate="!slot.isDateInPermittedRange">
+                        {{ time_slot_cell|raw }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+{% endblock %}

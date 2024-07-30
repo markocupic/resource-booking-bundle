@@ -14,10 +14,12 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\AjaxController;
 
+use Contao\Message;
 use Markocupic\ResourceBookingBundle\AjaxController\Traits\RefreshDataTrait;
 use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Markocupic\ResourceBookingBundle\Slot\SlotFactory;
+use Symfony\Contracts\Service\Attribute\Required;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class RefreshDataController extends AbstractController implements ControllerInterface
@@ -28,11 +30,11 @@ final class RefreshDataController extends AbstractController implements Controll
     private TranslatorInterface $translator;
 
     /**
-     * @required
-     * Use setter via "required" annotation injection in child classes instead of __construct injection
+     * Use setter via "#[Required]" attribute injection in child classes instead of __construct injection
      * see: https://stackoverflow.com/questions/58447365/correct-way-to-extend-classes-with-symfony-autowiring
-     * see: https://symfony.com/doc/current/service_container/calls.html
+     * see: https://symfony.com/doc/current/service_container/calls.html.
      */
+    #[Required]
     public function _setController(SlotFactory $slotFactory, TranslatorInterface $translator): void
     {
         $this->slotFactory = $slotFactory;
@@ -46,6 +48,6 @@ final class RefreshDataController extends AbstractController implements Controll
     {
         $ajaxResponse = $ajaxRequestEvent->getAjaxResponse();
         $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
-        $ajaxResponse->setDataFromArray($this->getRefreshedData());
+        $ajaxResponse->setDataFromArray($this->getRefreshedData($ajaxResponse));
     }
 }

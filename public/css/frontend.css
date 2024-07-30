@@ -1,36 +1,32 @@
-.rbb-custom-scroll-bar-thin, .mod_resourceBookingWeekcalendar .rbb-booking-table-booking-form .rbb-layout-cell.rbb-time-slot-cell[data-isbooked="true"], .mod_resourceBookingWeekcalendar .rbb-booking-table-main .rbb-layout-cell.rbb-time-slot-cell[data-isbooked="true"] {
-    /* Chrome, Edge, and Safari */
-}
-.rbb-custom-scroll-bar-thin, .mod_resourceBookingWeekcalendar .rbb-booking-table-booking-form .rbb-layout-cell.rbb-time-slot-cell[data-isbooked="true"], .mod_resourceBookingWeekcalendar .rbb-booking-table-main .rbb-layout-cell.rbb-time-slot-cell[data-isbooked="true"] {
-    scrollbar-width: 5px;
-    scrollbar-color: #000 #fff;
-}
-.rbb-custom-scroll-bar-thin::-webkit-scrollbar, .mod_resourceBookingWeekcalendar .rbb-booking-table-booking-form .rbb-layout-cell.rbb-time-slot-cell[data-isbooked="true"]::-webkit-scrollbar, .mod_resourceBookingWeekcalendar .rbb-booking-table-main .rbb-layout-cell.rbb-time-slot-cell[data-isbooked="true"]::-webkit-scrollbar {
-    width: 5px;
-}
-.rbb-custom-scroll-bar-thin::-webkit-scrollbar-track, .mod_resourceBookingWeekcalendar .rbb-booking-table-booking-form .rbb-layout-cell.rbb-time-slot-cell[data-isbooked="true"]::-webkit-scrollbar-track, .mod_resourceBookingWeekcalendar .rbb-booking-table-main .rbb-layout-cell.rbb-time-slot-cell[data-isbooked="true"]::-webkit-scrollbar-track {
-    background: #fff;
-}
-.rbb-custom-scroll-bar-thin::-webkit-scrollbar-thumb, .mod_resourceBookingWeekcalendar .rbb-booking-table-booking-form .rbb-layout-cell.rbb-time-slot-cell[data-isbooked="true"]::-webkit-scrollbar-thumb, .mod_resourceBookingWeekcalendar .rbb-booking-table-main .rbb-layout-cell.rbb-time-slot-cell[data-isbooked="true"]::-webkit-scrollbar-thumb {
-    background-color: #000;
-    border-radius: 3px;
-    border: 1px solid #fff;
+.rbb-custom-scroll-bar-thin {
+    scrollbar-width: thin;
 }
 .mod_resourceBookingWeekcalendar {
     /** Booking table **/
+}
+.mod_resourceBookingWeekcalendar .rbb-opacity-0 {
+    opacity: 0;
+}
+.mod_resourceBookingWeekcalendar .rbb-opacity-1 {
+    opacity: 1;
+}
+.mod_resourceBookingWeekcalendar * {
+    transition-duration: 0.5s;
+    transition-property: opacity;
+    transition-timing-function: ease-in-out;
 }
 .mod_resourceBookingWeekcalendar .alert-danger {
     background-color: #ffded5;
     color: #000;
 }
-.mod_resourceBookingWeekcalendar .alert-danger .fa-solid, .mod_resourceBookingWeekcalendar .alert-danger .svg-inline--fa {
+.mod_resourceBookingWeekcalendar .alert-danger .rbb-icon {
     color: #fff;
 }
 .mod_resourceBookingWeekcalendar .alert-success {
     background-color: rgba(115, 207, 97, 0.42);
     color: #000;
 }
-.mod_resourceBookingWeekcalendar .alert-success .fa-solid, .mod_resourceBookingWeekcalendar .alert-success .svg-inline--fa {
+.mod_resourceBookingWeekcalendar .alert-success .rbb-icon {
     color: #fff;
 }
 .mod_resourceBookingWeekcalendar .rbb-app .rbb-vue-application {
@@ -59,13 +55,13 @@
 .mod_resourceBookingWeekcalendar .rbb-filter-board-form .rbb-week-select option.future-week {
     /** **/
 }
-.mod_resourceBookingWeekcalendar .rbb-booking-table-booking-form, .mod_resourceBookingWeekcalendar .rbb-booking-table-main {
+.mod_resourceBookingWeekcalendar .rbb-booking-table-booking-form > .rbb-layout-box-inner, .mod_resourceBookingWeekcalendar .rbb-booking-table-main {
     overflow-x: auto;
 }
-.mod_resourceBookingWeekcalendar .rbb-booking-table-booking-form *, .mod_resourceBookingWeekcalendar .rbb-booking-table-main * {
+.mod_resourceBookingWeekcalendar .rbb-booking-table-booking-form > .rbb-layout-box-inner *, .mod_resourceBookingWeekcalendar .rbb-booking-table-main * {
     font-size: small;
 }
-.mod_resourceBookingWeekcalendar .rbb-booking-table-booking-form .rbb-layout-cell, .mod_resourceBookingWeekcalendar .rbb-booking-table-main .rbb-layout-cell {
+.mod_resourceBookingWeekcalendar .rbb-booking-table-booking-form > .rbb-layout-box-inner .rbb-layout-cell, .mod_resourceBookingWeekcalendar .rbb-booking-table-main .rbb-layout-cell {
     flex-grow: 1;
     flex-basis: 0;
     overflow: hidden;
@@ -73,25 +69,44 @@
     border: 3px solid #fff;
     padding: 0.25rem;
 }
-.mod_resourceBookingWeekcalendar .rbb-booking-table-booking-form .rbb-layout-cell.rbb-time-slot-cell, .mod_resourceBookingWeekcalendar .rbb-booking-table-main .rbb-layout-cell.rbb-time-slot-cell {
+.mod_resourceBookingWeekcalendar .rbb-booking-table-booking-form > .rbb-layout-box-inner .rbb-layout-cell.rbb-time-slot-cell, .mod_resourceBookingWeekcalendar .rbb-booking-table-main .rbb-layout-cell.rbb-time-slot-cell {
     background-color: rgba(115, 207, 97, 0.42);
     height: 6rem;
     display: flex;
 }
-.mod_resourceBookingWeekcalendar .rbb-booking-table-booking-form .rbb-layout-cell.rbb-time-slot-cell[data-isbooked="true"], .mod_resourceBookingWeekcalendar .rbb-booking-table-main .rbb-layout-cell.rbb-time-slot-cell[data-isbooked="true"] {
+.mod_resourceBookingWeekcalendar .rbb-booking-table-booking-form > .rbb-layout-box-inner .rbb-layout-cell.rbb-time-slot-cell[data-isbooked="true"], .mod_resourceBookingWeekcalendar .rbb-booking-table-main .rbb-layout-cell.rbb-time-slot-cell[data-isbooked="true"] {
     background-color: rgba(115, 207, 97, 0.42);
     overflow-y: auto;
+    /* Chrome, Edge, and Safari */
 }
-.mod_resourceBookingWeekcalendar .rbb-booking-table-booking-form .rbb-layout-cell.rbb-time-slot-cell[data-isbookable="true"], .mod_resourceBookingWeekcalendar .rbb-booking-table-main .rbb-layout-cell.rbb-time-slot-cell[data-isbookable="true"] {
+.mod_resourceBookingWeekcalendar .rbb-booking-table-booking-form > .rbb-layout-box-inner .rbb-layout-cell.rbb-time-slot-cell[data-isbooked="true"], .mod_resourceBookingWeekcalendar .rbb-booking-table-main .rbb-layout-cell.rbb-time-slot-cell[data-isbooked="true"] {
+    scrollbar-width: thin;
+    scrollbar-color: #000 #fff;
+}
+.mod_resourceBookingWeekcalendar .rbb-booking-table-booking-form > .rbb-layout-box-inner .rbb-layout-cell.rbb-time-slot-cell[data-isbooked="true"]::-webkit-scrollbar, .mod_resourceBookingWeekcalendar .rbb-booking-table-main .rbb-layout-cell.rbb-time-slot-cell[data-isbooked="true"]::-webkit-scrollbar {
+    width: 5px;
+}
+.mod_resourceBookingWeekcalendar .rbb-booking-table-booking-form > .rbb-layout-box-inner .rbb-layout-cell.rbb-time-slot-cell[data-isbooked="true"]::-webkit-scrollbar-track, .mod_resourceBookingWeekcalendar .rbb-booking-table-main .rbb-layout-cell.rbb-time-slot-cell[data-isbooked="true"]::-webkit-scrollbar-track {
+    background: #fff;
+}
+.mod_resourceBookingWeekcalendar .rbb-booking-table-booking-form > .rbb-layout-box-inner .rbb-layout-cell.rbb-time-slot-cell[data-isbooked="true"]::-webkit-scrollbar-thumb, .mod_resourceBookingWeekcalendar .rbb-booking-table-main .rbb-layout-cell.rbb-time-slot-cell[data-isbooked="true"]::-webkit-scrollbar-thumb {
+    background-color: #000;
+    border-radius: 3px;
+    border: 1px solid #fff;
+}
+.mod_resourceBookingWeekcalendar .rbb-booking-table-booking-form > .rbb-layout-box-inner .rbb-layout-cell.rbb-time-slot-cell[data-isbookable="true"], .mod_resourceBookingWeekcalendar .rbb-booking-table-main .rbb-layout-cell.rbb-time-slot-cell[data-isbookable="true"] {
     background-color: rgba(115, 207, 97, 0.42);
 }
-.mod_resourceBookingWeekcalendar .rbb-booking-table-booking-form .rbb-layout-cell.rbb-time-slot-cell[data-isinvaliddate="true"], .mod_resourceBookingWeekcalendar .rbb-booking-table-main .rbb-layout-cell.rbb-time-slot-cell[data-isinvaliddate="true"] {
+.mod_resourceBookingWeekcalendar .rbb-booking-table-booking-form > .rbb-layout-box-inner .rbb-layout-cell.rbb-time-slot-cell[data-isinvaliddate="true"], .mod_resourceBookingWeekcalendar .rbb-booking-table-main .rbb-layout-cell.rbb-time-slot-cell[data-isinvaliddate="true"] {
     background-color: #e9ecef;
 }
-.mod_resourceBookingWeekcalendar .rbb-booking-table-booking-form .rbb-layout-cell.rbb-time-slot-cell[data-isfullybooked="true"], .mod_resourceBookingWeekcalendar .rbb-booking-table-main .rbb-layout-cell.rbb-time-slot-cell[data-isfullybooked="true"] {
+.mod_resourceBookingWeekcalendar .rbb-booking-table-booking-form > .rbb-layout-box-inner .rbb-layout-cell.rbb-time-slot-cell[data-isfullybooked="true"], .mod_resourceBookingWeekcalendar .rbb-booking-table-main .rbb-layout-cell.rbb-time-slot-cell[data-isfullybooked="true"] {
     background-color: #ffded5;
 }
-.mod_resourceBookingWeekcalendar .rbb-booking-table-booking-form .rbb-layout-cell.rbb-cell-headline, .mod_resourceBookingWeekcalendar .rbb-booking-table-main .rbb-layout-cell.rbb-cell-headline {
+.mod_resourceBookingWeekcalendar .rbb-booking-table-booking-form > .rbb-layout-box-inner .rbb-layout-cell.rbb-time-slot-cell[data-isfullybooked="true"]:has(.rbb-booked-item[data-confirmed="false"]), .mod_resourceBookingWeekcalendar .rbb-booking-table-main .rbb-layout-cell.rbb-time-slot-cell[data-isfullybooked="true"]:has(.rbb-booked-item[data-confirmed="false"]) {
+    background-color: #ffd085;
+}
+.mod_resourceBookingWeekcalendar .rbb-booking-table-booking-form > .rbb-layout-box-inner .rbb-layout-cell.rbb-cell-headline, .mod_resourceBookingWeekcalendar .rbb-booking-table-main .rbb-layout-cell.rbb-cell-headline {
     background-color: #fff;
 }
 .mod_resourceBookingWeekcalendar .rbb-booking-table-main .rbb-layout-cell.rbb-time-slot-cell {
@@ -243,4 +258,35 @@
 .mod_resourceBookingWeekcalendar .rbb-booking-window .rbb-time-span-select option[selected] {
     background-color: #149efb;
 }
-
+.mod_resourceBookingWeekcalendar .rbb-icon {
+    font-size: 1em;
+    height: 1em;
+    overflow: visible;
+    box-sizing: content-box;
+}
+.mod_resourceBookingWeekcalendar .rbb-icon-2x {
+    font-size: 2em !important;
+}
+.mod_resourceBookingWeekcalendar .rbb-icon-3x {
+    font-size: 3em !important;
+}
+.mod_resourceBookingWeekcalendar .rbb-icon-4x {
+    font-size: 4em !important;
+}
+.mod_resourceBookingWeekcalendar .rbb-icon-5x {
+    font-size: 5em !important;
+}
+.mod_resourceBookingWeekcalendar .rbb-icon-spin {
+    animation-name: rbb-icon-spin;
+    animation-duration: 2000ms;
+    animation-iteration-count: infinite;
+    animation-timing-function: linear;
+}
+@keyframes rbb-icon-spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}

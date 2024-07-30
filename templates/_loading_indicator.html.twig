@@ -1,0 +1,18 @@
+{% trans_default_domain "contao_default" %}
+
+{% block rbb_loading_indicator %}
+    <template v-if="isReady === false && lastResponseCode === 200">
+        <div class="text-center mt-5">
+            {% block rbb_loading_indicator__icon %}
+                <div class="rbb-loading-spinner">
+                    {{ rbb_icon('fa-sync','rbb-icon-5x rbb-icon-spin')|raw }}
+                </div>
+            {% endblock %}
+            {% block rbb_loading_indicator__label %}
+                <div role="status">
+                    <span class="visually-hidden">{{ ('RBB.loading')|trans }}</span>
+                </div>
+            {% endblock %}
+        </div>
+    </template>
+{% endblock %}

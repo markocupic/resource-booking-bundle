@@ -1,0 +1,18 @@
+{% trans_default_domain "contao_default" %}
+
+{% block rbb_week_calendar_window__time_slot_cell %}
+    <div class="rbb-time-slot-cell-inner">
+        <div class="rbb-cell-booking-still-available-box" v-if="slot.resource.itemsAvailable > 1 && slot.itemsStillAvailable > 0 && slot.isDateInPermittedRange">{{ ('RBB.stillAvailable')|trans }}: [[ slot.itemsStillAvailable ]]</div>
+        <div class="rbb-booked-item" v-if="slot.hasBookings" v-for="booking in slot.bookings" :data-confirmed="booking.confirmed ? 'true' : 'false'">
+            <span class="rbb-cell-booking-owner-box">[[ booking.bookedByFullname ]]</span><span class="item-counter-box" v-if="activeResource.itemsAvailable > 1"> (-[[ booking.itemsBooked ]])</span>
+            <br>
+            <span class="rbb-cell-booking-description-box"><small>[[ booking.bookingDescription ]]</small></span>
+            <button class="btn btn-link rbb-btn-cancel-booking" v-if="booking.canCancel" @click="openBookingWindow(slot, 'showCancelBookingForm', slot.bookingRelatedToLoggedInUser)" title="{{ ('RBB.cancelResource')|trans }}">
+                {{ rbb_icon('fa-times-circle','rbb-icon-cancel-booking')|raw }}
+            </button>
+        </div>
+        <button class="btn btn-link rbb-btn-booking" v-if="hasLoggedInUser && (slot.isBookable && !slot.isCancelable)" @click="openBookingWindow(slot, 'showBookingForm', null)" title="{{ ('RBB.bookResource')|trans }}">
+            {{ rbb_icon('fa-check-circle')|raw }}
+        </button>
+    </div>
+{% endblock %}

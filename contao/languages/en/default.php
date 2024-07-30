@@ -69,9 +69,9 @@ $GLOBALS['TL_LANG']['RBB']['week'] = 'Week';
 // Errors
 $GLOBALS['TL_LANG']['RBB']['ERR']['401'] = 'Your session has expired. Access was denied. Please log in again.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['bookingNotFound'] = 'Could not find booking with ID %s.';
-$GLOBALS['TL_LANG']['RBB']['ERR']['cancelingBookingNotAllowed'] = 'You are not allowed to cancel this booking.';
+$GLOBALS['TL_LANG']['RBB']['ERR']['cancellingBookingNotAllowed'] = 'You are not allowed to cancel this booking.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['general'] = 'An error has occured. Please check connectivity.';
-$GLOBALS['TL_LANG']['RBB']['ERR']['generalBookingError'] = 'Error, while trying to book a resource.';
+$GLOBALS['TL_LANG']['RBB']['ERR']['generalBookingError'] = 'An unexpected error occurred while trying to book the resource. Please try again or contact the administrator.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['invalidStartOrEndTime'] = 'You\'ve selected a slot with a invalid start- or end time.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['notAuthorized'] = 'You are not authorized for this action.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['notEnoughItemsAvailable'] = 'There aren\'t enough items available in one ore more slots you\'ve requested.';
@@ -80,6 +80,9 @@ $GLOBALS['TL_LANG']['RBB']['ERR']['selectBookingDatesPlease'] = 'Select one or m
 $GLOBALS['TL_LANG']['RBB']['ERR']['slotNotBookable'] = 'You\'ve selected a non bookable slot';
 $GLOBALS['TL_LANG']['RBB']['ERR']['somethingWentWrong'] = 'Ups! I\'m sorry! Something went wrong.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['thisSlotHasNotEnoughItemsAvailable'] = 'There aren\'t enough items available in this slot.';
+$GLOBALS['TL_LANG']['RBB']['ERR']['invalidUploadValueSubmitted'] = 'Your request could not be processed. Reason: An invalid value was uploaded for the “%s” field.';
+$GLOBALS['TL_LANG']['RBB']['ERR']['invalidUploadFieldSubmitted'] = 'Your request could not be processed. Reason: “%s” is not in the list of allowed upload fields.';
+$GLOBALS['TL_LANG']['RBB']['ERR']['mandatoryFieldNotFilledIn'] = 'Your booking request could not be processed. Reason: The mandatory field “%s” was not filled in.';
 
 // Messages
 $GLOBALS['TL_LANG']['RBB']['MSG']['noResourceSelected'] = 'Select a ressource please.';

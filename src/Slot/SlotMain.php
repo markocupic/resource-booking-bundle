@@ -19,7 +19,7 @@ namespace Markocupic\ResourceBookingBundle\Slot;
  */
 class SlotMain extends AbstractSlot
 {
-    public const MODE = 'main-window';
+    public const MODE = 'week-calendar';
 
     /**
      * Check, if slot is bookable.

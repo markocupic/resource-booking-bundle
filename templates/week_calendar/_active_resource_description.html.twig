@@ -1,0 +1,9 @@
+{% trans_default_domain "contao_default" %}
+
+{% block rbb_week_calendar_window__active_resource_description %}
+    <div v-if="activeResource.description" class="rbb-message-box mt-4">
+        <div class="rbb_week_calendar_window__active_resource_description alert alert-info d-flex pt-3 pb-3">
+            {{ rbb_icon('fa-info-circle','rbb-icon-2x me-3')|raw }}<span>[[ activeResource.description ]]</span>
+        </div>
+    </div>
+{% endblock %}

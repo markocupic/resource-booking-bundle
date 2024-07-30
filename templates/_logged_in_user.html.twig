@@ -1,0 +1,5 @@
+{% trans_default_domain "contao_default" %}
+
+{% block rbb_logged_in_user %}
+    <div v-if="hasLoggedInUser" class="rbb-logged-in-user-data mb-2"><strong>{{ ('RBB.loggedInAs')|trans }}:</strong> {{ insert_tag('user::firstname') }} {{ insert_tag('user::lastname') }}</div>
+{% endblock %}

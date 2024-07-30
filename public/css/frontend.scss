@@ -3,6 +3,7 @@ $bookableBg: rgba(115, 207, 97, 0.42);
 $fullyBookedBg: rgb(255, 222, 213);
 $bgColorAlertSuccess: $bookableBg;
 $bgColorAlertDanger: $fullyBookedBg;
+$fullyBookedButUnconfirmedBg: #ffd085;
 $loggedInUserIsHolderBg: rgba(3, 169, 244, 0.32);
 $iconBookingColor: #ffffff;
 $iconCancelBookingColor: #ffffff;
@@ -12,33 +13,31 @@ $transitionSpeed: .8s;
 
 .rbb-custom-scroll-bar-thin {
   & {
-    scrollbar-width: 5px;
-    scrollbar-color: #000000 #ffffff;
-  }
-
-  /* Chrome, Edge, and Safari */
-  &::-webkit-scrollbar {
-    width: 5px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: #ffffff;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background-color: #000000;
-    border-radius: 3px;
-    border: 1px solid #ffffff;
+    scrollbar-width: thin;
   }
 }
 
 .mod_resourceBookingWeekcalendar {
 
+  .rbb-opacity-0 {
+    opacity: 0;
+  }
+
+  .rbb-opacity-1 {
+    opacity: 1;
+  }
+
+  * {
+    transition-duration: 0.5s;
+    transition-property: opacity;
+    transition-timing-function: ease-in-out;
+  }
+
   .alert-danger {
     background-color: $bgColorAlertDanger;
     color: #000000;
 
-    .fa-solid, .svg-inline--fa {
+    .rbb-icon {
       color: #ffffff;
     }
   }
@@ -47,7 +46,7 @@ $transitionSpeed: .8s;
     background-color: $bgColorAlertSuccess;
     color: #000000;
 
-    .fa-solid, .svg-inline--fa {
+    .rbb-icon {
       color: #ffffff;
     }
   }
@@ -94,7 +93,7 @@ $transitionSpeed: .8s;
     }
   }
 
-  .rbb-booking-table-booking-form, .rbb-booking-table-main {
+  .rbb-booking-table-booking-form > .rbb-layout-box-inner, .rbb-booking-table-main {
     overflow-x: auto;
 
     * {
@@ -119,7 +118,26 @@ $transitionSpeed: .8s;
       &.rbb-time-slot-cell[data-isbooked="true"] {
         background-color: $bookableBg;
         overflow-y: auto;
-        @extend .rbb-custom-scroll-bar-thin;
+
+        & {
+          scrollbar-width: thin;
+          scrollbar-color: #000000 #ffffff;
+        }
+
+        /* Chrome, Edge, and Safari */
+        &::-webkit-scrollbar {
+          width: 5px;
+        }
+
+        &::-webkit-scrollbar-track {
+          background: #ffffff;
+        }
+
+        &::-webkit-scrollbar-thumb {
+          background-color: #000000;
+          border-radius: 3px;
+          border: 1px solid #ffffff;
+        }
       }
 
       &.rbb-time-slot-cell[data-isbookable="true"] {
@@ -132,6 +150,10 @@ $transitionSpeed: .8s;
 
       &.rbb-time-slot-cell[data-isfullybooked="true"] {
         background-color: $fullyBookedBg;
+      }
+
+      &.rbb-time-slot-cell[data-isfullybooked="true"]:has(.rbb-booked-item[data-confirmed="false"]) {
+        background-color: $fullyBookedButUnconfirmedBg;
       }
 
       &.rbb-cell-headline {
@@ -342,6 +364,46 @@ $transitionSpeed: .8s;
 
     .rbb-time-span-select option[selected] {
       background-color: #149efb;
+    }
+  }
+
+  // Icons
+  .rbb-icon {
+    font-size: 1em;
+    height: 1em;
+    overflow: visible;
+    box-sizing: content-box;
+  }
+
+  .rbb-icon-2x {
+    font-size: 2em !important;
+  }
+
+  .rbb-icon-3x {
+    font-size: 3em !important;
+  }
+
+  .rbb-icon-4x {
+    font-size: 4em !important;
+  }
+
+  .rbb-icon-5x {
+    font-size: 5em !important;
+  }
+
+  .rbb-icon-spin {
+    animation-name: rbb-icon-spin;
+    animation-duration: 2000ms;
+    animation-iteration-count: infinite;
+    animation-timing-function: linear;
+  }
+
+  @keyframes rbb-icon-spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
     }
   }
 

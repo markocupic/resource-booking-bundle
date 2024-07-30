@@ -1,9 +1,0 @@
-{% trans_default_domain "contao_default" %}
-
-<template v-if="bookingWindow.action === 'showBookingForm'">
-  {% include('@Contao_MarkocupicResourceBookingBundle/rbb_booking_partial.html.twig') %}
-</template>
-
-<template v-if="bookingWindow.action === 'showCancelBookingForm'">
-    {% include('@Contao_MarkocupicResourceBookingBundle/rbb_cancel_booking_partial.html.twig') %}
-</template>

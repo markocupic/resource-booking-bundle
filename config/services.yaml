@@ -4,6 +4,7 @@ services:
         autoconfigure: true
         public: true
         bind:
+            $projectDir: '%kernel.project_dir%'
             $bagName: '%markocupic_resource_booking.session.attribute_bag_name%'
             $contaoCsrfTokenManager: '@contao.csrf.token_manager'
 

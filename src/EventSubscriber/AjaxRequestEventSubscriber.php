@@ -52,7 +52,7 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-            AjaxRequestEvent::NAME => ['onXmlHttpRequest', self::PRIORITY],
+            AjaxRequestEvent::class => ['onXmlHttpRequest', self::PRIORITY],
         ];
     }
 

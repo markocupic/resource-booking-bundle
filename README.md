@@ -39,7 +39,7 @@ Nach der Installation mit dem Contao Manager müssen:
 
 Die Erweiterung wird mit einer Standardkonfiguration ausgeliefert. Weitere Konfigurationssets können erstellt werden. Mehr dazu weiter [unten](#app-konfiguration-anpassen).
 
-Das Tool setzt auf [vue.js](https://vuejs.org/), [Fontawesome](https://fontawesome.com/) und [Bootstrap](https://getbootstrap.com/) auf. Die benötigten Libraries/Frameworks werden automatisch mitinstalliert und im Template eingebunden.
+Das Tool setzt auf [vue.js](https://vuejs.org/) und [Bootstrap](https://getbootstrap.com/) auf. Die benötigten Libraries/Frameworks werden automatisch mitinstalliert und im Template eingebunden.
 
 Anm: Bei der Installation wird neben den oben erwähnten Erweiterungen auch [codefog/contao-haste](https://github.com/codefog/contao-haste) mitinstalliert.
 
@@ -63,17 +63,17 @@ Der ***rbb.event.pre_booking*** Event wird unmittelbar vor dem Datenbank-Insert 
 
 Der ***rbb.event.post_booking*** Event wird nach dem Buchungs-Request ausgelöst. Mit einer Event-Subscriber-Klasse, die auf den Event hört, können unmittelbar nach der Buchung Aktionen durchgeführt werden. Beispielsweise kann eine Benachrichtigung gesendet werden oder es können weitere Einträge in der Datenbank getätigt werden.
 
-Der ***rbb.event.pre_canceling*** Event wird unmittelbar vor dem Stornieren einer Buchung ausgelöst.
+Der ***rbb.event.pre_cancelling*** Event wird unmittelbar vor dem Stornieren einer Buchung ausgelöst.
 
-Der ***rbb.event.post_canceling*** Event wird unmittelbar nach dem Stornieren einer Buchung ausgelöst.
+Der ***rbb.event.post_cancelling*** Event wird unmittelbar nach dem Stornieren einer Buchung ausgelöst.
 
 ## Event Subscriber
-Mit event subscribern kann die Applikation an mehreren Stellen erweitert werden. Dazu muss eine Subscriber Klasse erstellt werden und diese registriert werden.
+Mit event subscribern/listeners kann die Applikation an mehreren Stellen erweitert werden. Dazu muss eine Subscriber/Listener Klasse erstellt werden.
 
 ```
 # Registrierung anhand des rbb.event.post_booking Events in listener.yml
 services:
-  App\EventSubscriber\PostBookingEventSubscriber:
+  App\EventSubscriber\BookingEventSubscriber:
     tags:
     - { name: kernel.event_subscriber }
 ```
@@ -89,17 +89,27 @@ namespace App\EventSubscriber;
 
 use Contao\Date;
 use Markocupic\ResourceBookingBundle\Event\PostBookingEvent;
+use Markocupic\ResourceBookingBundle\Event\PreBookingEvent;
+use Markocupic\ResourceBookingBundle\Exception\StopBookingProcessException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-final class PostBookingEventSubscriber implements EventSubscriberInterface
+final class BookingEventSubscriber implements EventSubscriberInterface
 {
    const priority = 10000;
 
    public static function getSubscribedEvents(): array
     {
         return [
+            PreBookingEvent::NAME => ['onPreBooking', self::PRIORITY],
             PostBookingEvent::NAME => ['onPostBooking', self::PRIORITY],
         ];
+    }
+
+    public function onPreBooking(PostBookingEvent $objPostBookingEvent): void
+    {
+       // E.g. do some checks
+       // Abort the booking process and throw a StopBookingProcessException.
+       throw new StopBookingProcessException('You are not old enough to book the room.');
     }
 
     public function onPostBooking(PostBookingEvent $objPostBookingEvent): void
@@ -128,6 +138,10 @@ final class PostBookingEventSubscriber implements EventSubscriberInterface
                 );
             }
         }
+
+       // ...
+       // or revert the booking and throw a StopBookingProcessException.
+       throw new StopBookingProcessException('You are not old enough to book the room.');
     }
 }
 
@@ -160,6 +174,7 @@ declare(strict_types=1);
 namespace App\EventSubscriber;
 
 use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
+use Markocupic\ResourceBookingBundle\Exception\StopBookingProcessException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -253,11 +268,14 @@ Dazu muss in config/config.yml ein Eintrag erstellt werden.
 # config/config.yml
 
 markocupic_resource_booking:
+    purge_old_bookings_with_cron: true
     apps:
         my_rbb_custom:
             beginnWeek: 'monday'
             intBackWeeks: -10
             intAheadWeeks: 60
+            autoConfirm: true
+            permittedUploadFields: [phone,email]
 ```
 
 

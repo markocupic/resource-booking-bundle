@@ -1,0 +1,28 @@
+{% trans_default_domain "contao_default" %}
+
+{% block rbb_booking_window__booking_form_inputs %}
+    <div class="rbb-layout-box rbb-booking-form-inputs col-12 col-xl-6">
+        <div class="rbb-layout-box-inner" :class="isBusy ? 'rbb-opacity-0' : 'rbb-opacity-1'">
+            <div class="form-group" v-if="parseInt(activeResource.itemsAvailable) > 1">
+                <label for="ctrlItemsBooked_{{ moduleKey }}">{{ ('RBB.formLegendItems')|trans }}</label>
+                <select class="rbb-ctrl-items-booked form-control" id="ctrlItemsBooked_{{ moduleKey }}" name="itemsBooked" @change="bookingFormValidationRequest()">
+                    <option :value="i" v-for="i in parseInt(activeResource.itemsAvailable)"> [[ i ]] {{ ('RBB.pieces')|trans }}</option>
+                </select>
+                <small class="rbb-items-booked-help rbb-input-help-text">{{ ('RBB.formHelpItems')|trans }}</small>
+            </div>
+
+            <div class="form-group mt-4">
+                <label for="ctrlBookingDescription_{{ moduleKey }}">{{ ('RBB.formLegendDescription')|trans }}</label>
+                <input class="rbb-ctrl-booking-description form-control" id="ctrlBookingDescription_{{ moduleKey }}" maxlength="50" name="bookingDescription" placeholder="Kurzbeschreibung eingeben" type="text">
+                <small class="rbb-booking-description-help rbb-input-help-text">{{ ('RBB.formHelpDescription')|trans }}</small>
+            </div>
+
+            <div class="form-group mt-4">
+                <label for="ctrlBookingRepeatStopWeekTstamp_{{ moduleKey }}">{{ ('RBB.formLegendRepetitions')|trans }}</label>
+                <select class="rbb-js-booking-repeat-stop-week-tstamp rbb-time-span-select form-control " id="ctrlBookingRepeatStopWeekTstamp_{{ moduleKey }}" name="bookingRepeatStopWeekTstamp" @change="bookingFormValidationRequest()">
+                    <option :value="row.tstamp" v-for="(row, rowIndex) in bookingRepeatsSelection">[[ row.optionText ]]</option>
+                </select>
+            </div>
+        </div>
+    </div>
+{% endblock %}

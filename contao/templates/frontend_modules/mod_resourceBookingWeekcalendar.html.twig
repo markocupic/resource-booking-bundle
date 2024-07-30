@@ -1,0 +1,128 @@
+{% trans_default_domain "contao_default" %}
+
+{% do addJavascriptResource('assets/contao-component-bootstrap/bootstrap/dist/js/bootstrap.bundle.min.js|static') %}
+{% do addJavascriptResource('bundles/markocupicresourcebooking/vuejs/vue.global.prod.js') %}
+{% do addJavascriptResource('bundles/markocupicresourcebooking/app.js') %}
+{% do addCssResource('assets/contao-component-bootstrap/bootstrap/dist/css/bootstrap.min.css') %}
+{% do addCssResource('bundles/markocupicresourcebooking/css/frontend.min.css|static') %}
+
+{% extends '@Contao/block_unsearchable' %}
+
+{# Partials for mode "week-calendar" and  mode "booking_window" #}
+{% use '@MarkocupicResourceBooking/_logged_in_user.html.twig' %}
+{% use '@MarkocupicResourceBooking/_loading_indicator.html.twig' %}
+{% use '@MarkocupicResourceBooking/_status_message.html.twig' %}
+{% use '@MarkocupicResourceBooking/_messages.html.twig' %}
+
+{# Partials for mode "week-calendar" #}
+{% use '@MarkocupicResourceBooking/week_calendar/_active_resource_description.html.twig' %}
+{% use '@MarkocupicResourceBooking/week_calendar/_filter_board.html.twig' %}
+{% use '@MarkocupicResourceBooking/week_calendar/_table.html.twig' %}
+{% use '@MarkocupicResourceBooking/week_calendar/_time_slot_cell.html.twig' %}
+
+{# Partials for mode "booking_window" #}
+{% use '@MarkocupicResourceBooking/booking_window/_main_booking.html.twig' %}
+{% use '@MarkocupicResourceBooking/booking_window/_main_cancel.html.twig' %}
+{% use '@MarkocupicResourceBooking/booking_window/_info_table.html.twig' %}
+{% use '@MarkocupicResourceBooking/booking_window/_booking_form_inputs.html.twig' %}
+
+{% block content %}
+    <div id="resourceBookingApp_{{ moduleKey }}" v-cloak>
+        <div class="rbb-app py-4" :class="isReady ? 'rbb-is-ready' : ''">
+            {{ block('rbb_logged_in_user') }}
+            {{ block('rbb_loading_indicator') }}
+            {{ block('rbb_status_message') }}
+
+            {# Start rbb_application_container #}
+            {% block rbb_application_container %}
+                <div class="rbb-vue-application">
+
+                    {# Start main window / mode === 'week-calendar' #}
+                    {% block rbb_week_calendar_window %}
+                        <div class="rbb-week-calendar" v-if="mode === 'week-calendar'">
+                            {{ block('rbb_week_calendar_window__active_resource_description') }}
+                            {{ block('rbb_week_calendar_window__filter_board') }}
+                            {% with {time_slot_cell: block('rbb_week_calendar_window__time_slot_cell')} %}
+                                {{ block('rbb_week_calendar_window__table') }}
+                            {% endwith %}
+                        </div>
+                    {% endblock %}
+                    {# End main window / mode === 'week-calendar' #}
+
+                    {# Start booking window mode === 'booking-window' #}
+                    {% block rbb_booking_window %}
+                        <div class="rbb-booking-window" v-if="mode === 'booking-window' && hasLoggedInUser">
+                            {# Start booking window #}
+                            <template v-if="bookingWindow.action === 'showBookingForm'">
+                                {% with {
+                                    messages: block('rbb_messages'),
+                                    info_table: block('rbb_booking_window__info_table'),
+                                    booking_form_inputs: block('rbb_booking_window__booking_form_inputs'),
+                                } %}
+                                    {{ block('rbb_booking_window__booking_form') }}
+                                {% endwith %}
+                            </template>
+                            {# End booking window #}
+
+                            {# Start cancel booking window #}
+                            <template v-if="bookingWindow.action === 'showCancelBookingForm'">
+                                {% with {
+                                    info_table: block('rbb_booking_window__info_table'),
+                                    messages: block('rbb_messages'),
+                                } %}
+                                    {{ block('rbb_booking_window__cancel_booking_form') }}
+                                {% endwith %}
+                            </template>
+                            {# End cancel booking window #}
+                        </div>
+                    {% endblock %}
+                    {# End booking window mode === 'booking-window' #}
+                </div>
+            {% endblock %}
+            {# End rbb_application_container #}
+        </div>
+    </div>
+
+    {% block rbb_initialization_script %}
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                new ResourceBookingApp('#resourceBookingApp_{{ moduleKey }}', {
+                    'requestToken': '{{ csrfToken }}',
+                    'moduleKey': '{{ moduleKey }}',
+                    'audio': {
+                        'notifyOnNewBookingsAudio': 'bundles/markocupicresourcebooking/audio/booking-alert.mp3'
+                    },
+                    'autocloseWindowsAfter': 5000,
+                    'enableAudio': true,
+                });
+            });
+            {#
+            // Make usage of event listeners to hook into the booking request
+            document.addEventListener('rbb_before_booking_request', (e) =>{
+                // Get the vue.js instance
+                const vueInstance = e.detail.instance
+
+                // Get the form data object
+                const formData = e.detail.formData;
+
+                // Do not fire the booking request
+                e.detail.blnSend = false;
+
+                // Display an error message
+                vueInstance.setMessage('error', 'Here comes the error message');
+            });
+
+            document.addEventListener('rbb_after_booking_request', (e) =>{
+               // Get the vue.js instance
+                const vueInstance = e.detail.instance
+
+                // Get the form data object
+                const formData = e.detail.formData;
+
+                // Do not fire the booking request
+                const response = e.detail.response;
+            });
+            #}
+        </script>
+    {% endblock %}
+{% endblock %}

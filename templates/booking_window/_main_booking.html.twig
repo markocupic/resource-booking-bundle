@@ -1,0 +1,99 @@
+{% trans_default_domain "contao_default" %}
+
+{% block rbb_booking_window__booking_form %}
+    {# Start header #}
+    <div class="rbb-booking-window-header bg-primary d-flex justify-content-between">
+        <h3 class="rbb-booking-window-header-title m-3" v-if="bookingWindow.action === 'showBookingForm'">
+            {{ ('RBB.book')|trans }}: [[ activeResource.title ]]
+        </h3>
+        <button class="rbb-close-window bg-primary" type="button" @click="hideBookingWindow" aria-label="Close" title="{{ ('RBB.close')|trans }}">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    {# End header #}
+
+    {{ info_table|raw }}
+
+    {{ messages|raw }}
+
+    {# Start booking preview #}
+    {% block rbb_booking_window__booking_form__booking_preview %}
+        <template v-if="bookingWindow.response.bookingValidationProcessSucceeded === false && isBusy === false">
+            {% block rbb_booking_window__booking_form__booking_preview_button %}
+                {# Start collapse button #}
+                <div class="mt-5">
+                    <button aria-controls="bookingPreview" aria-expanded="false" class="btn btn-sm btn-danger" data-bs-target="#bookingPreview_{{ moduleKey }}" data-bs-toggle="collapse" type="button">
+                        {{ ('RBB.showOccupiedResources')|trans }}
+                    </button>
+                </div>
+                {# End collapse button #}
+            {% endblock %}
+
+            {% block rbb_booking_window__booking_form__booking_preview_table %}
+                {# Start booking preview table #}
+                <div class="rbb-booking-preview-table rbb-layout-table collapse mt-5" id="bookingPreview_{{ moduleKey }}">
+                    <div class="rbb-layout-box-inner">
+                        <div class="d-flex" :class="!slot.isBookable ? 'not-bookable' : 'bookable'" v-for="(slot, index) in bookingWindow.response.slotSelection">
+                            <div class="rbb-layout-cell">
+                                <small>[[ slot.datimSpanString ]]: </small>
+                            </div>
+                            <div class="rbb-layout-cell">
+                                <span v-if="slot.invalidDate"><small>{{ ('RBB.ERR.invalidStartOrEndTime')|trans }}</small></span>
+                                <span v-else-if="!slot.enoughItemsAvailable"><small>{{ ('RBB.ERR.thisSlotHasNotEnoughItemsAvailable')|trans }}</small></span>
+                                <span v-else-if="slot.isFullyBooked"><small>{{ ('RBB.ERR.resourceIsAlreadyFullyBooked')|trans }}</small></span>
+                                <span v-else><small>{{ ('RBB.MSG.resourceAvailable')|trans }}</small></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {# End booking preview table #}
+            {% endblock %}
+        </template>
+    {% endblock %}
+    {# End booking preview #}
+
+    {# Start booking form #}
+    {% block rbb_booking_window__booking_form__form %}
+        <form v-if="!bookingWindow.response.bookingProcessSucceeded" class="rbb-booking-form rbb-js-booking-form mt-5" :class="isBusy ? 'rbb-opacity-0' : 'rbb-opacity-1'">
+            <div class="row gy-4 gx-4">
+                <!-- start booking table -->
+                <div class="rbb-layout-table rbb-booking-table-booking-form col-12 col-xl-6" v-if="rows.length > 0">
+                    <div class="rbb-layout-box-inner rbb-custom-scroll-bar-thin pt-3 pb-4">
+                        {# Start checkbox table #}
+                        <div class="d-flex">
+                            <div class="rbb-layout-cell rbb-cell-headline rbb-time-slot-indicator"><strong>{{ ('RBB.time')|trans }}</strong></div>
+                            <div class="rbb-layout-cell rbb-cell-headline" :data-day-index="weekday.index" v-for="(weekday, index) in weekdays"><strong>[[ weekday.titleShort ]]</strong></div>
+                        </div>
+                        <div class="d-flex" :class="row.rowData.cssRowClass" :data-row-index="rowIndex" v-for="(row, rowIndex) in rows">
+                            <div class="rbb-layout-cell rbb-time-slot-indicator">[[ timeSlots[rowIndex].timeSpanString ]]</div>
+                            <div class="rbb-layout-cell rbb-time-slot-cell" :data-day-index="slot.index" :data-isbookable="slot.isBookable && slot.isDateInPermittedRange" :data-isbooked="slot.hasBookings" :data-isfullybooked="slot.isFullyBooked" :data-isinvaliddate="!slot.isDateInPermittedRange" v-for="(slot, colIndex) in row.cellData">
+                                <div v-if="slot.isBookable && !slot.isFullyBooked">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" :id="slot.bookingCheckboxId" :value="slot.bookingCheckboxValue" v-model="bookingWindow.selectedTimeSlots" @change="bookingFormValidationRequest()">
+                                        <label class="form-check-label" :for="slot.bookingCheckboxId"></label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {# End checkbox table #}
+                    </div>
+                </div>
+                {{ booking_form_inputs|raw }}
+            </div>
+        </form>
+    {% endblock %}
+    {# End booking form #}
+
+    {# Start footer #}
+    {% block rbb_booking_window__booking_form__footer %}
+        <div class="rbb-booking-window-footer mt-5">
+            <button class="me-3 btn btn-primary" type="button" v-if="!bookingWindow.response.bookingProcessSucceeded" @click="bookingRequest">
+                {{ ('RBB.bookResource')|trans }}
+            </button>
+            <button class="btn btn-secondary" type="button" @click="hideBookingWindow">
+                {{ ('RBB.close')|trans }}
+            </button>
+        </div>
+    {% endblock %}
+    {# End footer #}
+{% endblock %}

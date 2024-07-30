@@ -18,8 +18,10 @@ use Contao\Controller;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\ModuleModel;
 use Contao\System;
+use Markocupic\ResourceBookingBundle\Exception\StopBookingProcessException;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionBagInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class Utils
 {
@@ -27,6 +29,7 @@ class Utils
 
     public function __construct(
         private readonly ContaoFramework $framework,
+        private readonly TranslatorInterface $translator,
         RequestStack $requestStack,
         string $bagName,
     ) {
@@ -50,7 +53,7 @@ class Utils
     /**
      * @throws \Exception
      */
-    public function checkMandatoryFieldsSet(array $arrData, string $strTable): bool|string
+    public function checkMandatoryFieldsSet(array $arrData, string $strTable): bool|array
     {
         $controllerAdapter = $this->framework->getAdapter(Controller::class);
         $controllerAdapter->loadDataContainer($strTable);
@@ -64,7 +67,7 @@ class Utils
         foreach ($dca as $fieldName => $fieldConfig) {
             if (isset($fieldConfig['eval']['mandatory']) && true === $fieldConfig['eval']['mandatory']) {
                 if (empty($arrData[$fieldName])) {
-                    return $strTable.'.'.$fieldName;
+                    return [$strTable,$fieldName];
                 }
             }
         }
