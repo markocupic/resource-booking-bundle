@@ -31,7 +31,7 @@ $GLOBALS['TL_LANG']['MSC']['DAYS_LONG']['sunday'] = 'Sunday';
 
 // Forms
 $GLOBALS['TL_LANG']['MSC']['weekSelectOptionText'] = 'KW %s/%s: %s - %s';
-$GLOBALS['TL_LANG']['MSC']['bookingFor'] = 'Booking for';
+$GLOBALS['TL_LANG']['MSC']['bookedBy'] = 'Booked by';
 $GLOBALS['TL_LANG']['RBB']['formLegendItems'] = 'Select items';
 $GLOBALS['TL_LANG']['RBB']['formHelpItems'] = 'Select items.';
 $GLOBALS['TL_LANG']['RBB']['formLegendDescription'] = 'Brief description';

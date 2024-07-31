@@ -148,7 +148,7 @@ trait BookingTrait
             $arrUserInput['title'] = sprintf(
                 '%s : %s %s %s [%s - %s]',
                 $this->getActiveResource()->title,
-                $this->translator->trans('MSC.bookingFor', [], 'contao_default'),
+                $this->translator->trans('MSC.bookedBy', [], 'contao_default'),
                 $this->user->getLoggedInUser()->firstname,
                 $this->user->getLoggedInUser()->lastname,
                 $dateAdapter->parse($configAdapter->get('datimFormat'), $slot->startTime),

@@ -24,10 +24,10 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 #[AsCronJob('daily')]
-class Cron
+class PurgePastBookingsCron
 {
     public function __construct(
-        #[Autowire('%markocupic_resource_booking.purge_old_bookings_with_cron%')]
+        #[Autowire('%markocupic_resource_booking.purge_past_bookings_with_cron%')]
         private readonly bool $purgeOldBookingsWithCron,
         private readonly ContaoFramework $framework,
         private readonly LoggerInterface $contaoCronLogger,
@@ -39,7 +39,7 @@ class Cron
      */
     public function __invoke(): void
     {
-        if(!$this->purgeOldBookingsWithCron){
+        if (!$this->purgeOldBookingsWithCron) {
             return;
         }
 

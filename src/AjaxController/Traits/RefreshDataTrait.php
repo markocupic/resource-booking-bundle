@@ -53,12 +53,13 @@ trait RefreshDataTrait
         // Load language file
         $systemAdapter->loadLanguageFile('default', $this->translator->getLocale());
 
-        // Messages
+        // Show message if no resource type is selected.
         if (null === $this->getActiveResourceTypeFromSession()) {
             $ajaxResponse->setInfoMessage($this->translator->trans('RBB.MSG.selectResourceTypePlease', [], 'contao_default'));
         }
 
-        if (null === $this->getActiveResourceFromSession()) {
+        // Show message if a resource type is selected but no resource is selected.
+        if (null !== $this->getActiveResourceTypeFromSession() && null === $this->getActiveResourceFromSession()) {
             $ajaxResponse->setInfoMessage($this->translator->trans('RBB.MSG.selectResourcePlease', [], 'contao_default'));
         }
 
@@ -347,7 +348,6 @@ trait RefreshDataTrait
     {
         $resourceBookingTimeSlotModelAdapter = $this->framework->getAdapter(ResourceBookingTimeSlotModel::class);
         $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
-        $strAdapter = $this->framework->getAdapter(Str::class);
         $memberModelAdapter = $this->framework->getAdapter(MemberModel::class);
 
         $rows = [];

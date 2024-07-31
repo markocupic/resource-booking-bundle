@@ -268,7 +268,7 @@ Dazu muss in config/config.yml ein Eintrag erstellt werden.
 # config/config.yml
 
 markocupic_resource_booking:
-    purge_old_bookings_with_cron: true
+    purge_past_bookings_with_cron: true
     apps:
         my_rbb_custom:
             beginnWeek: 'monday'

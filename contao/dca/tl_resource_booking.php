@@ -69,16 +69,22 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = [
         ],
     ],
     'palettes' => [
-        'default' => '{booking_legend},title,itemsBooked,member,bookingTime,bookingUuid,description,confirmed;{module_legend},moduleId;{time_legend},startTime,endTime',
+        'default' => '
+        {booking_legend},pid,title,itemsBooked,member,bookingTime,bookingUuid,description,confirmed;
+        {module_legend},moduleId;
+        {time_legend},startTime,endTime
+        ',
     ],
     'fields'   => [
         'id'          => [
             'sql' => 'int(11) unsigned NOT NULL auto_increment',
         ],
         'pid'         => [
+            'exclude'    => true,
             'foreignKey' => 'tl_resource_booking_resource.title',
             'relation'   => ['type' => 'belongsTo', 'load' => 'lazy'],
-            'eval'       => ['mandatory' => true],
+            'inputType'  => 'select',
+            'eval'       => ['readonly' => true, 'mandatory' => true, 'tl_class' => 'w50'],
             'sql'        => "int(11) unsigned NOT NULL default 0",
         ],
         'tstamp'      => [
@@ -173,12 +179,12 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = [
             'sql'       => ['type' => 'boolean', 'default' => true],
         ],
         'upcoming'    => [
-            'exclude' => true,
-            'sorting' => true,
-            'filter'  => true,
-            //'inputType' => 'checkbox',
-            'eval'    => ['tl_class' => 'clr'],
-            'sql'     => ['type' => 'boolean', 'default' => true],
+            'exclude'   => true,
+            'sorting'   => true,
+            'filter'    => true,
+            'inputType' => 'checkbox',
+            'eval'      => ['tl_class' => 'clr'],
+            'sql'       => ['type' => 'boolean', 'default' => true],
         ],
     ],
 ];

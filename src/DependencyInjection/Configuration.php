@@ -56,7 +56,7 @@ class Configuration implements ConfigurationInterface
                         ->end()
                     ->end()
                 ->end()
-                ->booleanNode('purge_old_bookings_with_cron')
+                ->booleanNode('purge_past_bookings_with_cron')
                     ->defaultFalse()
                 ->end()
                 ->append($this->addAppNode())

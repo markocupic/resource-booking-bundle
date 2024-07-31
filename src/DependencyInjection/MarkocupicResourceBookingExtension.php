@@ -40,7 +40,7 @@ class MarkocupicResourceBookingExtension extends Extension
         $container->setParameter('markocupic_resource_booking.session.attribute_bag_key', $config['session']['attribute_bag_key']);
         $container->setParameter('markocupic_resource_booking.session.flash_bag_key', $config['session']['flash_bag_key']);
         $container->setParameter('markocupic_resource_booking.cookie.name', $config['cookie']['name']);
-        $container->setParameter('markocupic_resource_booking.purge_old_bookings_with_cron', $config['purge_old_bookings_with_cron']);
+        $container->setParameter('markocupic_resource_booking.purge_past_bookings_with_cron', $config['purge_past_bookings_with_cron']);
         $container->setParameter('markocupic_resource_booking.apps', $config['apps']);
     }
 

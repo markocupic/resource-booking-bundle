@@ -31,7 +31,7 @@ $GLOBALS['TL_LANG']['MSC']['DAYS_LONG']['sunday'] = 'Sonntag';
 
 // Forms
 $GLOBALS['TL_LANG']['MSC']['weekSelectOptionText'] = 'KW %s/%s: %s - %s';
-$GLOBALS['TL_LANG']['MSC']['bookingFor'] = 'Buchung für';
+$GLOBALS['TL_LANG']['MSC']['bookedBy'] = 'Gebucht durch';
 $GLOBALS['TL_LANG']['RBB']['formLegendItems'] = 'Stückzahl auswählen';
 $GLOBALS['TL_LANG']['RBB']['formHelpItems'] = 'Wählen Sie die Stückzahl aus, die Sie buchen möchten.';
 $GLOBALS['TL_LANG']['RBB']['formLegendDescription'] = 'Kurzbeschreibung';
