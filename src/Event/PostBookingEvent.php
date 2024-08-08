@@ -22,6 +22,7 @@ use Symfony\Contracts\EventDispatcher\Event;
 
 class PostBookingEvent extends Event
 {
+
     private Collection|null $bookingCollection;
     private FrontendUser $user;
     private ArrayAttributeBag $sessionBag;

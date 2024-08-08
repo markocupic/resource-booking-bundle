@@ -15,8 +15,15 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\Cron;
 
 use Contao\CoreBundle\DependencyInjection\Attribute\AsCronJob;
+use Contao\CoreBundle\Framework\ContaoFramework;
+use Contao\Database;
+use Contao\Date;
+use Contao\ModuleModel;
+use Contao\System;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Types\Types;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 #[AsCronJob('minutely')]
 class MarkBookingsAsExpiredCron
