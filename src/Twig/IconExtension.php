@@ -41,8 +41,6 @@ class IconExtension extends AbstractExtension
      * {{ rbb_icon('fa-my-icon.svg')|raw }} // The default icon folder will be used
      * {{ rbb_icon('/absolute_path/to/my/icon/fa-my-icon.svg')|raw }} // Use the absolute path to your icon.
      *
-     * @param string $iconNameOrPath
-     *
      * @throws FilesystemException
      */
     public function generateIcon(string $iconNameOrPath, string $strClass = ''): string
@@ -62,8 +60,8 @@ class IconExtension extends AbstractExtension
             $iconPath = Path::join($dirname, $iconName);
         }
 
-        if(!is_file($iconPath)){
-            throw new \Exception(sprintf('Could not find icon "%s" in "%s".',$iconNameOrPath,$iconPath));
+        if (!is_file($iconPath)) {
+            throw new \Exception(sprintf('Could not find icon "%s" in "%s".', $iconNameOrPath, $iconPath));
         }
 
         $strXml = file_get_contents($iconPath);

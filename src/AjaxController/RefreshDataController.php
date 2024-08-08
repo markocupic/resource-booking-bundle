@@ -14,7 +14,6 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\AjaxController;
 
-use Contao\Message;
 use Markocupic\ResourceBookingBundle\AjaxController\Traits\RefreshDataTrait;
 use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;

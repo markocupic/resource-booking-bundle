@@ -244,8 +244,6 @@ final class BookingController extends AbstractController implements ControllerIn
                 $objBooking = new ResourceBookingModel();
             }
 
-
-
             // Add data to the model
             if (null !== $objBooking) {
                 foreach ($slot->dataBooking as $k => $v) {

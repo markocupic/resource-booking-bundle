@@ -176,7 +176,7 @@ final class CancelController extends AbstractController implements ControllerInt
                 $this->eventDispatcher->dispatch($objPostCancellingEvent);
             }
 
-            if(!$ajaxResponse->hasConfirmationMessage()){
+            if (!$ajaxResponse->hasConfirmationMessage()) {
                 if ('true' === $request->request->get('deleteBookingsWithSameBookingUuid')) {
                     $ajaxResponse->setConfirmationMessage(
                         $this->translator->trans(
@@ -195,8 +195,6 @@ final class CancelController extends AbstractController implements ControllerInt
                     );
                 }
             }
-
-
 
             $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
             $ajaxResponse->setData('cancelBookingProcessSucceeded', true);
