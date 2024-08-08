@@ -435,6 +435,7 @@ trait RefreshDataTrait
                                 // Send booking details (tl_resource_booking)
                                 $databaseAdapter = $this->framework->getAdapter(Database::class);
                                 $arrAvailable = $databaseAdapter->getInstance()->listFields('tl_resource_booking');
+                                $arrShowAlways = ['pid', 'itemsBooked', 'bookingTime', 'confirmed'];
 
                                 // However, only show the fields that have been permitted in the module settings (tl_module.resourceBooking_bookingSubmittedFields).
                                 if ($moduleModel->resourceBooking_setBookingSubmittedFields) {
@@ -443,7 +444,7 @@ trait RefreshDataTrait
                                     foreach ($arrAvailable as $arrField) {
                                         $field = $arrField['name'];
 
-                                        if (\in_array($field, $arrAllowed, true)) {
+                                        if (\in_array($field, $arrShowAlways, true) || \in_array($field, $arrAllowed, true)) {
                                             $objBooking->{'booking'.ucfirst((string) $field)} = $stringUtilAdapter->decodeEntities((string) $objBooking->$field);
                                         } else {
                                             $objBooking->{'booking'.ucfirst((string) $field)} = null;
@@ -453,8 +454,13 @@ trait RefreshDataTrait
                                 } else {
                                     foreach ($arrAvailable as $arrField) {
                                         $field = $arrField['name'];
-                                        $objBooking->{'booking'.ucfirst((string) $field)} = null;
-                                        $objBooking->{$field} = null;
+
+                                        if (\in_array($field, $arrShowAlways, true)) {
+                                            $objBooking->{'booking'.ucfirst((string) $field)} = $stringUtilAdapter->decodeEntities((string) $objBooking->$field);
+                                        } else {
+                                            $objBooking->{'booking'.ucfirst((string) $field)} = null;
+                                            $objBooking->{$field} = null;
+                                        }
                                     }
                                 }
 
