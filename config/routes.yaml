@@ -1,4 +1,0 @@
-# routes.yaml
-resource_booking:
-  resource: "../src/Controller"
-  type: annotation
