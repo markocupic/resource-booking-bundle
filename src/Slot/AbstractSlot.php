@@ -92,7 +92,7 @@ abstract class AbstractSlot implements SlotInterface
     /**
      * @throws \Exception
      */
-    public function create(ResourceBookingResourceModel $resource, int $startTime, int $endTime, int $desiredItems = 1, int $bookingRepeatStopWeekTstamp = null): SlotInterface
+    public function create(int $timeSlotId, ResourceBookingResourceModel $resource, int $startTime, int $endTime, int $desiredItems = 1, int $bookingRepeatStopWeekTstamp = null): SlotInterface
     {
         $dateAdapter = $this->framework->getAdapter(Date::class);
         $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
@@ -103,6 +103,7 @@ abstract class AbstractSlot implements SlotInterface
             $this->user = $memberModelAdapter->findByPk($this->security->getUser()->id);
         }
 
+        $this->arrData['timeSlotId'] = $timeSlotId;
         $this->arrData['userIsLoggedIn'] = (bool) $this->user;
         $this->arrData['resource'] = $resource;
         $this->arrData['startTime'] = $startTime;

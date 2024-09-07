@@ -18,5 +18,5 @@ use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 
 interface SlotInterface
 {
-    public function create(ResourceBookingResourceModel $resource, int $startTime, int $endTime, int $desiredItems = 1, int $bookingRepeatStopWeekTstamp = null): self;
+    public function create(int $timeSlotId, ResourceBookingResourceModel $resource, int $startTime, int $endTime, int $desiredItems = 1, int $bookingRepeatStopWeekTstamp = null): self;
 }

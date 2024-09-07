@@ -63,6 +63,9 @@ trait RefreshDataTrait
             $ajaxResponse->setInfoMessage($this->translator->trans('RBB.MSG.selectResourcePlease', [], 'contao_default'));
         }
 
+        // Get the module id
+        $arrData['moduleId'] = $this->getModuleModelFromSession()->id;
+
         // Filter form: get resource types dropdown
         $arrData['filterBoard']['resourceTypes'] = $this->getResourceTypeSelectOptions($this->getModuleModelFromSession());
 
@@ -280,12 +283,12 @@ trait RefreshDataTrait
         $timeSlots = [];
 
         if (null !== $resourceBookingResourceModel) {
-            $objTimeslots = $resourceBookingTimeSlotModelAdapter->findPublishedByPid((int) $resourceBookingResourceModel->timeSlotType);
+            $objTimeslot = $resourceBookingTimeSlotModelAdapter->findPublishedByPid((int) $resourceBookingResourceModel->timeSlotType);
 
-            if (null !== $objTimeslots) {
-                while ($objTimeslots->next()) {
+            if (null !== $objTimeslot) {
+                while ($objTimeslot->next()) {
                     // Get the CSS ID
-                    $arrCssCellID = $stringUtilAdapter->deserialize($objTimeslots->cssID, true);
+                    $arrCssCellID = $stringUtilAdapter->deserialize($objTimeslot->cssID, true);
 
                     // Override the CSS ID
                     $cssCellClass = null;
@@ -293,8 +296,8 @@ trait RefreshDataTrait
                     if (!empty($arrCssCellID[1])) {
                         $cssCellClass = $arrCssCellID[1];
                     }
-                    $startTime = (int) $objTimeslots->startTime;
-                    $endTime = (int) $objTimeslots->endTime;
+                    $startTime = (int) $objTimeslot->startTime;
+                    $endTime = (int) $objTimeslot->endTime;
                     $objTs = new \stdClass();
                     $objTs->cssClass = $cssCellClass;
                     $objTs->startTimeString = $utcTimeHelperAdapter->parse('H:i', $startTime);
@@ -356,19 +359,19 @@ trait RefreshDataTrait
             return $rows;
         }
 
-        $objTimeslots = $resourceBookingTimeSlotModelAdapter->findPublishedByPid((int) $resourceModel->timeSlotType);
+        $objTimeslot = $resourceBookingTimeSlotModelAdapter->findPublishedByPid((int) $resourceModel->timeSlotType);
         $rowCount = 0;
 
-        if (null !== $objTimeslots) {
-            while ($objTimeslots->next()) {
+        if (null !== $objTimeslot) {
+            while ($objTimeslot->next()) {
                 $cells = [];
                 $objRow = new \stdClass();
 
-                $cssRowId = sprintf('timeSlotModId_%s_%s', $moduleModel->id, $objTimeslots->id);
-                $cssRowClass = 'rbb-time-slot-'.$objTimeslots->id;
+                $cssRowId = sprintf('timeSlotModId_%s_%s', $moduleModel->id, $objTimeslot->id);
+                $cssRowClass = 'rbb-time-slot-'.$objTimeslot->id;
 
                 // Get the CSS ID
-                $arrCssCellID = $stringUtilAdapter->deserialize($objTimeslots->cssID, true);
+                $arrCssCellID = $stringUtilAdapter->deserialize($objTimeslot->cssID, true);
 
                 // Override the CSS ID
                 if (!empty($arrCssCellID[0])) {
@@ -384,13 +387,13 @@ trait RefreshDataTrait
                         continue;
                     }
 
-                    $startTime = strtotime(sprintf('+%s day', $colCount), $activeWeekTstamp) + $objTimeslots->startTime;
-                    $endTime = strtotime(sprintf('+%s day', $colCount), $activeWeekTstamp) + $objTimeslots->endTime;
+                    $startTime = strtotime(sprintf('+%s day', $colCount), $activeWeekTstamp) + $objTimeslot->startTime;
+                    $endTime = strtotime(sprintf('+%s day', $colCount), $activeWeekTstamp) + $objTimeslot->endTime;
 
                     /** @var SlotMain $slot */
-                    $slot = $this->slotFactory->get(SlotMain::MODE, $resourceModel, $startTime, $endTime);
+                    $slot = $this->slotFactory->get($objTimeslot->id,SlotMain::MODE, $resourceModel, $startTime, $endTime);
                     $slot->index = $colCount;
-                    $slot->bookingCheckboxValue = sprintf('%s-%s-%s-%s', $objTimeslots->id, $startTime, $endTime, $activeWeekTstamp);
+                    $slot->bookingCheckboxValue = sprintf('%s-%s-%s-%s', $objTimeslot->id, $startTime, $endTime, $activeWeekTstamp);
                     $slot->bookingCheckboxId = sprintf('bookingCheckbox_modId_%s_%s_%s', $moduleModel->id, $rowCount, $colCount);
 
                     if ($slot->hasBookings) {

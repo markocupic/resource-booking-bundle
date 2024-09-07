@@ -32,18 +32,18 @@ class SlotFactory
     /**
      * @throws \Exception
      */
-    public function get(string $mode, ResourceBookingResourceModel $resource, int $startTime, int $endTime, int $desiredItems = 1, int $bookingRepeatStopWeekTstamp = null): SlotInterface
+    public function get(int $timeSlotId, string $mode, ResourceBookingResourceModel $resource, int $startTime, int $endTime, int $desiredItems = 1, int $bookingRepeatStopWeekTstamp = null): SlotInterface
     {
         if (SlotMain::MODE === $mode) {
             $slotEntity = new SlotMain($this->framework, $this->security, $this->utils);
 
-            return $slotEntity->create($resource, $startTime, $endTime, $desiredItems, $bookingRepeatStopWeekTstamp);
+            return $slotEntity->create($timeSlotId, $resource, $startTime, $endTime, $desiredItems, $bookingRepeatStopWeekTstamp);
         }
 
         if (SlotBooking::MODE === $mode) {
             $slotEntity = new SlotBooking($this->framework, $this->security, $this->utils);
 
-            return $slotEntity->create($resource, $startTime, $endTime, $desiredItems, $bookingRepeatStopWeekTstamp);
+            return $slotEntity->create($timeSlotId, $resource, $startTime, $endTime, $desiredItems, $bookingRepeatStopWeekTstamp);
         }
 
         throw new LogicException(sprintf('Variable $mode should either be "%s" or "%s" "%s" given.', SlotMain::MODE, SlotBooking::MODE, $mode));

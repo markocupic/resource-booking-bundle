@@ -741,6 +741,7 @@ if (typeof ResourceBookingApp !== 'function') {
             });
 
             app.config.compilerOptions.delimiters = ['[[ ', ' ]]'];
+            app.config.globalProperties.window = window;
             app.mount(elId);
         }
     }

@@ -72,6 +72,7 @@ trait BookingTrait
 
                 /** @var SlotMain $slot Create new booking entity */
                 $slot = $this->slotFactory->get(
+                    $timeSlotId,
                     SlotBooking::MODE,
                     $resource,
                     $startTime,
@@ -94,6 +95,7 @@ trait BookingTrait
 
                         /** @var SlotMain $slot Create new booking entity */
                         $slot = $this->slotFactory->get(
+                            $timeSlotId,
                             SlotBooking::MODE,
                             $resource,
                             $startTime,
@@ -101,7 +103,6 @@ trait BookingTrait
                             $itemsBooked,
                             $this->bookingRepeatStopWeekTstamp
                         );
-                        $slot->timeSlotId = $timeSlotId;
 
                         $arrSlotCollection[] = $slot;
 
