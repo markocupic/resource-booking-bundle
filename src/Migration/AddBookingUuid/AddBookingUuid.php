@@ -7,38 +7,38 @@ declare(strict_types=1);
  *
  * (c) Marko Cupic 2021 <m.cupic@gmx.ch>
  * @license MIT
+ * For the full copyright and license information,
+ * please view the LICENSE file that was distributed with this source code.
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
 namespace Markocupic\ResourceBookingBundle\Migration\AddBookingUuid;
 
+use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Migration\AbstractMigration;
 use Contao\CoreBundle\Migration\MigrationResult;
 use Contao\Database;
 use Contao\StringUtil;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Exception;
 
-/**
- * Class AddBookingUuid.
- */
 class AddBookingUuid extends AbstractMigration
 {
-    /**
-     * @var Connection
-     */
-    private $connection;
+    private ContaoFramework $framework;
+    private Connection $connection;
 
-    /**
-     * AddBookingUuid constructor.
-     */
-    public function __construct(Connection $connection)
+    public function __construct(ContaoFramework $framework, Connection $connection)
     {
+        $this->framework = $framework;
         $this->connection = $connection;
     }
 
+    /**
+     * @throws Exception
+     */
     public function shouldRun(): bool
     {
-        $schemaManager = $this->connection->getSchemaManager();
+        $schemaManager = $this->connection->createSchemaManager();
 
         // If the database table itself does not exist we should do nothing
         if (!$schemaManager->tablesExist(['tl_resource_booking'])) {
@@ -48,9 +48,9 @@ class AddBookingUuid extends AbstractMigration
         $columns = $schemaManager->listTableColumns('tl_resource_booking');
 
         if (isset($columns['bookinguuid'])) {
-            $objDb = Database::getInstance()->prepare('SELECT * FROM tl_resource_booking WHERE bookingUuid=?')->execute('');
+            $result = $this->connection->fetchOne('SELECT * FROM tl_resource_booking WHERE bookingUuid = ?', ['']);
 
-            if ($objDb->numRows) {
+            if ($result) {
                 // Add booking uuid
                 return true;
             }
@@ -59,6 +59,9 @@ class AddBookingUuid extends AbstractMigration
         return false;
     }
 
+    /**
+     * @throws Exception
+     */
     public function run(): MigrationResult
     {
         // Add booking uuid if there is none
@@ -72,16 +75,20 @@ class AddBookingUuid extends AbstractMigration
 
     /**
      * Add booking uuid if there is none.
+     *
+     * @throws Exception
      */
     private function addBookingUuid(): void
     {
-        $objDb = Database::getInstance()->prepare('SELECT * FROM tl_resource_booking WHERE bookingUuid=?')->execute('');
+        $this->framework->initialize();
+        $arrIds = $this->connection->fetchFirstColumn('SELECT id FROM tl_resource_booking WHERE bookingUuid = ?', ['']);
 
-        while ($objDb->next()) {
+        foreach ($arrIds as $id) {
             $set = [
                 'bookingUuid' => StringUtil::binToUuid(Database::getInstance()->getUuid()),
             ];
-            Database::getInstance()->prepare('UPDATE tl_resource_booking %s WHERE id=?')->set($set)->execute($objDb->id);
+
+            $this->connection->update('tl_resource_booking', $set, ['id' => $id]);
         }
     }
 }
