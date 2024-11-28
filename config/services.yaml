@@ -4,8 +4,9 @@ services:
         autoconfigure: true
         public: true
         bind:
-            $projectDir: '%kernel.project_dir%'
             $bagName: '%markocupic_resource_booking.session.attribute_bag_name%'
+            $projectDir: '%kernel.project_dir%'
+            $purgeOldBookingsWithCron: '%markocupic_resource_booking.purge_past_bookings_with_cron%'
             $contaoCsrfTokenManager: '@contao.csrf.token_manager'
 
     Markocupic\ResourceBookingBundle\:

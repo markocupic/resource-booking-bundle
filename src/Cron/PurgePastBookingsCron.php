@@ -21,13 +21,11 @@ use Contao\Date;
 use Contao\ModuleModel;
 use Contao\System;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 #[AsCronJob('daily')]
 class PurgePastBookingsCron
 {
     public function __construct(
-        #[Autowire('%markocupic_resource_booking.purge_past_bookings_with_cron%')]
         private readonly bool $purgeOldBookingsWithCron,
         private readonly ContaoFramework $framework,
         private readonly LoggerInterface $contaoCronLogger,
