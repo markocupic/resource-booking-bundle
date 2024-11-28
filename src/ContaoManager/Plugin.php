@@ -24,6 +24,7 @@ use Markocupic\ResourceBookingBundle\MarkocupicResourceBookingBundle;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\Config\Loader\LoaderResolverInterface;
 use Symfony\Component\HttpKernel\KernelInterface;
+use Symfony\Component\Routing\RouteCollection;
 
 class Plugin implements ConfigPluginInterface, BundlePluginInterface, RoutingPluginInterface
 {
@@ -47,13 +48,15 @@ class Plugin implements ConfigPluginInterface, BundlePluginInterface, RoutingPlu
     }
 
     /**
-     * {@inheritdoc}
+     * @throws \Exception
+     *
+     * @return RouteCollection|null
      */
     public function getRouteCollection(LoaderResolverInterface $resolver, KernelInterface $kernel)
     {
         return $resolver
-            ->resolve(__DIR__.'/../../config/routes.yaml')
-            ->load(__DIR__.'/../../config/routes.yaml')
-        ;
+            ->resolve(__DIR__.'/../Controller')
+            ->load(__DIR__.'/../Controller')
+            ;
     }
 }
