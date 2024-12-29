@@ -15,29 +15,43 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\Slot;
 
 /**
- * Use SlotFactory to create Slot instance.
+ * Use SlotFactory to create a new Slot instance.
  */
 class SlotBooking extends AbstractSlot
 {
     public const MODE = 'booking-window';
 
+    public function setTimeSlotId(int $id): AbstractSlot
+    {
+        $this->arrData['timeSlotId'] = $id;
+
+        return $this;
+    }
+
     /**
-     * Check, if slot is bookable.
+     * Check, if the slot is bookable.
      */
     public function isBookable(): bool
     {
         $itemsBooked = 0;
 
-        if (null !== ($objBookings = $this->getBookings())) {
-            while ($objBookings->next()) {
-                if ($this->user && (int) $this->user->id === (int) $objBookings->member) {
-                    continue;
-                }
-                $itemsBooked += (int) $objBookings->itemsBooked;
+        $iterator = (new \ArrayObject($this->getBookings()))->getIterator();
+
+        while ($iterator->valid()) {
+            $booking = $iterator->current();
+
+            if ($this->user && (int) $this->user->id === (int) $booking['member'] ?? -1) {
+                $iterator->next();
+
+                continue;
             }
+
+            $itemsBooked += (int) $booking['itemsBooked'];
+
+            $iterator->next();
         }
 
-        if ((int) $this->arrData['resource']->itemsAvailable >= $itemsBooked + $this->arrData['itemsBooked']) {
+        if ((int) $this->arrData['resource']['itemsAvailable'] >= $itemsBooked + $this->arrData['itemsBooked']) {
             return true;
         }
 

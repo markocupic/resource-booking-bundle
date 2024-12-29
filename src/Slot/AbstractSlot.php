@@ -19,7 +19,6 @@ use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Date;
 use Contao\FrontendUser;
 use Contao\MemberModel;
-use Contao\Model;
 use Contao\Model\Collection;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
@@ -47,7 +46,7 @@ use Symfony\Component\Security\Core\Security;
  * @property bool                              $isCancelable
  * @property bool                              $hasEnoughItemsAvailable
  * @property bool                              $userHasBooked
- * @property ResourceBookingModel|null         $bookingRelatedToLoggedInUser
+ * @property array|null                        $bookingRelatedToLoggedInUser
  * @property int                               $timeSlotId
  * @property ResourceBookingResourceModel|null $resource
  * @property int                               $pid
@@ -76,11 +75,6 @@ abstract class AbstractSlot implements SlotInterface
     ) {
     }
 
-    public function __set(string $strKey, mixed $value): void
-    {
-        $this->arrData[$strKey] = $value;
-    }
-
     /**
      * @return mixed|null
      */
@@ -105,7 +99,7 @@ abstract class AbstractSlot implements SlotInterface
 
         $this->arrData['timeSlotId'] = $timeSlotId;
         $this->arrData['userIsLoggedIn'] = (bool) $this->user;
-        $this->arrData['resource'] = $resource;
+        $this->arrData['resource'] = $resource->row();
         $this->arrData['startTime'] = $startTime;
         $this->arrData['endTime'] = $endTime;
         $this->arrData['itemsBooked'] = $desiredItems;
@@ -143,119 +137,15 @@ abstract class AbstractSlot implements SlotInterface
         return $this;
     }
 
-    public function hasBookings(): bool
-    {
-        return null !== $this->getBookings();
-    }
-
-    public function getBookings(): Collection|null
-    {
-        /** @var ResourceBookingModel $resourceBookingModelAdapter */
-        $resourceBookingModelAdapter = $this->framework->getAdapter(ResourceBookingModel::class);
-
-        return $resourceBookingModelAdapter
-            ->findByResourceStartTimeAndEndTime(
-                $this->arrData['resource'],
-                (int) $this->arrData['startTime'],
-                (int) $this->arrData['endTime']
-            )
-        ;
-    }
-
-    public function getBookingCount(): int
-    {
-        if (!$this->hasBookings()) {
-            return 0;
-        }
-
-        return $this->getBookings()->count();
-    }
-
-    public function isBookedByUser(): bool
-    {
-        if (null !== ($objBookings = $this->getBookings())) {
-            while ($objBookings->next()) {
-                if ($this->user && (int) $this->user->id === (int) $objBookings->member) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    public function enoughItemsAvailable(): bool
-    {
-        $count = 0;
-
-        if (null !== ($objBookings = $this->getBookings())) {
-            while ($objBookings->next()) {
-                if ($this->user && (int) $this->user->id === (int) $objBookings->member) {
-                    continue;
-                }
-                $count += (int) $objBookings->itemsBooked;
-            }
-        }
-
-        if ($count + $this->arrData['itemsBooked'] > (int) $this->resource->itemsAvailable) {
-            return false;
-        }
-
-        return true;
-    }
-
-    public function getItemsAvailable(): int
-    {
-        $count = 0;
-
-        if (null !== ($objBookings = $this->getBookings())) {
-            while ($objBookings->next()) {
-                $count += (int) $objBookings->itemsBooked;
-            }
-        }
-
-        return (int) $this->resource->itemsAvailable - $count;
-    }
-
-    public function isFullyBooked(): bool
-    {
-        $count = 0;
-
-        if (null !== ($objBookings = $this->getBookings())) {
-            while ($objBookings->next()) {
-                $count += (int) $objBookings->itemsBooked;
-            }
-        }
-
-        if ($count >= (int) $this->resource->itemsAvailable) {
-            return true;
-        }
-
-        return false;
-    }
-
-    public function getBookingRelatedToLoggedInUser(): Model|null
-    {
-        if (!$this->isBookedByUser()) {
-            return null;
-        }
-
-        if (null !== ($objBookings = $this->getBookings())) {
-            while ($objBookings->next()) {
-                if ($this->user && (int) $this->user->id === (int) $objBookings->member) {
-                    return $objBookings->current();
-                }
-            }
-        }
-
-        return null;
-    }
-
     /**
      * @throws \Exception
      */
     public function isDateInPermittedRange(): bool
     {
+        if (isset($this->arrData['isDateInPermittedRange'])) {
+            return $this->arrData['isDateInPermittedRange'];
+        }
+
         if ($this->arrData['endTime'] < time()) {
             return false;
         }
@@ -273,20 +163,182 @@ abstract class AbstractSlot implements SlotInterface
         return true;
     }
 
-    public function row(): array
+    public function enoughItemsAvailable(): bool
     {
-        $arrReturn = [];
-
-        foreach ($this->arrData as $k => $v) {
-            if ($v instanceof Model) {
-                $v = $v->row();
-            } elseif ($v instanceof Collection) {
-                $v = $v->fetchAll();
-            }
-            $arrReturn[$k] = $v;
+        if (isset($this->arrData['enoughItemsAvailable'])) {
+            return $this->arrData['enoughItemsAvailable'];
         }
 
-        return $arrReturn;
+        $itemsBooked = 0;
+
+        $iterator = (new \ArrayObject($this->getBookings()))->getIterator();
+
+        while ($iterator->valid()) {
+            $booking = $iterator->current();
+
+            if ($this->user && (int) $this->user->id === (int) $booking['member'] ?? -1) {
+                $iterator->next();
+
+                continue;
+            }
+
+            $itemsBooked += (int) $booking['itemsBooked'] ?? 1;
+
+            $iterator->next();
+        }
+
+        if ($itemsBooked + $this->arrData['itemsBooked'] > (int) $this->resource['itemsAvailable']) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public function setBookings(array $data): void
+    {
+        $this->arrData['bookings'] = $data;
+    }
+
+    public function getBookings(): array
+    {
+        if (isset($this->arrData['bookings'])) {
+            return $this->arrData['bookings'];
+        }
+
+        $resourceBookingModelAdapter = $this->framework->getAdapter(ResourceBookingModel::class);
+        $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
+
+        $bookings = $resourceBookingModelAdapter
+            ->findByResourceStartTimeAndEndTime(
+                $resourceBookingResourceModelAdapter->findByPk($this->arrData['resource']['id']),
+                (int) $this->arrData['startTime'],
+                (int) $this->arrData['endTime']
+            )
+        ;
+
+        $arrBookings = [];
+
+        if (null !== $bookings) {
+            while ($bookings->next()) {
+                $arrBookings[] = $bookings->row();
+            }
+        }
+
+        $this->arrData['bookings'] = $arrBookings;
+
+        return $this->arrData['bookings'];
+    }
+
+    public function getItemsAvailable(): int
+    {
+        if (isset($this->arrData['itemsStillAvailable'])) {
+            return $this->arrData['itemsStillAvailable'];
+        }
+
+        $itemsBooked = 0;
+
+        $iterator = (new \ArrayObject($this->getBookings()))->getIterator();
+
+        while ($iterator->valid()) {
+            $booking = $iterator->current();
+
+            $itemsBooked += (int) $booking['itemsBooked'] ?? 1;
+
+            $iterator->next();
+        }
+
+        return (int) $this->resource['itemsAvailable'] - $itemsBooked;
+    }
+
+    public function isFullyBooked(): bool
+    {
+        if (isset($this->arrData['isFullyBooked'])) {
+            return $this->arrData['isFullyBooked'];
+        }
+
+        $itemsBooked = 0;
+
+        $iterator = (new \ArrayObject($this->getBookings()))->getIterator();
+
+        while ($iterator->valid()) {
+            $booking = $iterator->current();
+
+            $itemsBooked += (int) $booking['itemsBooked'] ?? 1;
+
+            $iterator->next();
+        }
+
+        if ($itemsBooked >= (int) $this->resource['itemsAvailable']) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function hasBookings(): bool
+    {
+        return !empty($this->getBookings());
+    }
+
+    public function getBookingCount(): int
+    {
+        if (isset($this->arrData['bookingCount'])) {
+            return $this->arrData['bookingCount'];
+        }
+
+        if (!$this->hasBookings()) {
+            return 0;
+        }
+
+        return \count($this->getBookings());
+    }
+
+    public function isBookedByUser(): bool
+    {
+        if (isset($this->arrData['userHasBooked'])) {
+            return $this->arrData['userHasBooked'];
+        }
+
+        $iterator = (new \ArrayObject($this->getBookings()))->getIterator();
+
+        while ($iterator->valid()) {
+            $booking = $iterator->current();
+
+            if ($this->user && (int) $this->user->id === (int) $booking['member'] ?? -1) {
+                return true;
+            }
+
+            $iterator->next();
+        }
+
+        return false;
+    }
+
+    public function getBookingRelatedToLoggedInUser(): array|null
+    {
+        if (isset($this->arrData['bookingRelatedToLoggedInUser'])) {
+            return $this->arrData['bookingRelatedToLoggedInUser'];
+        }
+
+        if (!$this->isBookedByUser()) {
+            return null;
+        }
+
+        $iterator = (new \ArrayObject($this->getBookings()))->getIterator();
+
+        while ($iterator->valid()) {
+            $booking = $iterator->current();
+
+            if ($this->user && (int) $this->user->id === (int) $booking['member'] ?? -1) {
+                $resourceBookingModelAdapter = $this->framework->getAdapter(ResourceBookingModel::class);
+
+                return $resourceBookingModelAdapter->findByPk($booking['id'])->row();
+            }
+
+            $iterator->next();
+        }
+
+        return null;
     }
 
     /**
@@ -294,9 +346,13 @@ abstract class AbstractSlot implements SlotInterface
      */
     public function isCancelable(): bool
     {
-        $bookings = $this->getBookings();
+        if (isset($this->arrData['isCancelable']) && \is_bool($this->arrData['isCancelable'])) {
+            return $this->arrData['isCancelable'];
+        }
 
-        if (null === $bookings) {
+        $arrBookings = $this->getBookings();
+
+        if (empty($arrBookings)) {
             return false;
         }
 
@@ -308,16 +364,30 @@ abstract class AbstractSlot implements SlotInterface
             return false;
         }
 
-        while ($bookings->next()) {
-            if ((int) $this->user->id === (int) $bookings->member) {
-                $bookings->reset();
+        $iterator = (new \ArrayObject($this->getBookings()))->getIterator();
 
+        while ($iterator->valid()) {
+            $booking = $iterator->current();
+
+            if ($this->user && (int) $this->user->id === (int) $booking['member'] ?? -1) {
                 return true;
             }
+
+            $iterator->next();
         }
 
-        $bookings->reset();
-
         return false;
+    }
+
+    public function setBookingData(array $arrData): self
+    {
+        $this->arrData['dataBooking'] = $arrData;
+
+        return $this;
+    }
+
+    public function row(): array
+    {
+        return $this->arrData;
     }
 }

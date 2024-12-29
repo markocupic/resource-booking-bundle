@@ -70,7 +70,7 @@ trait BookingTrait
                 $startTime = (int) $arrTimeSlot[1];
                 $endTime = (int) $arrTimeSlot[2];
 
-                /** @var SlotMain $slot Create new booking entity */
+                /** @var SlotBooking $slot Create new booking entity */
                 $slot = $this->slotFactory->get(
                     $timeSlotId,
                     SlotBooking::MODE,
@@ -81,7 +81,7 @@ trait BookingTrait
                     $this->bookingRepeatStopWeekTstamp
                 );
 
-                $slot->timeSlotId = $timeSlotId;
+                $slot->setTimeSlotId($timeSlotId);
 
                 $arrSlotCollection[] = $slot;
 
@@ -156,7 +156,7 @@ trait BookingTrait
                 $dateAdapter->parse($configAdapter->get('datimFormat'), $slot->endTime)
             );
 
-            $slotCollection->dataBooking = $arrUserInput;
+            $slotCollection->current()->setBookingData($arrUserInput);
         }
 
         return $slotCollection;

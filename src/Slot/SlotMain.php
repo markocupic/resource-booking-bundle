@@ -21,6 +21,27 @@ class SlotMain extends AbstractSlot
 {
     public const MODE = 'week-calendar';
 
+    public function setIndex(int $index): AbstractSlot
+    {
+        $this->arrData['index'] = $index;
+
+        return $this;
+    }
+
+    public function setBookingCheckboxId(string $value): AbstractSlot
+    {
+        $this->arrData['bookingCheckboxId'] = $value;
+
+        return $this;
+    }
+
+    public function setBookingCheckboxValue(string $value): AbstractSlot
+    {
+        $this->arrData['bookingCheckboxValue'] = $value;
+
+        return $this;
+    }
+
     /**
      * Check, if slot is bookable.
      *
@@ -34,16 +55,23 @@ class SlotMain extends AbstractSlot
 
         $itemsBooked = 0;
 
-        if (null !== ($objBookings = $this->getBookings())) {
-            while ($objBookings->next()) {
-                if ($this->user && (int) $this->user->id === (int) $objBookings->member) {
-                    continue;
-                }
-                $itemsBooked += (int) $objBookings->itemsBooked;
+        $iterator = (new \ArrayObject($this->getBookings()))->getIterator();
+
+        while ($iterator->valid()) {
+            $booking = $iterator->current();
+
+            if ($this->user && (int) $this->user->id === (int) $booking['member'] ?? -1) {
+                $iterator->next();
+
+                continue;
             }
+
+            $itemsBooked += (int) $booking['itemsBooked'] ?? 1;
+
+            $iterator->next();
         }
 
-        if ((int) $this->arrData['resource']->itemsAvailable > $itemsBooked) {
+        if ((int) $this->arrData['resource']['itemsAvailable'] > $itemsBooked) {
             return true;
         }
 

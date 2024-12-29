@@ -139,11 +139,11 @@ trait RefreshDataTrait
 
     private function getResourceTypeSelectOptions(ModuleModel $objModule = null): array
     {
-        /** @var ResourceBookingResourceTypeModel $resourceBookingResourceTypeModelAdapter */
         $resourceBookingResourceTypeModelAdapter = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class);
+        $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
 
         $rows = [];
-        $arrIds = StringUtil::deserialize($objModule->resourceBooking_resourceTypes, true);
+        $arrIds = $stringUtilAdapter->deserialize($objModule->resourceBooking_resourceTypes, true);
 
         if (null !== ($objResourceTypes = $resourceBookingResourceTypeModelAdapter->findPublishedByIds($arrIds))) {
             while ($objResourceTypes->next()) {
@@ -156,7 +156,6 @@ trait RefreshDataTrait
 
     private function getResourceSelectOptions(ResourceBookingResourceTypeModel $resType = null): array
     {
-        /** @var ResourceBookingResourceModel $resourceBookingResourceModelAdapter */
         $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
 
         $rows = [];
@@ -175,13 +174,8 @@ trait RefreshDataTrait
      */
     private function getWeekSelection(int $startTstamp, int $endTstamp, bool $injectEmptyLine = false): array
     {
-        /** @var System $systemAdapter */
         $systemAdapter = $this->framework->getAdapter(System::class);
-
-        /** @var DateHelper $dateHelperAdapter */
         $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
-
-        /** @var Date $dateAdapter */
         $dateAdapter = $this->framework->getAdapter(Date::class);
 
         // Load language file
@@ -245,7 +239,6 @@ trait RefreshDataTrait
      */
     private function getJumpWeekDate(int $intJumpWeek): array
     {
-        /** @var DateHelper $dateHelperAdapter */
         $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
 
         $arrReturn = [
@@ -391,96 +384,96 @@ trait RefreshDataTrait
                     $endTime = strtotime(sprintf('+%s day', $colCount), $activeWeekTstamp) + $objTimeslot->endTime;
 
                     /** @var SlotMain $slot */
-                    $slot = $this->slotFactory->get($objTimeslot->id,SlotMain::MODE, $resourceModel, $startTime, $endTime);
-                    $slot->index = $colCount;
-                    $slot->bookingCheckboxValue = sprintf('%s-%s-%s-%s', $objTimeslot->id, $startTime, $endTime, $activeWeekTstamp);
-                    $slot->bookingCheckboxId = sprintf('bookingCheckbox_modId_%s_%s_%s', $moduleModel->id, $rowCount, $colCount);
+                    $slot = $this->slotFactory->get($objTimeslot->id, SlotMain::MODE, $resourceModel, $startTime, $endTime);
+                    $slot->setIndex($colCount);
+                    $slot->setBookingCheckboxId(sprintf('bookingCheckbox_modId_%s_%s_%s', $moduleModel->id, $rowCount, $colCount));
+                    $slot->setBookingCheckboxValue(sprintf('%s-%s-%s-%s', $objTimeslot->id, $startTime, $endTime, $activeWeekTstamp));
+
+                    $arrBookings = [];
 
                     if ($slot->hasBookings) {
-                        while ($slot->bookings->next()) {
-                            $objBooking = $slot->bookings->current();
+                        $iterator = (new \ArrayObject($slot->bookings))->getIterator();
 
-                            if (null !== $objBooking) {
-                                // Presets
-                                $objBooking->bookedByFirstname = '';
-                                $objBooking->bookedByLastname = '';
+                        while ($iterator->valid()) {
+                            $booking = $iterator->current();
 
-                                // Fallback
-                                $objBooking->bookedByFullname = $stringUtilAdapter->decodeEntities($this->translator->trans('RBB.anonymous', [], 'contao_default'));
+                            // Presets
+                            $booking['bookedByFirstname'] = '';
+                            $booking['bookedByLastname'] = '';
 
-                                $arrAllowed = $stringUtilAdapter->deserialize($moduleModel->resourceBooking_clientPersonalData, true);
+                            // Fallback
+                            $booking['bookedByFullname'] = $stringUtilAdapter->decodeEntities($this->translator->trans('RBB.anonymous', [], 'contao_default'));
 
-                                $objMember = $memberModelAdapter->findByPk($objBooking->member);
+                            $arrAllowed = $stringUtilAdapter->deserialize($moduleModel->resourceBooking_clientPersonalData, true);
 
-                                // Send data about the booking owner (tl_member)
-                                if (null !== $objMember) {
-                                    // However, only show the fields that have been permitted in the module settings (tl_module.resourceBooking_displayClientPersonalData).
-                                    if ($moduleModel->resourceBooking_displayClientPersonalData) {
-                                        foreach ($arrAllowed as $fieldName) {
-                                            $objBooking->{'bookedBy'.ucfirst($fieldName)} = $stringUtilAdapter->decodeEntities($objMember->$fieldName);
-                                        }
+                            $objMember = $memberModelAdapter->findByPk($booking['member']);
 
-                                        if (\in_array('firstname', $arrAllowed, true) && \in_array('lastname', $arrAllowed, true)) {
-                                            $objBooking->bookedByFullname = $stringUtilAdapter->decodeEntities($objMember->firstname.' '.$objMember->lastname);
-                                        }
+                            // Send data about the booking owner (tl_member)
+                            if (null !== $objMember) {
+                                // However, only show the fields that have been permitted in the module settings (tl_module.resourceBooking_displayClientPersonalData).
+                                if ($moduleModel->resourceBooking_displayClientPersonalData) {
+                                    foreach ($arrAllowed as $fieldName) {
+                                        $booking['bookedBy'.ucfirst($fieldName)] = $stringUtilAdapter->decodeEntities($objMember->$fieldName);
                                     }
 
-                                    // Show first- and lastname of the booking owner is the currently logged in frontend user.
-                                    if (null !== $user && (int) $user->id === (int) $objMember->id) {
-                                        $objBooking->bookedByFullname = $stringUtilAdapter->decodeEntities($objMember->firstname.' '.$objMember->lastname);
-                                    }
-
-                                    // Newer send the password or session data.
-                                    $objBooking->bookedBySession = null;
-                                    $objBooking->bookedByPassword = null;
-                                }
-
-                                // Send booking details (tl_resource_booking)
-                                $databaseAdapter = $this->framework->getAdapter(Database::class);
-                                $arrAvailable = $databaseAdapter->getInstance()->listFields('tl_resource_booking');
-                                $arrShowAlways = ['pid', 'itemsBooked', 'bookingTime', 'confirmed'];
-
-                                // However, only show the fields that have been permitted in the module settings (tl_module.resourceBooking_bookingSubmittedFields).
-                                if ($moduleModel->resourceBooking_setBookingSubmittedFields) {
-                                    $arrAllowed = $stringUtilAdapter->deserialize($moduleModel->resourceBooking_bookingSubmittedFields, true);
-
-                                    foreach ($arrAvailable as $arrField) {
-                                        $field = $arrField['name'];
-
-                                        if (\in_array($field, $arrShowAlways, true) || \in_array($field, $arrAllowed, true)) {
-                                            $objBooking->{'booking'.ucfirst((string) $field)} = $stringUtilAdapter->decodeEntities((string) $objBooking->$field);
-                                        } else {
-                                            $objBooking->{'booking'.ucfirst((string) $field)} = null;
-                                            $objBooking->{$field} = null;
-                                        }
-                                    }
-                                } else {
-                                    foreach ($arrAvailable as $arrField) {
-                                        $field = $arrField['name'];
-
-                                        if (\in_array($field, $arrShowAlways, true)) {
-                                            $objBooking->{'booking'.ucfirst((string) $field)} = $stringUtilAdapter->decodeEntities((string) $objBooking->$field);
-                                        } else {
-                                            $objBooking->{'booking'.ucfirst((string) $field)} = null;
-                                            $objBooking->{$field} = null;
-                                        }
+                                    if (\in_array('firstname', $arrAllowed, true) && \in_array('lastname', $arrAllowed, true)) {
+                                        $booking['bookedByFullname'] = $stringUtilAdapter->decodeEntities($objMember->firstname.' '.$objMember->lastname);
                                     }
                                 }
 
-                                $objBooking->canCancel = $slot->isCancelable() && (int) $user->id === (int) $objMember->id;
+                                // Show first- and lastname of the booking owner is the currently logged in frontend user.
+                                if (null !== $user && (int) $user->id === (int) $objMember->id) {
+                                    $booking['bookedByFullname'] = $stringUtilAdapter->decodeEntities($objMember->firstname.' '.$objMember->lastname);
+                                }
+
+                                // Newer send the password or session data.
+                                $booking['bookedBySession'] = null;
+                                $booking['bookedByPassword'] = null;
                             }
+
+                            // Send booking details (tl_resource_booking)
+                            $databaseAdapter = $this->framework->getAdapter(Database::class);
+                            $arrAvailable = $databaseAdapter->getInstance()->listFields('tl_resource_booking');
+                            $arrShowAlways = ['id', 'pid', 'itemsBooked', 'bookingTime', 'confirmed'];
+
+                            // However, only show the fields that have been permitted in the module settings (tl_module.resourceBooking_bookingSubmittedFields).
+                            if ($moduleModel->resourceBooking_setBookingSubmittedFields) {
+                                $arrAllowed = $stringUtilAdapter->deserialize($moduleModel->resourceBooking_bookingSubmittedFields, true);
+
+                                foreach ($arrAvailable as $arrField) {
+                                    $field = $arrField['name'];
+
+                                    if (\in_array($field, $arrShowAlways, true) || \in_array($field, $arrAllowed, true)) {
+                                        $booking['booking'.ucfirst((string) $field)] = $stringUtilAdapter->decodeEntities((string) $booking[$field]);
+                                    } else {
+                                        $booking['booking'.ucfirst((string) $field)] = null;
+                                        $booking[$field] = null;
+                                    }
+                                }
+                            } else {
+                                foreach ($arrAvailable as $arrField) {
+                                    $field = $arrField['name'];
+
+                                    if (\in_array($field, $arrShowAlways, true)) {
+                                        $booking['booking'.ucfirst((string) $field)] = $stringUtilAdapter->decodeEntities((string) $booking[$field]);
+                                    } else {
+                                        $booking['booking'.ucfirst((string) $field)] = null;
+                                        $booking[$field] = null;
+                                    }
+                                }
+                            }
+
+                            $booking['canCancel'] = $slot->isCancelable() && (int) $user->id === (int) $objMember->id;
+
+                            $arrBookings[] = $booking;
+
+                            $iterator->next();
                         }
+
+                        $slot->setBookings($arrBookings);
                     }
 
                     $cells[] = $slot->row();
-
-                    // Reset the model
-                    if ($slot->hasBookings) {
-                        while ($slot->bookings->next()) {
-                            $objBooking = $slot->bookings->current();
-                            $objBooking->refresh();
-                        }
-                    }
                 }
 
                 $rows[] = ['cellData' => $cells, 'rowData' => $objRow];
@@ -511,7 +504,6 @@ trait RefreshDataTrait
      */
     private function getActiveResourceFromSession(): ResourceBookingResourceModel|null
     {
-        /** @var ResourceBookingResourceModel $resourceBookingResourceModelAdapter */
         $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
 
         return $resourceBookingResourceModelAdapter->findByPk($this->sessionBag->get('res'));
@@ -522,7 +514,6 @@ trait RefreshDataTrait
      */
     private function getActiveResourceTypeFromSession(): ResourceBookingResourceTypeModel|null
     {
-        /** @var ResourceBookingResourceTypeModel $resourceBookingResourceTypeModelAdapter */
         $resourceBookingResourceTypeModelAdapter = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class);
 
         return $resourceBookingResourceTypeModelAdapter->findByPk($this->sessionBag->get('resType'));
@@ -533,7 +524,6 @@ trait RefreshDataTrait
      */
     private function getModuleModelFromSession(): ModuleModel|null
     {
-        /** @var ModuleModel $moduleModelAdapter */
         $moduleModelAdapter = $this->framework->getAdapter(ModuleModel::class);
 
         return $moduleModelAdapter->findByPk($this->sessionBag->get('moduleModelId'));
