@@ -24,16 +24,17 @@ use Symfony\Component\HttpFoundation\Session\SessionBagInterface;
 
 abstract class AbstractController
 {
-    protected SessionBagInterface|null $sessionBag = null;
-    protected ResourceBookingResourceModel|null $activeResource = null;
     protected ModuleModel|null $moduleModel = null;
+    protected ResourceBookingResourceModel|null $activeResource = null;
+    protected SessionBagInterface|null $sessionBag = null;
     protected string|null $errorMsg = null;
+    protected int $bookingRepeatStopWeekTstamp = 0;
 
     public function __construct(
         protected ContaoFramework $framework,
         protected LoggedInFrontendUser $user,
-        protected Utils $utils,
         protected RequestStack $requestStack,
+        protected Utils $utils,
         string $bagName,
     ) {
         // Get session from request

@@ -24,29 +24,11 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
     public const PRIORITY = 1000;
 
     private array $services = [];
-    private array $resources = [];
+    private array $controllers = [];
 
     public function __construct(
         private readonly RequestStack $requestStack,
     ) {
-    }
-
-    public function add(ControllerInterface $resource, string $alias, string $id): void
-    {
-        $this->resources[$alias] = $resource;
-        $this->services[$alias] = $id;
-    }
-
-    /**
-     * Get a resource by alias.
-     */
-    public function get(string $alias): ControllerInterface
-    {
-        if (\array_key_exists($alias, $this->resources)) {
-            return $this->resources[$alias];
-        }
-
-        throw new \LogicException(sprintf('Resource with alias "%s" not found.', $alias));
     }
 
     public static function getSubscribedEvents(): array
@@ -56,23 +38,47 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
         ];
     }
 
+    public function add(ControllerInterface $controller, string $alias, string $id): void
+    {
+        $this->controllers[$alias] = $controller;
+        $this->services[$alias] = $id;
+    }
+
     /**
      * @throws \Exception
      */
-    public function onXmlHttpRequest(AjaxRequestEvent $ajaxRequestEvent): void
+    public function onXmlHttpRequest(AjaxRequestEvent $event): void
     {
         $request = $this->requestStack->getCurrentRequest();
 
-        if ($request->isXmlHttpRequest()) {
-            $action = $request->request->get('action', '');
-            $alias = str_replace('Request', '', $action);
-
-            if (\array_key_exists($alias, $this->resources)) {
-                $controller = $this->get($alias);
-                $controller->generateResponse($ajaxRequestEvent);
-            } else {
-                throw new \Exception(sprintf('Could not find Controller for action "%s".', $action));
-            }
+        if (!$request->isXmlHttpRequest()) {
+            return;
         }
+
+        $action = $request->request->get('action', '');
+        $alias = str_replace('Request', '', $action);
+
+        if (\array_key_exists($alias, $this->controllers)) {
+            $controller = $this->get($alias);
+
+            $ajaxResponse = $controller->generateResponse($event->getAjaxResponse());
+            $event->setAjaxResponse($ajaxResponse);
+        } else {
+            throw new \Exception(sprintf('Could not find Controller for action "%s".', $action));
+        }
+
+    }
+
+    /**
+     * Get a resource by alias.
+     */
+    public function get(string $alias): ControllerInterface
+    {
+        if (!\array_key_exists($alias, $this->controllers)) {
+            throw new \LogicException(sprintf('Resource with alias "%s" not found.', $alias));
+        }
+
+        return $this->controllers[$alias];
+
     }
 }

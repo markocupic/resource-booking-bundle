@@ -1,10 +1,10 @@
 {% trans_default_domain "contao_default" %}
 
 {% do addJavascriptResource('assets/contao-component-bootstrap/bootstrap/dist/js/bootstrap.bundle.min.js|static') %}
-{% do addJavascriptResource('bundles/markocupicresourcebooking/vuejs/vue.global.prod.js') %}
-{% do addJavascriptResource('bundles/markocupicresourcebooking/app.js') %}
+{% do addJavascriptResource(asset('vue/vue.global.prod.js', 'markocupic_resource_booking')) %}
+{% do addJavascriptResource(asset('js/app.js', 'markocupic_resource_booking')) %}
 {% do addCssResource('assets/contao-component-bootstrap/bootstrap/dist/css/bootstrap.min.css') %}
-{% do addCssResource('bundles/markocupicresourcebooking/css/frontend.min.css|static') %}
+{% do addCssResource(asset('css/frontend.css', 'markocupic_resource_booking')) %}
 
 {% extends '@Contao/block_unsearchable' %}
 
@@ -90,7 +90,7 @@
                     'requestToken': '{{ csrfToken }}',
                     'moduleKey': '{{ moduleKey }}',
                     'audio': {
-                        'notifyOnNewBookingsAudio': 'bundles/markocupicresourcebooking/audio/booking-alert.mp3'
+                        'notifyOnNewBookingsAudio': '{{ asset('audio/booking-alert.mp3', 'markocupic_resource_booking') }}'
                     },
                     'autocloseWindowsAfter': 5000,
                     'enableAudio': true,

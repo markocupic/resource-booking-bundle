@@ -57,13 +57,12 @@ class PurgePastBookingsCron
         $intAffectedRows = 0;
 
         $objStmt = $databaseAdapter->getInstance()
-            ->execute('SELECT * FROM tl_resource_booking GROUP BY moduleId')
-        ;
+            ->execute('SELECT * FROM tl_resource_booking GROUP BY moduleId');
 
         while ($objStmt->next()) {
             $moduleId = $objStmt->moduleId;
 
-            if ((int) $moduleId > 0) {
+            if ((int)$moduleId > 0) {
                 if (!isset($arrAppConfig[$moduleId])) {
                     if (null !== ($objModule = $moduleAdapter->findByPk($moduleId))) {
                         $strConfig = $objModule->resourceBooking_appConfig ?? null;
@@ -87,8 +86,7 @@ class PurgePastBookingsCron
                         if (false !== ($tstampLimit = strtotime($dateBeginnCurrentWeek.' -'.$intWeeks.' weeks'))) {
                             $objStmtDel = $databaseAdapter->getInstance()
                                 ->prepare('DELETE FROM tl_resource_booking WHERE moduleId=? AND endTime<?')
-                                ->execute($moduleId, $tstampLimit)
-                            ;
+                                ->execute($moduleId, $tstampLimit);
 
                             $intAffectedRows += $objStmtDel->affectedRows;
                         }

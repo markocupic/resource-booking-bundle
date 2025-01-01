@@ -17,25 +17,16 @@ namespace Markocupic\ResourceBookingBundle\User;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\FrontendUser;
 use Contao\MemberModel;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Security;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 class LoggedInFrontendUser
 {
     public function __construct(
-        private readonly Security $security,
+        private readonly TokenStorageInterface $tokenStorage,
         private readonly ContaoFramework $framework,
     ) {
-    }
-
-    public function getLoggedInUser(): UserInterface|null
-    {
-        if ($this->security->getUser() instanceof FrontendUser) {
-            /** @var FrontendUser $user */
-            return $this->security->getUser();
-        }
-
-        return null;
     }
 
     public function getModel(): MemberModel|null
@@ -44,5 +35,20 @@ class LoggedInFrontendUser
         $user = $this->getLoggedInUser();
 
         return $user ? $memberModelAdapter->findByPk($user->id) : null;
+    }
+
+    public function getLoggedInUser(): UserInterface|null
+    {
+        if (null === ($token = $this->tokenStorage->getToken())) {
+            return null;
+        }
+
+        $user = $token->getUser();
+
+        if ($user instanceof FrontendUser) {
+           return $user;
+        }
+
+        return null;
     }
 }

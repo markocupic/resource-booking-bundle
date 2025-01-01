@@ -11,14 +11,16 @@ services:
 
     Markocupic\ResourceBookingBundle\:
         resource: ../src/
-        exclude: ../src/{DependencyInjection,Session,Config,Model,Event}
+        exclude:
+            - '../src/{DependencyInjection,Session,Config,Model,Event}'
+            - '../src/Response/AjaxResponse.php'
 
     # Register session bag
     markocupic.rbb.session_bag:
         class: Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag
         arguments:
             - '@request_stack'
-            - '@security.helper'
+            - '@security.token_storage'
             - _resource_booking_bundle_attributes
         calls:
             - [ 'setName', [ resource_booking_bundle_attributes ] ]

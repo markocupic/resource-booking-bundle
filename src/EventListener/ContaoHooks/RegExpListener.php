@@ -15,25 +15,36 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\EventListener\ContaoHooks;
 
 use Contao\Controller;
+use Contao\CoreBundle\Framework\Adapter;
+use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Validator;
 use Contao\Widget;
 use Markocupic\ResourceBookingBundle\Util\DateHelper;
 
 class RegExpListener
 {
+
     public const REGEX_RESOURCE_BOOKING_TIME = 'resourceBookingTime';
+
+    public function __construct(
+        private readonly ContaoFramework $framework,
+    ){
+    }
 
     #[AsHook('addCustomRegexp')]
     public function onCustomRegexp(string $strRegexp, string $varValue, Widget $objWidget): bool
     {
         if (self::REGEX_RESOURCE_BOOKING_TIME === $strRegexp) {
-            Controller::loadLanguageFile('default');
+            $this->framework
+                ->getAdapter(Controller::class)
+                ->loadLanguageFile('default')
+            ;
 
-            if (!Validator::isTime($varValue)) {
+            if (!$this->getValidator()->isTime($varValue)) {
                 $objWidget->addError($GLOBALS['TL_LANG']['MSG']['pleaseInsertValidBookingTime']);
             }
 
-            if (!DateHelper::isValidBookingTime($varValue)) {
+            if (!$this->getDateHelper()->isValidBookingTime($varValue)) {
                 $objWidget->addError($GLOBALS['TL_LANG']['MSG']['pleaseInsertValidBookingTime']);
             }
 
@@ -41,5 +52,15 @@ class RegExpListener
         }
 
         return false;
+    }
+
+    private function getValidator(): Adapter
+    {
+        return $this->framework->getAdapter(Validator::class);
+    }
+
+    private function getDateHelper(): Adapter
+    {
+        return $this->framework->getAdapter(DateHelper::class);
     }
 }

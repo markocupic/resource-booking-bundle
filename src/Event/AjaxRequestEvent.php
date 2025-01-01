@@ -20,13 +20,15 @@ use Symfony\Contracts\EventDispatcher\Event;
 
 class AjaxRequestEvent extends Event
 {
-    private AjaxResponse $ajaxResponse;
-    private Request $request;
+    public function __construct(
+        private readonly Request $request,
+        private AjaxResponse $ajaxResponse,
+    ) {
+    }
 
-    public function __construct(\stdClass $event)
+    public function setAjaxResponse(AjaxResponse $ajaxResponse): void
     {
-        $this->ajaxResponse = $event->ajaxResponse;
-        $this->request = $event->request;
+        $this->ajaxResponse = $ajaxResponse;
     }
 
     public function getAjaxResponse(): AjaxResponse

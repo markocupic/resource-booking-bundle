@@ -14,14 +14,12 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\Session\Attribute;
 
-use Contao\Environment;
 use Contao\FrontendUser;
-use Contao\System;
 use Markocupic\ResourceBookingBundle\AppInitialization\Helper\ModuleKey;
 use Markocupic\ResourceBookingBundle\AppInitialization\Helper\TokenManager;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\Attribute\AttributeBag;
-use Symfony\Component\Security\Core\Security;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 /**
  * The module key is necessary to run multiple rbb applications on the same page
@@ -38,9 +36,8 @@ use Symfony\Component\Security\Core\Security;
 class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
 {
     public function __construct(
-        //protected readonly ContaoFramework $framework,
         protected readonly RequestStack $requestStack,
-        protected readonly Security $security,
+        protected readonly TokenStorageInterface $tokenStorage,
         string $storageKey = '_sf2_attributes',
     ) {
         parent::__construct($storageKey);
@@ -52,6 +49,30 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
     public function offsetExists(mixed $offset): bool
     {
         return $this->has($offset);
+    }
+
+    /**
+     * @param $name
+     *
+     * @throws \Exception
+     */
+    public function has($name): bool
+    {
+        $sessKey = $this->getSessionBagKey();
+        $arrSession = parent::get($sessKey, []);
+
+        return isset($arrSession[$name]);
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function get(string $name, mixed $default = null): mixed
+    {
+        $sessKey = $this->getSessionBagKey();
+        $arrSession = parent::get($sessKey, []);
+
+        return $arrSession[$name] ?? $default;
     }
 
     /**
@@ -71,38 +92,6 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
     }
 
     /**
-     * @throws \Exception
-     */
-    public function offsetUnset(mixed $offset): void
-    {
-        $this->remove($offset);
-    }
-
-    /**
-     * @param $name
-     *
-     * @throws \Exception
-     */
-    public function has($name): bool
-    {
-        $sessKey = $this->getSessionBagSubkey();
-        $arrSession = parent::get($sessKey, []);
-
-        return isset($arrSession[$name]);
-    }
-
-    /**
-     * @throws \Exception
-     */
-    public function get(string $name, mixed $default = null): mixed
-    {
-        $sessKey = $this->getSessionBagSubkey();
-        $arrSession = parent::get($sessKey, []);
-
-        return $arrSession[$name] ?? $default;
-    }
-
-    /**
      * @param $name
      * @param $value
      *
@@ -110,7 +99,7 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
      */
     public function set($name, $value): void
     {
-        $sessKey = $this->getSessionBagSubkey();
+        $sessKey = $this->getSessionBagKey();
         $arrSession = parent::get($sessKey, []);
         $arrSession[$name] = $value;
 
@@ -120,12 +109,9 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
     /**
      * @throws \Exception
      */
-    public function replace(array $attributes): void
+    public function offsetUnset(mixed $offset): void
     {
-        $sessKey = $this->getSessionBagSubkey();
-        $arrSession = parent::get($sessKey, []);
-        $arrNew = array_merge($arrSession, $attributes);
-        parent::set($sessKey, $arrNew);
+        $this->remove($offset);
     }
 
     /**
@@ -133,7 +119,7 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
      */
     public function remove(string $name): mixed
     {
-        $sessKey = $this->getSessionBagSubkey();
+        $sessKey = $this->getSessionBagKey();
         $arrSession = parent::get($sessKey, []);
 
         if (isset($arrSession[$name])) {
@@ -147,9 +133,20 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
     /**
      * @throws \Exception
      */
-    public function clear(): mixed
+    public function replace(array $attributes): void
     {
-        $sessKey = $this->getSessionBagSubkey();
+        $sessKey = $this->getSessionBagKey();
+        $arrSession = parent::get($sessKey, []);
+        $arrNew = array_merge($arrSession, $attributes);
+        parent::set($sessKey, $arrNew);
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function clear(): null
+    {
+        $sessKey = $this->getSessionBagKey();
         $arrSessionAll = parent::all();
 
         if (isset($arrSessionAll[$sessKey])) {
@@ -168,7 +165,7 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
      */
     public function count(): int
     {
-        $sessKey = $this->getSessionBagSubkey();
+        $sessKey = $this->getSessionBagKey();
         $arrSessionAll = parent::all();
 
         if (isset($arrSessionAll[$sessKey]) && \is_array($arrSessionAll[$sessKey])) {
@@ -181,13 +178,8 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
     /**
      * @throws \Exception
      */
-    private function getSessionBagSubkey(): string
+    private function getSessionBagKey(): string
     {
-        /** @var Environment $environmentAdapter */
-        $framework = System::getContainer()->get('contao.framework');
-        $framework->initialize();
-        $environmentAdapter = $framework->getAdapter(Environment::class);
-
         /**
          * The module key is necessary to run multiple rbb applications on the same page
          * and is sent as a post parameter on every xhr request.
@@ -209,20 +201,17 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
             $sessionId = $session->getId();
         }
 
-        if ($this->security->getUser() instanceof FrontendUser) {
-            /** @var FrontendUser $objUser */
-            $objUser = $this->security->getUser();
+        $user = $this->tokenStorage->getToken()?->getUser();
 
-            if ($objUser->id > 0) {
-                $userId = $objUser->id;
-            }
+        if (!empty($user) && $user instanceof FrontendUser) {
+            $userId = $user->id;
         }
 
         $request = $this->requestStack->getCurrentRequest();
 
-        if ($environmentAdapter->get('isAjaxRequest')) {
+        if ($this->isAjaxRequest()) {
             $moduleKey = $request->request->get('moduleKey');
-        } elseif (!$environmentAdapter->get('isAjaxRequest') && \strlen((string) ModuleKey::getModuleKey()) && \strlen(TokenManager::getToken())) {
+        } elseif (!empty((string) ModuleKey::getModuleKey()) && !empty(TokenManager::getToken())) {
             $moduleKey = ModuleKey::getModuleKey();
         } else {
             return '';
@@ -236,5 +225,10 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
         $token = $request->query->get('token_'.$moduleKey);
 
         return sha1($sessionId.'_'.$userId.'_'.$moduleKey.'_'.$token);
+    }
+
+    private function isAjaxRequest(): bool
+    {
+        return $this->requestStack->getCurrentRequest()->isXmlHttpRequest();
     }
 }

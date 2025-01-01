@@ -49,26 +49,23 @@ class SlotMain extends AbstractSlot
      */
     public function isBookable(): bool
     {
+        if ($this->isBlocked) {
+            return false;
+        }
+
         if (!$this->isDateInPermittedRange()) {
             return false;
         }
 
         $itemsBooked = 0;
 
-        $iterator = (new \ArrayObject($this->getBookings()))->getIterator();
+        foreach ($this->getBookings() as $booking) {
 
-        while ($iterator->valid()) {
-            $booking = $iterator->current();
-
-            if ($this->user && (int) $this->user->id === (int) $booking['member'] ?? -1) {
-                $iterator->next();
-
+            if ($this->isBookingForLoggedUser($booking)) {
                 continue;
             }
 
             $itemsBooked += (int) $booking['itemsBooked'] ?? 1;
-
-            $iterator->next();
         }
 
         if ((int) $this->arrData['resource']['itemsAvailable'] > $itemsBooked) {

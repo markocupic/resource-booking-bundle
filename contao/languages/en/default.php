@@ -78,6 +78,7 @@ $GLOBALS['TL_LANG']['RBB']['ERR']['notEnoughItemsAvailable'] = 'There aren\'t en
 $GLOBALS['TL_LANG']['RBB']['ERR']['resourceIsAlreadyFullyBooked'] = 'Resource is already fully booked.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['selectBookingDatesPlease'] = 'Select one or more booking time slots please.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['slotNotBookable'] = 'You\'ve selected a non bookable slot';
+$GLOBALS['TL_LANG']['RBB']['ERR']['slotIsBlocked'] = 'One or more of the requested slots have been blocked/can\'t be booked.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['somethingWentWrong'] = 'Ups! I\'m sorry! Something went wrong.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['thisSlotHasNotEnoughItemsAvailable'] = 'There aren\'t enough items available in this slot.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['invalidUploadValueSubmitted'] = 'Your request could not be processed. Reason: An invalid value was uploaded for the “%s” field.';

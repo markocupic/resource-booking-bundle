@@ -1,12 +1,14 @@
 ![Logo](https://github.com/markocupic/markocupic/blob/main/logo.png)
 
 # resource-booking-bundle
+
 Mit diesem Modul für Contao kann eine einfache Online-Ressourcenverwaltung betrieben werden.
 Das Modul wurde für eine Schule entwickelt, wo ein Zimmerreservations-System benötigt wurde. Natürlich kann das Plugin auch im Zusammenhang mit anderen Ressourcen betrieben werden.
 
 Ab Version 3.x kann eingestellt werden, wie viele Items einer Ressource buchbar sein können. Damit wird es möglich eine Ressource von mehreren Personen buchen zu lassen, bis diese ausgebucht ist. Ein typischer use case können buchbare Geräte/Computer sein.
 
 ## Rückwärtskompatibilität
+
 **!Achtung beim Update von Version 2.x auf 3.x ist es zu grossen Änderungen an den Templates gekommen. Unter anderem wurden die Templates für eine bessere Übersichtlichkeit gesplitet. Vorher angepasste Custom-Templates müssen neu geschrieben werden.**
 
 ## Take a look
@@ -15,25 +17,23 @@ Ab Version 3.x kann eingestellt werden, wie viele Items einer Ressource buchbar 
 
 [Downlaod als mp4](https://github.com/markocupic/markocupic/blob/main/resource-booking-bundle/resource-booking-bundle.mp4?raw=true)
 
-
 ### Buchungstabelle mit Wochenübersicht:
 
 ![preview frontend](docs/screenshots/screenshot.png "Buchungstool im Frontend-Ansicht")
-
 
 ### Buchungsfenster:
 
 ![preview frontend](docs/screenshots/screenshot2.png "Buchungstool im Frontend-Ansicht")
 
-
 ## Konfiguration
+
 Nach der Installation mit dem Contao Manager müssen:
+
 * Mindestens 1 Reservations-Zeitfenster-Typ erstellt werden.
 * Danach darin die Reservations-Zeitfenster im Zeitformat H:i (08:00 bis 08:45) erstellt werden.
 * Ressourcen-Typen erstellt werden.
 * In jedem Ressourcen-Typ mindestens eine Ressource (z.B. Zimmer) erstellt werden.
 * Mindestens 1 Mitglied (Frontend-Benutzer) angelegt werden. (Das Buchungsmodul wird nur bei eingeloggtem Benutzer angezeigt.)
-
 
 ![App Konfiguration anpassen](docs/screenshots/adjust-app-configuration.png "Frontendmodul-Einstellungen")
 
@@ -44,9 +44,11 @@ Das Tool setzt auf [vue.js](https://vuejs.org/) und [Bootstrap](https://getboots
 Anm: Bei der Installation wird neben den oben erwähnten Erweiterungen auch [codefog/contao-haste](https://github.com/codefog/contao-haste) mitinstalliert.
 
 ## Benachrichtigung
+
 Die Benachrichtigung via [Contao Notification Center](https://github.com/terminal42/contao-notification_center) bei Buchung/Stornierung ist ein kostenpflichtiges Zusatzfeature. Bitte nehmen Sie per E-Mail mit dem Autor der Erweiterung [Kontakt](https://github.com/markocupic/resource-booking-bundle/blob/0080449a1a3fde63b1b9ad0b2fd0fd153ba82b4c/composer.json#L16) auf.
 
 ## Template mit zusätzlichen Mitgliederdaten erweitern
+
 Sollen zusätzliche Mitgliederdaten in der Buchungsübersicht angezeigt weden, müssen zwei Dinge angepasst werden.
 
 Erstens muss in der Moduleinstellung das Feld, welches zusätzlich angezeigt werden soll, ausgewählt werden.
@@ -57,8 +59,8 @@ Weiter muss zusätzlich das Template angepasst werden. Mit *[[ booking.bookedByC
 
 ![Alt text](docs/screenshots/screenshot4.png "Weitere Mitgliederfelder anzeigen")
 
-
 ## Events
+
 Der ***rbb.event.pre_booking*** Event wird unmittelbar vor dem Datenbank-Insert ausgelöst. Mit einer Event-Subscriber-Klasse lassen sich beispielsweise die Datenbankeinträge manipulieren.
 
 Der ***rbb.event.post_booking*** Event wird nach dem Buchungs-Request ausgelöst. Mit einer Event-Subscriber-Klasse, die auf den Event hört, können unmittelbar nach der Buchung Aktionen durchgeführt werden. Beispielsweise kann eine Benachrichtigung gesendet werden oder es können weitere Einträge in der Datenbank getätigt werden.
@@ -68,9 +70,10 @@ Der ***rbb.event.pre_cancelling*** Event wird unmittelbar vor dem Stornieren ein
 Der ***rbb.event.post_cancelling*** Event wird unmittelbar nach dem Stornieren einer Buchung ausgelöst.
 
 ## Event Subscriber
+
 Mit event subscribern/listeners kann die Applikation an mehreren Stellen erweitert werden. Dazu muss eine Subscriber/Listener Klasse erstellt werden.
 
-```
+```yaml
 # Registrierung anhand des rbb.event.post_booking Events in listener.yml
 services:
   App\EventSubscriber\BookingEventSubscriber:
@@ -148,16 +151,17 @@ final class BookingEventSubscriber implements EventSubscriberInterface
 ```
 
 ### XmlHttp event subscriber
+
 Das Buchungstool basiert fast vollständig auf Ajax Requests. Mit einer eigenen Event Subscriber Klasse können die Responses auf diese Ajax Anfragen angepasst werden oder es lassen sich auch custom Anfragen implementieren.
 Der *rbb.event.xml_http_request* Event wird bei Ajax-Anfragen vor dem Absenden der Response zurück an den Browser getriggert.
 
 Dazu muss die Subscriber-Klasse, die auf den *rbb.event.xml_http_request* Event hört, in der listener.yml registriert werden:
 
-```
+```yaml
 services:
   App\EventSubscriber\AjaxRequestEventSubscriber:
     arguments:
-    '@request_stack'
+    - '@request_stack'
     tags:
     - { name: kernel.event_subscriber }
 
@@ -257,15 +261,16 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
 }
 ```
 
-
 ## App Konfiguration anpassen
+
 Die Erweiterung wird mit einer Default-Konfiguration installiert.
 In config/config.yml können weitere Konfigurations-Sets erstellt werden,
 welche dann in den Frontend-Moduleinstellungen ausgewählt werden können.
 
 Dazu muss in config/config.yml ein Eintrag erstellt werden.
-```
-# config/config.yml
+
+```yaml
+# config/config.yaml
 
 markocupic_resource_booking:
     purge_past_bookings_with_cron: true
@@ -275,7 +280,6 @@ markocupic_resource_booking:
             intBackWeeks: -10
             intAheadWeeks: 60
             autoConfirm: true
+            # Custom Inputs im Buchungsformular müssen hier registriert werden
             permittedUploadFields: [phone,email]
 ```
-
-

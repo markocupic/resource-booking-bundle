@@ -21,7 +21,7 @@ use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotTypeModel;
 
 // Register back end modules
 $GLOBALS['BE_MOD']['resourceBookingTool'] = [
-    'resource' => [
+    'resource'     => [
         'tables' => ['tl_resource_booking_resource_type', 'tl_resource_booking_resource', 'tl_resource_booking'],
     ],
     'timeSlotType' => [

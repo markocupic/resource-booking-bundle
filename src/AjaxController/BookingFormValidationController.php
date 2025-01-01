@@ -16,7 +16,6 @@ namespace Markocupic\ResourceBookingBundle\AjaxController;
 
 use Contao\System;
 use Markocupic\ResourceBookingBundle\AjaxController\Traits\BookingTrait;
-use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Markocupic\ResourceBookingBundle\Slot\SlotFactory;
 use Symfony\Contracts\Service\Attribute\Required;
@@ -45,14 +44,13 @@ final class BookingFormValidationController extends AbstractController implement
     /**
      * @throws \Exception
      */
-    public function generateResponse(AjaxRequestEvent $ajaxRequestEvent): void
+    public function generateResponse(AjaxResponse $ajaxResponse): AjaxResponse
     {
-        /** @var System $systemAdapter */
-        $systemAdapter = $this->framework->getAdapter(System::class);
-
         // Load language file
-        $systemAdapter->loadLanguageFile('default', $this->translator->getLocale());
-        $ajaxResponse = $ajaxRequestEvent->getAjaxResponse();
+        $this->framework
+            ->getAdapter(System::class)
+            ->loadLanguageFile('default', $this->translator->getLocale())
+        ;
 
         $this->initialize();
 
@@ -63,7 +61,7 @@ final class BookingFormValidationController extends AbstractController implement
         $ajaxResponse->setData('noBookingRepeatStopWeekTstampSelected', false);
         $ajaxResponse->setData('bookingValidationProcessSucceeded', true);
 
-        $slotCollection = $this->getSlotCollectionFromRequest();
+        $slotCollection = $this->getSlotCollectionFromRequest($this->bookingRepeatStopWeekTstamp);
 
         if (!$this->isBookingPossible($slotCollection)) {
             $ajaxResponse->setData('bookingValidationProcessSucceeded', false);
@@ -105,5 +103,7 @@ final class BookingFormValidationController extends AbstractController implement
         if ($this->hasErrorMessage()) {
             $ajaxResponse->setStatus(AjaxResponse::STATUS_ERROR);
         }
+
+        return $ajaxResponse;
     }
 }

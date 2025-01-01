@@ -33,6 +33,10 @@ class SlotBooking extends AbstractSlot
      */
     public function isBookable(): bool
     {
+        if($this->isBlocked){
+            return false;
+        }
+
         $itemsBooked = 0;
 
         $iterator = (new \ArrayObject($this->getBookings()))->getIterator();

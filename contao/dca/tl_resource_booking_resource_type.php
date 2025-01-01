@@ -47,16 +47,16 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource_type'] = [
         ],
         'operations'        => [
             'edit'       => [
-                'href'  => 'table=tl_resource_booking_resource',
-                'icon'  => 'edit.gif',
+                'href' => 'table=tl_resource_booking_resource',
+                'icon' => 'edit.gif',
             ],
             'editheader' => [
-                'href'  => 'act=edit',
-                'icon'  => 'header.svg',
+                'href' => 'act=edit',
+                'icon' => 'header.svg',
             ],
             'cut'        => [
-                'href'  => 'act=paste&amp;mode=cut',
-                'icon'  => 'cut.gif',
+                'href' => 'act=paste&amp;mode=cut',
+                'icon' => 'cut.gif',
             ],
             'delete'     => [
                 'href'       => 'act=delete',
@@ -69,8 +69,8 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource_type'] = [
                 'showInHeader' => true,
             ],
             'show'       => [
-                'href'  => 'act=show',
-                'icon'  => 'show.gif',
+                'href' => 'act=show',
+                'icon' => 'show.gif',
             ],
         ],
     ],

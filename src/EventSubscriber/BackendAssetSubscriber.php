@@ -16,6 +16,7 @@ namespace Markocupic\ResourceBookingBundle\EventSubscriber;
 
 use Contao\CoreBundle\Routing\ScopeMatcher;
 use Markocupic\ResourceBookingBundle\Config\RbbConfig;
+use Symfony\Component\Asset\Packages;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
@@ -24,6 +25,7 @@ class BackendAssetSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private readonly ScopeMatcher $scopeMatcher,
+        private readonly Packages $packages
     ) {
     }
 
@@ -37,7 +39,7 @@ class BackendAssetSubscriber implements EventSubscriberInterface
         $request = $e->getRequest();
 
         if ($this->scopeMatcher->isBackendRequest($request)) {
-            $GLOBALS['TL_CSS'][] = RbbConfig::RBB_ASSET_PATH.'/css/backend.css';
+            $GLOBALS['TL_CSS'][] = $this->packages->getUrl('css/backend.css', 'markocupic_resource_booking');
         }
     }
 }

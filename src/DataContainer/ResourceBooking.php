@@ -15,22 +15,31 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\DataContainer;
 
 use Contao\CoreBundle\DependencyInjection\Attribute\AsCallback;
-use Contao\Database;
+use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Types\Types;
 use Markocupic\ResourceBookingBundle\Controller\FrontendModule\ResourceBookingWeekcalendarController;
 
 class ResourceBooking
 {
+    public function __construct(
+        private readonly Connection $connection,
+    ) {
+    }
+
     #[AsCallback(table: 'tl_resource_booking', target: 'fields.moduleId.options')]
     public function getRbbModules(): array
     {
         $opt = [];
-        $objDb = Database::getInstance()
-            ->prepare('SELECT * FROM tl_module WHERE type=?')
-            ->execute(ResourceBookingWeekcalendarController::TYPE)
-        ;
 
-        while ($objDb->next()) {
-            $opt[$objDb->id] = $objDb->name;
+        $modules = $this->connection
+            ->fetchAllAssociative(
+                'SELECT * FROM tl_module WHERE type = ?',
+                [ResourceBookingWeekcalendarController::TYPE],
+                [Types::STRING],
+            );
+
+        foreach ($modules as $module) {
+            $opt[$module['id']] = $module['name'];
         }
 
         return $opt;

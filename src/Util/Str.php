@@ -19,30 +19,42 @@ use Contao\Validator;
 
 class Str
 {
+
     public static function convertBinUuidsToStringUuids($varData): string
     {
-        $str = (string) $varData;
-        // Convert bin uuids to string uuids
-        if (!empty($str) && !preg_match('//u', $str)) {
-            if (\is_array(StringUtil::deserialize($str))) {
-                $arrTemp = [];
+        $stringData = (string) $varData;
 
-                foreach (StringUtil::deserialize($str) as $strUuid) {
-                    if (Validator::isBinaryUuid($strUuid)) {
-                        $arrTemp[] = StringUtil::binToUuid($strUuid);
-                    }
-                }
-                $str = serialize($arrTemp);
-            } else {
-                $strTemp = '';
-
-                if (Validator::isBinaryUuid($str)) {
-                    $strTemp = StringUtil::binToUuid($str);
-                }
-                $str = $strTemp;
-            }
+        // Early return if empty or already UTF-8
+        if (self::isEmptyOrUtf8($stringData)) {
+            return $stringData;
         }
 
-        return $str;
+        $deserializedData = StringUtil::deserialize($stringData);
+
+        if (is_array($deserializedData)) {
+            return self::processArrayUuids($deserializedData);
+        }
+
+        return Validator::isBinaryUuid($stringData) ? StringUtil::binToUuid($stringData) : '';
+    }
+
+    private static function isEmptyOrUtf8(string $data): bool
+    {
+        return empty($data) || preg_match('//u', $data);
+    }
+
+    private static function processArrayUuids(array $uuids): string
+    {
+        $convertedUuids = array_map([self::class, 'convertBinaryUuid'], $uuids);
+
+        // Remove null values for non-valid binary UUIDs
+        $filteredUuids = array_filter($convertedUuids);
+
+        return serialize($filteredUuids);
+    }
+
+    private static function convertBinaryUuid(?string $uuid): ?string
+    {
+        return Validator::isBinaryUuid($uuid) ? StringUtil::binToUuid($uuid) : null;
     }
 }
