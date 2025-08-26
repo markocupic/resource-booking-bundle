@@ -67,7 +67,7 @@ if (typeof ResourceBookingApp !== 'function') {
                             activeTimeSlot: null,
                             booking: null,
                             response: {},
-                            deleteBookingsWithSameBookingUuid: false,
+                            deleteRepetitions: false,
                             selectedTimeSlots: [],
                             showCancelBookingForm: false,
                             showCancelBookingButton: false,
@@ -508,7 +508,7 @@ if (typeof ResourceBookingApp !== 'function') {
                         formData.append('REQUEST_TOKEN', this.options.requestToken);
                         formData.append('action', action);
                         formData.append('id', this.bookingWindow.booking.id);
-                        formData.append('deleteBookingsWithSameBookingUuid', this.bookingWindow.deleteBookingsWithSameBookingUuid);
+                        formData.append('deleteRepetitions', this.bookingWindow.deleteRepetitions);
                         formData.append('moduleKey', this.options.moduleKey);
 
                         try {
@@ -550,7 +550,7 @@ if (typeof ResourceBookingApp !== 'function') {
 
                             // Always
                             this.messages = json.messages ? json.messages : [];
-                            this.bookingWindow.deleteBookingsWithSameBookingUuid = false;
+                            this.bookingWindow.deleteRepetitions = false;
                             await this.refreshDataRequest();
 
                         } catch (error) {
@@ -559,7 +559,7 @@ if (typeof ResourceBookingApp !== 'function') {
 
                             // Always
                             this.refreshDataRequest();
-                            this.bookingWindow.deleteBookingsWithSameBookingUuid = false;
+                            this.bookingWindow.deleteRepetitions = false;
                         }
                     },
 
@@ -601,7 +601,7 @@ if (typeof ResourceBookingApp !== 'function') {
                                 'activeTimeSlot': slot,
                                 'booking': booking,
                                 'response': {},
-                                'deleteBookingsWithSameBookingUuid': false,
+                                'deleteRepetitions': false,
                                 'selectedTimeSlots': [],
                             }
                         })();

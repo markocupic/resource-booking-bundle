@@ -45,45 +45,6 @@ class DateHelper
     }
 
     /**
-     * @throws \Exception
-     */
-    public static function addWeeksToTime(int $intWeeks = 0, int $time = null): int
-    {
-        if (null === $time) {
-            $time = time();
-        }
-
-        if ($intWeeks < 0) {
-            $intWeeks = abs($intWeeks);
-            $strAddWeeks = '-'.$intWeeks.' weeks';
-        } else {
-            $strAddWeeks = '+'.$intWeeks.' weeks';
-        }
-
-        $tstamp = strtotime(Date::parse('Y-m-d H:i:s', $time).' '.$strAddWeeks);
-
-        if (false !== $tstamp) {
-            return $tstamp;
-        }
-
-        throw new \Exception('Could not generate a valid timestamp.');
-    }
-
-    /**
-     * By default, this is the timestamp of a monday.
-     */
-    public static function getFirstDayOfCurrentWeek(array $arrAppConfig, int $timestamp = null): int
-    {
-        if (!$timestamp) {
-            $timestamp = time();
-        }
-
-        $beginnWeek = $arrAppConfig['beginnWeek'];
-
-        return strtotime(sprintf('%s this week', $beginnWeek), $timestamp);
-    }
-
-    /**
      * Return beginn weekday of the week the timestamp is in
      * By default this is a monday.
      *
@@ -146,5 +107,44 @@ class DateHelper
         }
 
         return true;
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public static function addWeeksToTime(int $intWeeks = 0, int $time = null): int
+    {
+        if (null === $time) {
+            $time = time();
+        }
+
+        if ($intWeeks < 0) {
+            $intWeeks = abs($intWeeks);
+            $strAddWeeks = '-'.$intWeeks.' weeks';
+        } else {
+            $strAddWeeks = '+'.$intWeeks.' weeks';
+        }
+
+        $tstamp = strtotime(Date::parse('Y-m-d H:i:s', $time).' '.$strAddWeeks);
+
+        if (false !== $tstamp) {
+            return $tstamp;
+        }
+
+        throw new \Exception('Could not generate a valid timestamp.');
+    }
+
+    /**
+     * By default, this is the timestamp of a monday.
+     */
+    public static function getFirstDayOfCurrentWeek(array $arrAppConfig, int $timestamp = null): int
+    {
+        if (!$timestamp) {
+            $timestamp = time();
+        }
+
+        $beginnWeek = $arrAppConfig['beginnWeek'];
+
+        return strtotime(sprintf('%s this week', $beginnWeek), $timestamp);
     }
 }

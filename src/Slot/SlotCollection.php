@@ -34,21 +34,6 @@ class SlotCollection implements \ArrayAccess, \Countable, \IteratorAggregate
     }
 
     /**
-     * Set an object property.
-     *
-     * @param string $strKey   The property name
-     * @param mixed  $varValue The property value
-     */
-    public function __set(string $strKey, mixed $varValue): void
-    {
-        if ($this->intIndex < 0) {
-            $this->first();
-        }
-
-        $this->arrSlots[$this->intIndex]->$strKey = $varValue;
-    }
-
-    /**
      * Return an object property.
      *
      * @param string $strKey The property name
@@ -65,6 +50,33 @@ class SlotCollection implements \ArrayAccess, \Countable, \IteratorAggregate
     }
 
     /**
+     * Set an object property.
+     *
+     * @param string $strKey The property name
+     * @param mixed $varValue The property value
+     */
+    public function __set(string $strKey, mixed $varValue): void
+    {
+        if ($this->intIndex < 0) {
+            $this->first();
+        }
+
+        $this->arrSlots[$this->intIndex]->$strKey = $varValue;
+    }
+
+    /**
+     * Go to the first row.
+     *
+     * @return static The slot collection object
+     */
+    public function first(): self
+    {
+        $this->intIndex = 0;
+
+        return $this;
+    }
+
+    /**
      * Check whether a property is set.
      *
      * @param string $strKey The property name
@@ -78,20 +90,6 @@ class SlotCollection implements \ArrayAccess, \Countable, \IteratorAggregate
         }
 
         return isset($this->arrSlots[$this->intIndex]->$strKey);
-    }
-
-    /**
-     * Return the current row as associative array.
-     *
-     * @return array The current row as array
-     */
-    public function row(): array
-    {
-        if ($this->intIndex < 0) {
-            $this->first();
-        }
-
-        return $this->arrSlots[$this->intIndex]->row();
     }
 
     /**
@@ -142,18 +140,6 @@ class SlotCollection implements \ArrayAccess, \Countable, \IteratorAggregate
     }
 
     /**
-     * Go to the first row.
-     *
-     * @return static The slot collection object
-     */
-    public function first(): self
-    {
-        $this->intIndex = 0;
-
-        return $this;
-    }
-
-    /**
      * Go to the previous row.
      */
     public function prev(): self|bool
@@ -168,34 +154,6 @@ class SlotCollection implements \ArrayAccess, \Countable, \IteratorAggregate
     }
 
     /**
-     * Return the current slot.
-     *
-     * @return SlotInterface The model object
-     */
-    public function current(): SlotInterface
-    {
-        if ($this->intIndex < 0) {
-            $this->first();
-        }
-
-        return $this->arrSlots[$this->intIndex];
-    }
-
-    /**
-     * Go to the next row.
-     */
-    public function next(): self|bool
-    {
-        if (!isset($this->arrSlots[$this->intIndex + 1])) {
-            return false;
-        }
-
-        ++$this->intIndex;
-
-        return $this;
-    }
-
-    /**
      * Go to the last row.
      *
      * @return static The slot collection object
@@ -203,18 +161,6 @@ class SlotCollection implements \ArrayAccess, \Countable, \IteratorAggregate
     public function last(): self
     {
         $this->intIndex = \count($this->arrSlots) - 1;
-
-        return $this;
-    }
-
-    /**
-     * Reset the model.
-     *
-     * @return static The model collection object
-     */
-    public function reset(): self
-    {
-        $this->intIndex = -1;
 
         return $this;
     }
@@ -239,6 +185,32 @@ class SlotCollection implements \ArrayAccess, \Countable, \IteratorAggregate
     }
 
     /**
+     * Reset the model.
+     *
+     * @return static The model collection object
+     */
+    public function reset(): self
+    {
+        $this->intIndex = -1;
+
+        return $this;
+    }
+
+    /**
+     * Go to the next row.
+     */
+    public function next(): self|bool
+    {
+        if (!isset($this->arrSlots[$this->intIndex + 1])) {
+            return false;
+        }
+
+        ++$this->intIndex;
+
+        return $this;
+    }
+
+    /**
      * Fetch all columns of every row.
      *
      * @return array An array with all rows and columns
@@ -253,6 +225,20 @@ class SlotCollection implements \ArrayAccess, \Countable, \IteratorAggregate
         }
 
         return $return;
+    }
+
+    /**
+     * Return the current row as associative array.
+     *
+     * @return array The current row as array
+     */
+    public function row(): array
+    {
+        if ($this->intIndex < 0) {
+            $this->first();
+        }
+
+        return $this->arrSlots[$this->intIndex]->row();
     }
 
     /**
@@ -314,9 +300,9 @@ class SlotCollection implements \ArrayAccess, \Countable, \IteratorAggregate
     /**
      * Sort collection by a given key.
      *
+     * @return $this
      * @throws \Exception
      *
-     * @return $this
      */
     public function sortBy(string $strKey): self
     {
@@ -327,7 +313,7 @@ class SlotCollection implements \ArrayAccess, \Countable, \IteratorAggregate
         while ($this->next()) {
             $slot = $this->current();
 
-            if (empty((string) $slot->{$strKey})) {
+            if (empty((string)$slot->{$strKey})) {
                 throw new \Exception('Can not sort collection, because '.$strKey.' has an empty value.');
             }
             $arrSort[$slot->$strKey] = $slot;
@@ -341,5 +327,19 @@ class SlotCollection implements \ArrayAccess, \Countable, \IteratorAggregate
         }
 
         return new self($arrNew);
+    }
+
+    /**
+     * Return the current slot.
+     *
+     * @return SlotInterface The model object
+     */
+    public function current(): SlotInterface
+    {
+        if ($this->intIndex < 0) {
+            $this->first();
+        }
+
+        return $this->arrSlots[$this->intIndex];
     }
 }

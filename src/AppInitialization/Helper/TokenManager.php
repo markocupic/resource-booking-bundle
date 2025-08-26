@@ -33,11 +33,6 @@ class TokenManager
         static::$token = Uuid::uuid4()->toString();
     }
 
-    public static function setToken(string $token): void
-    {
-        static::$token = $token;
-    }
-
     /**
      * @throws \Exception
      */
@@ -48,5 +43,10 @@ class TokenManager
         }
 
         return static::$token;
+    }
+
+    public static function setToken(string $token): void
+    {
+        static::$token = $token;
     }
 }

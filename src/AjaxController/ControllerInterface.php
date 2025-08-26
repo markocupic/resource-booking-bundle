@@ -14,9 +14,9 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\AjaxController;
 
-use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
+use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 
 interface ControllerInterface
 {
-    public function generateResponse(AjaxRequestEvent $ajaxRequestEvent);
+    public function generateResponse(AjaxResponse $ajaxResponse): AjaxResponse;
 }

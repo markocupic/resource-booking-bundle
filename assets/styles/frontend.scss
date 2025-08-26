@@ -1,9 +1,10 @@
-$notBookableBg: #e9ecef;
+$slotIsNotBookable: #e9ecef;
+$slotIsBlockedBg: $slotIsNotBookable;
 $bookableBg: rgba(115, 207, 97, 0.42);
 $fullyBookedBg: rgb(255, 222, 213);
 $bgColorAlertSuccess: $bookableBg;
 $bgColorAlertDanger: $fullyBookedBg;
-$fullyBookedButUnconfirmedBg: #ffd085;
+$slotIsFullyBookedButUnconfirmedBg: #ffd085;
 $loggedInUserIsHolderBg: rgba(3, 169, 244, 0.32);
 $iconBookingColor: #ffffff;
 $iconCancelBookingColor: #ffffff;
@@ -145,7 +146,7 @@ $transitionSpeed: .8s;
       }
 
       &.rbb-time-slot-cell[data-isinvaliddate="true"] {
-        background-color: $notBookableBg;
+        background-color: $slotIsNotBookable;
       }
 
       &.rbb-time-slot-cell[data-isfullybooked="true"] {
@@ -153,7 +154,11 @@ $transitionSpeed: .8s;
       }
 
       &.rbb-time-slot-cell[data-isfullybooked="true"]:has(.rbb-booked-item[data-confirmed="false"]) {
-        background-color: $fullyBookedButUnconfirmedBg;
+        background-color: $slotIsFullyBookedButUnconfirmedBg;
+      }
+
+      &.rbb-time-slot-cell[data-isblocked="true"] {
+        background-color: $slotIsBlockedBg;
       }
 
       &.rbb-cell-headline {

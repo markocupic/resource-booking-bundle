@@ -18,21 +18,17 @@ use Contao\FrontendUser;
 use Contao\Model\Collection;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag;
+use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Contracts\EventDispatcher\Event;
 
 class PostBookingEvent extends Event
 {
-    private Collection|null $bookingCollection;
-    private FrontendUser $user;
-    private ArrayAttributeBag $sessionBag;
-    private AjaxResponse $ajaxResponse;
-
-    public function __construct(\stdClass $event)
-    {
-        $this->bookingCollection = $event->bookingCollection;
-        $this->ajaxResponse = $event->ajaxResponse;
-        $this->user = $event->user;
-        $this->sessionBag = $event->sessionBag;
+    public function __construct(
+        private readonly AjaxResponse $ajaxResponse,
+        private readonly ArrayAttributeBag $sessionBag,
+        private readonly UserInterface $user,
+        private readonly Collection|null $bookingCollection,
+    ) {
     }
 
     public function getBookingCollection(): Collection
@@ -45,7 +41,7 @@ class PostBookingEvent extends Event
         return $this->ajaxResponse;
     }
 
-    public function getUser(): FrontendUser
+    public function getUser(): UserInterface
     {
         return $this->user;
     }

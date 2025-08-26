@@ -21,7 +21,7 @@
     {# Start delete repetitions switch #}
     {% block rbb_booking_window__cancel_booking_form__delete_repetitions_switch %}
         <div v-if="bookingWindow.showCancelBookingForm" class="form-check mt-5">
-            <input v-model="bookingWindow.deleteBookingsWithSameBookingUuid" type="checkbox" class="form-check-input" id="deleteSiblingsWithSameBookingIdSwitch">
+            <input v-model="bookingWindow.deleteRepetitions" type="checkbox" class="form-check-input" id="deleteSiblingsWithSameBookingIdSwitch">
             <label class="form-check-label" for="deleteSiblingsWithSameBookingIdSwitch">{{ ('RBB.deleteRepetitions')|trans }}</label>
         </div>
     {% endblock %}

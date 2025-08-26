@@ -15,15 +15,22 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\DataContainer;
 
 use Contao\CoreBundle\DependencyInjection\Attribute\AsCallback;
-use Contao\Database;
 use Contao\DataContainer;
 use Contao\Date;
-use Contao\Input;
 use Contao\Message;
+use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Types\Types;
 use Markocupic\ResourceBookingBundle\Util\UtcTimeHelper;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 class ResourceBookingTimeSlot
 {
+    public function __construct(
+        private readonly Connection $connection,
+        private readonly RequestStack $requestStack,
+    ) {
+    }
+
     #[AsCallback(table: 'tl_resource_booking_time_slot', target: 'list.sorting.child_record')]
     public function childRecordCallback(array $row): string
     {
@@ -74,9 +81,11 @@ class ResourceBookingTimeSlot
     #[AsCallback(table: 'tl_resource_booking_time_slot', target: 'fields.endTime.save')]
     public function setCorrectEndTime(int $timestamp, DataContainer $dc): int
     {
+        $request = $this->requestStack->getCurrentRequest();
+
         // Adjust endTime if it is smaller than the startTime
-        if (!empty(Input::post('startTime'))) {
-            $strStartTime = Input::post('startTime');
+        if (!empty($request->request->get('startTime'))) {
+            $strStartTime = $request->request->get('startTime');
         } else {
             $strStartTime = $dc->activeRecord->startTime;
         }
@@ -101,14 +110,28 @@ class ResourceBookingTimeSlot
             return;
         }
 
-        $objBooking = Database::getInstance()->prepare('SELECT id FROM tl_resource_booking WHERE timeSlotId=?')->execute($dc->id);
+        $arrIdsDel = $this->connection
+            ->fetchFirstColumn(
+                'SELECT id FROM tl_resource_booking WHERE timeSlotId = ?',
+                [$dc->id],
+                [Types::INTEGER],
+            )
+        ;
 
-        if ($objBooking->numRows) {
-            $arrIdsDel = $objBooking->fetchEach('id');
-            // Delete child bookings
-            Database::getInstance()->prepare('DELETE FROM tl_resource_booking WHERE timeSlotId=?')->execute($dc->id);
-            Message::addInfo('Deleted bookings with ids '.implode(',', $arrIdsDel));
+        if (empty($arrIdsDel)) {
+            return;
         }
+
+        // Delete child bookings
+        $this->connection
+            ->delete(
+                'tl_resource_booking',
+                ['timeSlotId' => $dc->id],
+                [Types::INTEGER],
+            )
+        ;
+
+        Message::addInfo('Deleted bookings with ids '.implode(',', $arrIdsDel));
     }
 
     #[AsCallback(table: 'tl_resource_booking_time_slot', target: 'config.onsubmit')]
@@ -120,33 +143,52 @@ class ResourceBookingTimeSlot
             return;
         }
 
-        $objSlot = Database::getInstance()->prepare('SELECT * FROM tl_resource_booking_time_slot WHERE id=?')->execute($intId);
+        $arrSlot = $this->connection->fetchAssociative(
+            'SELECT * FROM tl_resource_booking_time_slot WHERE id = ?',
+            [$intId],
+            [Types::INTEGER],
+        );
 
-        if ($objSlot->numRows) {
-            $arrAdapted = [];
-            $objBooking = Database::getInstance()->prepare('SELECT * FROM tl_resource_booking WHERE timeSlotId=?')->execute($objSlot->id);
+        if (!$arrSlot) {
+            return;
+        }
 
-            while ($objBooking->next()) {
-                $set = [];
-                $arrFields = ['startTime', 'endTime'];
+        $arrAdapted = [];
+        $arrBookings = $this->connection->fetchAllAssociative(
+            'SELECT * FROM tl_resource_booking WHERE timeSlotId = ?',
+            [$arrSlot['id']],
+            [Types::INTEGER],
+        );
 
-                foreach ($arrFields as $field) {
-                    $strDateOld = Date::parse('Y-m-d H:i', $objBooking->{$field});
-                    $arrDateOld = explode(' ', $strDateOld);
-                    $strTimeNew = UtcTimeHelper::parse('H:i', $objSlot->{$field});
-                    $strDateNew = $arrDateOld[0].' '.$strTimeNew;
-                    $set[$field] = strtotime($strDateNew);
-                }
-                $arrAdapted[] = $objBooking->id;
-                Database::getInstance()->prepare('UPDATE tl_resource_booking %s WHERE id=?')
-                    ->set($set)
-                    ->execute($objBooking->id)
-                ;
+        if (empty($arrBookings)) {
+            return;
+        }
+
+        foreach ($arrBookings as $arrBooking) {
+
+            $set = [];
+            $arrFields = ['startTime', 'endTime'];
+
+            foreach ($arrFields as $field) {
+                $strDateOld = Date::parse('Y-m-d H:i', $arrBooking[$field]);
+                $arrDateOld = explode(' ', $strDateOld);
+                $strTimeNew = UtcTimeHelper::parse('H:i', $arrSlot[$field]);
+                $strDateNew = $arrDateOld[0].' '.$strTimeNew;
+                $set[$field] = strtotime($strDateNew);
             }
 
-            if (\count($arrAdapted)) {
-                Message::addInfo('Adapted start- and endtime for booking with ids '.implode(',', $arrAdapted));
-            }
+            $arrAdapted[] = $arrBooking['id'];
+
+            $this->connection->update(
+                'tl_resource_booking',
+                $set,
+                ['id' => $arrBooking['id']],
+                [Types::INTEGER],
+            );
+        }
+
+        if (!empty($arrAdapted)) {
+            Message::addInfo('Adapted start- and end-time for booking with ids '.implode(',', $arrAdapted));
         }
     }
 }

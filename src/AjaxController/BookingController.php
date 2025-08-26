@@ -14,13 +14,11 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\AjaxController;
 
-use Contao\CoreBundle\Monolog\ContaoContext;
 use Contao\Input;
 use Contao\Model\Collection;
 use Contao\System;
 use Doctrine\DBAL\Connection;
 use Markocupic\ResourceBookingBundle\AjaxController\Traits\BookingTrait;
-use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
 use Markocupic\ResourceBookingBundle\Event\PostBookingEvent;
 use Markocupic\ResourceBookingBundle\Event\PreBookingEvent;
 use Markocupic\ResourceBookingBundle\Exception\StopBookingProcessException;
@@ -30,7 +28,7 @@ use Markocupic\ResourceBookingBundle\Slot\SlotCollection;
 use Markocupic\ResourceBookingBundle\Slot\SlotFactory;
 use Markocupic\ResourceBookingBundle\Slot\SlotMain;
 use Markocupic\ResourceBookingBundle\Util\Utils;
-use Psr\Log\LogLevel;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Contracts\Service\Attribute\Required;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -43,6 +41,8 @@ final class BookingController extends AbstractController implements ControllerIn
     private EventDispatcherInterface $eventDispatcher;
     private SlotFactory $slotFactory;
     private TranslatorInterface $translator;
+    private LoggerInterface|null $contaoGeneralLogger = null;
+    private LoggerInterface|null $contaoErrorLogger = null;
     private string|null $bookingUuid = null;
 
     /**
@@ -51,64 +51,50 @@ final class BookingController extends AbstractController implements ControllerIn
      * see: https://symfony.com/doc/current/service_container/calls.html.
      */
     #[Required]
-    public function _setController(Connection $connection, EventDispatcherInterface $eventDispatcher, SlotFactory $slotFactory, TranslatorInterface $translator): void
+    public function _setController(Connection $connection, EventDispatcherInterface $eventDispatcher, SlotFactory $slotFactory, TranslatorInterface $translator, LoggerInterface $contaoGeneralLogger = null, LoggerInterface $contaoErrorLogger = null): void
     {
         $this->connection = $connection;
         $this->eventDispatcher = $eventDispatcher;
         $this->slotFactory = $slotFactory;
         $this->translator = $translator;
+        $this->contaoGeneralLogger = $contaoGeneralLogger;
+        $this->contaoErrorLogger = $contaoErrorLogger;
     }
 
     /**
      * @throws \Exception
      */
-    public function generateResponse(AjaxRequestEvent $ajaxRequestEvent): void
+    public function generateResponse(AjaxResponse $ajaxResponse): AjaxResponse
     {
-        /** @var ResourceBookingModel $resourceBookingModelAdapter */
-        $resourceBookingModelAdapter = $this->framework->getAdapter(ResourceBookingModel::class);
-
-        /** @var System $systemAdapter */
-        $systemAdapter = $this->framework->getAdapter(System::class);
-
         // Load language file
-        $systemAdapter->loadLanguageFile('default', $this->translator->getLocale());
+        $this->framework
+            ->getAdapter(System::class)
+            ->loadLanguageFile('default', $this->translator->getLocale())
+        ;
 
         // Initialize: get resource from request, etc.
         $this->initialize();
 
-        // Get the logger
-        $logger = $systemAdapter->getContainer()->get('monolog.logger.contao');
-
-        $ajaxResponse = $ajaxRequestEvent->getAjaxResponse();
-
         $this->connection->beginTransaction();
 
         // Validate inputs
-        // !Important: If you use additional upload fields,
+        // !Important: If additional upload fields are used,
         // it is up to you to perform an input check.
         try {
             $this->validateInputs($this->utils->getAppConfig()['permittedUploadFields']);
 
-            $slotCollection = $this->getSlotCollectionFromRequest();
+            $slotCollection = $this->getSlotCollectionFromRequest($this->bookingRepeatStopWeekTstamp);
 
             // First we check, if booking is possible!
             if (!$this->isBookingPossible($slotCollection)) {
                 throw new StopBookingProcessException($this->translator->trans($this->getErrorMessage(), [], 'contao_default'));
             }
 
-            /** @var Collection $objBookings Then we get the booking collection */
+            /** @var Collection<ResourceBookingModel> $objBookings */
             $objBookings = $this->getBookingCollection($slotCollection, $this->utils);
 
             // Dispatch pre booking event "rbb.event.pre_booking"
-            $eventData = new \stdClass();
-            $eventData->user = $this->user->getLoggedInUser();
-            $eventData->bookingCollection = $objBookings;
-            $eventData->ajaxResponse = $ajaxResponse;
-            $eventData->sessionBag = $this->sessionBag;
-
-            // Dispatch the pre-booking event.
-            $objPreBookingEvent = new PreBookingEvent($eventData);
-
+            $objPreBookingEvent = new PreBookingEvent($ajaxResponse, $this->sessionBag, $this->user->getLoggedInUser(), $objBookings);
             $this->eventDispatcher->dispatch($objPreBookingEvent);
 
             $objBookings?->reset();
@@ -132,25 +118,21 @@ final class BookingController extends AbstractController implements ControllerIn
 
                     // Log
                     $strLog = sprintf('New resource "%s" (with ID %s) has been booked.', $this->getActiveResource()->title, $objBooking->id);
-                    $logger?->log(LogLevel::INFO, $strLog, ['contao' => new ContaoContext(__METHOD__, 'INFO')]);
+                    $this->contaoGeneralLogger?->info($strLog);
                 }
 
                 $ajaxResponse->setData('bookingProcessSucceeded', true);
             }
 
-            // Dispatch post booking event "rbb.event.post_booking"
             /** @var Collection $objBookings */
-            $objBookings = $resourceBookingModelAdapter->findByBookingUuid($this->getBookingUuid());
+            $objBookings = $this->framework
+                ->getAdapter(ResourceBookingModel::class)
+                ->findByBookingUuid($this->getBookingUuid())
+            ;
 
             if (null !== $objBookings) {
-                $eventData = new \stdClass();
-                $eventData->user = $this->user->getLoggedInUser();
-                $eventData->bookingCollection = $objBookings;
-                $eventData->ajaxResponse = $ajaxResponse;
-                $eventData->sessionBag = $this->sessionBag;
-
-                // Dispatch event
-                $objPostBookingEvent = new PostBookingEvent($eventData);
+                // Dispatch post booking event "rbb.event.post_booking"
+                $objPostBookingEvent = new PostBookingEvent($ajaxResponse, $this->sessionBag, $this->user->getLoggedInUser(), $objBookings);
                 $this->eventDispatcher->dispatch($objPostBookingEvent);
             }
 
@@ -181,11 +163,13 @@ final class BookingController extends AbstractController implements ControllerIn
             $this->connection->rollBack();
             $ajaxResponse->setStatus(AjaxResponse::STATUS_ERROR);
             $ajaxResponse->setErrorMessage($this->translator->trans('RBB.ERR.generalBookingError', [], 'contao_default'));
-            $logger?->log(LogLevel::ERROR, $e->getMessage(), ['contao' => new ContaoContext(__METHOD__, ContaoContext::ERROR)]);
+            $this->contaoErrorLogger?->error($e->getMessage());
         }
+
+        return $ajaxResponse;
     }
 
-    private function validateInputs(array $permittedUploadFields): void
+    protected function validateInputs(array $permittedUploadFields): void
     {
         $arrKeys = array_keys($_POST);
 
@@ -218,7 +202,7 @@ final class BookingController extends AbstractController implements ControllerIn
                     break;
 
                 default:
-                    // Check if custom field is allowed and registered in the configuration
+                    // Check if custom field is allowed and registered in the bundle configuration
                     if (!\in_array($key, $permittedUploadFields, true)) {
                         throw new \Exception($this->translator->trans('RBB.ERR.invalidUploadFieldSubmitted', [$key], 'contao_default'));
                     }
@@ -226,7 +210,7 @@ final class BookingController extends AbstractController implements ControllerIn
         }
     }
 
-    private function getBookingCollection(SlotCollection $slotCollection, Utils $utils): Collection|null
+    protected function getBookingCollection(SlotCollection $slotCollection, Utils $utils): Collection|null
     {
         $bookingCollection = [];
 
@@ -237,12 +221,13 @@ final class BookingController extends AbstractController implements ControllerIn
             $slot = $slotCollection->current();
 
             // Use already available booking entity
-            $arrBooking = $slot->bookingRelatedToLoggedInUser;
+            $arrBooking = $slot->userBooking;
 
             if (true !== $slot->userHasBooked && null === $arrBooking) {
-                // Create new booking entity
+                // Create a new booking entity
                 $objBooking = new ResourceBookingModel();
             } else {
+                // Use the already existing entity
                 $objBooking = ResourceBookingModel::findByPk($arrBooking['id']);
             }
 
@@ -258,7 +243,7 @@ final class BookingController extends AbstractController implements ControllerIn
 
                 // !Do not save the model here, this will be done later
                 $arrAppConfig = $utils->getAppConfig();
-                $objBooking->confirmed = $arrAppConfig['autoConfirm'] ? true : false;
+                $objBooking->confirmed = (bool) $arrAppConfig['autoConfirm'];
                 $objBooking->tstamp = time();
                 $objBooking->bookingTime = time();
 

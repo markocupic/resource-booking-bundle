@@ -15,7 +15,6 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\AjaxController;
 
 use Markocupic\ResourceBookingBundle\AjaxController\Traits\RefreshDataTrait;
-use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceTypeModel;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
@@ -49,25 +48,19 @@ final class ApplyFilterController extends AbstractController implements Controll
     /**
      * @throws \Exception
      */
-    public function generateResponse(AjaxRequestEvent $ajaxRequestEvent): void
+    public function generateResponse(AjaxResponse $ajaxResponse): AjaxResponse
     {
-        $ajaxResponse = $ajaxRequestEvent->getAjaxResponse();
 
-        /** @var ResourceBookingResourceTypeModel $resourceBookingResourceTypeModelAdapter */
-        $resourceBookingResourceTypeModelAdapter = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class);
 
-        /** @var ResourceBookingResourceModel $resourceBookingResourceModelAdapter */
-        $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
 
-        /** @var DateHelper $dateHelperAdapter */
-        $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
+
 
         $request = $this->requestStack->getCurrentRequest();
 
         // Get resource type from post request
         $intResType = (int) $request->request->get('resType', 0);
 
-        if (null !== $resourceBookingResourceTypeModelAdapter->findByPk($intResType)) {
+        if (null !== $this->framework->getAdapter(ResourceBookingResourceTypeModel::class)->findByPk($intResType)) {
             $this->sessionBag->set('resType', $intResType);
         } else {
             $this->sessionBag->set('resType', 0);
@@ -84,9 +77,9 @@ final class ApplyFilterController extends AbstractController implements Controll
         // Check if res exists
         $invalidRes = true;
 
-        if (null !== ($objRes = $resourceBookingResourceModelAdapter->findByPk($intRes))) {
+        if (null !== ($objRes = $this->framework->getAdapter(ResourceBookingResourceModel::class)->findByPk($intRes))) {
             // ... and if res is in the current resType container
-            if ((int) $objRes->pid === $intResType) {
+            if ($objRes->pid === $intResType) {
                 $this->sessionBag->set('res', $intRes);
                 $invalidRes = false;
             }
@@ -102,6 +95,7 @@ final class ApplyFilterController extends AbstractController implements Controll
 
         // Get active week timestamp from post request
         $intTstampDate = (int) $request->request->get('date', 0);
+        $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
         $intTstampDate = $dateHelperAdapter->isDateInPermittedRange($intTstampDate, $arrAppConfig) ? $intTstampDate : $dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig);
 
         // Validate $intTstampDate
@@ -122,5 +116,7 @@ final class ApplyFilterController extends AbstractController implements Controll
         // Fetch refreshed data and send it to the browser
         $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
         $ajaxResponse->setDataFromArray($this->getRefreshedData($ajaxResponse));
+
+        return $ajaxResponse;
     }
 }

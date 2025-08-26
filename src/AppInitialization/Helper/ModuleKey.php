@@ -30,16 +30,16 @@ class ModuleKey
 {
     private static string|null $moduleKey = null;
 
-    public static function setModuleKey(string $str): void
-    {
-        static::$moduleKey = $str;
-    }
-
     /**
      * @throws \Exception
      */
     public static function getModuleKey(): string|null
     {
         return static::$moduleKey;
+    }
+
+    public static function setModuleKey(string $str): void
+    {
+        static::$moduleKey = $str;
     }
 }

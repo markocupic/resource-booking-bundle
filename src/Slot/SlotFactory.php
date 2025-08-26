@@ -18,13 +18,14 @@ use Contao\CoreBundle\Framework\ContaoFramework;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Util\Utils;
 use Symfony\Component\PasswordHasher\Exception\LogicException;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Component\Security\Core\Security;
 
 class SlotFactory
 {
     public function __construct(
         private readonly ContaoFramework $framework,
-        private readonly Security $security,
+        private readonly TokenStorageInterface $tokenStorage,
         private readonly Utils $utils,
     ) {
     }
@@ -35,13 +36,13 @@ class SlotFactory
     public function get(int $timeSlotId, string $mode, ResourceBookingResourceModel $resource, int $startTime, int $endTime, int $desiredItems = 1, int $bookingRepeatStopWeekTstamp = null): SlotInterface
     {
         if (SlotMain::MODE === $mode) {
-            $slotEntity = new SlotMain($this->framework, $this->security, $this->utils);
+            $slotEntity = new SlotMain($this->framework, $this->tokenStorage, $this->utils);
 
             return $slotEntity->create($timeSlotId, $resource, $startTime, $endTime, $desiredItems, $bookingRepeatStopWeekTstamp);
         }
 
         if (SlotBooking::MODE === $mode) {
-            $slotEntity = new SlotBooking($this->framework, $this->security, $this->utils);
+            $slotEntity = new SlotBooking($this->framework, $this->tokenStorage, $this->utils);
 
             return $slotEntity->create($timeSlotId, $resource, $startTime, $endTime, $desiredItems, $bookingRepeatStopWeekTstamp);
         }

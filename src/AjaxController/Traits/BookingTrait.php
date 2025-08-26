@@ -16,25 +16,21 @@ namespace Markocupic\ResourceBookingBundle\AjaxController\Traits;
 
 use Contao\Config;
 use Contao\Controller;
-use Contao\Database;
 use Contao\Date;
 use Contao\Input;
-use Contao\StringUtil;
 use Markocupic\ResourceBookingBundle\Slot\SlotBooking;
 use Markocupic\ResourceBookingBundle\Slot\SlotCollection;
 use Markocupic\ResourceBookingBundle\Slot\SlotMain;
 use Markocupic\ResourceBookingBundle\Util\DateHelper;
+use Ramsey\Uuid\Uuid;
 
 trait BookingTrait
 {
     /**
      * @throws \Exception
      */
-    private function getSlotCollectionFromRequest(): SlotCollection|null
+    protected function getSlotCollectionFromRequest(int $bookingRepeatStopWeekTstamp): SlotCollection|null
     {
-        /** @var StringUtil $stringUtilAdapter */
-        $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
-
         /** @var DateHelper $dateHelperAdapter */
         $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
 
@@ -47,19 +43,13 @@ trait BookingTrait
         /** @var Config $configAdapter */
         $configAdapter = $this->framework->getAdapter(Config::class);
 
-        /** @var Controller $controllerAdapter */
-        $controllerAdapter = $this->framework->getAdapter(Controller::class);
-
-        $request = $this->requestStack->getCurrentRequest();
-
         $arrSlotCollection = [];
         $resource = $this->getActiveResource();
-        $itemsBooked = (int) $request->request->get('itemsBooked', 1);
-        $description = $request->request->has('bookingDescription') ? $stringUtilAdapter->decodeEntities($inputAdapter->post('bookingDescription')) : '';
+        $itemsBooked = (int) $inputAdapter->post('itemsBooked');
+        $description = (string) $inputAdapter->post('bookingDescription');
         // $request->request->get('bookingDateSelection') won't work, because
         // Symfony doesn't allow non-scalar values in the input bag (design change since Symfony 6)
-        $arrDateSelection = $request->request->all()['bookingDateSelection'] ?: [];
-        $this->bookingUuid = $this->getBookingUuid();
+        $arrDateSelection = $inputAdapter->post('bookingDateSelection');
 
         if (!empty($arrDateSelection) && \is_array($arrDateSelection)) {
             foreach ($arrDateSelection as $strTimeSlot) {
@@ -70,7 +60,7 @@ trait BookingTrait
                 $startTime = (int) $arrTimeSlot[1];
                 $endTime = (int) $arrTimeSlot[2];
 
-                /** @var SlotBooking $slot Create new booking entity */
+                /** @var SlotBooking $slot */
                 $slot = $this->slotFactory->get(
                     $timeSlotId,
                     SlotBooking::MODE,
@@ -78,7 +68,7 @@ trait BookingTrait
                     $startTime,
                     $endTime,
                     $itemsBooked,
-                    $this->bookingRepeatStopWeekTstamp
+                    $bookingRepeatStopWeekTstamp
                 );
 
                 $slot->setTimeSlotId($timeSlotId);
@@ -86,14 +76,14 @@ trait BookingTrait
                 $arrSlotCollection[] = $slot;
 
                 // Handle repetitions
-                if ($endTime < $this->bookingRepeatStopWeekTstamp) {
+                if ($endTime < $bookingRepeatStopWeekTstamp) {
                     $doRepeat = true;
 
                     while (true === $doRepeat) {
                         $startTime = $dateHelperAdapter->addDaysToTime(7, $startTime);
                         $endTime = $dateHelperAdapter->addDaysToTime(7, $endTime);
 
-                        /** @var SlotMain $slot Create new booking entity */
+                        /** @var SlotMain $slot */
                         $slot = $this->slotFactory->get(
                             $timeSlotId,
                             SlotBooking::MODE,
@@ -101,13 +91,13 @@ trait BookingTrait
                             $startTime,
                             $endTime,
                             $itemsBooked,
-                            $this->bookingRepeatStopWeekTstamp
+                            $bookingRepeatStopWeekTstamp
                         );
 
                         $arrSlotCollection[] = $slot;
 
                         // Stop repeating
-                        if ($slot->beginnWeekTimestampSelectedWeek >= $this->bookingRepeatStopWeekTstamp) {
+                        if ($slot->beginnWeekTimestampSelectedWeek >= $bookingRepeatStopWeekTstamp) {
                             $doRepeat = false;
                         }
                     }
@@ -117,7 +107,12 @@ trait BookingTrait
 
         $slotCollection = (new SlotCollection($arrSlotCollection))->sortBy('startTime');
 
-        $controllerAdapter->loadDataContainer('tl_resource_booking');
+        // Load data container
+        $this->framework
+            ->getAdapter(Controller::class)
+            ->loadDataContainer('tl_resource_booking')
+        ;
+
         $dca = $GLOBALS['TL_DCA']['tl_resource_booking'];
 
         $arrUserInput = [
@@ -130,7 +125,9 @@ trait BookingTrait
         ];
 
         // Add data from POST, thus the extension can easily be extended
-        foreach (array_keys($_POST) as $k) {
+        // Custom form fields must be registered in the bundle configuration
+        // @See: BookingController::validateInputs()
+        foreach ($inputAdapter->getKeys() as $k) {
             if (!isset($arrUserInput[$k])) {
                 $blnDecode = isset($dca['fields'][$k]['eval']['decodeEntities']) && true === $dca['fields'][$k]['eval']['decodeEntities'];
                 $arrUserInput[$k] = $blnDecode ? $inputAdapter->post($k, true) : $inputAdapter->post($k);
@@ -139,9 +136,11 @@ trait BookingTrait
 
         $slotCollection->reset();
 
+        $bookingUuid = $this->getBookingUuid();
+
         while ($slotCollection->next()) {
             $slot = $slotCollection->current();
-            $arrUserInput['bookingUuid'] = $this->bookingUuid;
+            $arrUserInput['bookingUuid'] = $bookingUuid;
             $arrUserInput['timeSlotId'] = $slot->timeSlotId;
             $arrUserInput['startTime'] = $slot->startTime;
             $arrUserInput['endTime'] = $slot->endTime;
@@ -160,6 +159,15 @@ trait BookingTrait
         }
 
         return $slotCollection;
+    }
+
+    private function getBookingUuid(): string
+    {
+        if (!$this->bookingUuid) {
+            $this->bookingUuid = Uuid::uuid4()->toString();
+        }
+
+        return $this->bookingUuid;
     }
 
     /**
@@ -185,14 +193,13 @@ trait BookingTrait
 
             if (!$slot->isBookable()) {
                 if (!$slot->isDateInPermittedRange()) {
-                    // Invalid time period
                     $this->setErrorMessage('RBB.ERR.invalidStartOrEndTime');
                 } elseif ($slot->isFullyBooked()) {
-                    // Resource has already been booked by another user
                     $this->setErrorMessage('RBB.ERR.resourceIsAlreadyFullyBooked');
                 } elseif (!$slot->isBookable()) {
-                    // Resource has already been booked by another user
                     $this->setErrorMessage('RBB.ERR.notEnoughItemsAvailable');
+                } elseif (!$slot->isBlocked()) {
+                    $this->setErrorMessage('RBB.ERR.slotIsBlocked');
                 } else {
                     // This case normally should not happen
                     $this->setErrorMessage('RBB.ERR.slotNotBookable');
@@ -203,20 +210,5 @@ trait BookingTrait
         }
 
         return true;
-    }
-
-    private function getBookingUuid(): string
-    {
-        if (!$this->bookingUuid) {
-            /** @var StringUtil $stringUtilAdapter */
-            $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
-
-            /** @var Database $databaseAdapter */
-            $databaseAdapter = $this->framework->getAdapter(Database::class);
-
-            $this->bookingUuid = $stringUtilAdapter->binToUuid($databaseAdapter->getInstance()->getUuid());
-        }
-
-        return $this->bookingUuid;
     }
 }

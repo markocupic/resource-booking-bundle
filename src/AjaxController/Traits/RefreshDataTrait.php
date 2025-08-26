@@ -137,6 +137,36 @@ trait RefreshDataTrait
         return $arrData;
     }
 
+    /**
+     * @throws \Exception
+     */
+    private function getActiveResourceTypeFromSession(): ResourceBookingResourceTypeModel|null
+    {
+        $resourceBookingResourceTypeModelAdapter = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class);
+
+        return $resourceBookingResourceTypeModelAdapter->findByPk($this->sessionBag->get('resType'));
+    }
+
+    /**
+     * @throws \Exception
+     */
+    private function getActiveResourceFromSession(): ResourceBookingResourceModel|null
+    {
+        $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
+
+        return $resourceBookingResourceModelAdapter->findByPk($this->sessionBag->get('res'));
+    }
+
+    /**
+     * @throws \Exception
+     */
+    private function getModuleModelFromSession(): ModuleModel|null
+    {
+        $moduleModelAdapter = $this->framework->getAdapter(ModuleModel::class);
+
+        return $moduleModelAdapter->findByPk($this->sessionBag->get('moduleModelId'));
+    }
+
     private function getResourceTypeSelectOptions(ModuleModel $objModule = null): array
     {
         $resourceBookingResourceTypeModelAdapter = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class);
@@ -167,6 +197,39 @@ trait RefreshDataTrait
         }
 
         return $rows;
+    }
+
+    /**
+     * @throws \Exception
+     */
+    private function getJumpWeekDate(int $intJumpWeek): array
+    {
+        $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
+
+        $arrReturn = [
+            'disabled' => false,
+            'tstamp' => null,
+        ];
+
+        $intJumpDays = 7 * $intJumpWeek;
+        // Create 1 week back and 1 week ahead links
+        $jumpTime = $dateHelperAdapter->addDaysToTime($intJumpDays, $this->sessionBag->get('activeWeekTstamp'));
+
+        // Get app config
+        $arrAppConfig = $this->utils->getAppConfig();
+
+        if (!$dateHelperAdapter->isDateInPermittedRange($jumpTime, $arrAppConfig)) {
+            $jumpTime = $this->sessionBag->get('activeWeekTstamp');
+            $arrReturn['disabled'] = true;
+        }
+
+        if (!$this->sessionBag->get('activeWeekTstamp') > 0 || null === $this->getActiveResourceTypeFromSession() || null === $this->getActiveResourceFromSession()) {
+            $arrReturn['disabled'] = true;
+        }
+
+        $arrReturn['tstamp'] = (int) $jumpTime;
+
+        return $arrReturn;
     }
 
     /**
@@ -237,78 +300,6 @@ trait RefreshDataTrait
     /**
      * @throws \Exception
      */
-    private function getJumpWeekDate(int $intJumpWeek): array
-    {
-        $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
-
-        $arrReturn = [
-            'disabled' => false,
-            'tstamp' => null,
-        ];
-
-        $intJumpDays = 7 * $intJumpWeek;
-        // Create 1 week back and 1 week ahead links
-        $jumpTime = $dateHelperAdapter->addDaysToTime($intJumpDays, $this->sessionBag->get('activeWeekTstamp'));
-
-        // Get app config
-        $arrAppConfig = $this->utils->getAppConfig();
-
-        if (!$dateHelperAdapter->isDateInPermittedRange($jumpTime, $arrAppConfig)) {
-            $jumpTime = $this->sessionBag->get('activeWeekTstamp');
-            $arrReturn['disabled'] = true;
-        }
-
-        if (!$this->sessionBag->get('activeWeekTstamp') > 0 || null === $this->getActiveResourceTypeFromSession() || null === $this->getActiveResourceFromSession()) {
-            $arrReturn['disabled'] = true;
-        }
-
-        $arrReturn['tstamp'] = (int) $jumpTime;
-
-        return $arrReturn;
-    }
-
-    private function getTimeslotData(ResourceBookingResourceModel $resourceBookingResourceModel = null): array
-    {
-        $resourceBookingTimeSlotModelAdapter = $this->framework->getAdapter(ResourceBookingTimeSlotModel::class);
-        $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
-        $utcTimeHelperAdapter = $this->framework->getAdapter(UtcTimeHelper::class);
-
-        $timeSlots = [];
-
-        if (null !== $resourceBookingResourceModel) {
-            $objTimeslot = $resourceBookingTimeSlotModelAdapter->findPublishedByPid((int) $resourceBookingResourceModel->timeSlotType);
-
-            if (null !== $objTimeslot) {
-                while ($objTimeslot->next()) {
-                    // Get the CSS ID
-                    $arrCssCellID = $stringUtilAdapter->deserialize($objTimeslot->cssID, true);
-
-                    // Override the CSS ID
-                    $cssCellClass = null;
-
-                    if (!empty($arrCssCellID[1])) {
-                        $cssCellClass = $arrCssCellID[1];
-                    }
-                    $startTime = (int) $objTimeslot->startTime;
-                    $endTime = (int) $objTimeslot->endTime;
-                    $objTs = new \stdClass();
-                    $objTs->cssClass = $cssCellClass;
-                    $objTs->startTimeString = $utcTimeHelperAdapter->parse('H:i', $startTime);
-                    $objTs->startTime = $startTime;
-                    $objTs->endTimeString = $utcTimeHelperAdapter->parse('H:i', $endTime);
-                    $objTs->timeSpanString = $utcTimeHelperAdapter->parse('H:i', $startTime).' - '.$utcTimeHelperAdapter->parse('H:i', $endTime);
-                    $objTs->endTime = $endTime;
-                    $timeSlots[] = $objTs;
-                }
-            }
-        }
-
-        return $timeSlots;
-    }
-
-    /**
-     * @throws \Exception
-     */
     private function getWeekdays(int $activeWeekTstamp, ModuleModel $moduleModel): array
     {
         $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
@@ -335,6 +326,21 @@ trait RefreshDataTrait
         }
 
         return $arrWeek;
+    }
+
+    /**
+     * @throws \Exception
+     */
+    private function getDaysOfWeek(): array
+    {
+        // $arrWeekdays[0] should be the weekday defined in the application configuration
+        $arrWeekdays = RbbConfig::RBB_WEEKDAYS;
+        $arrWeekdays = [...$arrWeekdays, ...$arrWeekdays];
+        $arrAppConfig = $this->utils->getAppConfig();
+        $beginnWeek = $arrAppConfig['beginnWeek'];
+        $offset = array_search($beginnWeek, $arrWeekdays, true);
+
+        return \array_slice($arrWeekdays, $offset, 7);
     }
 
     /**
@@ -484,48 +490,42 @@ trait RefreshDataTrait
         return $rows;
     }
 
-    /**
-     * @throws \Exception
-     */
-    private function getDaysOfWeek(): array
+    private function getTimeslotData(ResourceBookingResourceModel $resourceBookingResourceModel = null): array
     {
-        // $arrWeekdays[0] should be the weekday defined in the application configuration
-        $arrWeekdays = RbbConfig::RBB_WEEKDAYS;
-        $arrWeekdays = [...$arrWeekdays, ...$arrWeekdays];
-        $arrAppConfig = $this->utils->getAppConfig();
-        $beginnWeek = $arrAppConfig['beginnWeek'];
-        $offset = array_search($beginnWeek, $arrWeekdays, true);
+        $resourceBookingTimeSlotModelAdapter = $this->framework->getAdapter(ResourceBookingTimeSlotModel::class);
+        $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
+        $utcTimeHelperAdapter = $this->framework->getAdapter(UtcTimeHelper::class);
 
-        return \array_slice($arrWeekdays, $offset, 7);
-    }
+        $timeSlots = [];
 
-    /**
-     * @throws \Exception
-     */
-    private function getActiveResourceFromSession(): ResourceBookingResourceModel|null
-    {
-        $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
+        if (null !== $resourceBookingResourceModel) {
+            $objTimeslot = $resourceBookingTimeSlotModelAdapter->findPublishedByPid((int) $resourceBookingResourceModel->timeSlotType);
 
-        return $resourceBookingResourceModelAdapter->findByPk($this->sessionBag->get('res'));
-    }
+            if (null !== $objTimeslot) {
+                while ($objTimeslot->next()) {
+                    // Get the CSS ID
+                    $arrCssCellID = $stringUtilAdapter->deserialize($objTimeslot->cssID, true);
 
-    /**
-     * @throws \Exception
-     */
-    private function getActiveResourceTypeFromSession(): ResourceBookingResourceTypeModel|null
-    {
-        $resourceBookingResourceTypeModelAdapter = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class);
+                    // Override the CSS ID
+                    $cssCellClass = null;
 
-        return $resourceBookingResourceTypeModelAdapter->findByPk($this->sessionBag->get('resType'));
-    }
+                    if (!empty($arrCssCellID[1])) {
+                        $cssCellClass = $arrCssCellID[1];
+                    }
+                    $startTime = (int) $objTimeslot->startTime;
+                    $endTime = (int) $objTimeslot->endTime;
+                    $objTs = new \stdClass();
+                    $objTs->cssClass = $cssCellClass;
+                    $objTs->startTimeString = $utcTimeHelperAdapter->parse('H:i', $startTime);
+                    $objTs->startTime = $startTime;
+                    $objTs->endTimeString = $utcTimeHelperAdapter->parse('H:i', $endTime);
+                    $objTs->timeSpanString = $utcTimeHelperAdapter->parse('H:i', $startTime).' - '.$utcTimeHelperAdapter->parse('H:i', $endTime);
+                    $objTs->endTime = $endTime;
+                    $timeSlots[] = $objTs;
+                }
+            }
+        }
 
-    /**
-     * @throws \Exception
-     */
-    private function getModuleModelFromSession(): ModuleModel|null
-    {
-        $moduleModelAdapter = $this->framework->getAdapter(ModuleModel::class);
-
-        return $moduleModelAdapter->findByPk($this->sessionBag->get('moduleModelId'));
+        return $timeSlots;
     }
 }

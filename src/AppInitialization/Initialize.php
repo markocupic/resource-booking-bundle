@@ -111,9 +111,9 @@ class Initialize
             $objRes = $resourceBookingResourceModelAdapter->findByPk($request->query->get('res', 0));
 
             if (null !== $objRes) {
-                if (null !== ($objResType = $resourceBookingResourceTypeModelAdapter->findPublishedByPk((int) $objRes->pid))) {
-                    $this->sessionBag->set('res', (int) $request->query->get('res', 0));
-                    $this->sessionBag->set('resType', (int) $objResType->id);
+                if (null !== ($objResType = $resourceBookingResourceTypeModelAdapter->findPublishedByPk((int)$objRes->pid))) {
+                    $this->sessionBag->set('res', (int)$request->query->get('res', 0));
+                    $this->sessionBag->set('resType', (int)$objResType->id);
                 }
             }
             $blnRedirect = true;
@@ -136,7 +136,7 @@ class Initialize
         if (($resTypeId = $this->sessionBag->get('resType', 0)) > 0) {
             $blnForbidden = false;
 
-            if (null === $resourceBookingResourceTypeModelAdapter->findPublishedByPk((int) $resTypeId)) {
+            if (null === $resourceBookingResourceTypeModelAdapter->findPublishedByPk((int)$resTypeId)) {
                 $blnForbidden = true;
             }
 
@@ -163,7 +163,7 @@ class Initialize
         if (($resId = $this->sessionBag->get('res', 0)) > 0) {
             $blnForbidden = false;
 
-            if (null === $resourceBookingResourceModelAdapter->findPublishedByPkAndPid((int) $resId, (int) $resTypeId)) {
+            if (null === $resourceBookingResourceModelAdapter->findPublishedByPkAndPid((int)$resId, (int)$resTypeId)) {
                 $blnForbidden = true;
             }
 
@@ -173,7 +173,7 @@ class Initialize
         } else {
             // Auto redirect if there is only one resource in the filter menu.
             if (!$environmentAdapter->get('isAjaxRequest') && $resTypeId > 0) {
-                $oRes = $resourceBookingResourceModelAdapter->findPublishedByPid((int) $resTypeId);
+                $oRes = $resourceBookingResourceModelAdapter->findPublishedByPid((int)$resTypeId);
 
                 if (null !== $oRes && 1 === $oRes->count()) {
                     $this->sessionBag->set('res', $oRes->id);
@@ -184,7 +184,7 @@ class Initialize
         $arrAppConfig = $this->utils->getAppConfig();
 
         // Set active week timestamp.
-        $tstampCurrentWeek = (int) $this->sessionBag->get('activeWeekTstamp', $dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig));
+        $tstampCurrentWeek = (int)$this->sessionBag->get('activeWeekTstamp', $dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig));
         $this->sessionBag->set('activeWeekTstamp', $tstampCurrentWeek);
         $this->sessionBag->set('activeWeekDate', date('Y-m-d', $tstampCurrentWeek));
 

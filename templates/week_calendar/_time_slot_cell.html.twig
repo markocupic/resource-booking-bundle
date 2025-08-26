@@ -15,11 +15,11 @@
             <span class="rbb-cell-booking-description-box" v-if="booking.bookingDescription"><small>[[ booking.bookingDescription ]]</small></span>
             {# <span class="rbb-cell-booking-description-box v-if="booking.bookingTitle"><small>[[ booking.bookingTitle ]]</small></span> #}
             {# <span class="rbb-cell-booking-description-box v-if="booking.bookingBookingTime"><small>[[ booking.bookingBookingTime ]]</small></span> #}
-            <button class="btn btn-link rbb-btn-cancel-booking" v-if="booking.canCancel" @click="openBookingWindow(slot, 'showCancelBookingForm', slot.bookingRelatedToLoggedInUser)" title="{{ ('RBB.cancelResource')|trans }}">
+            <button class="btn btn-link rbb-btn-cancel-booking" v-if="booking.canCancel" @click="openBookingWindow(slot, 'showCancelBookingForm', slot.userBooking)" title="{{ ('RBB.cancelResource')|trans }}">
                 {{ rbb_icon('fa-times-circle','rbb-icon-cancel-booking')|raw }}
             </button>
         </div>
-        <button class="btn btn-link rbb-btn-booking" v-if="hasLoggedInUser && (slot.isBookable && !slot.isCancelable)" @click="openBookingWindow(slot, 'showBookingForm', null)" title="{{ ('RBB.bookResource')|trans }}">
+        <button class="btn btn-link rbb-btn-booking" v-if="hasLoggedInUser && (slot.isBookable && !slot.isCancelable && !slot.isBlocked)" @click="openBookingWindow(slot, 'showBookingForm', null)" title="{{ ('RBB.bookResource')|trans }}">
             {{ rbb_icon('fa-check-circle')|raw }}
         </button>
     </div>

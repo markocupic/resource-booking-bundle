@@ -1,0 +1,15 @@
+{
+  "vue/vue.global.prod.js": "/bundles/markocupicresourcebooking/vue/vue.global.prod.97c64fa8.js",
+  "audio/booking-alert.mp3": "/bundles/markocupicresourcebooking/audio/booking-alert.a7c4507e.mp3",
+  "css/frontend.css": "/bundles/markocupicresourcebooking/css/frontend.e97489e2.css",
+  "js/app.js": "/bundles/markocupicresourcebooking/js/app.38c32c97.js",
+  "icons/calendar.svg": "/bundles/markocupicresourcebooking/icons/calendar.svg",
+  "icons/feather/calendar.svg": "/bundles/markocupicresourcebooking/icons/feather/calendar.svg",
+  "icons/frontend/fa-sync.svg": "/bundles/markocupicresourcebooking/icons/frontend/fa-sync.svg",
+  "icons/frontend/fa-times-circle.svg": "/bundles/markocupicresourcebooking/icons/frontend/fa-times-circle.svg",
+  "icons/frontend/fa-info-circle.svg": "/bundles/markocupicresourcebooking/icons/frontend/fa-info-circle.svg",
+  "icons/frontend/fa-check-circle.svg": "/bundles/markocupicresourcebooking/icons/frontend/fa-check-circle.svg",
+  "icons/frontend/fa-exclamation-circle.svg": "/bundles/markocupicresourcebooking/icons/frontend/fa-exclamation-circle.svg",
+  "icons/frontend/fa-chevron-right.svg": "/bundles/markocupicresourcebooking/icons/frontend/fa-chevron-right.svg",
+  "icons/frontend/fa-chevron-left.svg": "/bundles/markocupicresourcebooking/icons/frontend/fa-chevron-left.svg"
+}

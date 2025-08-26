@@ -20,7 +20,6 @@ use Contao\ModuleModel;
 use Contao\System;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionBagInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 class Utils
 {
@@ -28,7 +27,6 @@ class Utils
 
     public function __construct(
         private readonly ContaoFramework $framework,
-        private readonly TranslatorInterface $translator,
         RequestStack $requestStack,
         string $bagName,
     ) {
@@ -43,10 +41,10 @@ class Utils
      */
     public function getModuleModel(): ModuleModel|null
     {
-        /** @var ModuleModel $moduleModelAdapter */
-        $moduleModelAdapter = $this->framework->getAdapter(ModuleModel::class);
-
-        return $moduleModelAdapter->findByPk($this->session->get('moduleModelId'));
+        return $this->framework
+            ->getAdapter(ModuleModel::class)
+            ->findByPk($this->session->get('moduleModelId'))
+            ;
     }
 
     /**
@@ -54,8 +52,10 @@ class Utils
      */
     public function checkMandatoryFieldsSet(array $arrData, string $strTable): array|bool
     {
-        $controllerAdapter = $this->framework->getAdapter(Controller::class);
-        $controllerAdapter->loadDataContainer($strTable);
+        $this->framework
+            ->getAdapter(Controller::class)
+            ->loadDataContainer($strTable)
+        ;
 
         if (empty($GLOBALS['TL_DCA'][$strTable])) {
             throw new \Exception('Data container array for table '.$strTable.' not found.');
@@ -87,8 +87,8 @@ class Utils
                 $strConfig = $module->resourceBooking_appConfig;
 
                 if ('' !== (string) $strConfig) {
-                    $systemAdapter = $this->framework->getAdapter(System::class);
-                    $appConfig = $systemAdapter->getContainer()
+                    $appConfig = $this->framework
+                        ->getAdapter(System::class)->getContainer()
                         ->getParameter('markocupic_resource_booking.apps')
                     ;
 
@@ -101,6 +101,6 @@ class Utils
             throw new \Exception('Could not find app configuration array. Please check your config.yml file and make sure you have created correctly your custom configuration.');
         }
 
-        throw new \Exception('Initialize RBB application must be initialized first, before you can call '.__METHOD__.'.');
+        throw new \Exception('RBB application must be initialized first, before you can call '.__METHOD__.'.');
     }
 }
