@@ -45,7 +45,7 @@ trait BookingTrait
 
         $arrSlotCollection = [];
         $resource = $this->getActiveResource();
-        $itemsBooked = (int) $inputAdapter->post('itemsBooked');
+        $itemsBooked = empty($inputAdapter->post('itemsBooked')) ? 1 : (int) $inputAdapter->post('itemsBooked');
         $description = (string) $inputAdapter->post('bookingDescription');
         // $request->request->get('bookingDateSelection') won't work, because
         // Symfony doesn't allow non-scalar values in the input bag (design change since Symfony 6)

@@ -41,13 +41,14 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
     public const TYPE = 'resourceBookingWeekcalendar';
 
     public function __construct(
-        private readonly AjaxResponseFactory $ajaxResponseFactory,
-        private readonly ContaoCsrfTokenManager $contaoCsrfTokenManager,
+        private readonly AjaxResponseFactory      $ajaxResponseFactory,
+        private readonly ContaoCsrfTokenManager   $contaoCsrfTokenManager,
         private readonly EventDispatcherInterface $eventDispatcher,
-        private readonly Initialize $appInitializer,
-        private readonly RequestStack $requestStack,
-        private readonly ScopeMatcher $scopeMatcher,
-    ) {
+        private readonly Initialize               $appInitializer,
+        private readonly RequestStack             $requestStack,
+        private readonly ScopeMatcher             $scopeMatcher,
+    )
+    {
     }
 
     /**
@@ -71,18 +72,18 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
             $request = $this->requestStack->getCurrentRequest();
 
             ModuleIndex::generateModuleIndex();
-            ModuleKey::setModuleKey($model->id.'_'.ModuleIndex::getModuleIndex());
+            ModuleKey::setModuleKey($model->id . '_' . ModuleIndex::getModuleIndex());
             $moduleKey = ModuleKey::getModuleKey();
 
-            if (!$request->isXmlHttpRequest() && !$request->query->has('token_'.$moduleKey)) {
+            if (!$request->isXmlHttpRequest() && !$request->query->has('token_' . $moduleKey)) {
                 TokenManager::generateToken();
-                $request->query->add(['token_'.$moduleKey => TokenManager::getToken()]);
+                $request->query->add(['token_' . $moduleKey => TokenManager::getToken()]);
                 $request->overrideGlobals();
 
                 return new RedirectResponse($request->getUri());
             }
 
-            TokenManager::setToken($request->query->get('token_'.$moduleKey));
+            TokenManager::setToken($request->query->get('token_' . $moduleKey));
 
             // Initialize application
             $this->appInitializer->initialize($model->id, $page->id);
