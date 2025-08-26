@@ -15,11 +15,9 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\Twig;
 
 use Contao\StringUtil;
-use Safe\Exceptions\FilesystemException;
 use Symfony\Component\Filesystem\Path;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
-use function Safe\file_get_contents;
 
 class IconExtension extends AbstractExtension
 {
@@ -40,8 +38,6 @@ class IconExtension extends AbstractExtension
      * {{ rbb_icon('fa-my-icon')|raw }} // The default icon folder will be used and the extension ".svg" will be added
      * {{ rbb_icon('fa-my-icon.svg')|raw }} // The default icon folder will be used
      * {{ rbb_icon('/absolute_path/to/my/icon/fa-my-icon.svg')|raw }} // Use the absolute path to your icon.
-     *
-     * @throws FilesystemException
      */
     public function generateIcon(string $iconNameOrPath, string $strClass = ''): string
     {
