@@ -87,10 +87,11 @@ class ResourceBookingTimeSlot
         if (!empty($request->request->get('startTime'))) {
             $strStartTime = $request->request->get('startTime');
         } else {
-            $strStartTime = $dc->activeRecord->startTime;
+            $strStartTime = UtcTimeHelper::parse('H:i', $dc->activeRecord->startTime);
         }
 
         if (!empty($strStartTime)) {
+
             $startTime = UtcTimeHelper::strToTime('01-01-1970 '.$strStartTime);
 
             if ($timestamp <= $startTime) {
