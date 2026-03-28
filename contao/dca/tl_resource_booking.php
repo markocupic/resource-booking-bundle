@@ -50,22 +50,9 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = [
             ],
         ],
         'operations'        => [
-            'edit'   => [
-                'label' => &$GLOBALS['TL_LANG']['tl_resource_booking']['editmeta'],
-                'href'  => 'act=edit',
-                'icon'  => 'edit.gif',
-            ],
-            'delete' => [
-                'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking']['delete'],
-                'href'       => 'act=delete',
-                'icon'       => 'delete.gif',
-                'attributes' => 'onclick="if(!confirm(\''.($GLOBALS['TL_LANG']['MSC']['deleteConfirm'] ?? null).'\'))return false;Backend.getScrollOffset()"',
-            ],
-            'show'   => [
-                'label' => &$GLOBALS['TL_LANG']['tl_resource_booking']['show'],
-                'href'  => 'act=show',
-                'icon'  => 'show.gif',
-            ],
+            'edit',
+            'delete',
+            'show',
         ],
     ],
     'palettes' => [
@@ -77,7 +64,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = [
     ],
     'fields'   => [
         'id'          => [
-            'sql' => 'int(11) unsigned NOT NULL auto_increment',
+            'sql' => ['type' => 'integer', 'length' => 11, 'unsigned' => true, 'notnull' => true, 'autoincrement' => true],
         ],
         'pid'         => [
             'exclude'    => true,
@@ -85,12 +72,12 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = [
             'relation'   => ['type' => 'belongsTo', 'load' => 'lazy'],
             'inputType'  => 'select',
             'eval'       => ['readonly' => true, 'mandatory' => true, 'tl_class' => 'w50'],
-            'sql'        => "int(11) unsigned NOT NULL default 0",
+            'sql'        => ['type' => 'integer', 'length' => 11, 'unsigned' => true, 'notnull' => true, 'default' => 0],
         ],
         'tstamp'      => [
             'sorting' => true,
             'flag'    => DataContainer::SORT_DAY_BOTH,
-            'sql'     => "int(11) unsigned NOT NULL default 0",
+            'sql'     => ['type' => 'integer', 'length' => 11, 'unsigned' => true, 'notnull' => true, 'default' => 0],
         ],
         'bookingTime' => [
             'exclude'   => true,
@@ -99,11 +86,11 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = [
             'flag'      => DataContainer::SORT_DAY_BOTH,
             'inputType' => 'text',
             'eval'      => ['rgxp' => 'datim', 'mandatory' => true, 'doNotCopy' => true, 'datepicker' => true, 'tl_class' => 'w50 wizard'],
-            'sql'       => "int(11) unsigned NOT NULL default 0",
+            'sql'       => ['type' => 'integer', 'length' => 11, 'unsigned' => true, 'notnull' => true, 'default' => 0],
         ],
         'timeSlotId'  => [
             'eval' => ['mandatory' => true],
-            'sql'  => "int(11) unsigned NOT NULL default 0",
+            'sql'  => ['type' => 'integer', 'length' => 11, 'unsigned' => true, 'notnull' => true, 'default' => 0],
         ],
         'moduleId'    => [
             'exclude'    => true,
@@ -111,7 +98,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = [
             'foreignKey' => 'tl_module.name',
             'relation'   => ['type' => 'belongsTo', 'load' => 'lazy'],
             'eval'       => ['mandatory' => true],
-            'sql'        => "int(11) unsigned NOT NULL default 0",
+            'sql'        => ['type' => 'integer', 'length' => 11, 'unsigned' => true, 'notnull' => true, 'default' => 0],
         ],
         'bookingUuid' => [
             'search'    => true,
@@ -119,7 +106,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = [
             'filter'    => true,
             'inputType' => 'text',
             'eval'      => ['mandatory' => true, 'readonly' => true, 'doNotCopy' => true, 'tl_class' => 'w50'],
-            'sql'       => "varchar(64) NOT NULL default ''",
+            'sql' => ['type' => 'string', 'length' => 64, 'notnull' => true, 'default' => ''],
         ],
         'member'      => [
             'exclude'    => true,
@@ -129,7 +116,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = [
             'foreignKey' => 'tl_member.CONCAT(firstname," ",lastname)',
             'eval'       => ['mandatory' => true, 'tl_class' => 'w50'],
             'relation'   => ['type' => 'belongsTo', 'load' => 'lazy'],
-            'sql'        => "int(11) unsigned NOT NULL default 0",
+            'sql'        => ['type' => 'integer', 'length' => 11, 'unsigned' => true, 'notnull' => true, 'default' => 0],
         ],
         'title'       => [
             'exclude'   => true,
@@ -137,7 +124,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = [
             'sorting'   => true,
             'inputType' => 'text',
             'eval'      => ['mandatory' => true, 'maxlength' => 255, 'tl_class' => 'w50'],
-            'sql'       => "varchar(255) NOT NULL default ''",
+            'sql'       => ['type' => 'string', 'length' => 255, 'notnull' => true, 'default' => ''],
         ],
         'description' => [
             'exclude'   => true,
@@ -150,7 +137,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = [
             'exclude'   => true,
             'inputType' => 'text',
             'eval'      => ['mandatory' => true, 'rgxp' => 'natural', 'tl_class' => 'w50'],
-            'sql'       => "int(11) unsigned NOT NULL default 0",
+            'sql'       => ['type' => 'integer', 'length' => 11, 'unsigned' => true, 'notnull' => true, 'default' => 0],
         ],
         'startTime'   => [
             'default'   => time(),
@@ -159,7 +146,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = [
             'flag'      => DataContainer::SORT_DAY_BOTH,
             'inputType' => 'text',
             'eval'      => ['readonly' => true, 'rgxp' => 'datim', 'mandatory' => true, 'doNotCopy' => true, 'datepicker' => false, 'tl_class' => 'w50 wizard'],
-            'sql'       => 'int(11) NULL',
+            'sql'       => ['type' => 'integer', 'length' => 11, 'unsigned' => false, 'notnull' => false],
         ],
         'endTime'     => [
             'sorting'   => true,
@@ -168,7 +155,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = [
             'flag'      => DataContainer::SORT_DAY_BOTH,
             'inputType' => 'text',
             'eval'      => ['readonly' => true, 'rgxp' => 'datim', 'mandatory' => true, 'doNotCopy' => true, 'datepicker' => false, 'tl_class' => 'w50 wizard'],
-            'sql'       => 'int(11) NULL',
+            'sql'       => ['type' => 'integer', 'length' => 11, 'unsigned' => false, 'notnull' => false],
         ],
         'confirmed'   => [
             'exclude'   => true,

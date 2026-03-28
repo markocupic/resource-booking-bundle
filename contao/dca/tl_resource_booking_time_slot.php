@@ -43,41 +43,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = [
                 'attributes' => 'onclick="Backend.getScrollOffset()" accesskey="e"',
             ],
         ],
-        'operations'        => [
-            'edit'   => [
-                'label' => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['edit'],
-                'href'  => 'act=edit',
-                'icon'  => 'edit.svg',
-            ],
-            'copy'   => [
-                'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['copy'],
-                'href'       => 'act=paste&amp;mode=copy',
-                'icon'       => 'copy.svg',
-                'attributes' => 'onclick="Backend.getScrollOffset()"',
-            ],
-            'cut'    => [
-                'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['cut'],
-                'href'       => 'act=paste&amp;mode=cut',
-                'icon'       => 'cut.svg',
-                'attributes' => 'onclick="Backend.getScrollOffset()"',
-            ],
-            'delete' => [
-                'label'      => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['delete'],
-                'href'       => 'act=delete',
-                'icon'       => 'delete.svg',
-                'attributes' => 'onclick="if(!confirm(\''.($GLOBALS['TL_LANG']['MSC']['deleteConfirm'] ?? null).'\'))return false;Backend.getScrollOffset()"',
-            ],
-            'toggle' => [
-                'href'         => 'act=toggle&amp;field=published',
-                'icon'         => 'visible.svg',
-                'showInHeader' => true,
-            ],
-            'show'   => [
-                'label' => &$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['show'],
-                'href'  => 'act=show',
-                'icon'  => 'show.svg',
-            ],
-        ],
+        'operations'        => 'all',
     ],
     'palettes' => [
         'default' => '
@@ -88,25 +54,25 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = [
     ],
     'fields'   => [
         'id'          => [
-            'sql' => 'int(10) unsigned NOT NULL auto_increment',
+            'sql' => ['type' => 'integer', 'length' => 11, 'notnull' => true, 'unsigned' => true, 'autoincrement' => true],
         ],
         'pid'         => [
             'foreignKey' => 'tl_resource_booking_time_slot_type.title',
             'relation'   => ['type' => 'belongsTo', 'load' => 'lazy'],
-            'sql'        => "int(10) unsigned NOT NULL default '0'",
+            'sql'        => ['type' => 'integer', 'length' => 11, 'notnull' => true, 'unsigned' => true, 'default' => 0],
         ],
         'tstamp'      => [
-            'sql' => "int(10) unsigned NOT NULL default '0'",
+            'sql' => ['type' => 'integer', 'length' => 10, 'notnull' => true, 'unsigned' => true, 'default' => 0],
         ],
         'sorting'     => [
-            'sql' => "int(10) unsigned NOT NULL default '0'",
+            'sql' => ['type' => 'integer', 'length' => 10, 'notnull' => true, 'unsigned' => true, 'default' => 0],
         ],
         'title'       => [
             'exclude'   => true,
             'search'    => true,
             'inputType' => 'text',
             'eval'      => ['mandatory' => true, 'maxlength' => 255, 'tl_class' => 'clr'],
-            'sql'       => "varchar(255) NOT NULL default ''",
+            'sql'       => ['type' => 'string', 'length' => 255, 'notnull' => true, 'default' => ''],
         ],
         'published'   => [
             'toggle'    => true,
@@ -130,20 +96,20 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = [
             'flag'      => DataContainer::SORT_MONTH_DESC,
             'inputType' => 'text',
             'eval'      => ['rgxp' => RegExpListener::REGEX_RESOURCE_BOOKING_TIME, 'mandatory' => true, 'tl_class' => 'w50'],
-            'sql'       => "int(10) unsigned NOT NULL default '0'",
+            'sql'       => ['type' => 'integer', 'length' => 10, 'notnull' => true, 'unsigned' => true, 'default' => 0],
         ],
         'endTime'     => [
             'default'   => time(),
             'exclude'   => true,
             'inputType' => 'text',
             'eval'      => ['rgxp' => RegExpListener::REGEX_RESOURCE_BOOKING_TIME, 'mandatory' => true, 'tl_class' => 'w50'],
-            'sql'       => "int(10) unsigned NOT NULL default '0'",
+            'sql'       => ['type' => 'integer', 'length' => 10, 'notnull' => true, 'unsigned' => true, 'default' => 0],
         ],
         'cssID'       => [
             'exclude'   => true,
             'inputType' => 'text',
             'eval'      => ['multiple' => true, 'size' => 2, 'tl_class' => 'w50 clr'],
-            'sql'       => "varchar(255) NOT NULL default ''",
+            'sql'       => ['type' => 'string', 'length' => 255, 'notnull' => true, 'default' => ''],
         ],
     ],
 ];

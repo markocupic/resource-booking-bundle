@@ -52,7 +52,7 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_hideDays'] = [
     'exclude'   => true,
     'inputType' => 'checkbox',
     'eval'      => ['submitOnChange' => true, 'tl_class' => 'clr'],
-    'sql'       => "char(1) NOT NULL default ''",
+    'sql'       => ['type' => 'boolean', 'default' => false],
 ];
 
 $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_hideDaysSelection'] = [
@@ -68,7 +68,7 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_addDateStop'] = [
     'exclude'   => true,
     'inputType' => 'checkbox',
     'eval'      => ['submitOnChange' => true, 'tl_class' => 'clr'],
-    'sql'       => "char(1) NOT NULL default ''",
+    'sql'       => ['type' => 'boolean', 'default' => false],
 ];
 
 $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_dateStop'] = [
@@ -76,21 +76,21 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_dateStop'] = [
     'default'   => time(),
     'inputType' => 'text',
     'eval'      => ['rgxp' => 'date', 'datepicker' => true, 'tl_class' => 'w50 wizard'],
-    'sql'       => "varchar(11) NOT NULL default ''",
+    'sql'       => ['type' => 'string', 'length' => 11, 'notnull' => true, 'default' => ''],
 ];
 $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_dateStop'] = [
     'exclude'   => true,
     'default'   => time(),
     'inputType' => 'text',
     'eval'      => ['rgxp' => 'date', 'datepicker' => true, 'tl_class' => 'w50 wizard'],
-    'sql'       => "varchar(11) NOT NULL default ''",
+    'sql'       => ['type' => 'string', 'length' => 11, 'notnull' => true, 'default' => ''],
 ];
 
 $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_displayClientPersonalData'] = [
     'exclude'   => true,
     'inputType' => 'checkbox',
     'eval'      => ['submitOnChange' => true, 'tl_class' => 'clr'],
-    'sql'       => "char(1) NOT NULL default '1'",
+    'sql'       => ['type' => 'boolean', 'default' => true],
 ];
 
 $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_clientPersonalData'] = [
@@ -98,14 +98,14 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_clientPersonalData'] 
     'reference' => &$GLOBALS['TL_LANG']['tl_member'],
     'inputType' => 'select',
     'eval'      => ['mandatory' => true, 'chosen' => true, 'multiple' => true, 'tl_class' => 'clr'],
-    'sql'       => "varchar(1024) NOT NULL default 'a:2:{i:0;s:9:\"firstname\";i:1;s:8:\"lastname\";}'",
+    'sql'       => ['type' => 'string', 'length' => 1024, 'notnull' => true, 'default' => 'a:2:{i:0;s:9:\"firstname\";i:1;s:8:\"lastname\";}'],
 ];
 
 $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_setBookingSubmittedFields'] = [
     'exclude'   => true,
     'inputType' => 'checkbox',
     'eval'      => ['submitOnChange' => true, 'tl_class' => 'clr'],
-    'sql'       => "char(1) NOT NULL default '1'",
+    'sql'       => ['type' => 'boolean', 'default' => true],
 ];
 
 $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_bookingSubmittedFields'] = [
@@ -113,12 +113,12 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_bookingSubmittedField
     'reference' => &$GLOBALS['TL_LANG']['tl_resource_booking'],
     'inputType' => 'select',
     'eval'      => ['mandatory' => true, 'chosen' => true, 'multiple' => true, 'tl_class' => 'clr'],
-    'sql'       => "varchar(1024) NOT NULL default 'a:2:{i:0;s:5:\"title\";i:1;s:11:\"description\";}'",
+    'sql'       => ['type' => 'string', 'length' => 1024, 'notnull' => true, 'default' => 'a:2:{i:0;s:5:\"title\";i:1;s:11:\"description\";}'],
 ];
 
 $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_appConfig'] = [
     'exclude'   => true,
     'inputType' => 'select',
     'eval'      => ['mandatory' => true, 'multiple' => false, 'tl_class' => 'clr'],
-    'sql'       => "varchar(64) NOT NULL default 'default'",
+    'sql'       => ['type' => 'string', 'length' => 64, 'notnull' => true, 'default' => 'default'],
 ];

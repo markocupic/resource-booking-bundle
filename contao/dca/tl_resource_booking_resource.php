@@ -49,28 +49,14 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = [
             ],
         ],
         'operations'        => [
-            'edit'     => [
-                'href' => 'act=edit',
-                'icon' => 'edit.gif',
-            ],
+            'edit',
             'bookings' => [
                 'href' => 'table=tl_resource_booking',
-                'icon' => RbbConfig::RBB_ASSET_PATH.'/icons/calendar.svg',
+                'icon' => RbbConfig::RBB_ASSET_PATH . '/icons/calendar.svg',
             ],
-            'delete'   => [
-                'href'       => 'act=delete',
-                'icon'       => 'delete.gif',
-                'attributes' => 'onclick="if(!confirm(\''.($GLOBALS['TL_LANG']['MSC']['deleteConfirm'] ?? null).'\'))return false;Backend.getScrollOffset()"',
-            ],
-            'toggle'   => [
-                'href'         => 'act=toggle&amp;field=published',
-                'icon'         => 'visible.svg',
-                'showInHeader' => true,
-            ],
-            'show'     => [
-                'href' => 'act=show',
-                'icon' => 'show.gif',
-            ],
+            'delete',
+            'toggle',
+            'show',
         ],
     ],
     'palettes' => [
@@ -78,15 +64,15 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = [
     ],
     'fields'   => [
         'id'             => [
-            'sql' => 'int(10) unsigned NOT NULL auto_increment',
+            'sql' => ['type' => 'integer', 'length' => 10, 'unsigned' => true, 'notnull' => true, 'autoincrement' => true],
         ],
         'pid'            => [
             'foreignKey' => 'tl_resource_booking_resource_type.title',
             'relation'   => ['type' => 'belongsTo', 'load' => 'lazy'],
-            'sql'        => "int(10) unsigned NOT NULL default '0'",
+            'sql'        => ['type' => 'integer', 'length' => 10, 'unsigned' => true, 'notnull' => true, 'default' => 0],
         ],
         'tstamp'         => [
-            'sql' => "int(10) unsigned NOT NULL default '0'",
+            'sql' => ['type' => 'integer', 'length' => 10, 'unsigned' => true, 'notnull' => true, 'default' => 0],
         ],
         'title'          => [
             'exclude'   => true,
@@ -94,7 +80,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = [
             'inputType' => 'text',
             'flag'      => 1,
             'eval'      => ['mandatory' => true, 'maxlength' => 255, 'tl_class' => 'clr'],
-            'sql'       => "varchar(255) NOT NULL default ''",
+            'sql'       => ['type' => 'string', 'length' => 255, 'notnull' => true, 'default' => ''],
         ],
         'published'      => [
             'toggle'    => true,
@@ -117,13 +103,13 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = [
             'filter'    => true,
             'inputType' => 'text',
             'eval'      => ['mandatory' => true, 'rgxp' => 'custom', 'customRgxp' => '/^[1-9]\d*$/', 'tl_class' => 'w50'],
-            'sql'       => "int(10) unsigned NOT NULL default '1'",
+            'sql'       => ['type' => 'integer', 'length' => 10, 'unsigned' => true, 'notnull' => true, 'default' => 1],
         ],
         'timeSlotType'   => [
             'inputType'  => 'select',
             'foreignKey' => 'tl_resource_booking_time_slot_type.title',
             'eval'       => ['mandatory' => true, 'tl_class' => 'clr'],
-            'sql'        => "int(10) unsigned NOT NULL default '0'",
+            'sql'        => ['type' => 'integer', 'length' => 11, 'unsigned' => true, 'notnull' => true, 'default' => 0],
             'relation'   => ['type' => 'belongsTo', 'load' => 'lazy'],
         ],
     ],

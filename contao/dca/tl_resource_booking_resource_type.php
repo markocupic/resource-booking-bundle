@@ -46,32 +46,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource_type'] = [
             ],
         ],
         'operations'        => [
-            'edit'       => [
-                'href' => 'table=tl_resource_booking_resource',
-                'icon' => 'edit.gif',
-            ],
-            'editheader' => [
-                'href' => 'act=edit',
-                'icon' => 'header.svg',
-            ],
-            'cut'        => [
-                'href' => 'act=paste&amp;mode=cut',
-                'icon' => 'cut.gif',
-            ],
-            'delete'     => [
-                'href'       => 'act=delete',
-                'icon'       => 'delete.gif',
-                'attributes' => 'onclick="if(!confirm(\''.($GLOBALS['TL_LANG']['MSC']['deleteConfirm'] ?? null).'\'))return false;Backend.getScrollOffset()"',
-            ],
-            'toggle'     => [
-                'href'         => 'act=toggle&amp;field=published',
-                'icon'         => 'visible.svg',
-                'showInHeader' => true,
-            ],
-            'show'       => [
-                'href' => 'act=show',
-                'icon' => 'show.gif',
-            ],
+            'all',
         ],
     ],
     'palettes' => [
@@ -79,17 +54,17 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource_type'] = [
     ],
     'fields'   => [
         'id'          => [
-            'sql' => 'int(10) unsigned NOT NULL auto_increment',
+            'sql' => ['type' => 'integer', 'length' => 11, 'unsigned' => true, 'notnull' => true, 'autoincrement' => true],
         ],
         'tstamp'      => [
-            'sql' => "int(10) unsigned NOT NULL default '0'",
+            'sql' => ['type' => 'integer', 'length' => 11, 'unsigned' => true, 'notnull' => true, 'default' => 0],
         ],
         'title'       => [
             'exclude'   => true,
             'search'    => true,
             'inputType' => 'text',
             'eval'      => ['mandatory' => true, 'maxlength' => 255, 'tl_class' => 'clr'],
-            'sql'       => "varchar(255) NOT NULL default ''",
+            'sql'       => ['type' => 'string', 'length' => 255, 'notnull' => true, 'default' => ''],
         ],
         'published'   => [
             'toggle'    => true,
