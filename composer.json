@@ -33,7 +33,7 @@
         "symfony/security-bundle": "^6.0 || ^7.0"
     },
     "require-dev": {
-        "contao/easy-coding-standard": "^5.0",
+        "markocupic/easy-coding-standard": "^13.0",
         "symfony/webpack-encore-bundle": "^2.0"
     },
     "autoload": {

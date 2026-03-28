@@ -33,7 +33,7 @@ class SlotBooking extends AbstractSlot
      */
     public function isBookable(): bool
     {
-        if($this->isBlocked){
+        if ($this->isBlocked) {
             return false;
         }
 

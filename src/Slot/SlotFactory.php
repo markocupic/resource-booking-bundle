@@ -19,7 +19,6 @@ use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Util\Utils;
 use Symfony\Component\PasswordHasher\Exception\LogicException;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
-use Symfony\Component\Security\Core\Security;
 
 class SlotFactory
 {
@@ -33,7 +32,7 @@ class SlotFactory
     /**
      * @throws \Exception
      */
-    public function get(int $timeSlotId, string $mode, ResourceBookingResourceModel $resource, int $startTime, int $endTime, int $desiredItems = 1, int $bookingRepeatStopWeekTstamp = null): SlotInterface
+    public function get(int $timeSlotId, string $mode, ResourceBookingResourceModel $resource, int $startTime, int $endTime, int $desiredItems = 1, int|null $bookingRepeatStopWeekTstamp = null): SlotInterface
     {
         if (SlotMain::MODE === $mode) {
             $slotEntity = new SlotMain($this->framework, $this->tokenStorage, $this->utils);
@@ -47,6 +46,6 @@ class SlotFactory
             return $slotEntity->create($timeSlotId, $resource, $startTime, $endTime, $desiredItems, $bookingRepeatStopWeekTstamp);
         }
 
-        throw new LogicException(sprintf('Variable $mode should either be "%s" or "%s" "%s" given.', SlotMain::MODE, SlotBooking::MODE, $mode));
+        throw new LogicException(\sprintf('Variable $mode should either be "%s" or "%s" "%s" given.', SlotMain::MODE, SlotBooking::MODE, $mode));
     }
 }

@@ -44,8 +44,8 @@ class ModuleIndex
 
     /**
      * @return mixed
-     * @throws \Exception
      *
+     * @throws \Exception
      */
     public static function getModuleIndex(): int
     {

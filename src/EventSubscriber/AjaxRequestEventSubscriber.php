@@ -24,6 +24,7 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
     public const PRIORITY = 1000;
 
     private array $services = [];
+
     private array $controllers = [];
 
     public function __construct(
@@ -64,9 +65,8 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
             $ajaxResponse = $controller->generateResponse($event->getAjaxResponse());
             $event->setAjaxResponse($ajaxResponse);
         } else {
-            throw new \Exception(sprintf('Could not find Controller for action "%s".', $action));
+            throw new \Exception(\sprintf('Could not find Controller for action "%s".', $action));
         }
-
     }
 
     /**
@@ -75,10 +75,9 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
     public function get(string $alias): ControllerInterface
     {
         if (!\array_key_exists($alias, $this->controllers)) {
-            throw new \LogicException(sprintf('Resource with alias "%s" not found.', $alias));
+            throw new \LogicException(\sprintf('Resource with alias "%s" not found.', $alias));
         }
 
         return $this->controllers[$alias];
-
     }
 }

@@ -67,7 +67,9 @@ use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInt
 abstract class AbstractSlot implements SlotInterface
 {
     protected const SECONDS_IN_DAY = 86400;
+
     protected array $arrData = [];
+
     protected MemberModel|null $user = null;
 
     public function __construct(
@@ -88,7 +90,7 @@ abstract class AbstractSlot implements SlotInterface
     /**
      * @throws \Exception
      */
-    public function create(int $timeSlotId, ResourceBookingResourceModel $resource, int $startTime, int $endTime, int $desiredItems = 1, int $bookingRepeatStopWeekTstamp = null): SlotInterface
+    public function create(int $timeSlotId, ResourceBookingResourceModel $resource, int $startTime, int $endTime, int $desiredItems = 1, int|null $bookingRepeatStopWeekTstamp = null): SlotInterface
     {
         $dateAdapter = $this->framework->getAdapter(Date::class);
         $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
@@ -112,7 +114,7 @@ abstract class AbstractSlot implements SlotInterface
         $this->arrData['startTimeString'] = $dateAdapter->parse('H:i', $startTime);
         $this->arrData['endTimeString'] = $dateAdapter->parse('H:i', $endTime);
         $this->arrData['date'] = $dateAdapter->parse($configAdapter->get('dateFormat'), $startTime);
-        $this->arrData['datimSpanString'] = sprintf('%s, %s: %s - %s', $dateAdapter->parse('D', $startTime), $dateAdapter->parse($configAdapter->get('dateFormat'), $startTime), $dateAdapter->parse('H:i', $startTime), $dateAdapter->parse('H:i', $endTime));
+        $this->arrData['datimSpanString'] = \sprintf('%s, %s: %s - %s', $dateAdapter->parse('D', $startTime), $dateAdapter->parse($configAdapter->get('dateFormat'), $startTime), $dateAdapter->parse('H:i', $startTime), $dateAdapter->parse('H:i', $endTime));
         $this->arrData['timeSpanString'] = $dateAdapter->parse('H:i', $startTime).' - '.$dateAdapter->parse('H:i', $startTime);
         $this->arrData['beginnWeekTimestampSelectedWeek'] = $dateHelperAdapter->getFirstDayOfCurrentWeek($appConfig, $startTime);
         $this->arrData['isBookable'] = $this->isBookable();
@@ -187,7 +189,7 @@ abstract class AbstractSlot implements SlotInterface
             ->findByResourceStartTimeAndEndTime(
                 $this->framework
                     ->getAdapter(ResourceBookingResourceModel::class)
-                    ->findByPk($this->arrData['resource']['id']),
+                    ->findById($this->arrData['resource']['id']),
                 (int) $this->arrData['startTime'],
                 (int) $this->arrData['endTime'],
             )
@@ -273,8 +275,8 @@ abstract class AbstractSlot implements SlotInterface
             if ($this->isBookingForLoggedUser($booking)) {
                 return $this->framework
                     ->getAdapter(ResourceBookingModel::class)
-                    ->findByPk($booking['id'])->row()
-                    ;
+                    ->findById($booking['id'])->row()
+                ;
             }
         }
 
@@ -356,7 +358,7 @@ abstract class AbstractSlot implements SlotInterface
         if ($user instanceof FrontendUser) {
             $this->user = $this->framework
                 ->getAdapter(MemberModel::class)
-                ->findByPk($user->id)
+                ->findById($user->id)
             ;
         }
     }

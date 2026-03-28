@@ -37,7 +37,6 @@ trait BookingTrait
         /** @var Date $dateAdapter */
         $dateAdapter = $this->framework->getAdapter(Date::class);
 
-        /** @var $inputAdapter */
         $inputAdapter = $this->framework->getAdapter(Input::class);
 
         /** @var Config $configAdapter */
@@ -68,7 +67,7 @@ trait BookingTrait
                     $startTime,
                     $endTime,
                     $itemsBooked,
-                    $bookingRepeatStopWeekTstamp
+                    $bookingRepeatStopWeekTstamp,
                 );
 
                 $slot->setTimeSlotId($timeSlotId);
@@ -91,7 +90,7 @@ trait BookingTrait
                             $startTime,
                             $endTime,
                             $itemsBooked,
-                            $bookingRepeatStopWeekTstamp
+                            $bookingRepeatStopWeekTstamp,
                         );
 
                         $arrSlotCollection[] = $slot;
@@ -145,14 +144,14 @@ trait BookingTrait
             $arrUserInput['startTime'] = $slot->startTime;
             $arrUserInput['endTime'] = $slot->endTime;
 
-            $arrUserInput['title'] = sprintf(
+            $arrUserInput['title'] = \sprintf(
                 '%s : %s %s %s [%s - %s]',
                 $this->getActiveResource()->title,
                 $this->translator->trans('MSC.bookedBy', [], 'contao_default'),
                 $this->user->getLoggedInUser()->firstname,
                 $this->user->getLoggedInUser()->lastname,
                 $dateAdapter->parse($configAdapter->get('datimFormat'), $slot->startTime),
-                $dateAdapter->parse($configAdapter->get('datimFormat'), $slot->endTime)
+                $dateAdapter->parse($configAdapter->get('datimFormat'), $slot->endTime),
             );
 
             $slotCollection->current()->setBookingData($arrUserInput);

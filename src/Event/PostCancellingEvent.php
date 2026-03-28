@@ -14,7 +14,6 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\Event;
 
-use Contao\FrontendUser;
 use Contao\Model\Collection;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag;

@@ -52,8 +52,8 @@ class SlotCollection implements \ArrayAccess, \Countable, \IteratorAggregate
     /**
      * Set an object property.
      *
-     * @param string $strKey The property name
-     * @param mixed $varValue The property value
+     * @param string $strKey   The property name
+     * @param mixed  $varValue The property value
      */
     public function __set(string $strKey, mixed $varValue): void
     {
@@ -62,18 +62,6 @@ class SlotCollection implements \ArrayAccess, \Countable, \IteratorAggregate
         }
 
         $this->arrSlots[$this->intIndex]->$strKey = $varValue;
-    }
-
-    /**
-     * Go to the first row.
-     *
-     * @return static The slot collection object
-     */
-    public function first(): self
-    {
-        $this->intIndex = 0;
-
-        return $this;
     }
 
     /**
@@ -90,6 +78,18 @@ class SlotCollection implements \ArrayAccess, \Countable, \IteratorAggregate
         }
 
         return isset($this->arrSlots[$this->intIndex]->$strKey);
+    }
+
+    /**
+     * Go to the first row.
+     *
+     * @return static The slot collection object
+     */
+    public function first(): self
+    {
+        $this->intIndex = 0;
+
+        return $this;
     }
 
     /**
@@ -301,8 +301,8 @@ class SlotCollection implements \ArrayAccess, \Countable, \IteratorAggregate
      * Sort collection by a given key.
      *
      * @return $this
-     * @throws \Exception
      *
+     * @throws \Exception
      */
     public function sortBy(string $strKey): self
     {
@@ -313,7 +313,7 @@ class SlotCollection implements \ArrayAccess, \Countable, \IteratorAggregate
         while ($this->next()) {
             $slot = $this->current();
 
-            if (empty((string)$slot->{$strKey})) {
+            if (empty((string) $slot->{$strKey})) {
                 throw new \Exception('Can not sort collection, because '.$strKey.' has an empty value.');
             }
             $arrSort[$slot->$strKey] = $slot;

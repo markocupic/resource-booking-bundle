@@ -60,7 +60,8 @@ class Configuration implements ConfigurationInterface
             ->defaultFalse()
             ->end()
             ->append($this->addAppNode())
-            ->end();
+            ->end()
+        ;
 
         return $treeBuilder;
     }
@@ -90,6 +91,7 @@ class Configuration implements ConfigurationInterface
             ->scalarPrototype()->end()
             ->end()
             ->end()
-            ->end();
+            ->end()
+        ;
     }
 }

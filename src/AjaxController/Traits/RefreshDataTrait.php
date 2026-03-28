@@ -127,7 +127,7 @@ trait RefreshDataTrait
             $this->sessionBag->get('activeWeekTstamp'),
             $this->getModuleModelFromSession(),
             $this->getActiveResourceFromSession(),
-            $this->user->getLoggedInUser()
+            $this->user->getLoggedInUser(),
         );
 
         $arrData['timeSlots'] = $this->getTimeslotData($this->getActiveResourceFromSession());
@@ -144,7 +144,7 @@ trait RefreshDataTrait
     {
         $resourceBookingResourceTypeModelAdapter = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class);
 
-        return $resourceBookingResourceTypeModelAdapter->findByPk($this->sessionBag->get('resType'));
+        return $resourceBookingResourceTypeModelAdapter->findById($this->sessionBag->get('resType'));
     }
 
     /**
@@ -154,7 +154,7 @@ trait RefreshDataTrait
     {
         $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
 
-        return $resourceBookingResourceModelAdapter->findByPk($this->sessionBag->get('res'));
+        return $resourceBookingResourceModelAdapter->findById($this->sessionBag->get('res'));
     }
 
     /**
@@ -164,10 +164,10 @@ trait RefreshDataTrait
     {
         $moduleModelAdapter = $this->framework->getAdapter(ModuleModel::class);
 
-        return $moduleModelAdapter->findByPk($this->sessionBag->get('moduleModelId'));
+        return $moduleModelAdapter->findById($this->sessionBag->get('moduleModelId'));
     }
 
-    private function getResourceTypeSelectOptions(ModuleModel $objModule = null): array
+    private function getResourceTypeSelectOptions(ModuleModel|null $objModule = null): array
     {
         $resourceBookingResourceTypeModelAdapter = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class);
         $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
@@ -184,7 +184,7 @@ trait RefreshDataTrait
         return $rows;
     }
 
-    private function getResourceSelectOptions(ResourceBookingResourceTypeModel $resType = null): array
+    private function getResourceSelectOptions(ResourceBookingResourceTypeModel|null $resType = null): array
     {
         $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
 
@@ -346,7 +346,7 @@ trait RefreshDataTrait
     /**
      * @throws \Exception
      */
-    private function getBookingTableData(array $arrWeekdays, int $activeWeekTstamp, ModuleModel $moduleModel = null, ResourceBookingResourceModel $resourceModel = null, FrontendUser $user = null): array
+    private function getBookingTableData(array $arrWeekdays, int $activeWeekTstamp, ModuleModel|null $moduleModel = null, ResourceBookingResourceModel|null $resourceModel = null, FrontendUser|null $user = null): array
     {
         $resourceBookingTimeSlotModelAdapter = $this->framework->getAdapter(ResourceBookingTimeSlotModel::class);
         $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
@@ -366,7 +366,7 @@ trait RefreshDataTrait
                 $cells = [];
                 $objRow = new \stdClass();
 
-                $cssRowId = sprintf('timeSlotModId_%s_%s', $moduleModel->id, $objTimeslot->id);
+                $cssRowId = \sprintf('timeSlotModId_%s_%s', $moduleModel->id, $objTimeslot->id);
                 $cssRowClass = 'rbb-time-slot-'.$objTimeslot->id;
 
                 // Get the CSS ID
@@ -386,14 +386,14 @@ trait RefreshDataTrait
                         continue;
                     }
 
-                    $startTime = strtotime(sprintf('+%s day', $colCount), $activeWeekTstamp) + $objTimeslot->startTime;
-                    $endTime = strtotime(sprintf('+%s day', $colCount), $activeWeekTstamp) + $objTimeslot->endTime;
+                    $startTime = strtotime(\sprintf('+%s day', $colCount), $activeWeekTstamp) + $objTimeslot->startTime;
+                    $endTime = strtotime(\sprintf('+%s day', $colCount), $activeWeekTstamp) + $objTimeslot->endTime;
 
                     /** @var SlotMain $slot */
                     $slot = $this->slotFactory->get($objTimeslot->id, SlotMain::MODE, $resourceModel, $startTime, $endTime);
                     $slot->setIndex($colCount);
-                    $slot->setBookingCheckboxId(sprintf('bookingCheckbox_modId_%s_%s_%s', $moduleModel->id, $rowCount, $colCount));
-                    $slot->setBookingCheckboxValue(sprintf('%s-%s-%s-%s', $objTimeslot->id, $startTime, $endTime, $activeWeekTstamp));
+                    $slot->setBookingCheckboxId(\sprintf('bookingCheckbox_modId_%s_%s_%s', $moduleModel->id, $rowCount, $colCount));
+                    $slot->setBookingCheckboxValue(\sprintf('%s-%s-%s-%s', $objTimeslot->id, $startTime, $endTime, $activeWeekTstamp));
 
                     $arrBookings = [];
 
@@ -412,7 +412,7 @@ trait RefreshDataTrait
 
                             $arrAllowed = $stringUtilAdapter->deserialize($moduleModel->resourceBooking_clientPersonalData, true);
 
-                            $objMember = $memberModelAdapter->findByPk($booking['member']);
+                            $objMember = $memberModelAdapter->findById($booking['member']);
 
                             // Send data about the booking owner (tl_member)
                             if (null !== $objMember) {
@@ -490,7 +490,7 @@ trait RefreshDataTrait
         return $rows;
     }
 
-    private function getTimeslotData(ResourceBookingResourceModel $resourceBookingResourceModel = null): array
+    private function getTimeslotData(ResourceBookingResourceModel|null $resourceBookingResourceModel = null): array
     {
         $resourceBookingTimeSlotModelAdapter = $this->framework->getAdapter(ResourceBookingTimeSlotModel::class);
         $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);

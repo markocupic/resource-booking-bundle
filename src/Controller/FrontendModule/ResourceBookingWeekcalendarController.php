@@ -41,20 +41,19 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
     public const TYPE = 'resourceBookingWeekcalendar';
 
     public function __construct(
-        private readonly AjaxResponseFactory      $ajaxResponseFactory,
-        private readonly ContaoCsrfTokenManager   $contaoCsrfTokenManager,
+        private readonly AjaxResponseFactory $ajaxResponseFactory,
+        private readonly ContaoCsrfTokenManager $contaoCsrfTokenManager,
         private readonly EventDispatcherInterface $eventDispatcher,
-        private readonly Initialize               $appInitializer,
-        private readonly RequestStack             $requestStack,
-        private readonly ScopeMatcher             $scopeMatcher,
-    )
-    {
+        private readonly Initialize $appInitializer,
+        private readonly RequestStack $requestStack,
+        private readonly ScopeMatcher $scopeMatcher,
+    ) {
     }
 
     /**
      * @throws \Exception
      */
-    public function __invoke(Request $request, ModuleModel $model, string $section, array $classes = null, PageModel $page = null): Response
+    public function __invoke(Request $request, ModuleModel $model, string $section, array|null $classes = null, PageModel|null $page = null): Response
     {
         // Is frontend
         if ($this->scopeMatcher->isFrontendRequest($request) && null !== $page) {
@@ -72,18 +71,18 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
             $request = $this->requestStack->getCurrentRequest();
 
             ModuleIndex::generateModuleIndex();
-            ModuleKey::setModuleKey($model->id . '_' . ModuleIndex::getModuleIndex());
+            ModuleKey::setModuleKey($model->id.'_'.ModuleIndex::getModuleIndex());
             $moduleKey = ModuleKey::getModuleKey();
 
-            if (!$request->isXmlHttpRequest() && !$request->query->has('token_' . $moduleKey)) {
+            if (!$request->isXmlHttpRequest() && !$request->query->has('token_'.$moduleKey)) {
                 TokenManager::generateToken();
-                $request->query->add(['token_' . $moduleKey => TokenManager::getToken()]);
+                $request->query->add(['token_'.$moduleKey => TokenManager::getToken()]);
                 $request->overrideGlobals();
 
                 return new RedirectResponse($request->getUri());
             }
 
-            TokenManager::setToken($request->query->get('token_' . $moduleKey));
+            TokenManager::setToken($request->query->get('token_'.$moduleKey));
 
             // Initialize application
             $this->appInitializer->initialize($model->id, $page->id);
@@ -109,7 +108,7 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
         $response = new JsonResponse(
             $event->getAjaxResponse()
                 ->prepareBeforeSend(true)
-                ->getAll()
+                ->getAll(),
         );
 
         $response->setStatusCode(200);

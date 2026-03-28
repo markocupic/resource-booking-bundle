@@ -28,9 +28,6 @@ use Symfony\Component\Routing\RouteCollection;
 
 class Plugin implements ConfigPluginInterface, BundlePluginInterface, RoutingPluginInterface
 {
-    /**
-     * {@inheritdoc}
-     */
     public function getBundles(ParserInterface $parser): array
     {
         return [
@@ -39,9 +36,6 @@ class Plugin implements ConfigPluginInterface, BundlePluginInterface, RoutingPlu
         ];
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function registerContainerConfiguration(LoaderInterface $loader, array $managerConfig): void
     {
         $loader->load(__DIR__.'/../../config/config.yaml');
@@ -49,13 +43,14 @@ class Plugin implements ConfigPluginInterface, BundlePluginInterface, RoutingPlu
 
     /**
      * @return RouteCollection|null
-     * @throws \Exception
      *
+     * @throws \Exception
      */
     public function getRouteCollection(LoaderResolverInterface $resolver, KernelInterface $kernel)
     {
         return $resolver
             ->resolve(__DIR__.'/../Controller')
-            ->load(__DIR__.'/../Controller');
+            ->load(__DIR__.'/../Controller')
+        ;
     }
 }

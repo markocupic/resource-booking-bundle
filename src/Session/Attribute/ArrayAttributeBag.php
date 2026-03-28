@@ -52,8 +52,6 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
     }
 
     /**
-     * @param $name
-     *
      * @throws \Exception
      */
     public function has($name): bool
@@ -75,9 +73,6 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
         return $arrSession[$name] ?? $default;
     }
 
-    /**
-     * @param $offset
-     */
     public function &offsetGet($offset): mixed
     {
         return $this->attributes[$offset];
@@ -92,9 +87,6 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
     }
 
     /**
-     * @param $name
-     * @param $value
-     *
      * @throws \Exception
      */
     public function set($name, $value): void

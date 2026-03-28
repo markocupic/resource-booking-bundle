@@ -57,7 +57,7 @@ class IconExtension extends AbstractExtension
         }
 
         if (!is_file($iconPath)) {
-            throw new \Exception(sprintf('Could not find icon "%s" in "%s".', $iconNameOrPath, $iconPath));
+            throw new \Exception(\sprintf('Could not find icon "%s" in "%s".', $iconNameOrPath, $iconPath));
         }
 
         $strXml = file_get_contents($iconPath);

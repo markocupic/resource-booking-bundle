@@ -34,9 +34,13 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 final class CancelController extends AbstractController implements ControllerInterface
 {
     private Connection $connection;
+
     private EventDispatcherInterface $eventDispatcher;
+
     private TranslatorInterface $translator;
+
     private LoggerInterface|null $contaoErrorLogger = null;
+
     private LoggerInterface|null $contaoGeneralLogger = null;
 
     /**
@@ -45,7 +49,7 @@ final class CancelController extends AbstractController implements ControllerInt
      * see: https://symfony.com/doc/current/service_container/calls.html.
      */
     #[Required]
-    public function _setController(Connection $connection, EventDispatcherInterface $eventDispatcher, TranslatorInterface $translator, LoggerInterface $contaoErrorLogger = null, LoggerInterface $contaoGeneralLogger = null): void
+    public function _setController(Connection $connection, EventDispatcherInterface $eventDispatcher, TranslatorInterface $translator, LoggerInterface|null $contaoErrorLogger = null, LoggerInterface|null $contaoGeneralLogger = null): void
     {
         $this->connection = $connection;
         $this->eventDispatcher = $eventDispatcher;
@@ -75,7 +79,7 @@ final class CancelController extends AbstractController implements ControllerInt
 
             $bookingId = (int) $request->request->get('id');
 
-            if (null === ($objBooking = $this->framework->getAdapter(ResourceBookingModel::class)->findByPk($bookingId))) {
+            if (null === ($objBooking = $this->framework->getAdapter(ResourceBookingModel::class)->findById($bookingId))) {
                 throw new StopBookingCancellationException($this->translator->trans('RBB.ERR.bookingNotFound', [$bookingId], 'contao_default'));
             }
 
@@ -100,7 +104,7 @@ final class CancelController extends AbstractController implements ControllerInt
 
                     if ($intAffected) {
                         // Log
-                        $strLog = sprintf('Resource Booking for "%s" (with ID %s) has been deleted.', $this->getParentResource($currentBooking)->title, $currentBooking->id);
+                        $strLog = \sprintf('Resource Booking for "%s" (with ID %s) has been deleted.', $this->getParentResource($currentBooking)->title, $currentBooking->id);
 
                         $this->contaoGeneralLogger?->info($strLog);
                     }
@@ -121,7 +125,7 @@ final class CancelController extends AbstractController implements ControllerInt
                             'RBB.MSG.successfullyCanceledBookingAndItsRepetitions',
                             [$bookingId, (string) ($bookingCollection->count() - 1)],
                             'contao_default',
-                        )
+                        ),
                     );
                 } else {
                     $ajaxResponse->setConfirmationMessage(
@@ -129,7 +133,7 @@ final class CancelController extends AbstractController implements ControllerInt
                             'RBB.MSG.successfullyCanceledBooking',
                             [$bookingId],
                             'contao_default',
-                        )
+                        ),
                     );
                 }
             }
@@ -203,7 +207,7 @@ final class CancelController extends AbstractController implements ControllerInt
         $resource = $objBooking->getRelated('pid');
 
         if (!$resource instanceof ResourceBookingResourceModel) {
-            throw new \Exception(sprintf('Resource for booking with ID %d not found.', $objBooking->id));
+            throw new \Exception(\sprintf('Resource for booking with ID %d not found.', $objBooking->id));
         }
 
         return $resource;

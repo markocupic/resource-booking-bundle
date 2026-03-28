@@ -29,7 +29,9 @@ final class ApplyFilterController extends AbstractController implements Controll
     use RefreshDataTrait;
 
     private EventDispatcherInterface $eventDispatcher;
+
     private SlotFactory $slotFactory;
+
     private TranslatorInterface $translator;
 
     /**
@@ -50,17 +52,12 @@ final class ApplyFilterController extends AbstractController implements Controll
      */
     public function generateResponse(AjaxResponse $ajaxResponse): AjaxResponse
     {
-
-
-
-
-
         $request = $this->requestStack->getCurrentRequest();
 
         // Get resource type from post request
         $intResType = (int) $request->request->get('resType', 0);
 
-        if (null !== $this->framework->getAdapter(ResourceBookingResourceTypeModel::class)->findByPk($intResType)) {
+        if (null !== $this->framework->getAdapter(ResourceBookingResourceTypeModel::class)->findById($intResType)) {
             $this->sessionBag->set('resType', $intResType);
         } else {
             $this->sessionBag->set('resType', 0);
@@ -77,7 +74,7 @@ final class ApplyFilterController extends AbstractController implements Controll
         // Check if res exists
         $invalidRes = true;
 
-        if (null !== ($objRes = $this->framework->getAdapter(ResourceBookingResourceModel::class)->findByPk($intRes))) {
+        if (null !== ($objRes = $this->framework->getAdapter(ResourceBookingResourceModel::class)->findById($intRes))) {
             // ... and if res is in the current resType container
             if ($objRes->pid === $intResType) {
                 $this->sessionBag->set('res', $intRes);

@@ -17,11 +17,17 @@ namespace Markocupic\ResourceBookingBundle\Response;
 class AjaxResponse
 {
     public const MESSAGE_CONFIRM = 'confirm';
+
     public const MESSAGE_ERROR = 'error';
+
     public const MESSAGE_INFO = 'info';
+
     public const MESSAGE_WARNING = 'warning';
+
     public const STATUS_ERROR = 'error';
+
     public const STATUS_SUCCESS = 'success';
+
     public const STATUS_WARNING = 'warning';
 
     private array $arrData;
@@ -29,14 +35,14 @@ class AjaxResponse
     public function __construct(string $action)
     {
         $this->arrData = [
-            'status'   => null,
+            'status' => null,
             'messages' => [
                 static::MESSAGE_WARNING => null,
-                static::MESSAGE_ERROR   => null,
+                static::MESSAGE_ERROR => null,
                 static::MESSAGE_CONFIRM => null,
-                static::MESSAGE_INFO    => null,
+                static::MESSAGE_INFO => null,
             ],
-            'data'     => [],
+            'data' => [],
         ];
 
         $this->setAction($action);
@@ -83,7 +89,7 @@ class AjaxResponse
     public function setStatus(string $strStatus): void
     {
         if ($strStatus !== static::STATUS_ERROR && $strStatus !== static::STATUS_SUCCESS && $strStatus !== static::STATUS_WARNING) {
-            throw new \Exception(sprintf('Status must be either %s, %s or %s and can not be "%s"', static::STATUS_ERROR, static::STATUS_WARNING, static::STATUS_SUCCESS, $strStatus));
+            throw new \Exception(\sprintf('Status must be either %s, %s or %s and can not be "%s"', static::STATUS_ERROR, static::STATUS_WARNING, static::STATUS_SUCCESS, $strStatus));
         }
 
         $this->arrData['status'] = $strStatus;
@@ -164,9 +170,6 @@ class AjaxResponse
         $this->arrData['messages'][static::MESSAGE_WARNING] = $strMessage;
     }
 
-    /**
-     * @param $value
-     */
     public function setData(string $key, $value): void
     {
         $this->arrData['data'][$key] = $value;

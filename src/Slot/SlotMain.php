@@ -60,7 +60,6 @@ class SlotMain extends AbstractSlot
         $itemsBooked = 0;
 
         foreach ($this->getBookings() as $booking) {
-
             if ($this->isBookingForLoggedUser($booking)) {
                 continue;
             }

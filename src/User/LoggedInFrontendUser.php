@@ -18,7 +18,6 @@ use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\FrontendUser;
 use Contao\MemberModel;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
-use Symfony\Component\Security\Core\Security;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 class LoggedInFrontendUser
@@ -34,7 +33,7 @@ class LoggedInFrontendUser
         $memberModelAdapter = $this->framework->getAdapter(MemberModel::class);
         $user = $this->getLoggedInUser();
 
-        return $user ? $memberModelAdapter->findByPk($user->id) : null;
+        return $user ? $memberModelAdapter->findById($user->id) : null;
     }
 
     public function getLoggedInUser(): UserInterface|null
@@ -46,7 +45,7 @@ class LoggedInFrontendUser
         $user = $token->getUser();
 
         if ($user instanceof FrontendUser) {
-           return $user;
+            return $user;
         }
 
         return null;

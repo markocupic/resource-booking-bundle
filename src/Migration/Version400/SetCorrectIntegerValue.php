@@ -96,7 +96,7 @@ class SetCorrectIntegerValue extends AbstractMigration
 
         return new MigrationResult(
             true,
-            'Set correct integer value after converting boolean fields from type "char(1)" to "tinyint(1)".'
+            'Set correct integer value after converting boolean fields from type "char(1)" to "tinyint(1)".',
         );
     }
 }

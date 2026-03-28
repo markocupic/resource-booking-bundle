@@ -19,7 +19,6 @@ use Contao\Validator;
 
 class Str
 {
-
     public static function convertBinUuidsToStringUuids($varData): string
     {
         $stringData = (string) $varData;
@@ -31,7 +30,7 @@ class Str
 
         $deserializedData = StringUtil::deserialize($stringData);
 
-        if (is_array($deserializedData)) {
+        if (\is_array($deserializedData)) {
             return self::processArrayUuids($deserializedData);
         }
 
@@ -53,7 +52,7 @@ class Str
         return serialize($filteredUuids);
     }
 
-    private static function convertBinaryUuid(?string $uuid): ?string
+    private static function convertBinaryUuid(string|null $uuid): string|null
     {
         return Validator::isBinaryUuid($uuid) ? StringUtil::binToUuid($uuid) : null;
     }

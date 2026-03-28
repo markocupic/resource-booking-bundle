@@ -36,7 +36,8 @@ class ResourceBooking
                 'SELECT * FROM tl_module WHERE type = ?',
                 [ResourceBookingWeekcalendarController::TYPE],
                 [Types::STRING],
-            );
+            )
+        ;
 
         foreach ($modules as $module) {
             $opt[$module['id']] = $module['name'];

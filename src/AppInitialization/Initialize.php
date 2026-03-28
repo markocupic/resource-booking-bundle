@@ -70,7 +70,6 @@ class Initialize
         /** @var Controller $controllerAdapter */
         $controllerAdapter = $this->framework->getAdapter(Controller::class);
 
-        /** @var $moduleKeyAdapter */
         $moduleKeyAdapter = $this->framework->getAdapter(ModuleKey::class);
 
         /** @var Request $request */
@@ -80,7 +79,7 @@ class Initialize
             throw new \Exception('Module key not set.');
         }
 
-        $objModuleModel = ModuleModel::findByPk($moduleModelId);
+        $objModuleModel = ModuleModel::findById($moduleModelId);
 
         if (null === $objModuleModel) {
             throw new \Exception('Module id not set.');
@@ -88,7 +87,7 @@ class Initialize
 
         $this->sessionBag->set('moduleModelId', $objModuleModel->id);
 
-        $objPageModel = PageModel::findByPk($pageModelId);
+        $objPageModel = PageModel::findById($pageModelId);
 
         if (null === $objPageModel) {
             throw new \Exception('Page model not set.');
@@ -108,20 +107,20 @@ class Initialize
         // Set res by url param.
         if ($request->query->has('res')) {
             // @ Todo Ermitteln ob res im erlaubten resType liegt (Modul Einstellung)
-            $objRes = $resourceBookingResourceModelAdapter->findByPk($request->query->get('res', 0));
+            $objRes = $resourceBookingResourceModelAdapter->findById($request->query->get('res', 0));
 
             if (null !== $objRes) {
-                if (null !== ($objResType = $resourceBookingResourceTypeModelAdapter->findPublishedByPk((int)$objRes->pid))) {
-                    $this->sessionBag->set('res', (int)$request->query->get('res', 0));
-                    $this->sessionBag->set('resType', (int)$objResType->id);
+                if (null !== ($objResType = $resourceBookingResourceTypeModelAdapter->findPublishedByPk((int) $objRes->pid))) {
+                    $this->sessionBag->set('res', (int) $request->query->get('res', 0));
+                    $this->sessionBag->set('resType', (int) $objResType->id);
                 }
             }
             $blnRedirect = true;
         }
 
         if ($blnRedirect) {
-            //@ Todo Datum Implementation
-            //$request->query->remove('date');
+            // @ Todo Datum Implementation
+            // $request->query->remove('date');
             $request->query->remove('resType');
             $request->query->remove('res');
             $request->overrideGlobals();
@@ -136,7 +135,7 @@ class Initialize
         if (($resTypeId = $this->sessionBag->get('resType', 0)) > 0) {
             $blnForbidden = false;
 
-            if (null === $resourceBookingResourceTypeModelAdapter->findPublishedByPk((int)$resTypeId)) {
+            if (null === $resourceBookingResourceTypeModelAdapter->findPublishedByPk((int) $resTypeId)) {
                 $blnForbidden = true;
             }
 
@@ -145,7 +144,7 @@ class Initialize
             }
 
             if ($blnForbidden) {
-                throw new UnauthorizedHttpException(sprintf('Unauthorized access to resource type with ID %s.', $resTypeId));
+                throw new UnauthorizedHttpException(\sprintf('Unauthorized access to resource type with ID %s.', $resTypeId));
             }
         } else {
             // Auto redirect if there is only one resource type in the filter menu.
@@ -163,17 +162,17 @@ class Initialize
         if (($resId = $this->sessionBag->get('res', 0)) > 0) {
             $blnForbidden = false;
 
-            if (null === $resourceBookingResourceModelAdapter->findPublishedByPkAndPid((int)$resId, (int)$resTypeId)) {
+            if (null === $resourceBookingResourceModelAdapter->findPublishedByPkAndPid((int) $resId, (int) $resTypeId)) {
                 $blnForbidden = true;
             }
 
             if ($blnForbidden) {
-                throw new UnauthorizedHttpException(sprintf('Unauthorized access to resource with ID %s.', $resId));
+                throw new UnauthorizedHttpException(\sprintf('Unauthorized access to resource with ID %s.', $resId));
             }
         } else {
             // Auto redirect if there is only one resource in the filter menu.
             if (!$environmentAdapter->get('isAjaxRequest') && $resTypeId > 0) {
-                $oRes = $resourceBookingResourceModelAdapter->findPublishedByPid((int)$resTypeId);
+                $oRes = $resourceBookingResourceModelAdapter->findPublishedByPid((int) $resTypeId);
 
                 if (null !== $oRes && 1 === $oRes->count()) {
                     $this->sessionBag->set('res', $oRes->id);
@@ -184,7 +183,7 @@ class Initialize
         $arrAppConfig = $this->utils->getAppConfig();
 
         // Set active week timestamp.
-        $tstampCurrentWeek = (int)$this->sessionBag->get('activeWeekTstamp', $dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig));
+        $tstampCurrentWeek = (int) $this->sessionBag->get('activeWeekTstamp', $dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig));
         $this->sessionBag->set('activeWeekTstamp', $tstampCurrentWeek);
         $this->sessionBag->set('activeWeekDate', date('Y-m-d', $tstampCurrentWeek));
 

@@ -22,7 +22,7 @@ class DateHelper
     /**
      * @throws \Exception
      */
-    public static function addDaysToTime(int $intDays = 0, int $time = null): int
+    public static function addDaysToTime(int $intDays = 0, int|null $time = null): int
     {
         if (null === $time) {
             $time = time();
@@ -48,8 +48,6 @@ class DateHelper
      * Return beginn weekday of the week the timestamp is in
      * By default this is a monday.
      *
-     * @param $tstamp
-     *
      * @throws \Exception
      */
     public static function getFirstDayOfWeek(array $arrAppConfig, $tstamp = null): int
@@ -73,7 +71,7 @@ class DateHelper
 
         // Otherwise, return the date of the nearest "beginn week day" in the past
         // by default this is a monday
-        return $date->modify(sprintf('last %s', $beginnWeek))->getTimestamp();
+        return $date->modify(\sprintf('last %s', $beginnWeek))->getTimestamp();
     }
 
     public static function isValidBookingTime(string $dateString): bool
@@ -112,7 +110,7 @@ class DateHelper
     /**
      * @throws \Exception
      */
-    public static function addWeeksToTime(int $intWeeks = 0, int $time = null): int
+    public static function addWeeksToTime(int $intWeeks = 0, int|null $time = null): int
     {
         if (null === $time) {
             $time = time();
@@ -137,7 +135,7 @@ class DateHelper
     /**
      * By default, this is the timestamp of a monday.
      */
-    public static function getFirstDayOfCurrentWeek(array $arrAppConfig, int $timestamp = null): int
+    public static function getFirstDayOfCurrentWeek(array $arrAppConfig, int|null $timestamp = null): int
     {
         if (!$timestamp) {
             $timestamp = time();
@@ -145,6 +143,6 @@ class DateHelper
 
         $beginnWeek = $arrAppConfig['beginnWeek'];
 
-        return strtotime(sprintf('%s this week', $beginnWeek), $timestamp);
+        return strtotime(\sprintf('%s this week', $beginnWeek), $timestamp);
     }
 }

@@ -34,7 +34,7 @@ class ResourceBookingTimeSlot
     #[AsCallback(table: 'tl_resource_booking_time_slot', target: 'list.sorting.child_record')]
     public function childRecordCallback(array $row): string
     {
-        return sprintf('<div class="tl_content_left"><span style="color:#999;padding-left:3px">'.$row['title'].'</span> %s-%s</div>', UtcTimeHelper::parse('H:i', $row['startTime']), UtcTimeHelper::parse('H:i', $row['endTime']));
+        return \sprintf('<div class="tl_content_left"><span style="color:#999;padding-left:3px">'.$row['title'].'</span> %s-%s</div>', UtcTimeHelper::parse('H:i', $row['startTime']), UtcTimeHelper::parse('H:i', $row['endTime']));
     }
 
     #[AsCallback(table: 'tl_resource_booking_time_slot', target: 'fields.startTime.load', priority: 100)]
@@ -71,12 +71,7 @@ class ResourceBookingTimeSlot
     /**
      * Adjust endTime if it is smaller than the startTime.
      *
-     * @param int           $timestamp
-     * @param DataContainer $dc
-     *
      * @throws \Exception
-     *
-     * @return int
      */
     #[AsCallback(table: 'tl_resource_booking_time_slot', target: 'fields.endTime.save')]
     public function setCorrectEndTime(int $timestamp, DataContainer $dc): int
@@ -91,7 +86,6 @@ class ResourceBookingTimeSlot
         }
 
         if (!empty($strStartTime)) {
-
             $startTime = UtcTimeHelper::strToTime('01-01-1970 '.$strStartTime);
 
             if ($timestamp <= $startTime) {
@@ -166,7 +160,6 @@ class ResourceBookingTimeSlot
         }
 
         foreach ($arrBookings as $arrBooking) {
-
             $set = [];
             $arrFields = ['startTime', 'endTime'];
 

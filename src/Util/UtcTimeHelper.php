@@ -34,6 +34,6 @@ class UtcTimeHelper
         $utc = new \DateTimeZone('UTC');
         $dt = new \DateTime($strDate, $utc);
 
-        return (int)$dt->format('U');
+        return (int) $dt->format('U');
     }
 }

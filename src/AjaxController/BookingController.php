@@ -38,11 +38,17 @@ final class BookingController extends AbstractController implements ControllerIn
     use BookingTrait;
 
     private Connection $connection;
+
     private EventDispatcherInterface $eventDispatcher;
+
     private SlotFactory $slotFactory;
+
     private TranslatorInterface $translator;
+
     private LoggerInterface|null $contaoGeneralLogger = null;
+
     private LoggerInterface|null $contaoErrorLogger = null;
+
     private string|null $bookingUuid = null;
 
     /**
@@ -51,7 +57,7 @@ final class BookingController extends AbstractController implements ControllerIn
      * see: https://symfony.com/doc/current/service_container/calls.html.
      */
     #[Required]
-    public function _setController(Connection $connection, EventDispatcherInterface $eventDispatcher, SlotFactory $slotFactory, TranslatorInterface $translator, LoggerInterface $contaoGeneralLogger = null, LoggerInterface $contaoErrorLogger = null): void
+    public function _setController(Connection $connection, EventDispatcherInterface $eventDispatcher, SlotFactory $slotFactory, TranslatorInterface $translator, LoggerInterface|null $contaoGeneralLogger = null, LoggerInterface|null $contaoErrorLogger = null): void
     {
         $this->connection = $connection;
         $this->eventDispatcher = $eventDispatcher;
@@ -117,7 +123,7 @@ final class BookingController extends AbstractController implements ControllerIn
                     $objBooking->save();
 
                     // Log
-                    $strLog = sprintf('New resource "%s" (with ID %s) has been booked.', $this->getActiveResource()->title, $objBooking->id);
+                    $strLog = \sprintf('New resource "%s" (with ID %s) has been booked.', $this->getActiveResource()->title, $objBooking->id);
                     $this->contaoGeneralLogger?->info($strLog);
                 }
 
@@ -142,7 +148,7 @@ final class BookingController extends AbstractController implements ControllerIn
                 // Use event listeners to return a custom message to the user
                 if (null === $ajaxResponse->getConfirmationMessage()) {
                     $ajaxResponse->setConfirmationMessage(
-                        $this->translator->trans('RBB.MSG.successfullyBookedXItems', [$this->getActiveResource()->title, $objBookings->count()], 'contao_default')
+                        $this->translator->trans('RBB.MSG.successfullyBookedXItems', [$this->getActiveResource()->title, $objBookings->count()], 'contao_default'),
                     );
                 }
             } else {
@@ -228,7 +234,7 @@ final class BookingController extends AbstractController implements ControllerIn
                 $objBooking = new ResourceBookingModel();
             } else {
                 // Use the already existing entity
-                $objBooking = ResourceBookingModel::findByPk($arrBooking['id']);
+                $objBooking = ResourceBookingModel::findById($arrBooking['id']);
             }
 
             // Add data to the model

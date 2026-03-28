@@ -27,8 +27,6 @@ class Member
     }
 
     /**
-     * @param DataContainer $dc
-     *
      * @throws Exception
      */
     #[AsCallback(table: 'tl_member', target: 'config.ondelete')]

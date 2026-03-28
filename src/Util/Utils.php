@@ -43,8 +43,8 @@ class Utils
     {
         return $this->framework
             ->getAdapter(ModuleModel::class)
-            ->findByPk($this->session->get('moduleModelId'))
-            ;
+            ->findById($this->session->get('moduleModelId'))
+        ;
     }
 
     /**
@@ -81,7 +81,7 @@ class Utils
     {
         if ($this->session->has('moduleModelId')) {
             $moduleModelAdapter = $this->framework->getAdapter(ModuleModel::class);
-            $module = $moduleModelAdapter->findByPk($this->session->get('moduleModelId'));
+            $module = $moduleModelAdapter->findById($this->session->get('moduleModelId'));
 
             if (null !== $module) {
                 $strConfig = $module->resourceBooking_appConfig;

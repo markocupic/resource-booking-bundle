@@ -57,14 +57,15 @@ class PurgePastBookingsCron
         $intAffectedRows = 0;
 
         $objStmt = $databaseAdapter->getInstance()
-            ->execute('SELECT * FROM tl_resource_booking GROUP BY moduleId');
+            ->execute('SELECT * FROM tl_resource_booking GROUP BY moduleId')
+        ;
 
         while ($objStmt->next()) {
             $moduleId = $objStmt->moduleId;
 
-            if ((int)$moduleId > 0) {
+            if ((int) $moduleId > 0) {
                 if (!isset($arrAppConfig[$moduleId])) {
-                    if (null !== ($objModule = $moduleAdapter->findByPk($moduleId))) {
+                    if (null !== ($objModule = $moduleAdapter->findById($moduleId))) {
                         $strConfig = $objModule->resourceBooking_appConfig ?? null;
 
                         if (null !== $strConfig && isset($arrAppConfigs[$strConfig])) {
@@ -80,13 +81,14 @@ class PurgePastBookingsCron
                     if ($intWeeks < 0) {
                         $intWeeks = abs($intWeeks);
                         $beginnWeek = $appConfig['beginnWeek'];
-                        $dateBeginnCurrentWeek = $dateAdapter->parse('d-m-Y', strtotime(sprintf('%s this week', $beginnWeek)));
+                        $dateBeginnCurrentWeek = $dateAdapter->parse('d-m-Y', strtotime(\sprintf('%s this week', $beginnWeek)));
 
                         // Calculate the limit from which we can delete the entries
                         if (false !== ($tstampLimit = strtotime($dateBeginnCurrentWeek.' -'.$intWeeks.' weeks'))) {
                             $objStmtDel = $databaseAdapter->getInstance()
                                 ->prepare('DELETE FROM tl_resource_booking WHERE moduleId=? AND endTime<?')
-                                ->execute($moduleId, $tstampLimit);
+                                ->execute($moduleId, $tstampLimit)
+                            ;
 
                             $intAffectedRows += $objStmtDel->affectedRows;
                         }
@@ -96,7 +98,7 @@ class PurgePastBookingsCron
         }
 
         if ($intAffectedRows > 0) {
-            $this->contaoCronLogger->info(sprintf('CRON: tl_resource_booking has been cleared from %s old entries.', $intAffectedRows));
+            $this->contaoCronLogger->info(\sprintf('CRON: tl_resource_booking has been cleared from %s old entries.', $intAffectedRows));
         }
     }
 }

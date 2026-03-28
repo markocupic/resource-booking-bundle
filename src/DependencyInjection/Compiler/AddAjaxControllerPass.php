@@ -36,17 +36,14 @@ class AddAjaxControllerPass implements CompilerPassInterface
             // a service could have the same tag twice
             foreach ($tags as $attributes) {
                 if (!isset($attributes['alias'])) {
-                    throw new InvalidArgumentException(sprintf('Missing tag information "alias" on markocupic_resource_booking.ajax_controller tagged service "%s".', $id));
+                    throw new InvalidArgumentException(\sprintf('Missing tag information "alias" on markocupic_resource_booking.ajax_controller tagged service "%s".', $id));
                 }
 
-                $definition->addMethodCall(
-                    'add',
-                    [
-                        new Reference($id),
-                        $attributes['alias'],
-                        $id,
-                    ]
-                );
+                $definition->addMethodCall('add', [
+                    new Reference($id),
+                    $attributes['alias'],
+                    $id,
+                ]);
             }
         }
     }

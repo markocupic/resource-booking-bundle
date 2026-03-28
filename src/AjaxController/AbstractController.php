@@ -25,9 +25,13 @@ use Symfony\Component\HttpFoundation\Session\SessionBagInterface;
 abstract class AbstractController
 {
     protected ModuleModel|null $moduleModel = null;
+
     protected ResourceBookingResourceModel|null $activeResource = null;
+
     protected SessionBagInterface|null $sessionBag = null;
+
     protected string|null $errorMsg = null;
+
     protected int $bookingRepeatStopWeekTstamp = 0;
 
     public function __construct(
@@ -56,7 +60,7 @@ abstract class AbstractController
         }
 
         // Set module model
-        $this->moduleModel = $moduleModelAdapter->findByPk($this->sessionBag->get('moduleModelId'));
+        $this->moduleModel = $moduleModelAdapter->findById($this->sessionBag->get('moduleModelId'));
 
         if (null === $this->moduleModel) {
             throw new \Exception('Module model not found.');
@@ -66,7 +70,7 @@ abstract class AbstractController
         $request = $this->requestStack->getCurrentRequest();
 
         if (null === $this->getActiveResource()) {
-            throw new \Exception(sprintf('Resource with Id %s not found.', $request->request->get('resourceId')));
+            throw new \Exception(\sprintf('Resource with Id %s not found.', $request->request->get('resourceId')));
         }
 
         if (!$request->request->has('bookingRepeatStopWeekTstamp')) {

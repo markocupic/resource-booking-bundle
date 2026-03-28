@@ -15,7 +15,6 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\EventSubscriber;
 
 use Contao\CoreBundle\Routing\ScopeMatcher;
-use Markocupic\ResourceBookingBundle\Config\RbbConfig;
 use Symfony\Component\Asset\Packages;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
@@ -25,7 +24,7 @@ class BackendAssetSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private readonly ScopeMatcher $scopeMatcher,
-        private readonly Packages $packages
+        private readonly Packages $packages,
     ) {
     }
 

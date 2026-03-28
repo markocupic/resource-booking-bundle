@@ -25,6 +25,7 @@ final class RefreshDataController extends AbstractController implements Controll
     use RefreshDataTrait;
 
     private SlotFactory $slotFactory;
+
     private TranslatorInterface $translator;
 
     /**

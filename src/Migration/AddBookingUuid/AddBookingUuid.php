@@ -66,7 +66,7 @@ class AddBookingUuid extends AbstractMigration
 
         return new MigrationResult(
             true,
-            'Added booking uuids to tl_resource_booking during the database update process.'
+            'Added booking uuids to tl_resource_booking during the database update process.',
         );
     }
 

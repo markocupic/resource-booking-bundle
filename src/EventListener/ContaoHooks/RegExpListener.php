@@ -23,12 +23,11 @@ use Markocupic\ResourceBookingBundle\Util\DateHelper;
 
 class RegExpListener
 {
-
     public const REGEX_RESOURCE_BOOKING_TIME = 'resourceBookingTime';
 
     public function __construct(
         private readonly ContaoFramework $framework,
-    ){
+    ) {
     }
 
     #[AsHook('addCustomRegexp')]
