@@ -1,3 +1,9 @@
 {
-  "entrypoints": {}
+  "entrypoints": {
+    "css/frontend": {
+      "css": [
+        "/bundles/markocupicresourcebooking/css/frontend.10991ec0.css"
+      ]
+    }
+  }
 }
