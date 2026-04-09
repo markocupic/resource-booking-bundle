@@ -43,6 +43,14 @@ Das Tool setzt auf [vue.js](https://vuejs.org/) und [Bootstrap](https://getboots
 
 Anm: Bei der Installation wird neben den oben erwähnten Erweiterungen auch [codefog/contao-haste](https://github.com/codefog/contao-haste) mitinstalliert.
 
+## Zeitpläne per command anlegen
+
+Anstatt die Buchungs-Zeitpläne aufwändig manuell anzulegen, ist es möglich über ein command die Slots automatisch anlegen zu lassen.
+
+```bash
+php vendor/bin/contao-console rbb:create-slots
+```
+
 ## Benachrichtigung
 
 Die Benachrichtigung via [Contao Notification Center](https://github.com/terminal42/contao-notification_center) bei Buchung/Stornierung ist ein kostenpflichtiges Zusatzfeature. Bitte nehmen Sie per E-Mail mit dem Autor der Erweiterung [Kontakt](https://github.com/markocupic/resource-booking-bundle/blob/0080449a1a3fde63b1b9ad0b2fd0fd153ba82b4c/composer.json#L16) auf.
