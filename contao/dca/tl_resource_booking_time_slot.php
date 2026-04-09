@@ -95,14 +95,14 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = [
             'sorting'   => true,
             'flag'      => DataContainer::SORT_MONTH_DESC,
             'inputType' => 'text',
-            'eval'      => ['rgxp' => RegExpListener::REGEX_RESOURCE_BOOKING_TIME, 'mandatory' => true, 'tl_class' => 'w50'],
+            'eval'      => ['rgxp' => RegExpListener::REGEX_RESOURCE_BOOKING_START_TIME, 'mandatory' => true, 'tl_class' => 'w50'],
             'sql'       => ['type' => 'integer', 'length' => 10, 'notnull' => true, 'unsigned' => true, 'default' => 0],
         ],
         'endTime'     => [
             'default'   => time(),
             'exclude'   => true,
             'inputType' => 'text',
-            'eval'      => ['rgxp' => RegExpListener::REGEX_RESOURCE_BOOKING_TIME, 'mandatory' => true, 'tl_class' => 'w50'],
+            'eval'      => ['rgxp' => RegExpListener::REGEX_RESOURCE_BOOKING_END_TIME, 'mandatory' => true, 'tl_class' => 'w50'],
             'sql'       => ['type' => 'integer', 'length' => 10, 'notnull' => true, 'unsigned' => true, 'default' => 0],
         ],
         'cssID'       => [

@@ -87,7 +87,8 @@ $GLOBALS['TL_LANG']['RBB']['ERR']['mandatoryFieldNotFilledIn'] = 'Ihre Buchungsa
 
 // Messages
 $GLOBALS['TL_LANG']['RBB']['MSG']['noResourceSelected'] = 'Es wurde keine Ressource ausgewählt';
-$GLOBALS['TL_LANG']['RBB']['MSG']['pleaseInsertValidBookingTime'] = 'Bitte geben Sie eine gültige Zeit in der Form hh:mm ein.';
+$GLOBALS['TL_LANG']['RBB']['MSG']['pleaseInsertValidBookingStartTime'] = 'Bitte geben Sie eine gültige Startzeit in der Form hh:mm ein. Gültiger Bereich: 00:00 - 23:59.';
+$GLOBALS['TL_LANG']['RBB']['MSG']['pleaseInsertValidBookingEndTime'] = 'Bitte geben Sie eine gültige Endzeit in der Form hh:mm ein. Gültiger Bereich: 00:01 - 24:00.';
 $GLOBALS['TL_LANG']['RBB']['MSG']['resourceAvailable'] = 'Die von Ihnen gewünschte Ressource ist im gewünschten Zeitraum noch verfügbar.';
 $GLOBALS['TL_LANG']['RBB']['MSG']['selectResourcePlease'] = 'Bitte wählen Sie eine Ressource aus.';
 $GLOBALS['TL_LANG']['RBB']['MSG']['selectResourceTypePlease'] = 'Bitte wählen Sie einen Ressourcen-Typ aus.';

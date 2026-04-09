@@ -208,7 +208,6 @@ trait RefreshDataTrait
 
         $arrReturn = [
             'disabled' => false,
-            'tstamp' => null,
         ];
 
         $intJumpDays = 7 * $intJumpWeek;
@@ -512,14 +511,19 @@ trait RefreshDataTrait
                     if (!empty($arrCssCellID[1])) {
                         $cssCellClass = $arrCssCellID[1];
                     }
+
+                    $startTimeFormatted = $utcTimeHelperAdapter->parseStartTime($objTimeslot->startTime);
+                    $endTimeFormatted = $utcTimeHelperAdapter->parseEndTime($objTimeslot->endTime);
+                    $endTimeFormatted = '00:00' === $endTimeFormatted ? '24:00' : $endTimeFormatted;
+
                     $startTime = (int) $objTimeslot->startTime;
                     $endTime = (int) $objTimeslot->endTime;
                     $objTs = new \stdClass();
                     $objTs->cssClass = $cssCellClass;
-                    $objTs->startTimeString = $utcTimeHelperAdapter->parse('H:i', $startTime);
+                    $objTs->startTimeString = $startTimeFormatted;
                     $objTs->startTime = $startTime;
-                    $objTs->endTimeString = $utcTimeHelperAdapter->parse('H:i', $endTime);
-                    $objTs->timeSpanString = $utcTimeHelperAdapter->parse('H:i', $startTime).' - '.$utcTimeHelperAdapter->parse('H:i', $endTime);
+                    $objTs->endTimeString = $endTimeFormatted;
+                    $objTs->timeSpanString = $startTimeFormatted.' - '.$endTimeFormatted;
                     $objTs->endTime = $endTime;
                     $timeSlots[] = $objTs;
                 }

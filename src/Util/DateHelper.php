@@ -69,13 +69,17 @@ class DateHelper
             return $date->getTimestamp();
         }
 
-        // Otherwise, return the date of the nearest "beginn week day" in the past
+        // Otherwise, return the date of the nearest "begin week day" in the past
         // by default this is a monday
         return $date->modify(\sprintf('last %s', $beginnWeek))->getTimestamp();
     }
 
     public static function isValidBookingTime(string $dateString): bool
     {
+        if ('24:00' === $dateString) {
+            return true;
+        }
+
         $format = 'H:i';
         $dateObj = \DateTime::createFromFormat($format, $dateString);
 
@@ -99,7 +103,7 @@ class DateHelper
         if ($tstamp < $tstampFirstPermittedWeek || $tstamp > $tstampLastPermittedWeek) {
             return false;
         }
-        // Get numeric value of the weekday:  0 for sunday, 1 for monday, etc.
+        // Get numeric value of the weekday: 0 for Sunday, 1 for Monday, etc.
         if ('1' !== Date::parse('w', $tstamp)) {
             return false;
         }

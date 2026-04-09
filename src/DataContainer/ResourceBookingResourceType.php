@@ -22,7 +22,7 @@ use Contao\StringUtil;
 class ResourceBookingResourceType
 {
     #[AsCallback(table: 'tl_resource_booking_resource_type', target: 'list.operations.editheader.button')]
-    public function editHeader(array $row, string $href, string $label, string $title, string $icon, string $attributes): string
+    public function editHeader(array $row, string|null $href, string $label, string $title, string|null $icon, string $attributes): string
     {
         return '<a href="'.Backend::addToUrl($href.'&amp;id='.$row['id']).'" title="'.StringUtil::specialchars($title).'"'.$attributes.'>'.Image::getHtml($icon, $label).'</a> ';
     }

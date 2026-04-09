@@ -24,6 +24,19 @@ class UtcTimeHelper
         return gmdate($strFormat, $tstamp);
     }
 
+    public static function parseEndTime(int $tstamp): string
+    {
+        // Handle the special case midnight
+        return 0 === $tstamp % 86400 && $tstamp > 0
+            ? '24:00'
+            : self::parse('H:i', $tstamp);
+    }
+
+    public static function parseStartTime(int $tstamp): string
+    {
+        return self::parse('H:i', $tstamp);
+    }
+
     /**
      * Return a timestamp based on the UTC timezone.
      *

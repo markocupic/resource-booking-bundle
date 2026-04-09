@@ -23,6 +23,7 @@ use Contao\Model\Collection;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Util\DateHelper;
+use Markocupic\ResourceBookingBundle\Util\UtcTimeHelper;
 use Markocupic\ResourceBookingBundle\Util\Utils;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
@@ -111,11 +112,11 @@ abstract class AbstractSlot implements SlotInterface
         $this->arrData['pid'] = $resource->id;
         $this->arrData['isDateInPermittedRange'] = $this->isDateInPermittedRange();
         $this->arrData['weekday'] = strtolower(date('l', $startTime));
-        $this->arrData['startTimeString'] = $dateAdapter->parse('H:i', $startTime);
-        $this->arrData['endTimeString'] = $dateAdapter->parse('H:i', $endTime);
+        $this->arrData['startTimeString'] = UtcTimeHelper::parseStartTime($startTime);
+        $this->arrData['endTimeString'] = UtcTimeHelper::parseEndTime($endTime);
         $this->arrData['date'] = $dateAdapter->parse($configAdapter->get('dateFormat'), $startTime);
-        $this->arrData['datimSpanString'] = \sprintf('%s, %s: %s - %s', $dateAdapter->parse('D', $startTime), $dateAdapter->parse($configAdapter->get('dateFormat'), $startTime), $dateAdapter->parse('H:i', $startTime), $dateAdapter->parse('H:i', $endTime));
-        $this->arrData['timeSpanString'] = $dateAdapter->parse('H:i', $startTime).' - '.$dateAdapter->parse('H:i', $startTime);
+        $this->arrData['datimSpanString'] = \sprintf('%s, %s: %s - %s', $dateAdapter->parse('D', $startTime), $dateAdapter->parse($configAdapter->get('dateFormat'), $startTime), UtcTimeHelper::parseStartTime($startTime), UtcTimeHelper::parseEndTime($endTime));
+        $this->arrData['timeSpanString'] = UtcTimeHelper::parseStartTime($startTime).' - '.UtcTimeHelper::parseEndTime($endTime);
         $this->arrData['beginnWeekTimestampSelectedWeek'] = $dateHelperAdapter->getFirstDayOfCurrentWeek($appConfig, $startTime);
         $this->arrData['isBookable'] = $this->isBookable();
         $this->arrData['enoughItemsAvailable'] = $this->areEnoughItemsAvailable();

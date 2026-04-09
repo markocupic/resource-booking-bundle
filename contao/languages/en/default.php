@@ -87,7 +87,8 @@ $GLOBALS['TL_LANG']['RBB']['ERR']['mandatoryFieldNotFilledIn'] = 'Your booking r
 
 // Messages
 $GLOBALS['TL_LANG']['RBB']['MSG']['noResourceSelected'] = 'Select a ressource please.';
-$GLOBALS['TL_LANG']['RBB']['MSG']['pleaseInsertValidBookingTime'] = 'Insert a valid time (format hh:mm) please.';
+$GLOBALS['TL_LANG']['RBB']['MSG']['pleaseInsertValidBookingStartTime'] = 'Please enter a valid start time in the format hh:mm. Valid range: 00:00–23:59.';
+$GLOBALS['TL_LANG']['RBB']['MSG']['pleaseInsertValidBookingEndTime'] = 'Please enter a valid end time in the format hh:mm. Valid range: 00:01–24:00.';
 $GLOBALS['TL_LANG']['RBB']['MSG']['resourceAvailable'] = 'The resource can still be booked in the desired period.';
 $GLOBALS['TL_LANG']['RBB']['MSG']['selectResourcePlease'] = 'Select a resource please.';
 $GLOBALS['TL_LANG']['RBB']['MSG']['selectResourceTypePlease'] = 'Select a resource type please.';

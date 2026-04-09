@@ -26,25 +26,40 @@ use Symfony\Component\HttpFoundation\RequestStack;
 class ResourceBookingTimeSlot
 {
     public function __construct(
-        private readonly Connection $connection,
-        private readonly RequestStack $requestStack,
+        private Connection $connection,
+        private RequestStack $requestStack,
     ) {
     }
 
     #[AsCallback(table: 'tl_resource_booking_time_slot', target: 'list.sorting.child_record')]
     public function childRecordCallback(array $row): string
     {
-        return \sprintf('<div class="tl_content_left"><span style="color:#999;padding-left:3px">'.$row['title'].'</span> %s-%s</div>', UtcTimeHelper::parse('H:i', $row['startTime']), UtcTimeHelper::parse('H:i', $row['endTime']));
+        $startTimeFormatted = UtcTimeHelper::parseStartTime($row['startTime']);
+        $endTimeFormatted = UtcTimeHelper::parseEndTime($row['endTime']);
+        $endTimeFormatted = '00:00' === $endTimeFormatted ? '24:00' : $endTimeFormatted;
+
+        return \sprintf('<div class="tl_content_left"><span style="color:#999;padding-left:3px">'.$row['title'].'</span> %s-%s</div>', $startTimeFormatted, $endTimeFormatted);
     }
 
     #[AsCallback(table: 'tl_resource_booking_time_slot', target: 'fields.startTime.load', priority: 100)]
-    #[AsCallback(table: 'tl_resource_booking_time_slot', target: 'fields.endTime.load')]
-    public function loadTime(int $timestamp): string
+    public function loadStartTime(int $timestamp): string
     {
         $strTime = '';
 
         if ($timestamp >= 0) {
-            $strTime = UtcTimeHelper::parse('H:i', $timestamp);
+            $strTime = UtcTimeHelper::parseStartTime($timestamp);
+        }
+
+        return $strTime;
+    }
+
+    #[AsCallback(table: 'tl_resource_booking_time_slot', target: 'fields.endTime.load', priority: 100)]
+    public function loadEndTime(int $timestamp): string
+    {
+        $strTime = '';
+
+        if ($timestamp >= 0) {
+            $strTime = UtcTimeHelper::parseEndTime($timestamp);
         }
 
         return $strTime;
@@ -55,12 +70,15 @@ class ResourceBookingTimeSlot
      *
      * @throws \Exception
      */
-    #[AsCallback(table: 'tl_resource_booking_time_slot', target: 'fields.startTime.save')]
-    #[AsCallback(table: 'tl_resource_booking_time_slot', target: 'fields.endTime.save')]
-    public function setCorrectTime(string $strTime, DataContainer $dc): int
+    #[AsCallback(table: 'tl_resource_booking_time_slot', target: 'fields.startTime.save', priority: 100)]
+    public function setCorrectStartTime(string $strTime, DataContainer $dc): int
     {
         if (preg_match('/^(2[0-3]|[01][0-9]):[0-5][0-9]$/', $strTime)) {
-            $timestamp = UtcTimeHelper::strToTime('1970-01-01 '.$strTime);
+            if ('24:00' === $strTime) {
+                $timestamp = UtcTimeHelper::strToTime('1970-01-01 24:00');
+            } else {
+                $timestamp = UtcTimeHelper::strToTime('1970-01-01 '.$strTime);
+            }
         } else {
             $timestamp = 0;
         }
@@ -69,33 +87,48 @@ class ResourceBookingTimeSlot
     }
 
     /**
-     * Adjust endTime if it is smaller than the startTime.
+     * Converts formatted time f.ex 09:01 into an utc timestamp.
      *
      * @throws \Exception
      */
-    #[AsCallback(table: 'tl_resource_booking_time_slot', target: 'fields.endTime.save')]
-    public function setCorrectEndTime(int $timestamp, DataContainer $dc): int
+    #[AsCallback(table: 'tl_resource_booking_time_slot', target: 'fields.endTime.save', priority: 100)]
+    public function setCorrectEndTime(string $strTime, DataContainer $dc): int
     {
         $request = $this->requestStack->getCurrentRequest();
+
+        if (preg_match('/^(24|2[0-3]|[01][0-9]):[0-5][0-9]$/', $strTime)) {
+            if ('00:00' === $strTime) {
+                $strTime = '24:00';
+                $request->request->set('endTime', '24:00');
+            }
+
+            if ('24:00' === $strTime) {
+                $timestampEndTime = UtcTimeHelper::strToTime('1970-01-02 00:00');
+            } else {
+                $timestampEndTime = UtcTimeHelper::strToTime('1970-01-01 '.$strTime);
+            }
+        } else {
+            $timestampEndTime = 0;
+        }
 
         // Adjust endTime if it is smaller than the startTime
         if (!empty($request->request->get('startTime'))) {
             $strStartTime = $request->request->get('startTime');
         } else {
-            $strStartTime = UtcTimeHelper::parse('H:i', $dc->activeRecord->startTime);
+            $strStartTime = UtcTimeHelper::parseStartTime($dc->activeRecord->startTime);
         }
 
         if (!empty($strStartTime)) {
             $startTime = UtcTimeHelper::strToTime('01-01-1970 '.$strStartTime);
 
-            if ($timestamp <= $startTime) {
-                $timestamp = $startTime + 60;
+            if ($timestampEndTime <= $startTime) {
+                $timestampEndTime = $startTime + 60;
             }
         } else {
-            $timestamp = 0;
+            $timestampEndTime = 0;
         }
 
-        return $timestamp;
+        return $timestampEndTime;
     }
 
     #[AsCallback(table: 'tl_resource_booking_time_slot', target: 'config.ondelete')]
@@ -166,7 +199,7 @@ class ResourceBookingTimeSlot
             foreach ($arrFields as $field) {
                 $strDateOld = Date::parse('Y-m-d H:i', $arrBooking[$field]);
                 $arrDateOld = explode(' ', $strDateOld);
-                $strTimeNew = UtcTimeHelper::parse('H:i', $arrSlot[$field]);
+                $strTimeNew = 'startTime' === $field ? UtcTimeHelper::parseStartTime($arrSlot[$field]) : UtcTimeHelper::parseEndTime($arrSlot[$field]);
                 $strDateNew = $arrDateOld[0].' '.$strTimeNew;
                 $set[$field] = strtotime($strDateNew);
             }
