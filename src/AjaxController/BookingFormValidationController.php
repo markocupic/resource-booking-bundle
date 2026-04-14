@@ -25,6 +25,8 @@ final class BookingFormValidationController extends AbstractController implement
 {
     use BookingTrait;
 
+    public const REQUEST_NAME = 'bookingFormValidationRequest';
+
     private SlotFactory $slotFactory;
 
     private TranslatorInterface $translator;

@@ -24,6 +24,8 @@ final class RefreshDataController extends AbstractController implements Controll
 {
     use RefreshDataTrait;
 
+    public const REQUEST_NAME = 'refreshDataRequest';
+
     private SlotFactory $slotFactory;
 
     private TranslatorInterface $translator;

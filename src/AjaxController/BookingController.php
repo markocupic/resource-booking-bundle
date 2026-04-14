@@ -37,6 +37,8 @@ final class BookingController extends AbstractController implements ControllerIn
 {
     use BookingTrait;
 
+    public const REQUEST_NAME = 'bookingRequest';
+
     private Connection $connection;
 
     private EventDispatcherInterface $eventDispatcher;

@@ -33,6 +33,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class CancelController extends AbstractController implements ControllerInterface
 {
+    public const REQUEST_NAME = 'cancelRequest';
+
     private Connection $connection;
 
     private EventDispatcherInterface $eventDispatcher;

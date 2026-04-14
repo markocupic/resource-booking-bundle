@@ -28,6 +28,8 @@ final class ApplyFilterController extends AbstractController implements Controll
 {
     use RefreshDataTrait;
 
+    public const REQUEST_NAME = 'applyFilterRequest';
+
     private EventDispatcherInterface $eventDispatcher;
 
     private SlotFactory $slotFactory;
