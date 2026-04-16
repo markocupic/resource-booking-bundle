@@ -390,6 +390,7 @@ trait RefreshDataTrait
 
                     /** @var SlotMain $slot */
                     $slot = $this->slotFactory->get($objTimeslot->id, SlotMain::MODE, $resourceModel, $startTime, $endTime);
+
                     $slot->setIndex($colCount);
                     $slot->setBookingCheckboxId(\sprintf('bookingCheckbox_modId_%s_%s_%s', $moduleModel->id, $rowCount, $colCount));
                     $slot->setBookingCheckboxValue(\sprintf('%s-%s-%s-%s', $objTimeslot->id, $startTime, $endTime, $activeWeekTstamp));

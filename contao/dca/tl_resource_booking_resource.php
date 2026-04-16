@@ -21,6 +21,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = [
         'dataContainer'    => DC_Table::class,
         'switchToEdit'     => true,
         'ptable'           => 'tl_resource_booking_resource_type',
+        'ctable'           => ['tl_resource_booking'],
         'enableVersioning' => true,
         'sql'              => [
             'keys' => [

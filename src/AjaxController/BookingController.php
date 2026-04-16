@@ -30,6 +30,7 @@ use Markocupic\ResourceBookingBundle\Slot\SlotMain;
 use Markocupic\ResourceBookingBundle\Util\Utils;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Contracts\Service\Attribute\Required;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -72,7 +73,7 @@ final class BookingController extends AbstractController implements ControllerIn
     /**
      * @throws \Exception
      */
-    public function generateResponse(AjaxResponse $ajaxResponse): AjaxResponse
+    public function generateResponse(Request $request, AjaxResponse $ajaxResponse): AjaxResponse
     {
         // Load language file
         $this->framework
@@ -102,7 +103,7 @@ final class BookingController extends AbstractController implements ControllerIn
             $objBookings = $this->getBookingCollection($slotCollection, $this->utils);
 
             // Dispatch pre booking event "rbb.event.pre_booking"
-            $objPreBookingEvent = new PreBookingEvent($ajaxResponse, $this->sessionBag, $this->user->getLoggedInUser(), $objBookings);
+            $objPreBookingEvent = new PreBookingEvent($request, $ajaxResponse, $this->sessionBag, $this->user->getLoggedInUser(), $objBookings);
             $this->eventDispatcher->dispatch($objPreBookingEvent);
 
             $objBookings?->reset();
@@ -140,7 +141,7 @@ final class BookingController extends AbstractController implements ControllerIn
 
             if (null !== $objBookings) {
                 // Dispatch post booking event "rbb.event.post_booking"
-                $objPostBookingEvent = new PostBookingEvent($ajaxResponse, $this->sessionBag, $this->user->getLoggedInUser(), $objBookings);
+                $objPostBookingEvent = new PostBookingEvent($request, $ajaxResponse, $this->sessionBag, $this->user->getLoggedInUser(), $objBookings);
                 $this->eventDispatcher->dispatch($objPostBookingEvent);
             }
 
@@ -167,6 +168,7 @@ final class BookingController extends AbstractController implements ControllerIn
             $this->connection->rollBack();
             $ajaxResponse->setStatus(AjaxResponse::STATUS_WARNING);
             $ajaxResponse->setWarningMessage($e->getMessage());
+            $this->contaoErrorLogger?->error($e->getMessage());
         } catch (\Exception $e) {
             $this->connection->rollBack();
             $ajaxResponse->setStatus(AjaxResponse::STATUS_ERROR);
@@ -196,6 +198,13 @@ final class BookingController extends AbstractController implements ControllerIn
                 // Arrays
                 case 'bookingDateSelection':
                     if (!\is_array(Input::post($key))) {
+                        throw new \Exception($this->translator->trans('RBB.ERR.invalidUploadValueSubmitted', [$key], 'contao_default'));
+                    }
+
+                    break;
+                // Booleans
+                case 'isBlocked':
+                    if ('' !== Input::post($key) && '1' !== Input::post($key)) {
                         throw new \Exception($this->translator->trans('RBB.ERR.invalidUploadValueSubmitted', [$key], 'contao_default'));
                     }
 

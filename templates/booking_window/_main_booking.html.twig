@@ -39,6 +39,7 @@
                             </div>
                             <div class="rbb-layout-cell">
                                 <span v-if="slot.invalidDate"><small>{{ ('RBB.ERR.invalidStartOrEndTime')|trans }}</small></span>
+                                <span v-else-if="slot.isBlocked"><small>{{ ('RBB.ERR.slotIsBlocked')|trans }}</small></span>
                                 <span v-else-if="!slot.enoughItemsAvailable"><small>{{ ('RBB.ERR.thisSlotHasNotEnoughItemsAvailable')|trans }}</small></span>
                                 <span v-else-if="slot.isFullyBooked"><small>{{ ('RBB.ERR.resourceIsAlreadyFullyBooked')|trans }}</small></span>
                                 <span v-else><small>{{ ('RBB.MSG.resourceAvailable')|trans }}</small></span>

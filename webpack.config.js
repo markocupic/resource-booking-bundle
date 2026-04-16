@@ -24,11 +24,6 @@ Encore
     .copyFiles({
         from: './assets/styles',
         to: 'css/[path][name].[hash:8].[ext]',
-        pattern: /(frontend\.css)$/,
-    })
-    .copyFiles({
-        from: './assets/styles',
-        to: 'css/[path][name].[hash:8].[ext]',
         pattern: /(backend\.css)$/,
     })
     .copyFiles({

@@ -25,6 +25,7 @@ $GLOBALS['TL_LANG']['tl_resource_booking']['pid'] = ['Ressource'];
 $GLOBALS['TL_LANG']['tl_resource_booking']['timeSlotId'] = ['Zeitpunkt'];
 $GLOBALS['TL_LANG']['tl_resource_booking']['bookingTime'] = ['Buchungseingang'];
 $GLOBALS['TL_LANG']['tl_resource_booking']['member'] = ['Reserviert durch Frontend-Benutzer'];
+$GLOBALS['TL_LANG']['tl_resource_booking']['isBlocked'] = ['Slot ist geblockt (z.B. Ferienzeit)'];
 $GLOBALS['TL_LANG']['tl_resource_booking']['title'] = ['Titel'];
 $GLOBALS['TL_LANG']['tl_resource_booking']['description'] = ['Beschreibung'];
 $GLOBALS['TL_LANG']['tl_resource_booking']['startTime'] = ['Startzeit'];

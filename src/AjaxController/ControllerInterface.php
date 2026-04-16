@@ -15,8 +15,9 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\AjaxController;
 
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
+use Symfony\Component\HttpFoundation\Request;
 
 interface ControllerInterface
 {
-    public function generateResponse(AjaxResponse $ajaxResponse): AjaxResponse;
+    public function generateResponse(Request $request, AjaxResponse $ajaxResponse): AjaxResponse;
 }

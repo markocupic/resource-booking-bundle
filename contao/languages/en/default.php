@@ -35,6 +35,7 @@ $GLOBALS['TL_LANG']['MSC']['bookedBy'] = 'Booked by';
 $GLOBALS['TL_LANG']['RBB']['formLegendItems'] = 'Select items';
 $GLOBALS['TL_LANG']['RBB']['formHelpItems'] = 'Select items.';
 $GLOBALS['TL_LANG']['RBB']['formLegendDescription'] = 'Brief description';
+$GLOBALS['TL_LANG']['RBB']['formIsBlocked'] = 'Blocked (e.g. holiday period)';
 $GLOBALS['TL_LANG']['RBB']['formHelpDescription'] = 'Enter a short description (max 50 characters).';
 $GLOBALS['TL_LANG']['RBB']['formLegendRepetitions'] = 'Repeat booking until ...?';
 $GLOBALS['TL_LANG']['RBB']['formOptionSelectResource'] = 'Select resource';

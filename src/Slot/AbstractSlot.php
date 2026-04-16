@@ -85,7 +85,10 @@ abstract class AbstractSlot implements SlotInterface
      */
     public function __get(string $strKey)
     {
-        return $this->arrData[$strKey] ?? null;
+        return match ($strKey) {
+            'isBlocked' => !empty($this->getBlockedBookings()),
+            default => $this->arrData[$strKey] ?? null,
+        };
     }
 
     /**
@@ -99,15 +102,13 @@ abstract class AbstractSlot implements SlotInterface
         $appConfig = $this->utils->getAppConfig();
 
         $this->initializeUser();
-
         $this->arrData['timeSlotId'] = $timeSlotId;
         $this->arrData['userIsLoggedIn'] = (bool) $this->user;
         $this->arrData['resource'] = $resource->row();
         $this->arrData['startTime'] = $startTime;
         $this->arrData['endTime'] = $endTime;
         $this->arrData['itemsBooked'] = $desiredItems;
-        $this->arrData['isBlocked'] = false;
-        // This is the timestamp of a "beginn week weekday" by default this is a monday
+        // This is the timestamp of a "begin week weekday" by default this is a monday
         $this->arrData['bookingRepeatStopWeekTstamp'] = null === $bookingRepeatStopWeekTstamp ? $dateHelperAdapter->getFirstDayOfCurrentWeek($appConfig, $startTime) : $bookingRepeatStopWeekTstamp;
         $this->arrData['pid'] = $resource->id;
         $this->arrData['isDateInPermittedRange'] = $this->isDateInPermittedRange();
@@ -118,6 +119,7 @@ abstract class AbstractSlot implements SlotInterface
         $this->arrData['datimSpanString'] = \sprintf('%s, %s: %s - %s', $dateAdapter->parse('D', $startTime), $dateAdapter->parse($configAdapter->get('dateFormat'), $startTime), UtcTimeHelper::parseStartTime($startTime), UtcTimeHelper::parseEndTime($endTime));
         $this->arrData['timeSpanString'] = UtcTimeHelper::parseStartTime($startTime).' - '.UtcTimeHelper::parseEndTime($endTime);
         $this->arrData['beginnWeekTimestampSelectedWeek'] = $dateHelperAdapter->getFirstDayOfCurrentWeek($appConfig, $startTime);
+        $this->arrData['isBlocked'] = $this->isBlocked;
         $this->arrData['isBookable'] = $this->isBookable();
         $this->arrData['enoughItemsAvailable'] = $this->areEnoughItemsAvailable();
         $this->arrData['itemsStillAvailable'] = $this->getItemsAvailable();
@@ -179,6 +181,21 @@ abstract class AbstractSlot implements SlotInterface
         return true;
     }
 
+    public function getBlockedBookings(): array
+    {
+        $bookings = $this->getBookings();
+
+        $blockedBookings = [];
+
+        foreach ($bookings as $booking) {
+            if ($booking['isBlocked']) {
+                $blockedBookings[] = $booking;
+            }
+        }
+
+        return $blockedBookings;
+    }
+
     public function getBookings(): array
     {
         if (isset($this->arrData['bookings'])) {
@@ -200,7 +217,9 @@ abstract class AbstractSlot implements SlotInterface
 
         if (null !== $bookings) {
             while ($bookings->next()) {
-                $arrBookings[] = $bookings->row();
+                $booking = $bookings->current();
+
+                $arrBookings[] = $booking->row();
             }
         }
 
@@ -289,10 +308,6 @@ abstract class AbstractSlot implements SlotInterface
      */
     public function isCancelable(): bool
     {
-        if ($this->isBlocked()) {
-            return false;
-        }
-
         $arrBookings = $this->getBookings();
 
         if (empty($arrBookings)) {
@@ -323,27 +338,6 @@ abstract class AbstractSlot implements SlotInterface
     public function setBookingData(array $arrData): self
     {
         $this->arrData['dataBooking'] = $arrData;
-
-        return $this;
-    }
-
-    public function setIsBookable(bool $isBookable): self
-    {
-        $this->arrData['isBookable'] = $isBookable;
-
-        return $this;
-    }
-
-    public function setIsCancelable(bool $isCancelable): self
-    {
-        $this->arrData['isCancelable'] = $isCancelable;
-
-        return $this;
-    }
-
-    public function setIsBlocked(bool $isBlocked): self
-    {
-        $this->arrData['isBlocked'] = $isBlocked;
 
         return $this;
     }

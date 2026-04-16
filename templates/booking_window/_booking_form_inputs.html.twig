@@ -10,6 +10,12 @@
                 </select>
                 <small class="rbb-items-booked-help rbb-input-help-text">{{ ('RBB.formHelpItems')|trans }}</small>
             </div>
+            {#
+            <div class="form-check mt-4">
+                <input type="checkbox" class="rbb-ctrl-is-blocked form-check-input" id="ctrlIsBlocked_{{ moduleKey }}" name="isBlocked" value="1">
+                <label for="ctrlIsBlocked_{{ moduleKey }}">{{ ('RBB.formIsBlocked')|trans }}</label>
+            </div>
+            #}
 
             <div class="form-group mt-4">
                 <label for="ctrlBookingDescription_{{ moduleKey }}">{{ ('RBB.formLegendDescription')|trans }}</label>

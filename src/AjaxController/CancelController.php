@@ -27,6 +27,7 @@ use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Contracts\Service\Attribute\Required;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -63,7 +64,7 @@ final class CancelController extends AbstractController implements ControllerInt
     /**
      * @throws \Exception
      */
-    public function generateResponse(AjaxResponse $ajaxResponse): AjaxResponse
+    public function generateResponse(Request $request, AjaxResponse $ajaxResponse): AjaxResponse
     {
         // Load language file
         $this->getSystemAdapter()->loadLanguageFile('default', $this->translator->getLocale());
@@ -92,16 +93,16 @@ final class CancelController extends AbstractController implements ControllerInt
             $bookingCollection = $this->getBookingsToBeDeleted($objBooking, $user, $deleteRepetitions);
 
             if (null !== $bookingCollection) {
-                // Dispatch pre cancelling event "rbb.event.pre_cancelling"
+                // Dispatch pre-cancelling event "rbb.event.pre_cancelling"
                 // ! Important
                 // Throw a StopBookingCancellationException
                 // to interrupt the cancellation process
-                $objPreCancellingEvent = new PreCancellingEvent($ajaxResponse, $this->sessionBag, $user, $bookingCollection);
+                $objPreCancellingEvent = new PreCancellingEvent($request, $ajaxResponse, $this->sessionBag, $user, $bookingCollection);
                 $this->eventDispatcher->dispatch($objPreCancellingEvent);
 
                 while ($bookingCollection->next()) {
                     $currentBooking = $bookingCollection->current();
-                    // Use pre cancelling subscriber to stop the cancellation process.
+                    // Use pre-cancelling subscriber to stop the cancellation process.
                     $intAffected = $currentBooking->delete();
 
                     if ($intAffected) {
@@ -116,7 +117,7 @@ final class CancelController extends AbstractController implements ControllerInt
                 // ! Important
                 // Throw a StopBookingCancellationException
                 // to revert the cancellation process
-                $objPostCancellingEvent = new PostCancellingEvent($ajaxResponse, $this->sessionBag, $user, $bookingCollection);
+                $objPostCancellingEvent = new PostCancellingEvent($request, $ajaxResponse, $this->sessionBag, $user, $bookingCollection);
                 $this->eventDispatcher->dispatch($objPostCancellingEvent);
             }
 

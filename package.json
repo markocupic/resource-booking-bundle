@@ -5,7 +5,10 @@
         "url": "git+github.com/markocupic/resource-booking-bundle"
     },
     "scripts": {
-        "build": "encore production"
+        "dev-server": "encore dev-server",
+        "dev": "encore dev",
+        "watch": "encore dev --watch",
+        "build": "encore production --progress"
     },
     "license": "MIT",
     "dependencies": {

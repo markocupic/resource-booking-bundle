@@ -17,6 +17,7 @@ namespace Markocupic\ResourceBookingBundle\AjaxController;
 use Markocupic\ResourceBookingBundle\AjaxController\Traits\RefreshDataTrait;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Markocupic\ResourceBookingBundle\Slot\SlotFactory;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Contracts\Service\Attribute\Required;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -45,7 +46,7 @@ final class RefreshDataController extends AbstractController implements Controll
     /**
      * @throws \Exception
      */
-    public function generateResponse(AjaxResponse $ajaxResponse): AjaxResponse
+    public function generateResponse(Request $request, AjaxResponse $ajaxResponse): AjaxResponse
     {
         $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
         $ajaxResponse->setDataFromArray($this->getRefreshedData($ajaxResponse));

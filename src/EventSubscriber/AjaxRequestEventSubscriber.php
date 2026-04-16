@@ -62,7 +62,7 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
         if (\array_key_exists($alias, $this->controllers)) {
             $controller = $this->get($alias);
 
-            $ajaxResponse = $controller->generateResponse($event->getAjaxResponse());
+            $ajaxResponse = $controller->generateResponse($request, $event->getAjaxResponse());
             $event->setAjaxResponse($ajaxResponse);
         } else {
             throw new \Exception(\sprintf('Could not find Controller for action "%s".', $action));

@@ -17,17 +17,24 @@ namespace Markocupic\ResourceBookingBundle\Event;
 use Contao\Model\Collection;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Contracts\EventDispatcher\Event;
 
 class PreCancellingEvent extends Event
 {
     public function __construct(
+        private readonly Request $request,
         private readonly AjaxResponse $ajaxResponse,
         private readonly ArrayAttributeBag $sessionBag,
         private readonly UserInterface $user,
         private readonly Collection|null $bookingCollection,
     ) {
+    }
+
+    public function getRequest(): Request
+    {
+        return $this->getRequest();
     }
 
     public function getBookingCollection(): Collection|null

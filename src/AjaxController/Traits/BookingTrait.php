@@ -126,7 +126,10 @@ trait BookingTrait
         // Add data from POST, thus the extension can easily be extended
         // Custom form fields must be registered in the bundle configuration
         // @See: BookingController::validateInputs()
-        foreach ($inputAdapter->getKeys() as $k) {
+
+        $keys = array_keys($_POST ?? []);
+
+        foreach ($keys as $k) {
             if (!isset($arrUserInput[$k])) {
                 $blnDecode = isset($dca['fields'][$k]['eval']['decodeEntities']) && true === $dca['fields'][$k]['eval']['decodeEntities'];
                 $arrUserInput[$k] = $blnDecode ? $inputAdapter->post($k, true) : $inputAdapter->post($k);
@@ -195,10 +198,10 @@ trait BookingTrait
                     $this->setErrorMessage('RBB.ERR.invalidStartOrEndTime');
                 } elseif ($slot->isFullyBooked()) {
                     $this->setErrorMessage('RBB.ERR.resourceIsAlreadyFullyBooked');
+                } elseif ($slot->isBlocked()) {
+                    $this->setErrorMessage('RBB.ERR.slotIsBlocked');
                 } elseif (!$slot->isBookable()) {
                     $this->setErrorMessage('RBB.ERR.notEnoughItemsAvailable');
-                } elseif (!$slot->isBlocked()) {
-                    $this->setErrorMessage('RBB.ERR.slotIsBlocked');
                 } else {
                     // This case normally should not happen
                     $this->setErrorMessage('RBB.ERR.slotNotBookable');

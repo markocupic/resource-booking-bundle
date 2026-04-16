@@ -21,6 +21,7 @@ use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Markocupic\ResourceBookingBundle\Slot\SlotFactory;
 use Markocupic\ResourceBookingBundle\Util\DateHelper;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Contracts\Service\Attribute\Required;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -52,11 +53,9 @@ final class ApplyFilterController extends AbstractController implements Controll
     /**
      * @throws \Exception
      */
-    public function generateResponse(AjaxResponse $ajaxResponse): AjaxResponse
+    public function generateResponse(Request $request, AjaxResponse $ajaxResponse): AjaxResponse
     {
-        $request = $this->requestStack->getCurrentRequest();
-
-        // Get resource type from post request
+        // Get resource type from POST
         $intResType = (int) $request->request->get('resType', 0);
 
         if (null !== $this->framework->getAdapter(ResourceBookingResourceTypeModel::class)->findById($intResType)) {
@@ -65,7 +64,7 @@ final class ApplyFilterController extends AbstractController implements Controll
             $this->sessionBag->set('resType', 0);
         }
 
-        // Get resource from post request
+        // Get resource from POST
         $intRes = (int) $request->request->get('res', 0);
 
         if (0 === $this->sessionBag->get('resType')) {
@@ -92,7 +91,7 @@ final class ApplyFilterController extends AbstractController implements Controll
         // Get app config
         $arrAppConfig = $this->utils->getAppConfig();
 
-        // Get active week timestamp from post request
+        // Get active week timestamp from POST
         $intTstampDate = (int) $request->request->get('date', 0);
         $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
         $intTstampDate = $dateHelperAdapter->isDateInPermittedRange($intTstampDate, $arrAppConfig) ? $intTstampDate : $dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig);

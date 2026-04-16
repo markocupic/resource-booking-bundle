@@ -18,6 +18,7 @@ use Contao\System;
 use Markocupic\ResourceBookingBundle\AjaxController\Traits\BookingTrait;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Markocupic\ResourceBookingBundle\Slot\SlotFactory;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Contracts\Service\Attribute\Required;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -48,7 +49,7 @@ final class BookingFormValidationController extends AbstractController implement
     /**
      * @throws \Exception
      */
-    public function generateResponse(AjaxResponse $ajaxResponse): AjaxResponse
+    public function generateResponse(Request $request, AjaxResponse $ajaxResponse): AjaxResponse
     {
         // Load language file
         $this->framework
@@ -80,7 +81,7 @@ final class BookingFormValidationController extends AbstractController implement
                 $slotCollection->reset();
 
                 while ($slotCollection->next()) {
-                    $slot = $slotCollection->next();
+                    $slot = $slotCollection->current();
 
                     if (true === $slot->invalidDate) {
                         $ajaxResponse->setErrorMessage($this->translator->trans('RBB.ERR.selectBookingDatesPlease', [], 'contao_default'));
@@ -90,6 +91,8 @@ final class BookingFormValidationController extends AbstractController implement
                     if (!$slot->isBookable) {
                         if ($slot->isFullyBooked) {
                             $ajaxResponse->setErrorMessage($this->translator->trans('RBB.ERR.resourceIsAlreadyFullyBooked', [], 'contao_default'));
+                        } elseif ($slot->isBlocked) {
+                            $ajaxResponse->setErrorMessage($this->translator->trans('RBB.ERR.slotIsBlocked', [], 'contao_default'));
                         } else {
                             $ajaxResponse->setErrorMessage($this->translator->trans('RBB.ERR.notEnoughItemsAvailable', [], 'contao_default'));
                         }

@@ -35,6 +35,7 @@ $GLOBALS['TL_LANG']['MSC']['bookedBy'] = 'Gebucht durch';
 $GLOBALS['TL_LANG']['RBB']['formLegendItems'] = 'Stückzahl auswählen';
 $GLOBALS['TL_LANG']['RBB']['formHelpItems'] = 'Wählen Sie die Stückzahl aus, die Sie buchen möchten.';
 $GLOBALS['TL_LANG']['RBB']['formLegendDescription'] = 'Kurzbeschreibung';
+$GLOBALS['TL_LANG']['RBB']['formIsBlocked'] = 'Geblockt (z.B. Ferienzeit)';
 $GLOBALS['TL_LANG']['RBB']['formHelpDescription'] = 'Kurzbeschreibung eingeben (max 50 Zeichen).';
 $GLOBALS['TL_LANG']['RBB']['formLegendRepetitions'] = 'Ressource buchen bis (Wiederholungen)';
 $GLOBALS['TL_LANG']['RBB']['formOptionSelectResource'] = 'Ressource auswählen';
