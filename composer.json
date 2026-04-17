@@ -34,7 +34,8 @@
     },
     "require-dev": {
         "markocupic/easy-coding-standard": "^13.0",
-        "symfony/webpack-encore-bundle": "^2.0"
+        "symfony/webpack-encore-bundle": "^2.0",
+        "phpstan/phpstan": "^2.1"
     },
     "autoload": {
         "psr-4": {
