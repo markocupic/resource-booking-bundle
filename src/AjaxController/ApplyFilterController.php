@@ -94,7 +94,7 @@ final class ApplyFilterController extends AbstractController implements Controll
         // Get active week timestamp from POST
         $intTstampDate = (int) $request->request->get('date', 0);
         $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
-        $intTstampDate = $dateHelperAdapter->isDateInPermittedRange($intTstampDate, $arrAppConfig) ? $intTstampDate : $dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig);
+        $intTstampDate = $dateHelperAdapter->isWithinAllowedDateRange($intTstampDate, $arrAppConfig) ? $intTstampDate : $dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig);
 
         // Validate $intTstampDate
         $tstampFirstPermittedWeek = $this->sessionBag->get('tstampFirstPermittedWeek');

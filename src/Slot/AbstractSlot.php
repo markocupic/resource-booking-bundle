@@ -53,7 +53,7 @@ use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInt
  * @property ResourceBookingResourceModel|null $resource
  * @property int                               $pid
  * @property bool                              $isFullyBooked
- * @property bool                              $isDateInPermittedRange
+ * @property bool                              $isWithinAllowedDateRange
  * @property string                            $cssClass
  * @property Collection|null                   $bookings
  * @property int                               $bookingCount
@@ -102,34 +102,45 @@ abstract class AbstractSlot implements SlotInterface
         $appConfig = $this->utils->getAppConfig();
 
         $this->initializeUser();
-        $this->arrData['timeSlotId'] = $timeSlotId;
-        $this->arrData['userIsLoggedIn'] = (bool) $this->user;
-        $this->arrData['resource'] = $resource->row();
-        $this->arrData['startTime'] = $startTime;
-        $this->arrData['endTime'] = $endTime;
-        $this->arrData['itemsBooked'] = $desiredItems;
-        // This is the timestamp of a "begin week weekday" by default this is a monday
-        $this->arrData['bookingRepeatStopWeekTstamp'] = null === $bookingRepeatStopWeekTstamp ? $dateHelperAdapter->getFirstDayOfCurrentWeek($appConfig, $startTime) : $bookingRepeatStopWeekTstamp;
-        $this->arrData['pid'] = $resource->id;
-        $this->arrData['isDateInPermittedRange'] = $this->isDateInPermittedRange();
-        $this->arrData['weekday'] = strtolower(date('l', $startTime));
-        $this->arrData['startTimeString'] = UtcTimeHelper::parseStartTime($startTime);
-        $this->arrData['endTimeString'] = UtcTimeHelper::parseEndTime($endTime);
-        $this->arrData['date'] = $dateAdapter->parse($configAdapter->get('dateFormat'), $startTime);
-        $this->arrData['datimSpanString'] = \sprintf('%s, %s: %s - %s', $dateAdapter->parse('D', $startTime), $dateAdapter->parse($configAdapter->get('dateFormat'), $startTime), UtcTimeHelper::parseStartTime($startTime), UtcTimeHelper::parseEndTime($endTime));
-        $this->arrData['timeSpanString'] = UtcTimeHelper::parseStartTime($startTime).' - '.UtcTimeHelper::parseEndTime($endTime);
-        $this->arrData['beginnWeekTimestampSelectedWeek'] = $dateHelperAdapter->getFirstDayOfCurrentWeek($appConfig, $startTime);
+
+        $startTimeString = UtcTimeHelper::parseStartTime($startTime);
+        $endTimeString = UtcTimeHelper::parseEndTime($endTime);
+        $dateString = $dateAdapter->parse($configAdapter->get('dateFormat'), $startTime);
+        $firstDayOfWeek = $dateHelperAdapter->getFirstDayOfCurrentWeek($appConfig, $startTime);
+
+        $this->arrData = [
+            'timeSlotId' => $timeSlotId,
+            'userIsLoggedIn' => (bool) $this->user,
+            'resource' => $resource->row(),
+            'pid' => $resource->id,
+            'startTime' => $startTime,
+            'endTime' => $endTime,
+            'itemsBooked' => $desiredItems,
+            // This is the timestamp of a "begin week weekday," by default, this is a monday
+            'bookingRepeatStopWeekTstamp' => $bookingRepeatStopWeekTstamp ?? $firstDayOfWeek,
+            'weekday' => strtolower(date('l', $startTime)),
+            'startTimeString' => $startTimeString,
+            'endTimeString' => $endTimeString,
+            'date' => $dateString,
+            'datimSpanString' => \sprintf('%s, %s: %s - %s', $dateAdapter->parse('D', $startTime), $dateString, $startTimeString, $endTimeString),
+            'timeSpanString' => $startTimeString.' - '.$endTimeString,
+            'beginnWeekTimestampSelectedWeek' => $firstDayOfWeek,
+            'dataBooking' => [],
+        ];
+
+        $this->arrData['isWithinAllowedDateRange'] = $this->isWithinAllowedDateRange();
+
+        // Order matters below — each call depends on the previous assignments
+        $this->arrData['bookings'] = $this->getBookings();
         $this->arrData['isBlocked'] = $this->isBlocked;
         $this->arrData['isBookable'] = $this->isBookable();
-        $this->arrData['enoughItemsAvailable'] = $this->areEnoughItemsAvailable();
-        $this->arrData['itemsStillAvailable'] = $this->getItemsAvailable();
+        $this->arrData['enoughItemsAvailable'] = $this->canFulfillRequestedItems();
+        $this->arrData['itemsStillAvailable'] = $this->getRemainingItems();
         $this->arrData['isFullyBooked'] = $this->isFullyBooked();
-        $this->arrData['hasBookings'] = $this->hasBookings();
-        $this->arrData['bookings'] = $this->getBookings();
-        $this->arrData['bookingCount'] = $this->getBookingCount();
-        $this->arrData['userHasBooked'] = $this->isBookedByLoggedInUser();
+        $this->arrData['hasBookings'] = $this->hasAnyBookings();
+        $this->arrData['bookingCount'] = $this->countBookings();
+        $this->arrData['userHasBooked'] = $this->userHasBooking();
         $this->arrData['userBooking'] = $this->getUserBooking();
-        $this->arrData['dataBooking'] = [];
         $this->arrData['isCancelable'] = $this->isCancelable();
 
         return $this;
@@ -143,7 +154,7 @@ abstract class AbstractSlot implements SlotInterface
     /**
      * @throws \Exception
      */
-    public function isDateInPermittedRange(): bool
+    public function isWithinAllowedDateRange(): bool
     {
         if ($this->arrData['endTime'] < time()) {
             return false;
@@ -162,12 +173,12 @@ abstract class AbstractSlot implements SlotInterface
         return true;
     }
 
-    public function areEnoughItemsAvailable(): bool
+    public function canFulfillRequestedItems(): bool
     {
         $totalBookedItems = 0;
 
         foreach ($this->getBookings() as $booking) {
-            if ($this->isBookingForLoggedUser($booking)) {
+            if ($this->isOwnedByLoggedUser($booking)) {
                 continue;
             }
 
@@ -179,21 +190,6 @@ abstract class AbstractSlot implements SlotInterface
         }
 
         return true;
-    }
-
-    public function getBlockedBookings(): array
-    {
-        $bookings = $this->getBookings();
-
-        $blockedBookings = [];
-
-        foreach ($bookings as $booking) {
-            if ($booking['isBlocked']) {
-                $blockedBookings[] = $booking;
-            }
-        }
-
-        return $blockedBookings;
     }
 
     public function getBookings(): array
@@ -228,23 +224,6 @@ abstract class AbstractSlot implements SlotInterface
         return $this->arrData['bookings'];
     }
 
-    public function getItemsAvailable(): int
-    {
-        if (isset($this->arrData['itemsStillAvailable'])) {
-            return $this->arrData['itemsStillAvailable'];
-        }
-
-        $totalBookedItems = 0;
-
-        foreach ($this->getBookings() as $booking) {
-            $totalBookedItems += (int) $booking['itemsBooked'] ?? 1;
-        }
-
-        $this->arrData['itemsStillAvailable'] = (int) $this->resource['itemsAvailable'] - $totalBookedItems;
-
-        return $this->arrData['itemsStillAvailable'];
-    }
-
     public function isFullyBooked(): bool
     {
         $totalBookedItems = 0;
@@ -260,49 +239,6 @@ abstract class AbstractSlot implements SlotInterface
         return false;
     }
 
-    public function hasBookings(): bool
-    {
-        return !empty($this->getBookings());
-    }
-
-    public function getBookingCount(): int
-    {
-        if (!$this->hasBookings()) {
-            return 0;
-        }
-
-        return \count($this->getBookings());
-    }
-
-    public function isBookedByLoggedInUser(): bool
-    {
-        foreach ($this->getBookings() as $booking) {
-            if ($this->isBookingForLoggedUser($booking)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public function getUserBooking(): array|null
-    {
-        if (!$this->isBookedByLoggedInUser()) {
-            return null;
-        }
-
-        foreach ($this->getBookings() as $booking) {
-            if ($this->isBookingForLoggedUser($booking)) {
-                return $this->framework
-                    ->getAdapter(ResourceBookingModel::class)
-                    ->findById($booking['id'])->row()
-                ;
-            }
-        }
-
-        return null;
-    }
-
     /**
      * @throws \Exception
      */
@@ -314,7 +250,7 @@ abstract class AbstractSlot implements SlotInterface
             return false;
         }
 
-        if (!$this->isDateInPermittedRange()) {
+        if (!$this->isWithinAllowedDateRange()) {
             return false;
         }
 
@@ -322,7 +258,7 @@ abstract class AbstractSlot implements SlotInterface
             return false;
         }
 
-        return $this->isBookedByLoggedInUser();
+        return $this->userHasBooking();
     }
 
     public function isBlocked(): bool
@@ -342,7 +278,89 @@ abstract class AbstractSlot implements SlotInterface
         return $this;
     }
 
-    protected function initializeUser(): void
+    abstract protected function isBookable(): bool;
+
+    protected function isOwnedByLoggedUser(array $booking): bool
+    {
+        return $this->user && $this->user->id === ($booking['member'] ?? -1);
+    }
+
+    private function getBlockedBookings(): array
+    {
+        $bookings = $this->getBookings();
+
+        $blockedBookings = [];
+
+        foreach ($bookings as $booking) {
+            if ($booking['isBlocked']) {
+                $blockedBookings[] = $booking;
+            }
+        }
+
+        return $blockedBookings;
+    }
+
+    private function getRemainingItems(): int
+    {
+        if (isset($this->arrData['itemsStillAvailable'])) {
+            return $this->arrData['itemsStillAvailable'];
+        }
+
+        $totalBookedItems = 0;
+
+        foreach ($this->getBookings() as $booking) {
+            $totalBookedItems += (int) $booking['itemsBooked'] ?? 1;
+        }
+
+        $this->arrData['itemsStillAvailable'] = (int) $this->resource['itemsAvailable'] - $totalBookedItems;
+
+        return $this->arrData['itemsStillAvailable'];
+    }
+
+    private function hasAnyBookings(): bool
+    {
+        return !empty($this->getBookings());
+    }
+
+    private function countBookings(): int
+    {
+        if (!$this->hasAnyBookings()) {
+            return 0;
+        }
+
+        return \count($this->getBookings());
+    }
+
+    private function userHasBooking(): bool
+    {
+        foreach ($this->getBookings() as $booking) {
+            if ($this->isOwnedByLoggedUser($booking)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function getUserBooking(): array|null
+    {
+        if (!$this->userHasBooking()) {
+            return null;
+        }
+
+        foreach ($this->getBookings() as $booking) {
+            if ($this->isOwnedByLoggedUser($booking)) {
+                return $this->framework
+                    ->getAdapter(ResourceBookingModel::class)
+                    ->findById($booking['id'])->row()
+                ;
+            }
+        }
+
+        return null;
+    }
+
+    private function initializeUser(): void
     {
         if (null === ($token = $this->tokenStorage->getToken())) {
             return;
@@ -356,10 +374,5 @@ abstract class AbstractSlot implements SlotInterface
                 ->findById($user->id)
             ;
         }
-    }
-
-    protected function isBookingForLoggedUser(array $booking): bool
-    {
-        return $this->user && $this->user->id === ($booking['member'] ?? -1);
     }
 }

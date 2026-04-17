@@ -61,8 +61,6 @@ class Module
             $arrOpt[] = $fieldName;
         }
 
-        unset($arrOpt['id'], $arrOpt['password']);
-
         return $arrOpt;
     }
 

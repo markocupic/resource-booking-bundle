@@ -53,14 +53,18 @@ class SlotMain extends AbstractSlot
             return false;
         }
 
-        if (!$this->isDateInPermittedRange()) {
+        if (!$this->isWithinAllowedDateRange()) {
             return false;
         }
 
         $itemsBooked = 0;
 
         foreach ($this->getBookings() as $booking) {
-            if ($this->isBookingForLoggedUser($booking)) {
+            // Any items already booked by the currently logged‑in user
+            // should not be counted towards the total
+            // because the new booking will overwrite the existing one.
+            // Complicated, I know. ;-)
+            if ($this->isOwnedByLoggedUser($booking)) {
                 continue;
             }
 

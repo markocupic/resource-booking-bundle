@@ -13,7 +13,7 @@
                     <!-- time indicator -->
                     <div class="rbb-layout-cell rbb-time-slot-indicator" :class="timeSlots[rowIndex].cssClass ? timeSlots[rowIndex].cssClass : ''">[[ timeSlots[rowIndex].timeSpanString ]]</div>
                     <!-- slots -->
-                    <div class="rbb-layout-cell rbb-time-slot-cell" v-for="(slot, colIndex) in row.cellData" :class="timeSlots[rowIndex].cssClass ? timeSlots[rowIndex].cssClass : ''" :data-day-index="slot.index" :data-userisloggedin="slot.userIsLoggedIn" :data-isblocked="slot.isBlocked" :data-iscancelable="slot.isCancelable" :data-isfullybooked="slot.isFullyBooked" :data-isbookable="!slot.isCancelable && slot.isBookable" :data-isbooked="slot.hasBookings" :data-bookingcount="slot.bookingCount" :data-isinvaliddate="!slot.isDateInPermittedRange">
+                    <div class="rbb-layout-cell rbb-time-slot-cell" v-for="(slot, colIndex) in row.cellData" :class="timeSlots[rowIndex].cssClass ? timeSlots[rowIndex].cssClass : ''" :data-day-index="slot.index" :data-userisloggedin="slot.userIsLoggedIn" :data-isblocked="slot.isBlocked" :data-iscancelable="slot.isCancelable" :data-isfullybooked="slot.isFullyBooked" :data-isbookable="!slot.isCancelable && slot.isBookable" :data-isbooked="slot.hasBookings" :data-bookingcount="slot.bookingCount" :data-isinvaliddate="!slot.isWithinAllowedDateRange">
                         {{ time_slot_cell|raw }}
                     </div>
                 </div>

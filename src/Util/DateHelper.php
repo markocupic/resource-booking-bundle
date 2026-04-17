@@ -91,7 +91,7 @@ class DateHelper
      *
      * @throws \Exception
      */
-    public static function isDateInPermittedRange(int $tstamp, array $arrAppConfig): bool
+    public static function isWithinAllowedDateRange(int $tstamp, array $arrAppConfig): bool
     {
         $intBackWeeks = $arrAppConfig['intBackWeeks'];
         $intAheadWeeks = $arrAppConfig['intAheadWeeks'];

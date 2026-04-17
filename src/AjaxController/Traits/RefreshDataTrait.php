@@ -217,7 +217,7 @@ trait RefreshDataTrait
         // Get app config
         $arrAppConfig = $this->utils->getAppConfig();
 
-        if (!$dateHelperAdapter->isDateInPermittedRange($jumpTime, $arrAppConfig)) {
+        if (!$dateHelperAdapter->isWithinAllowedDateRange($jumpTime, $arrAppConfig)) {
             $jumpTime = $this->sessionBag->get('activeWeekTstamp');
             $arrReturn['disabled'] = true;
         }

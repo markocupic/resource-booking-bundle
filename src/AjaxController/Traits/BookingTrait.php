@@ -194,7 +194,7 @@ trait BookingTrait
             $slot = $slotCollection->current();
 
             if (!$slot->isBookable()) {
-                if (!$slot->isDateInPermittedRange()) {
+                if (!$slot->isWithinAllowedDateRange()) {
                     $this->setErrorMessage('RBB.ERR.invalidStartOrEndTime');
                 } elseif ($slot->isFullyBooked()) {
                     $this->setErrorMessage('RBB.ERR.resourceIsAlreadyFullyBooked');
