@@ -32,9 +32,7 @@ final class RefreshDataController extends AbstractController implements Controll
     private TranslatorInterface $translator;
 
     /**
-     * Use setter via "#[Required]" attribute injection in child classes instead of __construct injection
-     * see: https://stackoverflow.com/questions/58447365/correct-way-to-extend-classes-with-symfony-autowiring
-     * see: https://symfony.com/doc/current/service_container/calls.html.
+     * Use setter inection here.
      */
     #[Required]
     public function _setController(SlotFactory $slotFactory, TranslatorInterface $translator): void

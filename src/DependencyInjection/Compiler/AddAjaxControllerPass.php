@@ -29,11 +29,11 @@ class AddAjaxControllerPass implements CompilerPassInterface
     {
         $definition = $container->findDefinition('Markocupic\ResourceBookingBundle\EventSubscriber\AjaxRequestEventSubscriber');
 
-        // find all service IDs with the huh.api.resource tag
+        // Find all service IDs with the huh.api.resource tag
         $taggedServices = $container->findTaggedServiceIds('markocupic_resource_booking.ajax_controller');
 
         foreach ($taggedServices as $id => $tags) {
-            // a service could have the same tag twice
+            // A service could have the same tag twice
             foreach ($tags as $attributes) {
                 if (!isset($attributes['alias'])) {
                     throw new InvalidArgumentException(\sprintf('Missing tag information "alias" on markocupic_resource_booking.ajax_controller tagged service "%s".', $id));

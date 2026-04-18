@@ -50,71 +50,58 @@ final class ApplyFilterController extends AbstractController implements Controll
         $this->translator = $translator;
     }
 
-    /**
-     * @throws \Exception
-     */
     public function generateResponse(Request $request, AjaxResponse $ajaxResponse): AjaxResponse
     {
-        // Get resource type from POST
-        $intResType = (int) $request->request->get('resType', 0);
+        // Update the session with request data
+        $this->applyResourceTypeFromRequest($request);
+        $this->applyResourceFromRequest($request);
+        $this->applyActiveWeekFromRequest($request);
 
-        if (null !== $this->framework->getAdapter(ResourceBookingResourceTypeModel::class)->findById($intResType)) {
-            $this->sessionBag->set('resType', $intResType);
-        } else {
-            $this->sessionBag->set('resType', 0);
-        }
-
-        // Get resource from POST
-        $intRes = (int) $request->request->get('res', 0);
-
-        if (0 === $this->sessionBag->get('resType')) {
-            // Set resource to 0, if there is no resource type selected
-            $intRes = 0;
-        }
-
-        // Check if res exists
-        $invalidRes = true;
-
-        if (null !== ($objRes = $this->framework->getAdapter(ResourceBookingResourceModel::class)->findById($intRes))) {
-            // ... and if res is in the current resType container
-            if ($objRes->pid === $intResType) {
-                $this->sessionBag->set('res', $intRes);
-                $invalidRes = false;
-            }
-        }
-
-        // Set res to 0, if the res is invalid
-        if ($invalidRes) {
-            $this->sessionBag->set('res', 0);
-        }
-
-        // Get app config
-        $arrAppConfig = $this->utils->getAppConfig();
-
-        // Get active week timestamp from POST
-        $intTstampDate = (int) $request->request->get('date', 0);
-        $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
-        $intTstampDate = $dateHelperAdapter->isWithinAllowedDateRange($intTstampDate, $arrAppConfig) ? $intTstampDate : $dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig);
-
-        // Validate $intTstampDate
-        $tstampFirstPermittedWeek = $this->sessionBag->get('tstampFirstPermittedWeek');
-
-        if ($intTstampDate < $tstampFirstPermittedWeek) {
-            $intTstampDate = $tstampFirstPermittedWeek;
-        }
-
-        $tstampLastPermittedWeek = $this->sessionBag->get('tstampLastPermittedWeek');
-
-        if ($intTstampDate > $tstampLastPermittedWeek) {
-            $intTstampDate = $tstampLastPermittedWeek;
-        }
-
-        $this->sessionBag->set('activeWeekTstamp', (int) $intTstampDate);
-
-        // Fetch refreshed data and send it to the browser
         $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
         $ajaxResponse->setDataFromArray($this->getRefreshedData($ajaxResponse));
 
         return $ajaxResponse;
+    }
+
+    private function applyResourceTypeFromRequest(Request $request): void
+    {
+        $intResType = (int) $request->request->get('resType', 0);
+        $isValid = null !== $this->framework->getAdapter(ResourceBookingResourceTypeModel::class)->findById($intResType);
+
+        $this->sessionBag->set('resType', $isValid ? $intResType : 0);
+    }
+
+    private function applyResourceFromRequest(Request $request): void
+    {
+        if (0 === $this->sessionBag->get('resType')) {
+            $this->sessionBag->set('res', 0);
+
+            return;
+        }
+
+        $intResType = $this->sessionBag->get('resType');
+        $intRes = (int) $request->request->get('res', 0);
+        $objRes = $this->framework->getAdapter(ResourceBookingResourceModel::class)->findById($intRes);
+
+        $isValid = null !== $objRes && $objRes->pid === $intResType;
+
+        $this->sessionBag->set('res', $isValid ? $intRes : 0);
+    }
+
+    private function applyActiveWeekFromRequest(Request $request): void
+    {
+        $appConfig = $this->utils->getAppConfig();
+        $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
+
+        $intTstampDate = (int) $request->request->get('date', 0);
+
+        if (!$dateHelperAdapter->isWithinAllowedDateRange($intTstampDate, $appConfig)) {
+            $intTstampDate = $dateHelperAdapter->getFirstDayOfCurrentWeek($appConfig);
+        }
+
+        $intTstampDate = max($intTstampDate, (int) $this->sessionBag->get('tstampFirstPermittedWeek'));
+        $intTstampDate = min($intTstampDate, (int) $this->sessionBag->get('tstampLastPermittedWeek'));
+
+        $this->sessionBag->set('activeWeekTstamp', $intTstampDate);
     }
 }

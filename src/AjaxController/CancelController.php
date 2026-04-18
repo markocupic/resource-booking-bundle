@@ -47,9 +47,7 @@ final class CancelController extends AbstractController implements ControllerInt
     private LoggerInterface|null $contaoGeneralLogger = null;
 
     /**
-     * Use setter via "#[Required]" attribute injection in child classes instead of __construct injection
-     * see: https://stackoverflow.com/questions/58447365/correct-way-to-extend-classes-with-symfony-autowiring
-     * see: https://symfony.com/doc/current/service_container/calls.html.
+     * Use setter injection here.
      */
     #[Required]
     public function _setController(Connection $connection, EventDispatcherInterface $eventDispatcher, TranslatorInterface $translator, LoggerInterface|null $contaoErrorLogger = null, LoggerInterface|null $contaoGeneralLogger = null): void
@@ -66,79 +64,50 @@ final class CancelController extends AbstractController implements ControllerInt
      */
     public function generateResponse(Request $request, AjaxResponse $ajaxResponse): AjaxResponse
     {
-        // Load language file
         $this->getSystemAdapter()->loadLanguageFile('default', $this->translator->getLocale());
 
-        $request = $this->requestStack->getCurrentRequest();
-        $user = $this->user->getLoggedInUser();
         $deleteRepetitions = 'true' === $request->request->get('deleteRepetitions');
 
         $this->connection->beginTransaction();
 
         try {
-            if (null === $user || !(int) $request->request->get('id') > 0) {
+            $user = $this->user->getLoggedInUser();
+            $bookingId = (int) $request->request->get('id');
+
+            if (null === $user || $bookingId <= 0) {
                 throw new StopBookingCancellationException($this->translator->trans('RBB.ERR.notAuthorized', [], 'contao_default'));
             }
 
-            $bookingId = (int) $request->request->get('id');
+            $booking = $this->framework->getAdapter(ResourceBookingModel::class)->findById($bookingId);
 
-            if (null === ($objBooking = $this->framework->getAdapter(ResourceBookingModel::class)->findById($bookingId))) {
+            if (null === $booking) {
                 throw new StopBookingCancellationException($this->translator->trans('RBB.ERR.bookingNotFound', [$bookingId], 'contao_default'));
             }
 
-            if ($objBooking->member !== $user->id) {
+            if ($booking->member !== $user->id) {
                 throw new StopBookingCancellationException($this->translator->trans('RBB.ERR.notAuthorized', [], 'contao_default'));
             }
 
-            $bookingCollection = $this->getBookingsToBeDeleted($objBooking, $user, $deleteRepetitions);
+            $bookings = $this->getBookingsToBeDeleted($booking, $user, $deleteRepetitions);
 
-            if (null !== $bookingCollection) {
+            if (null !== $bookings) {
                 // Dispatch pre-cancelling event "rbb.event.pre_cancelling"
-                // ! Important
+                // !Important
                 // Throw a StopBookingCancellationException
                 // to interrupt the cancellation process
-                $objPreCancellingEvent = new PreCancellingEvent($request, $ajaxResponse, $this->sessionBag, $user, $bookingCollection);
-                $this->eventDispatcher->dispatch($objPreCancellingEvent);
+                $this->eventDispatcher->dispatch(new PreCancellingEvent($request, $ajaxResponse, $this->sessionBag, $user, $bookings));
 
-                while ($bookingCollection->next()) {
-                    $currentBooking = $bookingCollection->current();
-                    // Use pre-cancelling subscriber to stop the cancellation process.
-                    $intAffected = $currentBooking->delete();
-
-                    if ($intAffected) {
-                        // Log
-                        $strLog = \sprintf('Resource Booking for "%s" (with ID %s) has been deleted.', $this->getParentResource($currentBooking)->title, $currentBooking->id);
-
-                        $this->contaoGeneralLogger?->info($strLog);
-                    }
-                }
+                $this->deleteBookings($bookings);
 
                 // Dispatch post cancelling event "rbb.event.post_cancelling"
-                // ! Important
+                // !Important
                 // Throw a StopBookingCancellationException
                 // to revert the cancellation process
-                $objPostCancellingEvent = new PostCancellingEvent($request, $ajaxResponse, $this->sessionBag, $user, $bookingCollection);
-                $this->eventDispatcher->dispatch($objPostCancellingEvent);
+                $this->eventDispatcher->dispatch(new PostCancellingEvent($request, $ajaxResponse, $this->sessionBag, $user, $bookings));
             }
 
             if (!$ajaxResponse->hasConfirmationMessage()) {
-                if ($deleteRepetitions && $bookingCollection->count() > 1) {
-                    $ajaxResponse->setConfirmationMessage(
-                        $this->translator->trans(
-                            'RBB.MSG.successfullyCanceledBookingAndItsRepetitions',
-                            [$bookingId, (string) ($bookingCollection->count() - 1)],
-                            'contao_default',
-                        ),
-                    );
-                } else {
-                    $ajaxResponse->setConfirmationMessage(
-                        $this->translator->trans(
-                            'RBB.MSG.successfullyCanceledBooking',
-                            [$bookingId],
-                            'contao_default',
-                        ),
-                    );
-                }
+                $ajaxResponse->setConfirmationMessage($this->buildConfirmationMessage($bookingId, $deleteRepetitions, $bookings));
             }
 
             $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
@@ -161,39 +130,64 @@ final class CancelController extends AbstractController implements ControllerInt
         return $ajaxResponse;
     }
 
-    protected function getBookingsToBeDeleted(ResourceBookingModel $objBooking, UserInterface $user, bool $deleteRepetitions): Collection|null
+    private function deleteBookings(Collection $bookings): void
     {
-        $bookingUuid = $objBooking->bookingUuid;
-        $timeSlotId = $objBooking->timeSlotId;
-        $weekday = $this->getDateAdapter()->parse('D', $objBooking->startTime);
+        while ($bookings->next()) {
+            $booking = $bookings->current();
 
-        $arrIds = [$objBooking->id];
+            if ($booking->delete()) {
+                $this->contaoGeneralLogger?->info(\sprintf(
+                    'Resource Booking for "%s" (with ID %s) has been deleted.',
+                    $this->getParentResource($booking)->title,
+                    $booking->id,
+                ));
+            }
+        }
+    }
 
-        // Delete repetitions (bookings with same bookingUuid and same start- and end-time)
+    private function buildConfirmationMessage(int $bookingId, bool $deleteRepetitions, Collection|null $bookings): string
+    {
+        if ($deleteRepetitions && null !== $bookings && $bookings->count() > 1) {
+            return $this->translator->trans(
+                'RBB.MSG.successfullyCanceledBookingAndItsRepetitions',
+                [$bookingId, (string) ($bookings->count() - 1)],
+                'contao_default',
+            );
+        }
+
+        return $this->translator->trans('RBB.MSG.successfullyCanceledBooking', [$bookingId], 'contao_default');
+    }
+
+    private function getBookingsToBeDeleted(ResourceBookingModel $booking, UserInterface $user, bool $deleteRepetitions): Collection|null
+    {
+        $arrIds = [$booking->id];
+
+        // Collect repetitions (bookings with same bookingUuid, timeSlot, and weekday)
         if ($deleteRepetitions) {
-            $arrColumns = [
-                'tl_resource_booking.bookingUuid=?',
-                'tl_resource_booking.timeSlotId=?',
-                'tl_resource_booking.id!=?',
-                'tl_resource_booking.member=?',
-            ];
+            $weekday = $this->getDateAdapter()->parse('D', $booking->startTime);
 
-            $arrValues = [
-                $bookingUuid,
-                $timeSlotId,
-                $objBooking->id,
-                $user->id,
-            ];
-
-            $objRepetitions = $this->framework
+            $bookings = $this->framework
                 ->getAdapter(ResourceBookingModel::class)
-                ->findBy($arrColumns, $arrValues)
+                ->findBy(
+                    [
+                        'tl_resource_booking.bookingUuid=?',
+                        'tl_resource_booking.timeSlotId=?',
+                        'tl_resource_booking.id!=?',
+                        'tl_resource_booking.member=?',
+                    ],
+                    [
+                        $booking->bookingUuid,
+                        $booking->timeSlotId,
+                        $booking->id,
+                        $user->id,
+                    ],
+                )
             ;
 
-            if (null !== $objRepetitions) {
-                while ($objRepetitions->next()) {
-                    if ($this->getDateAdapter()->parse('D', $objRepetitions->startTime) === $weekday) {
-                        $arrIds[] = $objRepetitions->id;
+            if (null !== $bookings) {
+                while ($bookings->next()) {
+                    if ($this->getDateAdapter()->parse('D', $bookings->startTime) === $weekday) {
+                        $arrIds[] = $bookings->id;
                     }
                 }
             }
@@ -205,23 +199,23 @@ final class CancelController extends AbstractController implements ControllerInt
         ;
     }
 
-    protected function getParentResource(ResourceBookingModel $objBooking): ResourceBookingResourceModel|null
+    private function getParentResource(ResourceBookingModel $booking): ResourceBookingResourceModel
     {
-        $resource = $objBooking->getRelated('pid');
+        $resource = $booking->getRelated('pid');
 
         if (!$resource instanceof ResourceBookingResourceModel) {
-            throw new \Exception(\sprintf('Resource for booking with ID %d not found.', $objBooking->id));
+            throw new \RuntimeException(\sprintf('Resource for booking with ID %d not found.', $booking->id));
         }
 
         return $resource;
     }
 
-    protected function getDateAdapter(): Adapter
+    private function getDateAdapter(): Adapter
     {
         return $this->framework->getAdapter(Date::class);
     }
 
-    protected function getSystemAdapter(): Adapter
+    private function getSystemAdapter(): Adapter
     {
         return $this->framework->getAdapter(System::class);
     }

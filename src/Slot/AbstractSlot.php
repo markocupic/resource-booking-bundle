@@ -116,7 +116,7 @@ abstract class AbstractSlot implements SlotInterface
             'startTime' => $startTime,
             'endTime' => $endTime,
             'itemsBooked' => $desiredItems,
-            // This is the timestamp of a "begin week weekday," by default, this is a monday
+            // Timestamp of the "begin week weekday" (Monday by default)
             'bookingRepeatStopWeekTstamp' => $bookingRepeatStopWeekTstamp ?? $firstDayOfWeek,
             'weekday' => strtolower(date('l', $startTime)),
             'startTimeString' => $startTimeString,
@@ -128,9 +128,8 @@ abstract class AbstractSlot implements SlotInterface
             'dataBooking' => [],
         ];
 
-        $this->arrData['isWithinAllowedDateRange'] = $this->isWithinAllowedDateRange();
-
         // Order matters below — each call depends on the previous assignments
+        $this->arrData['isWithinAllowedDateRange'] = $this->isWithinAllowedDateRange();
         $this->arrData['bookings'] = $this->getBookings();
         $this->arrData['isBlocked'] = $this->isBlocked;
         $this->arrData['isBookable'] = $this->isBookable();
@@ -144,6 +143,11 @@ abstract class AbstractSlot implements SlotInterface
         $this->arrData['isCancelable'] = $this->isCancelable();
 
         return $this;
+    }
+
+    public function setRow(array $data): void
+    {
+        $this->arrData = $data;
     }
 
     public function row(): array
@@ -175,21 +179,9 @@ abstract class AbstractSlot implements SlotInterface
 
     public function canFulfillRequestedItems(): bool
     {
-        $totalBookedItems = 0;
+        $booked = $this->countBookedItems(excludeOwn: true);
 
-        foreach ($this->getBookings() as $booking) {
-            if ($this->isOwnedByLoggedUser($booking)) {
-                continue;
-            }
-
-            $totalBookedItems += (int) $booking['itemsBooked'] ?? 1;
-        }
-
-        if ($totalBookedItems + $this->arrData['itemsBooked'] > (int) $this->resource['itemsAvailable']) {
-            return false;
-        }
-
-        return true;
+        return $booked + $this->arrData['itemsBooked'] <= (int) $this->resource['itemsAvailable'];
     }
 
     public function getBookings(): array
@@ -213,9 +205,7 @@ abstract class AbstractSlot implements SlotInterface
 
         if (null !== $bookings) {
             while ($bookings->next()) {
-                $booking = $bookings->current();
-
-                $arrBookings[] = $booking->row();
+                $arrBookings[] = $bookings->current()->row();
             }
         }
 
@@ -226,17 +216,7 @@ abstract class AbstractSlot implements SlotInterface
 
     public function isFullyBooked(): bool
     {
-        $totalBookedItems = 0;
-
-        foreach ($this->getBookings() as $booking) {
-            $totalBookedItems += (int) $booking['itemsBooked'] ?? 1;
-        }
-
-        if ($totalBookedItems >= (int) $this->resource['itemsAvailable']) {
-            return true;
-        }
-
-        return false;
+        return $this->countBookedItems() >= (int) $this->resource['itemsAvailable'];
     }
 
     /**
@@ -244,17 +224,15 @@ abstract class AbstractSlot implements SlotInterface
      */
     public function isCancelable(): bool
     {
-        $arrBookings = $this->getBookings();
+        if (!$this->user) {
+            return false;
+        }
 
-        if (empty($arrBookings)) {
+        if (empty($this->getBookings())) {
             return false;
         }
 
         if (!$this->isWithinAllowedDateRange()) {
-            return false;
-        }
-
-        if (!$this->user) {
             return false;
         }
 
@@ -263,7 +241,7 @@ abstract class AbstractSlot implements SlotInterface
 
     public function isBlocked(): bool
     {
-        return $this->arrData['isBlocked'];
+        return !empty($this->getBlockedBookings());
     }
 
     public function setBookings(array $data): void
@@ -278,43 +256,35 @@ abstract class AbstractSlot implements SlotInterface
         return $this;
     }
 
-    abstract protected function isBookable(): bool;
+    abstract public function isBookable(): bool;
 
     protected function isOwnedByLoggedUser(array $booking): bool
     {
         return $this->user && $this->user->id === ($booking['member'] ?? -1);
     }
 
-    private function getBlockedBookings(): array
+    private function countBookedItems(bool $excludeOwn = false): int
     {
-        $bookings = $this->getBookings();
+        $total = 0;
 
-        $blockedBookings = [];
-
-        foreach ($bookings as $booking) {
-            if ($booking['isBlocked']) {
-                $blockedBookings[] = $booking;
+        foreach ($this->getBookings() as $booking) {
+            if ($excludeOwn && $this->isOwnedByLoggedUser($booking)) {
+                continue;
             }
+            $total += (int) ($booking['itemsBooked'] ?? 1);
         }
 
-        return $blockedBookings;
+        return $total;
+    }
+
+    private function getBlockedBookings(): array
+    {
+        return array_values(array_filter($this->getBookings(), static fn (array $b) => $b['isBlocked']));
     }
 
     private function getRemainingItems(): int
     {
-        if (isset($this->arrData['itemsStillAvailable'])) {
-            return $this->arrData['itemsStillAvailable'];
-        }
-
-        $totalBookedItems = 0;
-
-        foreach ($this->getBookings() as $booking) {
-            $totalBookedItems += (int) $booking['itemsBooked'] ?? 1;
-        }
-
-        $this->arrData['itemsStillAvailable'] = (int) $this->resource['itemsAvailable'] - $totalBookedItems;
-
-        return $this->arrData['itemsStillAvailable'];
+        return (int) $this->resource['itemsAvailable'] - $this->countBookedItems();
     }
 
     private function hasAnyBookings(): bool
@@ -324,10 +294,6 @@ abstract class AbstractSlot implements SlotInterface
 
     private function countBookings(): int
     {
-        if (!$this->hasAnyBookings()) {
-            return 0;
-        }
-
         return \count($this->getBookings());
     }
 
@@ -344,10 +310,6 @@ abstract class AbstractSlot implements SlotInterface
 
     private function getUserBooking(): array|null
     {
-        if (!$this->userHasBooking()) {
-            return null;
-        }
-
         foreach ($this->getBookings() as $booking) {
             if ($this->isOwnedByLoggedUser($booking)) {
                 return $this->framework

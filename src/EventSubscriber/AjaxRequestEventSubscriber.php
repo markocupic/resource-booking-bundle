@@ -23,8 +23,9 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
 {
     public const PRIORITY = 1000;
 
-    private array $services = [];
-
+    /**
+     * @var array<string, ControllerInterface>
+     */
     private array $controllers = [];
 
     public function __construct(
@@ -39,10 +40,9 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
         ];
     }
 
-    public function add(ControllerInterface $controller, string $alias, string $id): void
+    public function add(ControllerInterface $controller, string $alias): void
     {
         $this->controllers[$alias] = $controller;
-        $this->services[$alias] = $id;
     }
 
     /**
@@ -59,25 +59,13 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
         $action = $request->request->get('action', '');
         $alias = str_replace('Request', '', $action);
 
-        if (\array_key_exists($alias, $this->controllers)) {
-            $controller = $this->get($alias);
-
-            $ajaxResponse = $controller->generateResponse($request, $event->getAjaxResponse());
-            $event->setAjaxResponse($ajaxResponse);
-        } else {
-            throw new \Exception(\sprintf('Could not find Controller for action "%s".', $action));
-        }
+        $ajaxResponse = $this->get($alias)->generateResponse($request, $event->getAjaxResponse());
+        $event->setAjaxResponse($ajaxResponse);
     }
 
-    /**
-     * Get a resource by alias.
-     */
     public function get(string $alias): ControllerInterface
     {
-        if (!\array_key_exists($alias, $this->controllers)) {
-            throw new \LogicException(\sprintf('Resource with alias "%s" not found.', $alias));
-        }
-
-        return $this->controllers[$alias];
+        return $this->controllers[$alias]
+            ?? throw new \Exception(\sprintf('Could not find Controller for action "%s".', $alias));
     }
 }

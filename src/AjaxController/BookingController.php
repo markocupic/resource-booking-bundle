@@ -55,9 +55,7 @@ final class BookingController extends AbstractController implements ControllerIn
     private string|null $bookingUuid = null;
 
     /**
-     * Use setter via "#[Required]" attribute injection in child classes instead of __construct injection
-     * see: https://stackoverflow.com/questions/58447365/correct-way-to-extend-classes-with-symfony-autowiring
-     * see: https://symfony.com/doc/current/service_container/calls.html.
+     * Use setter injectione here.
      */
     #[Required]
     public function _setController(Connection $connection, EventDispatcherInterface $eventDispatcher, SlotFactory $slotFactory, TranslatorInterface $translator, LoggerInterface|null $contaoGeneralLogger = null, LoggerInterface|null $contaoErrorLogger = null): void
@@ -70,99 +68,42 @@ final class BookingController extends AbstractController implements ControllerIn
         $this->contaoErrorLogger = $contaoErrorLogger;
     }
 
-    /**
-     * @throws \Exception
-     */
     public function generateResponse(Request $request, AjaxResponse $ajaxResponse): AjaxResponse
     {
-        // Load language file
-        $this->framework
-            ->getAdapter(System::class)
-            ->loadLanguageFile('default', $this->translator->getLocale())
-        ;
-
-        // Initialize: get resource from request, etc.
+        $this->framework->getAdapter(System::class)->loadLanguageFile('default', $this->translator->getLocale());
         $this->initialize();
-
         $this->connection->beginTransaction();
 
-        // Validate inputs
-        // !Important: If additional upload fields are used,
-        // it is up to you to perform an input check.
         try {
             $this->validateInputs($this->utils->getAppConfig()['permittedUploadFields']);
 
-            $slotCollection = $this->getSlotCollectionFromRequest($this->bookingRepeatStopWeekTstamp);
+            $slots = $this->getSlotCollectionFromRequest($this->bookingRepeatStopWeekTstamp);
 
-            // First we check, if booking is possible!
-            if (!$this->isBookingPossible($slotCollection)) {
+            if (!$this->isBookingPossible($slots)) {
                 throw new StopBookingProcessException($this->translator->trans($this->getErrorMessage(), [], 'contao_default'));
             }
 
-            /** @var Collection<ResourceBookingModel> $objBookings */
-            $objBookings = $this->getBookingCollection($slotCollection, $this->utils);
+            /** @var Collection<ResourceBookingModel> $bookings */
+            $bookings = $this->getBookingCollection($slots, $this->utils);
 
-            // Dispatch pre booking event "rbb.event.pre_booking"
-            $objPreBookingEvent = new PreBookingEvent($request, $ajaxResponse, $this->sessionBag, $this->user->getLoggedInUser(), $objBookings);
-            $this->eventDispatcher->dispatch($objPreBookingEvent);
+            $this->eventDispatcher->dispatch(
+                new PreBookingEvent($request, $ajaxResponse, $this->sessionBag, $this->user->getLoggedInUser(), $bookings),
+            );
 
-            $objBookings?->reset();
+            $this->saveBookings($bookings);
 
-            if (null !== $objBookings) {
-                while ($objBookings->next()) {
-                    $objBooking = $objBookings->current();
+            /** @var Collection<ResourceBookingModel>|null $bookings */
+            $bookings = $this->framework->getAdapter(ResourceBookingModel::class)->findByBookingUuid($this->getBookingUuid());
 
-                    // Check if mandatory fields are all filled in, see dca mandatory key
-                    // Throw a StopBookingProcessException to stop the booking process.
-                    if (true !== ($res = $this->utils->checkMandatoryFieldsSet($objBooking->row(), 'tl_resource_booking'))) {
-                        $tableName = $res[0];
-                        $fieldName = $res[1];
-                        $label = $GLOBALS['TL_LANG'][$tableName][$fieldName][0] ?? $fieldName;
-
-                        throw new StopBookingProcessException($this->translator->trans('RBB.ERR.mandatoryFieldNotFilledIn', [$label], 'contao_default'));
-                    }
-
-                    // Save booking to the database
-                    $objBooking->save();
-
-                    // Log
-                    $strLog = \sprintf('New resource "%s" (with ID %s) has been booked.', $this->getActiveResource()->title, $objBooking->id);
-                    $this->contaoGeneralLogger?->info($strLog);
-                }
-
-                $ajaxResponse->setData('bookingProcessSucceeded', true);
-            }
-
-            /** @var Collection $objBookings */
-            $objBookings = $this->framework
-                ->getAdapter(ResourceBookingModel::class)
-                ->findByBookingUuid($this->getBookingUuid())
-            ;
-
-            if (null !== $objBookings) {
-                // Dispatch post booking event "rbb.event.post_booking"
-                $objPostBookingEvent = new PostBookingEvent($request, $ajaxResponse, $this->sessionBag, $this->user->getLoggedInUser(), $objBookings);
-                $this->eventDispatcher->dispatch($objPostBookingEvent);
-            }
-
-            if (null !== $objBookings) {
-                $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
-
-                // Use event listeners to return a custom message to the user
-                if (null === $ajaxResponse->getConfirmationMessage()) {
-                    $ajaxResponse->setConfirmationMessage(
-                        $this->translator->trans('RBB.MSG.successfullyBookedXItems', [$this->getActiveResource()->title, $objBookings->count()], 'contao_default'),
-                    );
-                }
-            } else {
+            if (null === $bookings) {
                 throw new StopBookingProcessException($this->translator->trans('RBB.ERR.generalBookingError', [], 'contao_default'));
             }
 
-            // Add booking selection to response
-            $objBookings->reset();
+            $this->eventDispatcher->dispatch(
+                new PostBookingEvent($request, $ajaxResponse, $this->sessionBag, $this->user->getLoggedInUser(), $bookings),
+            );
 
-            $ajaxResponse->setData('bookingSelection', $objBookings->fetchAll());
-
+            $this->setSuccessResponse($ajaxResponse, $bookings);
             $this->connection->commit();
         } catch (StopBookingProcessException $e) {
             $this->connection->rollBack();
@@ -179,95 +120,132 @@ final class BookingController extends AbstractController implements ControllerIn
         return $ajaxResponse;
     }
 
-    protected function validateInputs(array $permittedUploadFields): void
+    /**
+     * @param Collection<ResourceBookingModel>|null $bookings
+     */
+    private function saveBookings(Collection|null $bookings): void
     {
-        $arrKeys = array_keys($_POST);
+        if (null === $bookings) {
+            return;
+        }
 
-        foreach ($arrKeys as $key) {
-            switch ($key) {
-                // Strings
-                case 'REQUEST_TOKEN':
-                case 'action':
-                case 'moduleKey':
-                case 'bookingDescription':
-                    if (!empty(Input::post($key)) && !\is_string(Input::post($key))) {
-                        throw new \Exception($this->translator->trans('RBB.ERR.invalidUploadValueSubmitted', [$key], 'contao_default'));
-                    }
+        $bookings->reset();
 
-                    break;
-                // Arrays
-                case 'bookingDateSelection':
-                    if (!\is_array(Input::post($key))) {
-                        throw new \Exception($this->translator->trans('RBB.ERR.invalidUploadValueSubmitted', [$key], 'contao_default'));
-                    }
+        while ($bookings->next()) {
+            $booking = $bookings->current();
 
-                    break;
-                // Booleans
-                case 'isBlocked':
-                    if ('' !== Input::post($key) && '1' !== Input::post($key)) {
-                        throw new \Exception($this->translator->trans('RBB.ERR.invalidUploadValueSubmitted', [$key], 'contao_default'));
-                    }
+            if (true !== ($res = $this->utils->checkMandatoryFieldsSet($booking->row(), 'tl_resource_booking'))) {
+                [$tableName, $fieldName] = $res;
+                $label = $GLOBALS['TL_LANG'][$tableName][$fieldName][0] ?? $fieldName;
 
-                    break;
-                // Integers
-                case 'resourceId':
-                case 'bookingRepeatStopWeekTstamp':
-                    if (empty(Input::post($key)) || (string) (int) Input::post($key) !== Input::post($key)) {
-                        throw new \Exception($this->translator->trans('RBB.ERR.invalidUploadValueSubmitted', [$key], 'contao_default'));
-                    }
+                throw new StopBookingProcessException($this->translator->trans('RBB.ERR.mandatoryFieldNotFilledIn', [$label], 'contao_default'));
+            }
 
-                    break;
+            $booking->save();
+            $this->contaoGeneralLogger?->info(
+                \sprintf('New resource "%s" (with ID %s) has been booked.', $this->getActiveResource()->title, $booking->id),
+            );
+        }
+    }
 
-                default:
-                    // Check if custom field is allowed and registered in the bundle configuration
-                    if (!\in_array($key, $permittedUploadFields, true)) {
-                        throw new \Exception($this->translator->trans('RBB.ERR.invalidUploadFieldSubmitted', [$key], 'contao_default'));
-                    }
+    /**
+     * @param Collection<ResourceBookingModel> $bookings
+     */
+    private function setSuccessResponse(AjaxResponse $ajaxResponse, Collection $bookings): void
+    {
+        $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
+        $ajaxResponse->setData('bookingProcessSucceeded', true);
+
+        if (null === $ajaxResponse->getConfirmationMessage()) {
+            $ajaxResponse->setConfirmationMessage(
+                $this->translator->trans('RBB.MSG.successfullyBookedXItems', [$this->getActiveResource()->title, $bookings->count()], 'contao_default'),
+            );
+        }
+
+        $bookings->reset();
+        $ajaxResponse->setData('bookingSelection', $bookings->fetchAll());
+    }
+
+    private function validateInputs(array $permittedFormFields): void
+    {
+        static $fieldTypes = [
+            'string' => ['REQUEST_TOKEN', 'action', 'moduleKey', 'bookingDescription'],
+            'array' => ['bookingDateSelection'],
+            'boolean' => ['isBlocked'],
+            'integer' => ['resourceId', 'bookingRepeatStopWeekTstamp'],
+        ];
+
+        foreach (array_keys($_POST) as $key) {
+            $value = Input::post($key);
+
+            if (\in_array($key, $fieldTypes['string'], true)) {
+                if (!empty($value) && !\is_string($value)) {
+                    $this->throwInvalidValue($key);
+                }
+            } elseif (\in_array($key, $fieldTypes['array'], true)) {
+                if (!\is_array($value)) {
+                    $this->throwInvalidValue($key);
+                }
+            } elseif (\in_array($key, $fieldTypes['boolean'], true)) {
+                if ('' !== $value && '1' !== $value) {
+                    $this->throwInvalidValue($key);
+                }
+            } elseif (\in_array($key, $fieldTypes['integer'], true)) {
+                if (empty($value) || (string) (int) $value !== $value) {
+                    $this->throwInvalidValue($key);
+                }
+            } elseif (!\in_array($key, $permittedFormFields, true)) {
+                throw new \Exception($this->translator->trans('RBB.ERR.invalidUploadFieldSubmitted', [$key], 'contao_default'));
             }
         }
     }
 
-    protected function getBookingCollection(SlotCollection $slotCollection, Utils $utils): Collection|null
+    private function throwInvalidValue(string $key): void
     {
-        $bookingCollection = [];
+        throw new \Exception($this->translator->trans('RBB.ERR.invalidUploadValueSubmitted', [$key], 'contao_default'));
+    }
 
-        $slotCollection->reset();
+    private function getBookingCollection(SlotCollection $slots, Utils $utils): Collection|null
+    {
+        $bookings = [];
 
-        while ($slotCollection->next()) {
+        $slots->reset();
+
+        while ($slots->next()) {
             /** @var SlotMain $slot */
-            $slot = $slotCollection->current();
+            $slot = $slots->current();
 
             // Use already available booking entity
             $arrBooking = $slot->userBooking;
 
             if (true !== $slot->userHasBooked && null === $arrBooking) {
                 // Create a new booking entity
-                $objBooking = new ResourceBookingModel();
+                $booking = new ResourceBookingModel();
             } else {
-                // Use the already existing entity
-                $objBooking = ResourceBookingModel::findById($arrBooking['id']);
+                // Use the already existing entity instead of creating a new one
+                $booking = ResourceBookingModel::findById($arrBooking['id']);
             }
 
             // Add data to the model
-            if (null !== $objBooking) {
+            if (null !== $booking) {
                 foreach ($slot->dataBooking as $k => $v) {
                     if ('id' === $k && empty($v)) {
                         continue;
                     }
 
-                    $objBooking->{$k} = $v;
+                    $booking->{$k} = $v;
                 }
 
                 // !Do not save the model here, this will be done later
-                $arrAppConfig = $utils->getAppConfig();
-                $objBooking->confirmed = (bool) $arrAppConfig['autoConfirm'];
-                $objBooking->tstamp = time();
-                $objBooking->bookingTime = time();
+                $appConfig = $utils->getAppConfig();
+                $booking->confirmed = (bool) $appConfig['autoConfirm'];
+                $booking->tstamp = time();
+                $booking->bookingTime = time();
 
-                $bookingCollection[] = $objBooking;
+                $bookings[] = $booking;
             }
         }
 
-        return !empty($bookingCollection) ? new Collection($bookingCollection, 'tl_resource_booking') : null;
+        return !empty($bookings) ? new Collection($bookings, 'tl_resource_booking') : null;
     }
 }

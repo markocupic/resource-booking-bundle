@@ -49,11 +49,7 @@ class SlotMain extends AbstractSlot
      */
     public function isBookable(): bool
     {
-        if ($this->isBlocked) {
-            return false;
-        }
-
-        if (!$this->isWithinAllowedDateRange()) {
+        if ($this->isBlocked || !$this->isWithinAllowedDateRange()) {
             return false;
         }
 
@@ -68,13 +64,9 @@ class SlotMain extends AbstractSlot
                 continue;
             }
 
-            $itemsBooked += (int) $booking['itemsBooked'] ?? 1;
+            $itemsBooked += (int) ($booking['itemsBooked'] ?? 1);
         }
 
-        if ((int) $this->arrData['resource']['itemsAvailable'] > $itemsBooked) {
-            return true;
-        }
-
-        return false;
+        return (int) $this->arrData['resource']['itemsAvailable'] > $itemsBooked;
     }
 }

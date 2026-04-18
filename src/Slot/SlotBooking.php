@@ -28,37 +28,8 @@ class SlotBooking extends AbstractSlot
         return $this;
     }
 
-    /**
-     * Check, if the slot is bookable.
-     */
     public function isBookable(): bool
     {
-        if ($this->isBlocked) {
-            return false;
-        }
-
-        $itemsBooked = 0;
-
-        $iterator = (new \ArrayObject($this->getBookings()))->getIterator();
-
-        while ($iterator->valid()) {
-            $booking = $iterator->current();
-
-            if ($this->user && (int) $this->user->id === (int) $booking['member'] ?? -1) {
-                $iterator->next();
-
-                continue;
-            }
-
-            $itemsBooked += (int) $booking['itemsBooked'];
-
-            $iterator->next();
-        }
-
-        if ((int) $this->arrData['resource']['itemsAvailable'] >= $itemsBooked + $this->arrData['itemsBooked']) {
-            return true;
-        }
-
-        return false;
+        return !$this->isBlocked && $this->canFulfillRequestedItems();
     }
 }

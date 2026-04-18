@@ -16,330 +16,160 @@ namespace Markocupic\ResourceBookingBundle\Slot;
 
 class SlotCollection implements \ArrayAccess, \Countable, \IteratorAggregate
 {
-    protected int $intIndex = -1;
+    private int $index = -1;
 
-    protected array $arrSlots = [];
+    private array $slots = [];
 
-    public function __construct(array $arrSlots = [])
+    public function __construct(array $slots = [])
     {
-        $arrSlots = array_values($arrSlots);
+        $slots = array_values($slots);
 
-        foreach ($arrSlots as $objSlot) {
-            if (!$objSlot instanceof SlotInterface) {
-                throw new \InvalidArgumentException('Invalid type: '.\gettype($objSlot));
+        foreach ($slots as $slot) {
+            if (!$slot instanceof SlotInterface) {
+                throw new \InvalidArgumentException('Invalid type: '.get_debug_type($slot));
             }
         }
-
-        $this->arrSlots = $arrSlots;
+        $this->slots = $slots;
     }
 
-    /**
-     * Return an object property.
-     *
-     * @param string $strKey The property name
-     *
-     * @return mixed|null The property value or null
-     */
-    public function __get(string $strKey)
+    public function __get(string $key): mixed
     {
-        if ($this->intIndex < 0) {
-            $this->first();
-        }
-
-        return $this->arrSlots[$this->intIndex]->$strKey ?? null;
+        return $this->current()->$key ?? null;
     }
 
-    /**
-     * Set an object property.
-     *
-     * @param string $strKey   The property name
-     * @param mixed  $varValue The property value
-     */
-    public function __set(string $strKey, mixed $varValue): void
+    public function __set(string $key, mixed $value): void
     {
-        if ($this->intIndex < 0) {
-            $this->first();
-        }
-
-        $this->arrSlots[$this->intIndex]->$strKey = $varValue;
+        $this->current()->$key = $value;
     }
 
-    /**
-     * Check whether a property is set.
-     *
-     * @param string $strKey The property name
-     *
-     * @return bool True if the property is set
-     */
-    public function __isset(string $strKey): bool
+    public function __isset(string $key): bool
     {
-        if ($this->intIndex < 0) {
-            $this->first();
-        }
-
-        return isset($this->arrSlots[$this->intIndex]->$strKey);
+        return isset($this->current()->$key);
     }
 
-    /**
-     * Go to the first row.
-     *
-     * @return static The slot collection object
-     */
-    public function first(): self
+    public function first(): static
     {
-        $this->intIndex = 0;
+        $this->index = 0;
 
         return $this;
     }
 
-    /**
-     * Set the current row from an array.
-     *
-     * @param array $arrData The row data as array
-     *
-     * @return static The slot collection object
-     */
-    public function setRow(array $arrData): self
+    public function last(): static
     {
-        if ($this->intIndex < 0) {
-            $this->first();
-        }
-
-        $this->arrSlots[$this->intIndex]->setRow($arrData);
+        $this->index = \count($this->slots) - 1;
 
         return $this;
     }
 
-    /**
-     * Delete the current slot.
-     */
-    public function delete(): void
+    public function reset(): static
     {
-        if ($this->intIndex < 0) {
-            $this->first();
-        }
-        unset($this->arrSlots[$this->intIndex]);
+        $this->index = -1;
+
+        return $this;
     }
 
-    /**
-     * Return the slots as array.
-     */
-    public function getSlots(): array|null
+    public function next(): static|false
     {
-        return $this->arrSlots;
-    }
-
-    /**
-     * Return the number of rows in the result set.
-     *
-     * @return int The number of rows
-     */
-    public function count(): int
-    {
-        return \count($this->arrSlots);
-    }
-
-    /**
-     * Go to the previous row.
-     */
-    public function prev(): self|bool
-    {
-        if ($this->intIndex < 1) {
+        if (!isset($this->slots[$this->index + 1])) {
             return false;
         }
-
-        --$this->intIndex;
-
-        return $this;
-    }
-
-    /**
-     * Go to the last row.
-     *
-     * @return static The slot collection object
-     */
-    public function last(): self
-    {
-        $this->intIndex = \count($this->arrSlots) - 1;
+        ++$this->index;
 
         return $this;
     }
 
-    /**
-     * Fetch a column of each row.
-     *
-     * @param string $strKey The property name
-     *
-     * @return array An array with all property values
-     */
-    public function fetchEach(string $strKey): array
+    public function prev(): static|false
     {
-        $this->reset();
-        $return = [];
-
-        while ($this->next()) {
-            $return[] = $this->$strKey;
-        }
-
-        return $return;
-    }
-
-    /**
-     * Reset the model.
-     *
-     * @return static The model collection object
-     */
-    public function reset(): self
-    {
-        $this->intIndex = -1;
-
-        return $this;
-    }
-
-    /**
-     * Go to the next row.
-     */
-    public function next(): self|bool
-    {
-        if (!isset($this->arrSlots[$this->intIndex + 1])) {
+        if ($this->index < 1) {
             return false;
         }
-
-        ++$this->intIndex;
+        --$this->index;
 
         return $this;
     }
 
-    /**
-     * Fetch all columns of every row.
-     *
-     * @return array An array with all rows and columns
-     */
-    public function fetchAll(): array
-    {
-        $this->reset();
-        $return = [];
-
-        while ($this->next()) {
-            $return[] = $this->row();
-        }
-
-        return $return;
-    }
-
-    /**
-     * Return the current row as associative array.
-     *
-     * @return array The current row as array
-     */
-    public function row(): array
-    {
-        if ($this->intIndex < 0) {
-            $this->first();
-        }
-
-        return $this->arrSlots[$this->intIndex]->row();
-    }
-
-    /**
-     * Check whether an offset exists.
-     *
-     * @param int $offset The offset
-     *
-     * @return bool True if the offset exists
-     */
-    public function offsetExists($offset): bool
-    {
-        return isset($this->arrSlots[$offset]);
-    }
-
-    /**
-     * Retrieve a particular offset.
-     *
-     * @param int $offset The offset
-     *
-     * @return SlotInterface|null The model or null
-     */
-    public function offsetGet($offset): SlotInterface|null
-    {
-        return $this->arrSlots[$offset];
-    }
-
-    /**
-     * Set a particular offset.
-     *
-     * @throws \RuntimeException The collection is immutable
-     */
-    public function offsetSet($offset, mixed $value): void
-    {
-        throw new \RuntimeException('This collection is immutable');
-    }
-
-    /**
-     * Unset a particular offset.
-     *
-     * @param int $offset The offset
-     *
-     * @throws \RuntimeException The collection is immutable
-     */
-    public function offsetUnset($offset): void
-    {
-        throw new \RuntimeException('This collection is immutable');
-    }
-
-    /**
-     * Retrieve the iterator object.
-     *
-     * @return \ArrayIterator The iterator object
-     */
-    public function getIterator(): \ArrayIterator
-    {
-        return new \ArrayIterator($this->arrSlots);
-    }
-
-    /**
-     * Sort collection by a given key.
-     *
-     * @return $this
-     *
-     * @throws \Exception
-     */
-    public function sortBy(string $strKey): self
-    {
-        $this->reset();
-
-        $arrSort = [];
-
-        while ($this->next()) {
-            $slot = $this->current();
-
-            if (empty((string) $slot->{$strKey})) {
-                throw new \Exception('Can not sort collection, because '.$strKey.' has an empty value.');
-            }
-            $arrSort[$slot->$strKey] = $slot;
-        }
-
-        ksort($arrSort);
-        $arrNew = [];
-
-        foreach ($arrSort as $v) {
-            $arrNew[] = $v;
-        }
-
-        return new self($arrNew);
-    }
-
-    /**
-     * Return the current slot.
-     *
-     * @return SlotInterface The model object
-     */
     public function current(): SlotInterface
     {
-        if ($this->intIndex < 0) {
+        if ($this->index < 0) {
             $this->first();
         }
 
-        return $this->arrSlots[$this->intIndex];
+        return $this->slots[$this->index];
+    }
+
+    public function setRow(array $data): static
+    {
+        $this->current()->setRow($data);
+
+        return $this;
+    }
+
+    public function row(): array
+    {
+        return $this->current()->row();
+    }
+
+    public function delete(): void
+    {
+        unset($this->slots[max($this->index, 0)]);
+        $this->slots = array_values($this->slots);
+    }
+
+    public function getSlots(): array
+    {
+        return $this->slots;
+    }
+
+    public function count(): int
+    {
+        return \count($this->slots);
+    }
+
+    public function fetchEach(string $key): array
+    {
+        return array_map(static fn (SlotInterface $slot) => $slot->$key, $this->slots);
+    }
+
+    public function fetchAll(): array
+    {
+        return array_map(static fn (SlotInterface $slot) => $slot->row(), $this->slots);
+    }
+
+    public function sortBy(string $key): self
+    {
+        foreach ($this->slots as $slot) {
+            if (empty((string) $slot->{$key})) {
+                throw new \InvalidArgumentException(\sprintf("Cannot sort collection: '%s' has an empty value.", $key));
+            }
+        }
+        $slots = $this->slots;
+        usort($slots, static fn ($a, $b) => (string) $a->$key <=> (string) $b->$key);
+
+        return new self($slots);
+    }
+
+    public function offsetExists(mixed $offset): bool
+    {
+        return isset($this->slots[$offset]);
+    }
+
+    public function offsetGet(mixed $offset): SlotInterface|null
+    {
+        return $this->slots[$offset] ?? null;
+    }
+
+    public function offsetSet(mixed $offset, mixed $value): void
+    {
+        throw new \RuntimeException('This collection is immutable.');
+    }
+
+    public function offsetUnset(mixed $offset): void
+    {
+        throw new \RuntimeException('This collection is immutable.');
+    }
+
+    public function getIterator(): \ArrayIterator
+    {
+        return new \ArrayIterator($this->slots);
     }
 }
