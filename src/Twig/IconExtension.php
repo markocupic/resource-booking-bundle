@@ -21,9 +21,8 @@ use Twig\TwigFunction;
 
 class IconExtension extends AbstractExtension
 {
-    public function __construct(
-        private readonly string $projectDir,
-    ) {
+    public function __construct(private readonly string $projectDir)
+    {
     }
 
     public function getFunctions()

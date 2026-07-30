@@ -22,9 +22,8 @@ use Doctrine\DBAL\Exception;
 
 class Module
 {
-    public function __construct(
-        private readonly Connection $connection,
-    ) {
+    public function __construct(private readonly Connection $connection)
+    {
     }
 
     /**

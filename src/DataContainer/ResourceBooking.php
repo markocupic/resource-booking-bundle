@@ -21,9 +21,8 @@ use Markocupic\ResourceBookingBundle\Controller\FrontendModule\ResourceBookingWe
 
 class ResourceBooking
 {
-    public function __construct(
-        private readonly Connection $connection,
-    ) {
+    public function __construct(private readonly Connection $connection)
+    {
     }
 
     #[AsCallback(table: 'tl_resource_booking', target: 'fields.moduleId.options')]
