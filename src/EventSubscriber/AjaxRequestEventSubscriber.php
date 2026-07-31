@@ -51,7 +51,7 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
     {
         $request = $this->requestStack->getCurrentRequest();
 
-        if (!$request->isXmlHttpRequest()) {
+        if (null === $request || !$request->isXmlHttpRequest()) {
             return;
         }
 

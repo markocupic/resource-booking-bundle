@@ -23,7 +23,7 @@ use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInt
 
 /**
  * The module key is necessary to run multiple rbb applications on the same page
- * and is sent as a post parameter on every xhr request.
+ * and is sent as a POST parameter on every ajax request.
  *
  * The session data of each rbb instance is stored under $_SESSION[_resource_booking_bundle_attributes][$sessionId.'_'.$userId.'_'.$moduleKey.'_'.$token]
  *
@@ -73,9 +73,13 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
         return $arrSession[$name] ?? $default;
     }
 
-    public function &offsetGet($offset): mixed
+    /**
+     * @throws \Exception
+     */
+    public function offsetGet($offset): mixed
     {
-        return $this->attributes[$offset];
+        // Read from the same namespaced store that offsetSet()/set() write to.
+        return $this->get((string) $offset);
     }
 
     /**
@@ -114,12 +118,15 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
         $sessKey = $this->getSessionBagKey();
         $arrSession = parent::get($sessKey, []);
 
+        $removed = $arrSession[$name] ?? null;
+
         if (isset($arrSession[$name])) {
             unset($arrSession[$name]);
             parent::set($sessKey, $arrSession);
         }
 
-        return $arrSession;
+        // Return the removed value, as required by AttributeBagInterface::remove().
+        return $removed;
     }
 
     /**
@@ -138,16 +145,9 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
      */
     public function clear(): null
     {
-        $sessKey = $this->getSessionBagKey();
-        $arrSessionAll = parent::all();
-
-        if (isset($arrSessionAll[$sessKey])) {
-            unset($arrSessionAll[$sessKey]);
-
-            foreach ($arrSessionAll as $k => $v) {
-                parent::set($k, $v);
-            }
-        }
+        // Remove only this instance's namespaced data; other rbb instances share
+        // the same underlying AttributeBag under different session keys.
+        parent::remove($this->getSessionBagKey());
 
         return null;
     }
@@ -174,7 +174,7 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
     {
         /**
          * The module key is necessary to run multiple rbb applications on the same page
-         * and is sent as a post parameter on every xhr request.
+         * and is sent as a POST parameter on every xhr request.
          *
          * The session data of each rbb instance is stored under $_SESSION[_resource_booking_bundle_attributes][$sessionId.'_'.$userId.'_'.$moduleKey.'_'.$token]
          *
@@ -184,10 +184,16 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
          *
          * Do only run once ModuleIndex::generateModuleIndex() per module instance;
          */
+        $request = $this->requestStack->getCurrentRequest();
+
+        if (null === $request) {
+            return '';
+        }
+
         $sessionId = '';
         $userId = '';
 
-        $session = $this->requestStack->getCurrentRequest()->getSession();
+        $session = $request->getSession();
 
         if ($session->isStarted()) {
             $sessionId = $session->getId();
@@ -199,9 +205,7 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
             $userId = $user->id;
         }
 
-        $request = $this->requestStack->getCurrentRequest();
-
-        if ($this->isAjaxRequest()) {
+        if ($request->isXmlHttpRequest()) {
             $moduleKey = $request->request->get('moduleKey');
         } elseif (!empty((string) ModuleKey::getModuleKey()) && !empty(TokenManager::getToken())) {
             $moduleKey = ModuleKey::getModuleKey();
@@ -217,10 +221,5 @@ class ArrayAttributeBag extends AttributeBag implements \ArrayAccess
         $token = $request->query->get('token_'.$moduleKey);
 
         return sha1($sessionId.'_'.$userId.'_'.$moduleKey.'_'.$token);
-    }
-
-    private function isAjaxRequest(): bool
-    {
-        return $this->requestStack->getCurrentRequest()->isXmlHttpRequest();
     }
 }

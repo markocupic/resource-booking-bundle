@@ -170,12 +170,12 @@ class AjaxResponse
         $this->arrData['messages'][static::MESSAGE_WARNING] = $strMessage;
     }
 
-    public function setData(string $key, $value): void
+    public function setData(string $key, mixed $value): void
     {
         $this->arrData['data'][$key] = $value;
     }
 
-    public function getData(string $key): array|null
+    public function getData(string $key): mixed
     {
         if (isset($this->arrData['data'][$key])) {
             return $this->arrData['data'][$key];

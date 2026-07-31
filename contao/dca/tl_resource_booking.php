@@ -130,7 +130,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = [
             'exclude'   => true,
             'search'    => true,
             'inputType' => 'textarea',
-            'eval'      => ['tl_class' => 'clr'],
+            'eval'      => ['allowHtml' => false, 'tl_class' => 'clr'],
             'sql'       => 'mediumtext NULL',
         ],
         'itemsBooked' => [

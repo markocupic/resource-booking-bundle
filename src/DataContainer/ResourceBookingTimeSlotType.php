@@ -36,7 +36,14 @@ class ResourceBookingTimeSlotType
         }
 
         // Delete child bookings
-        $this->connection->executeStatement('DELETE FROM tl_resource_booking WHERE tl_resource_booking.timeSlotId IN (SELECT id FROM tl_resource_booking_time_slot WHERE tl_resource_booking_time_slot.pid = ?)', [$dc->id]);
+        $this->connection->executeStatement(
+            'DELETE FROM tl_resource_booking
+                    WHERE tl_resource_booking.timeSlotId IN (
+                        SELECT id FROM tl_resource_booking_time_slot
+                            WHERE tl_resource_booking_time_slot.pid = ?
+                    )',
+            [$dc->id],
+        );
 
         // Delete time slot children
         $this->connection->executeStatement('DELETE FROM tl_resource_booking_time_slot WHERE pid = ?', [$dc->id]);

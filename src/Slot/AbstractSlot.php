@@ -260,7 +260,7 @@ abstract class AbstractSlot implements SlotInterface
 
     protected function isOwnedByLoggedUser(array $booking): bool
     {
-        return $this->user && $this->user->id === ($booking['member'] ?? -1);
+        return $this->user && (int) $this->user->id === (int) ($booking['member'] ?? -1);
     }
 
     private function countBookedItems(bool $excludeOwn = false): int
@@ -279,7 +279,7 @@ abstract class AbstractSlot implements SlotInterface
 
     private function getBlockedBookings(): array
     {
-        return array_values(array_filter($this->getBookings(), static fn (array $b) => $b['isBlocked']));
+        return array_values(array_filter($this->getBookings(), static fn (array $b) => (bool) ($b['isBlocked'] ?? false)));
     }
 
     private function getRemainingItems(): int
@@ -314,7 +314,7 @@ abstract class AbstractSlot implements SlotInterface
             if ($this->isOwnedByLoggedUser($booking)) {
                 return $this->framework
                     ->getAdapter(ResourceBookingModel::class)
-                    ->findById($booking['id'])->row()
+                    ->findById($booking['id'])?->row()
                 ;
             }
         }

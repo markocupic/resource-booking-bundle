@@ -145,7 +145,7 @@ class CreateTimeslotTypeCommand extends Command
             return Command::FAILURE;
         }
 
-        $io->success(\sprintf('Operation successfully completed. Created %s new time slots in schedule "%s". You have to publish the schedule manually in the Contao Backend.', $i, $this->scheduleName));
+        $io->success(\sprintf('Operation successfully completed. Created %s new time slots in schedule "%s". You have to publish the schedule manually in the Contao Backend.', \count($arrSlots), $this->scheduleName));
 
         return Command::SUCCESS;
     }

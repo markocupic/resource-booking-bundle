@@ -25,7 +25,6 @@ use Markocupic\ResourceBookingBundle\Exception\StopBookingProcessException;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Markocupic\ResourceBookingBundle\Slot\SlotCollection;
-use Markocupic\ResourceBookingBundle\Slot\SlotFactory;
 use Markocupic\ResourceBookingBundle\Slot\SlotMain;
 use Markocupic\ResourceBookingBundle\Util\Utils;
 use Psr\Log\LoggerInterface;
@@ -44,8 +43,6 @@ final class BookingController extends AbstractController implements ControllerIn
 
     private EventDispatcherInterface $eventDispatcher;
 
-    private SlotFactory $slotFactory;
-
     private TranslatorInterface $translator;
 
     private LoggerInterface|null $contaoGeneralLogger = null;
@@ -54,16 +51,27 @@ final class BookingController extends AbstractController implements ControllerIn
 
     private string|null $bookingUuid = null;
 
-    /**
-     * Use setter injectione here.
-     */
     #[Required]
-    public function _setController(Connection $connection, EventDispatcherInterface $eventDispatcher, SlotFactory $slotFactory, TranslatorInterface $translator, LoggerInterface|null $contaoGeneralLogger = null, LoggerInterface|null $contaoErrorLogger = null): void
+    public function setConnection(Connection $connection): void
     {
         $this->connection = $connection;
+    }
+
+    #[Required]
+    public function setEventDispatcher(EventDispatcherInterface $eventDispatcher): void
+    {
         $this->eventDispatcher = $eventDispatcher;
-        $this->slotFactory = $slotFactory;
+    }
+
+    #[Required]
+    public function setTranslator(TranslatorInterface $translator): void
+    {
         $this->translator = $translator;
+    }
+
+    #[Required]
+    public function setLoggers(LoggerInterface|null $contaoGeneralLogger = null, LoggerInterface|null $contaoErrorLogger = null): void
+    {
         $this->contaoGeneralLogger = $contaoGeneralLogger;
         $this->contaoErrorLogger = $contaoErrorLogger;
     }
@@ -77,7 +85,7 @@ final class BookingController extends AbstractController implements ControllerIn
         try {
             $this->validateInputs($this->utils->getAppConfig()['permittedUploadFields']);
 
-            $slots = $this->getSlotCollectionFromRequest($this->bookingRepeatStopWeekTstamp);
+            $slots = $this->getSlotCollectionFromRequest($request, $this->bookingRepeatStopWeekTstamp);
 
             if (!$this->isBookingPossible($slots)) {
                 throw new StopBookingProcessException($this->translator->trans($this->getErrorMessage(), [], 'contao_default'));
@@ -223,7 +231,7 @@ final class BookingController extends AbstractController implements ControllerIn
                 $booking = new ResourceBookingModel();
             } else {
                 // Use the already existing entity instead of creating a new one
-                $booking = ResourceBookingModel::findById($arrBooking['id']);
+                $booking = ResourceBookingModel::findById($arrBooking['id'] ?? null);
             }
 
             // Add data to the model

@@ -14,18 +14,27 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\Twig;
 
+use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\StringUtil;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Filesystem\Path;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 
 class IconExtension extends AbstractExtension
 {
-    public function __construct(private readonly string $projectDir)
-    {
+    private const DEFAULT_ICON_FOLDER = 'vendor/markocupic/resource-booking-bundle/public/icons/frontend';
+
+    public function __construct(
+        private readonly ContaoFramework $framework,
+        private readonly Filesystem $filesystem,
+        #[Autowire('%kernel.project_dir%')]
+        private readonly string $projectDir,
+    ) {
     }
 
-    public function getFunctions()
+    public function getFunctions(): array
     {
         return [
             new TwigFunction('rbb_icon', [$this, 'generateIcon']),
@@ -40,26 +49,29 @@ class IconExtension extends AbstractExtension
      */
     public function generateIcon(string $iconNameOrPath, string $strClass = ''): string
     {
-        $strClass = StringUtil::specialcharsAttribute($strClass);
+        $strClass = $this->framework
+            ->getAdapter(StringUtil::class)
+            ->specialcharsAttribute($strClass)
+        ;
         $classes = explode(' ', trim($strClass));
         $classes[] = 'rbb-icon';
         $classes = array_filter(array_unique($classes));
         $strClass = implode(' ', $classes);
 
-        if (is_file($iconNameOrPath)) {
+        if ($this->filesystem->exists($iconNameOrPath)) {
             $iconPath = $iconNameOrPath;
         } else {
             // Use the default location:  'vendor/markocupic/resource-booking-bundle/public/icons/frontend'
             $iconName = !str_ends_with($iconNameOrPath, '.svg') ? $iconNameOrPath.'.svg' : $iconNameOrPath;
-            $dirname = Path::join($this->projectDir, 'vendor/markocupic/resource-booking-bundle/public/icons/frontend');
+            $dirname = Path::join($this->projectDir, self::DEFAULT_ICON_FOLDER);
             $iconPath = Path::join($dirname, $iconName);
         }
 
-        if (!is_file($iconPath)) {
+        if (!$this->filesystem->exists($iconPath)) {
             throw new \Exception(\sprintf('Could not find icon "%s" in "%s".', $iconNameOrPath, $iconPath));
         }
 
-        $strXml = file_get_contents($iconPath);
+        $strXml = $this->filesystem->readFile($iconPath);
         $xml = new \SimpleXMLElement($strXml);
 
         if (!empty($strClass)) {

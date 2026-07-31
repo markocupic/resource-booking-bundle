@@ -23,7 +23,7 @@ class RbbEndTime extends Regex
     public function __construct(array|null $options = null)
     {
         parent::__construct([
-            'pattern' => '/^(?:(?:0[1-9]|1\d|2[0-3]):[0-5]\d|00:[0-5][1-9]|24:00)$/',
+            'pattern' => '/^(?:(?:0[1-9]|1\d|2[0-3]):[0-5]\d|00:(?:0[1-9]|[1-5]\d)|24:00)$/',
             'message' => 'Please enter the end time in the format HH:MM. Allowed values are 00:01 to 24:00.',
             'normalizer' => 'trim',
             ...($options ?? []),

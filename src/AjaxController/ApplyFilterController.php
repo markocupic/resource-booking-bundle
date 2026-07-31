@@ -18,12 +18,10 @@ use Markocupic\ResourceBookingBundle\AjaxController\Traits\RefreshDataTrait;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceTypeModel;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
-use Markocupic\ResourceBookingBundle\Slot\SlotFactory;
 use Markocupic\ResourceBookingBundle\Util\DateHelper;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Contracts\Service\Attribute\Required;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class ApplyFilterController extends AbstractController implements ControllerInterface
 {
@@ -33,21 +31,10 @@ final class ApplyFilterController extends AbstractController implements Controll
 
     private EventDispatcherInterface $eventDispatcher;
 
-    private SlotFactory $slotFactory;
-
-    private TranslatorInterface $translator;
-
-    /**
-     * Use setter via "#[Required]" attribute injection in child classes instead of __construct injection
-     * see: https://stackoverflow.com/questions/58447365/correct-way-to-extend-classes-with-symfony-autowiring
-     * see: https://symfony.com/doc/current/service_container/calls.html.
-     */
     #[Required]
-    public function _setController(EventDispatcherInterface $eventDispatcher, SlotFactory $slotFactory, TranslatorInterface $translator): void
+    public function setEventDispatcher(EventDispatcherInterface $eventDispatcher): void
     {
         $this->eventDispatcher = $eventDispatcher;
-        $this->slotFactory = $slotFactory;
-        $this->translator = $translator;
     }
 
     public function generateResponse(Request $request, AjaxResponse $ajaxResponse): AjaxResponse

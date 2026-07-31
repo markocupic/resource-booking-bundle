@@ -16,19 +16,24 @@ namespace Markocupic\ResourceBookingBundle\Cron;
 
 use Contao\CoreBundle\DependencyInjection\Attribute\AsCronJob;
 use Contao\CoreBundle\Framework\ContaoFramework;
-use Contao\Database;
 use Contao\Date;
 use Contao\ModuleModel;
-use Contao\System;
+use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Types\Types;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 #[AsCronJob('daily')]
 class PurgePastBookingsCron
 {
     public function __construct(
-        private readonly bool $purgeOldBookingsWithCron,
+        private readonly Connection $connection,
         private readonly ContaoFramework $framework,
-        private readonly LoggerInterface $contaoCronLogger,
+        #[Autowire('%markocupic_resource_booking.purge_past_bookings_with_cron%')]
+        private readonly bool $purgeOldBookingsWithCron,
+        #[Autowire('%markocupic_resource_booking.apps%')]
+        private readonly array $appConfigs,
+        private readonly LoggerInterface|null $contaoCronLogger = null,
     ) {
     }
 
@@ -41,64 +46,112 @@ class PurgePastBookingsCron
             return;
         }
 
-        /** @var Date $dateAdapter */
-        $dateAdapter = $this->framework->getAdapter(Date::class);
-
-        /** @var Database $databaseAdapter */
-        $databaseAdapter = $this->framework->getAdapter(Database::class);
-
-        /** @var ModuleModel $moduleAdapter */
-        $moduleAdapter = $this->framework->getAdapter(ModuleModel::class);
-
-        // Get all app configurations
-        $arrAppConfigs = System::getContainer()->getParameter('markocupic_resource_booking.apps');
-
-        $arrAppConfig = [];
         $intAffectedRows = 0;
 
-        $objStmt = $databaseAdapter->getInstance()
-            ->execute('SELECT * FROM tl_resource_booking GROUP BY moduleId')
-        ;
+        foreach ($this->getModuleIdsWithBookings() as $moduleId) {
+            $appConfig = $this->resolveAppConfigForModule($moduleId);
 
-        while ($objStmt->next()) {
-            $moduleId = $objStmt->moduleId;
-
-            if ((int) $moduleId > 0) {
-                if (!isset($arrAppConfig[$moduleId])) {
-                    if (null !== ($objModule = $moduleAdapter->findById($moduleId))) {
-                        $strConfig = $objModule->resourceBooking_appConfig ?? null;
-
-                        if (null !== $strConfig && isset($arrAppConfigs[$strConfig])) {
-                            $arrAppConfig[$moduleId] = $arrAppConfigs[$strConfig];
-                        }
-                    }
-                }
-
-                if (isset($arrAppConfig[$moduleId])) {
-                    $appConfig = $arrAppConfig[$moduleId];
-                    $intWeeks = $appConfig['intBackWeeks'];
-
-                    if ($intWeeks < 0) {
-                        $intWeeks = abs($intWeeks);
-                        $beginnWeek = $appConfig['beginnWeek'];
-                        $dateBeginnCurrentWeek = $dateAdapter->parse('d-m-Y', strtotime(\sprintf('%s this week', $beginnWeek)));
-
-                        // Calculate the limit from which we can delete the entries
-                        if (false !== ($tstampLimit = strtotime($dateBeginnCurrentWeek.' -'.$intWeeks.' weeks'))) {
-                            $objStmtDel = $databaseAdapter->getInstance()
-                                ->prepare('DELETE FROM tl_resource_booking WHERE moduleId=? AND endTime<?')
-                                ->execute($moduleId, $tstampLimit)
-                            ;
-
-                            $intAffectedRows += $objStmtDel->affectedRows;
-                        }
-                    }
-                }
+            if (null === $appConfig) {
+                continue;
             }
+
+            $tstampLimit = $this->calculatePurgeLimit($appConfig);
+
+            if (null === $tstampLimit) {
+                continue;
+            }
+
+            $intAffectedRows += $this->deleteExpiredBookings($moduleId, $tstampLimit);
         }
 
         if ($intAffectedRows > 0) {
-            $this->contaoCronLogger->info(\sprintf('CRON: tl_resource_booking has been cleared from %s old entries.', $intAffectedRows));
+            $this->contaoCronLogger?->info(\sprintf('CRON: tl_resource_booking has been cleared from %s old entries.', $intAffectedRows));
         }
+    }
+
+    /**
+     * Returns the distinct module ids that currently have bookings.
+     *
+     * @return list<int>
+     */
+    protected function getModuleIdsWithBookings(): array
+    {
+        // Select only the grouped column so the query is valid under ONLY_FULL_GROUP_BY.
+        $rows = $this->connection->fetchAllAssociative('SELECT moduleId FROM tl_resource_booking GROUP BY moduleId');
+
+        $moduleIds = [];
+
+        foreach ($rows as $row) {
+            $moduleId = (int) ($row['moduleId'] ?? 0);
+
+            if ($moduleId > 0) {
+                $moduleIds[] = $moduleId;
+            }
+        }
+
+        return $moduleIds;
+    }
+
+    /**
+     * Resolves the app configuration assigned to a module, or null if it cannot be resolved.
+     *
+     * @return array<string, mixed>|null
+     */
+    protected function resolveAppConfigForModule(int $moduleId): array|null
+    {
+        $moduleAdapter = $this->framework->getAdapter(ModuleModel::class);
+
+        if (null === ($objModule = $moduleAdapter->findById($moduleId))) {
+            return null;
+        }
+
+        $strConfig = $objModule->resourceBooking_appConfig ?? null;
+
+        if (null === $strConfig || !isset($this->appConfigs[$strConfig])) {
+            return null;
+        }
+
+        return $this->appConfigs[$strConfig];
+    }
+
+    /**
+     * Returns the timestamp before which bookings may be deleted, or null when
+     * the app config does not enable back-week purging (intBackWeeks >= 0).
+     *
+     * @param array<string, mixed> $appConfig
+     */
+    protected function calculatePurgeLimit(array $appConfig): int|null
+    {
+        $intBackWeeks = (int) $appConfig['intBackWeeks'];
+
+        // Only purge if bookings from past weeks are configured (negative value).
+        if ($intBackWeeks >= 0) {
+            return null;
+        }
+
+        $dateAdapter = $this->framework->getAdapter(Date::class);
+
+        $intWeeks = abs($intBackWeeks);
+        $beginnWeek = $appConfig['beginnWeek'];
+        $dateBeginnCurrentWeek = $dateAdapter->parse('d-m-Y', strtotime(\sprintf('%s this week', $beginnWeek)));
+
+        $tstampLimit = strtotime($dateBeginnCurrentWeek.' -'.$intWeeks.' weeks');
+
+        return false === $tstampLimit ? null : $tstampLimit;
+    }
+
+    protected function deleteExpiredBookings(int $moduleId, int $tstampLimit): int
+    {
+        return (int) $this->connection->executeStatement(
+            'DELETE FROM tl_resource_booking WHERE moduleId = ? AND endTime < ?',
+            [
+                $moduleId,
+                $tstampLimit,
+            ],
+            [
+                Types::INTEGER,
+                Types::INTEGER,
+            ],
+        );
     }
 }

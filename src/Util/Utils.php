@@ -18,6 +18,7 @@ use Contao\Controller;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\ModuleModel;
 use Contao\System;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionBagInterface;
 
@@ -28,7 +29,8 @@ class Utils
     public function __construct(
         private readonly ContaoFramework $framework,
         RequestStack $requestStack,
-        string $bagName,
+        #[Autowire('%markocupic_resource_booking.session.attribute_bag_name%')]
+        private readonly string $bagName,
     ) {
         // Get session from request
         if (null !== ($request = $requestStack->getCurrentRequest())) {

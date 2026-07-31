@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\DataContainer;
 
 use Contao\CoreBundle\DependencyInjection\Attribute\AsCallback;
+use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\DataContainer;
 use Contao\Date;
 use Contao\Message;
@@ -23,9 +24,10 @@ use Doctrine\DBAL\Types\Types;
 use Markocupic\ResourceBookingBundle\Util\UtcTimeHelper;
 use Symfony\Component\HttpFoundation\RequestStack;
 
-class ResourceBookingTimeSlot
+readonly class ResourceBookingTimeSlot
 {
     public function __construct(
+        private ContaoFramework $framework,
         private Connection $connection,
         private RequestStack $requestStack,
     ) {
@@ -34,8 +36,16 @@ class ResourceBookingTimeSlot
     #[AsCallback(table: 'tl_resource_booking_time_slot', target: 'list.sorting.child_record')]
     public function childRecordCallback(array $row): string
     {
-        $startTimeFormatted = UtcTimeHelper::parseStartTime($row['startTime']);
-        $endTimeFormatted = UtcTimeHelper::parseEndTime($row['endTime']);
+        $startTimeFormatted = $this->framework
+            ->getAdapter(UtcTimeHelper::class)
+            ->parseStartTime($row['startTime'])
+        ;
+
+        $endTimeFormatted = $this->framework
+            ->getAdapter(UtcTimeHelper::class)
+            ->parseEndTime($row['endTime'])
+        ;
+
         $endTimeFormatted = '00:00' === $endTimeFormatted ? '24:00' : $endTimeFormatted;
 
         return \sprintf('<div class="tl_content_left"><span style="color:#999;padding-left:3px">'.$row['title'].'</span> %s-%s</div>', $startTimeFormatted, $endTimeFormatted);
@@ -47,7 +57,10 @@ class ResourceBookingTimeSlot
         $strTime = '';
 
         if ($timestamp >= 0) {
-            $strTime = UtcTimeHelper::parseStartTime($timestamp);
+            $strTime = $this->framework
+                ->getAdapter(UtcTimeHelper::class)
+                ->parseStartTime($timestamp)
+            ;
         }
 
         return $strTime;
@@ -59,7 +72,10 @@ class ResourceBookingTimeSlot
         $strTime = '';
 
         if ($timestamp >= 0) {
-            $strTime = UtcTimeHelper::parseEndTime($timestamp);
+            $strTime = $this->framework
+                ->getAdapter(UtcTimeHelper::class)
+                ->parseEndTime($timestamp)
+            ;
         }
 
         return $strTime;
@@ -73,14 +89,20 @@ class ResourceBookingTimeSlot
     #[AsCallback(table: 'tl_resource_booking_time_slot', target: 'fields.startTime.save', priority: 100)]
     public function setCorrectStartTime(string $strTime, DataContainer $dc): int
     {
+        $request = $this->requestStack->getCurrentRequest();
+
         if (preg_match('/^(2[0-3]|[01][0-9]):[0-5][0-9]$/', $strTime)) {
-            if ('24:00' === $strTime) {
-                $timestamp = UtcTimeHelper::strToTime('1970-01-01 24:00');
-            } else {
-                $timestamp = UtcTimeHelper::strToTime('1970-01-01 '.$strTime);
-            }
+            $timestamp = $this->framework
+                ->getAdapter(UtcTimeHelper::class)
+                ->strToTime('1970-01-01 '.$strTime)
+            ;
         } else {
-            $timestamp = 0;
+            $timestamp = $this->framework
+                ->getAdapter(UtcTimeHelper::class)
+                ->strToTime('1970-01-01 00:00')
+            ; // -> 0
+
+            $request->request->set('startTime', '00:00');
         }
 
         return $timestamp;
@@ -103,9 +125,15 @@ class ResourceBookingTimeSlot
             }
 
             if ('24:00' === $strTime) {
-                $timestampEndTime = UtcTimeHelper::strToTime('1970-01-02 00:00');
+                $timestampEndTime = $this->framework
+                    ->getAdapter(UtcTimeHelper::class)
+                    ->strToTime('1970-01-02 00:00')
+                ;
             } else {
-                $timestampEndTime = UtcTimeHelper::strToTime('1970-01-01 '.$strTime);
+                $timestampEndTime = $this->framework
+                    ->getAdapter(UtcTimeHelper::class)
+                    ->strToTime('1970-01-01 '.$strTime)
+                ;
             }
         } else {
             $timestampEndTime = 0;
@@ -115,11 +143,17 @@ class ResourceBookingTimeSlot
         if (!empty($request->request->get('startTime'))) {
             $strStartTime = $request->request->get('startTime');
         } else {
-            $strStartTime = UtcTimeHelper::parseStartTime($dc->activeRecord->startTime);
+            $strStartTime = $this->framework
+                ->getAdapter(UtcTimeHelper::class)
+                ->parseStartTime($dc->activeRecord->startTime)
+            ;
         }
 
         if (!empty($strStartTime)) {
-            $startTime = UtcTimeHelper::strToTime('01-01-1970 '.$strStartTime);
+            $startTime = $this->framework
+                ->getAdapter(UtcTimeHelper::class)
+                ->strToTime('01-01-1970 '.$strStartTime)
+            ;
 
             if ($timestampEndTime <= $startTime) {
                 $timestampEndTime = $startTime + 60;
@@ -159,7 +193,10 @@ class ResourceBookingTimeSlot
             )
         ;
 
-        Message::addInfo('Deleted bookings with ids '.implode(',', $arrIdsDel));
+        $this->framework
+            ->getAdapter(Message::class)
+            ->addInfo('Deleted bookings with ids '.implode(',', $arrIdsDel))
+        ;
     }
 
     #[AsCallback(table: 'tl_resource_booking_time_slot', target: 'config.onsubmit')]
@@ -197,10 +234,25 @@ class ResourceBookingTimeSlot
             $arrFields = ['startTime', 'endTime'];
 
             foreach ($arrFields as $field) {
-                $strDateOld = Date::parse('Y-m-d H:i', $arrBooking[$field]);
+                $strDateOld = $this->framework
+                    ->getAdapter(Date::class)
+                    ->parse('Y-m-d H:i', $arrBooking[$field])
+                ;
+
                 $arrDateOld = explode(' ', $strDateOld);
-                $strTimeNew = 'startTime' === $field ? UtcTimeHelper::parseStartTime($arrSlot[$field]) : UtcTimeHelper::parseEndTime($arrSlot[$field]);
+
+                $strTimeNew = 'startTime' === $field
+                    ?
+                    $this->framework
+                        ->getAdapter(UtcTimeHelper::class)
+                        ->parseStartTime($arrSlot[$field])
+                    :
+                    $this->framework->getAdapter(UtcTimeHelper::class)
+                        ->parseEndTime($arrSlot[$field])
+                ;
+
                 $strDateNew = $arrDateOld[0].' '.$strTimeNew;
+
                 $set[$field] = strtotime($strDateNew);
             }
 
@@ -215,7 +267,10 @@ class ResourceBookingTimeSlot
         }
 
         if (!empty($arrAdapted)) {
-            Message::addInfo('Adapted start- and end-time for booking with ids '.implode(',', $arrAdapted));
+            $this->framework
+                ->getAdapter(Message::class)
+                ->addInfo('Adapted start- and end-time for booking with ids '.implode(',', $arrAdapted))
+            ;
         }
     }
 }

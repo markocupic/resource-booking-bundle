@@ -15,15 +15,21 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\DataContainer;
 
 use Contao\CoreBundle\DependencyInjection\Attribute\AsCallback;
+use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Database;
 use Contao\System;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 class Module
 {
-    public function __construct(private readonly Connection $connection)
-    {
+    public function __construct(
+        private readonly ContaoFramework $framework,
+        private readonly Connection $connection,
+        #[Autowire('%markocupic_resource_booking.apps%')]
+        private readonly array $appConfigs,
+    ) {
     }
 
     /**
@@ -40,20 +46,25 @@ class Module
     #[AsCallback(table: 'tl_module', target: 'fields.resourceBooking_appConfig.options')]
     public function getAppConfigurations(): array
     {
-        $appConfig = System::getContainer()->getParameter('markocupic_resource_booking.apps');
-
-        return array_keys($appConfig);
+        return array_keys($this->appConfigs);
     }
 
     #[AsCallback(table: 'tl_module', target: 'fields.resourceBooking_clientPersonalData.options')]
     public function getTlMemberFields(): array
     {
-        $arrFieldNames = Database::getInstance()->getFieldNames('tl_member');
+        $fieldNames = $this->framework
+            ->getAdapter(Database::class)
+            ->getInstance()->getFieldNames('tl_member')
+        ;
 
-        System::loadLanguageFile('tl_member');
+        $this->framework
+            ->getAdapter(System::class)
+            ->loadLanguageFile('tl_member')
+        ;
+
         $arrOpt = [];
 
-        foreach ($arrFieldNames as $fieldName) {
+        foreach ($fieldNames as $fieldName) {
             if ('id' === $fieldName || 'password' === $fieldName) {
                 continue;
             }
@@ -67,9 +78,16 @@ class Module
     #[AsCallback(table: 'tl_module', target: 'fields.resourceBooking_bookingSubmittedFields.options')]
     public function getTlResourceBookingFields(): array
     {
-        $arrFieldNames = Database::getInstance()->getFieldNames('tl_resource_booking');
-        System::loadLanguageFile('tl_resource_booking');
+        $fieldNames = $this->framework
+            ->getAdapter(Database::class)
+            ->getInstance()->getFieldNames('tl_resource_booking')
+        ;
 
-        return $arrFieldNames;
+        $this->framework
+            ->getAdapter(System::class)
+            ->loadLanguageFile('tl_resource_booking')
+        ;
+
+        return $fieldNames;
     }
 }

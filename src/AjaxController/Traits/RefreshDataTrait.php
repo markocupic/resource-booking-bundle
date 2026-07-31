@@ -27,26 +27,45 @@ use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceTypeModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotModel;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
+use Markocupic\ResourceBookingBundle\Slot\SlotFactory;
 use Markocupic\ResourceBookingBundle\Slot\SlotMain;
 use Markocupic\ResourceBookingBundle\Util\DateHelper;
 use Markocupic\ResourceBookingBundle\Util\Str;
 use Markocupic\ResourceBookingBundle\Util\UtcTimeHelper;
+use Symfony\Contracts\Service\Attribute\Required;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
  * Trait RefreshDataTrait.
  */
 trait RefreshDataTrait
 {
+    protected SlotFactory $slotFactory;
+
+    protected TranslatorInterface $translator;
+
+    #[Required]
+    public function setSlotFactory(SlotFactory $slotFactory): void
+    {
+        $this->slotFactory = $slotFactory;
+    }
+
+    #[Required]
+    public function setTranslator(TranslatorInterface $translator): void
+    {
+        $this->translator = $translator;
+    }
+
     /**
      * @throws \Exception
      */
     private function getRefreshedData(AjaxResponse $ajaxResponse): array
     {
-        $systemAdapter = $this->framework->getAdapter(System::class);
-        $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
-        $dateAdapter = $this->framework->getAdapter(Date::class);
         $configAdapter = $this->framework->getAdapter(Config::class);
+        $dateAdapter = $this->framework->getAdapter(Date::class);
+        $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
         $strAdapter = $this->framework->getAdapter(Str::class);
+        $systemAdapter = $this->framework->getAdapter(System::class);
 
         $arrData = [];
 
@@ -222,7 +241,7 @@ trait RefreshDataTrait
             $arrReturn['disabled'] = true;
         }
 
-        if (!$this->sessionBag->get('activeWeekTstamp') > 0 || null === $this->getActiveResourceTypeFromSession() || null === $this->getActiveResourceFromSession()) {
+        if (!($this->sessionBag->get('activeWeekTstamp') > 0) || null === $this->getActiveResourceTypeFromSession() || null === $this->getActiveResourceFromSession()) {
             $arrReturn['disabled'] = true;
         }
 
@@ -357,6 +376,10 @@ trait RefreshDataTrait
             return $rows;
         }
 
+        // Resolve the list of available booking fields once; it is constant for the whole request.
+        $databaseAdapter = $this->framework->getAdapter(Database::class);
+        $arrAvailable = $databaseAdapter->getInstance()->listFields('tl_resource_booking');
+
         $objTimeslot = $resourceBookingTimeSlotModelAdapter->findPublishedByPid((int) $resourceModel->timeSlotType);
         $rowCount = 0;
 
@@ -438,8 +461,6 @@ trait RefreshDataTrait
                             }
 
                             // Send booking details (tl_resource_booking)
-                            $databaseAdapter = $this->framework->getAdapter(Database::class);
-                            $arrAvailable = $databaseAdapter->getInstance()->listFields('tl_resource_booking');
                             $arrShowAlways = ['id', 'pid', 'itemsBooked', 'bookingTime', 'confirmed'];
 
                             // However, only show the fields that have been permitted in the module settings (tl_module.resourceBooking_bookingSubmittedFields).
@@ -469,7 +490,8 @@ trait RefreshDataTrait
                                 }
                             }
 
-                            $booking['canCancel'] = $slot->isCancelable() && (int) $user->id === (int) $objMember->id;
+                            // A user may only cancel their own bookings: both must exist and share the same id.
+                            $booking['canCancel'] = $slot->isCancelable() && null !== $user && null !== $objMember && (int) $user->id === (int) $objMember->id;
 
                             $arrBookings[] = $booking;
 

@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\DependencyInjection\Compiler;
 
+use Markocupic\ResourceBookingBundle\EventSubscriber\AjaxRequestEventSubscriber;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Exception\InvalidArgumentException;
@@ -27,9 +28,9 @@ class AddAjaxControllerPass implements CompilerPassInterface
      */
     public function process(ContainerBuilder $container): void
     {
-        $definition = $container->findDefinition('Markocupic\ResourceBookingBundle\EventSubscriber\AjaxRequestEventSubscriber');
+        $definition = $container->findDefinition(AjaxRequestEventSubscriber::class);
 
-        // Find all service IDs with the huh.api.resource tag
+        // Find all service IDs with the markocupic_resource_booking.ajax_controller tag
         $taggedServices = $container->findTaggedServiceIds('markocupic_resource_booking.ajax_controller');
 
         foreach ($taggedServices as $id => $tags) {

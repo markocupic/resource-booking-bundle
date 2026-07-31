@@ -16,30 +16,13 @@ namespace Markocupic\ResourceBookingBundle\AjaxController;
 
 use Markocupic\ResourceBookingBundle\AjaxController\Traits\RefreshDataTrait;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
-use Markocupic\ResourceBookingBundle\Slot\SlotFactory;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Contracts\Service\Attribute\Required;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class RefreshDataController extends AbstractController implements ControllerInterface
 {
     use RefreshDataTrait;
 
     public const REQUEST_NAME = 'refreshDataRequest';
-
-    private SlotFactory $slotFactory;
-
-    private TranslatorInterface $translator;
-
-    /**
-     * Use setter inection here.
-     */
-    #[Required]
-    public function _setController(SlotFactory $slotFactory, TranslatorInterface $translator): void
-    {
-        $this->slotFactory = $slotFactory;
-        $this->translator = $translator;
-    }
 
     /**
      * @throws \Exception

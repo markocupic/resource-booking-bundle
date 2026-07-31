@@ -138,7 +138,8 @@ class SlotCollection implements \ArrayAccess, \Countable, \IteratorAggregate
     public function sortBy(string $key): self
     {
         foreach ($this->slots as $slot) {
-            if (empty((string) $slot->{$key})) {
+            // Reject null/empty string, but allow legitimate "0"/0 values.
+            if ('' === (string) ($slot->{$key} ?? '')) {
                 throw new \InvalidArgumentException(\sprintf("Cannot sort collection: '%s' has an empty value.", $key));
             }
         }

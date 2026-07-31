@@ -17,7 +17,6 @@ namespace Markocupic\ResourceBookingBundle\Slot;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Util\Utils;
-use Symfony\Component\PasswordHasher\Exception\LogicException;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 class SlotFactory
@@ -46,6 +45,6 @@ class SlotFactory
             return $slotEntity->create($timeSlotId, $resource, $startTime, $endTime, $desiredItems, $bookingRepeatStopWeekTstamp);
         }
 
-        throw new LogicException(\sprintf('Variable $mode should either be "%s" or "%s" "%s" given.', SlotMain::MODE, SlotBooking::MODE, $mode));
+        throw new \LogicException(\sprintf('Variable $mode should either be "%s" or "%s" "%s" given.', SlotMain::MODE, SlotBooking::MODE, $mode));
     }
 }

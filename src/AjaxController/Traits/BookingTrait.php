@@ -20,35 +20,46 @@ use Contao\Date;
 use Contao\Input;
 use Markocupic\ResourceBookingBundle\Slot\SlotBooking;
 use Markocupic\ResourceBookingBundle\Slot\SlotCollection;
+use Markocupic\ResourceBookingBundle\Slot\SlotFactory;
 use Markocupic\ResourceBookingBundle\Slot\SlotMain;
 use Markocupic\ResourceBookingBundle\Util\DateHelper;
 use Ramsey\Uuid\Uuid;
+use Symfony\Component\HtmlSanitizer\HtmlSanitizerInterface;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Contracts\Service\Attribute\Required;
 
 trait BookingTrait
 {
+    protected HtmlSanitizerInterface $htmlSanitizer;
+
+    protected SlotFactory $slotFactory;
+
+    #[Required]
+    public function setHtmlSanitizer(HtmlSanitizerInterface $htmlSanitizer): void
+    {
+        $this->htmlSanitizer = $htmlSanitizer;
+    }
+
+    #[Required]
+    public function setSlotFactory(SlotFactory $slotFactory): void
+    {
+        $this->slotFactory = $slotFactory;
+    }
+
     /**
      * @throws \Exception
      */
-    protected function getSlotCollectionFromRequest(int $bookingRepeatStopWeekTstamp): SlotCollection|null
+    protected function getSlotCollectionFromRequest(Request $request, int $bookingRepeatStopWeekTstamp): SlotCollection|null
     {
-        /** @var DateHelper $dateHelperAdapter */
-        $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
-
-        /** @var Date $dateAdapter */
-        $dateAdapter = $this->framework->getAdapter(Date::class);
-
-        $inputAdapter = $this->framework->getAdapter(Input::class);
-
-        /** @var Config $configAdapter */
-        $configAdapter = $this->framework->getAdapter(Config::class);
-
         $arrSlotCollection = [];
         $resource = $this->getActiveResource();
-        $itemsBooked = empty($inputAdapter->post('itemsBooked')) ? 1 : (int) $inputAdapter->post('itemsBooked');
-        $description = (string) $inputAdapter->post('bookingDescription');
+        $itemsBooked = empty((int) $request->request->get('itemsBooked')) ? 1 : (int) $request->request->get('itemsBooked');
+        // Consider input encoding!!!
+        $description = (string) $this->framework->getAdapter(Input::class)->post('bookingDescription');
+        $description = $this->htmlSanitizer->sanitize($description); // Remove malicious code
         // $request->request->get('bookingDateSelection') won't work, because
         // Symfony doesn't allow non-scalar values in the input bag (design change since Symfony 6)
-        $arrDateSelection = $inputAdapter->post('bookingDateSelection');
+        $arrDateSelection = $request->request->all()['bookingDateSelection'] ?? null;
 
         if (!empty($arrDateSelection) && \is_array($arrDateSelection)) {
             foreach ($arrDateSelection as $strTimeSlot) {
@@ -79,8 +90,8 @@ trait BookingTrait
                     $doRepeat = true;
 
                     while (true === $doRepeat) {
-                        $startTime = $dateHelperAdapter->addDaysToTime(7, $startTime);
-                        $endTime = $dateHelperAdapter->addDaysToTime(7, $endTime);
+                        $startTime = $this->framework->getAdapter(DateHelper::class)->addDaysToTime(7, $startTime);
+                        $endTime = $this->framework->getAdapter(DateHelper::class)->addDaysToTime(7, $endTime);
 
                         /** @var SlotMain $slot */
                         $slot = $this->slotFactory->get(
@@ -106,13 +117,7 @@ trait BookingTrait
 
         $slotCollection = (new SlotCollection($arrSlotCollection))->sortBy('startTime');
 
-        // Load data container
-        $this->framework
-            ->getAdapter(Controller::class)
-            ->loadDataContainer('tl_resource_booking')
-        ;
-
-        $dca = $GLOBALS['TL_DCA']['tl_resource_booking'];
+        $dca = $this->loadDcaForTable('tl_resource_booking');
 
         $arrUserInput = [
             'member' => $this->user->getLoggedInUser()->id,
@@ -127,12 +132,14 @@ trait BookingTrait
         // Custom form fields must be registered in the bundle configuration
         // @See: BookingController::validateInputs()
 
-        $keys = array_keys($_POST ?? []);
+        $keys = array_keys($request->request->all());
 
         foreach ($keys as $k) {
             if (!isset($arrUserInput[$k])) {
-                $blnDecode = isset($dca['fields'][$k]['eval']['decodeEntities']) && true === $dca['fields'][$k]['eval']['decodeEntities'];
-                $arrUserInput[$k] = $blnDecode ? $inputAdapter->post($k, true) : $inputAdapter->post($k);
+                $blnDecode = ($dca['fields'][$k]['eval']['decodeEntities'] ?? false) === true;
+                // Consider input encoding!!!
+                $value = $this->framework->getAdapter(Input::class)->post($k, $blnDecode);
+                $arrUserInput[$k] = \is_string($value) ? $this->htmlSanitizer->sanitize($value) : $value;
             }
         }
 
@@ -153,14 +160,24 @@ trait BookingTrait
                 $this->translator->trans('MSC.bookedBy', [], 'contao_default'),
                 $this->user->getLoggedInUser()->firstname,
                 $this->user->getLoggedInUser()->lastname,
-                $dateAdapter->parse($configAdapter->get('datimFormat'), $slot->startTime),
-                $dateAdapter->parse($configAdapter->get('datimFormat'), $slot->endTime),
+                $this->framework->getAdapter(Date::class)->parse($this->framework->getAdapter(Config::class)->get('datimFormat'), $slot->startTime),
+                $this->framework->getAdapter(Date::class)->parse($this->framework->getAdapter(Config::class)->get('datimFormat'), $slot->endTime),
             );
 
             $slotCollection->current()->setBookingData($arrUserInput);
         }
 
         return $slotCollection;
+    }
+
+    private function loadDcaForTable(string $tableName): array
+    {
+        $this->framework
+            ->getAdapter(Controller::class)
+            ->loadDataContainer($tableName)
+        ;
+
+        return $GLOBALS['TL_DCA'][$tableName];
     }
 
     private function getBookingUuid(): string

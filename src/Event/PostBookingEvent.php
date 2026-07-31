@@ -34,10 +34,10 @@ class PostBookingEvent extends Event
 
     public function getRequest(): Request
     {
-        return $this->getRequest();
+        return $this->request;
     }
 
-    public function getBookingCollection(): Collection
+    public function getBookingCollection(): Collection|null
     {
         return $this->bookingCollection;
     }

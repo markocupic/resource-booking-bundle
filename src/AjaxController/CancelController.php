@@ -46,15 +46,27 @@ final class CancelController extends AbstractController implements ControllerInt
 
     private LoggerInterface|null $contaoGeneralLogger = null;
 
-    /**
-     * Use setter injection here.
-     */
     #[Required]
-    public function _setController(Connection $connection, EventDispatcherInterface $eventDispatcher, TranslatorInterface $translator, LoggerInterface|null $contaoErrorLogger = null, LoggerInterface|null $contaoGeneralLogger = null): void
+    public function setConnection(Connection $connection): void
     {
         $this->connection = $connection;
+    }
+
+    #[Required]
+    public function setEventDispatcher(EventDispatcherInterface $eventDispatcher): void
+    {
         $this->eventDispatcher = $eventDispatcher;
+    }
+
+    #[Required]
+    public function setTranslator(TranslatorInterface $translator): void
+    {
         $this->translator = $translator;
+    }
+
+    #[Required]
+    public function setLoggers(LoggerInterface|null $contaoErrorLogger = null, LoggerInterface|null $contaoGeneralLogger = null): void
+    {
         $this->contaoErrorLogger = $contaoErrorLogger;
         $this->contaoGeneralLogger = $contaoGeneralLogger;
     }
@@ -84,7 +96,7 @@ final class CancelController extends AbstractController implements ControllerInt
                 throw new StopBookingCancellationException($this->translator->trans('RBB.ERR.bookingNotFound', [$bookingId], 'contao_default'));
             }
 
-            if ($booking->member !== $user->id) {
+            if ((int) $booking->member !== (int) $user->id) {
                 throw new StopBookingCancellationException($this->translator->trans('RBB.ERR.notAuthorized', [], 'contao_default'));
             }
 

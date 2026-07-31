@@ -23,27 +23,47 @@
         "source": "https://github.com/markocupic/resource-booking-bundle"
     },
     "require": {
-        "php": "^8.1",
+        "php": "^8.3",
         "ext-simplexml": "*",
         "contao/core-bundle": "^5.3",
         "markocupic/contao-component-bootstrap": "^5.0",
         "markocupic/contao-twig-assets": "^1.1",
-        "ramsey/uuid": "^3.0 || ^4.0 || ^5.0" ,
+        "ramsey/uuid": "^3.0 || ^4.0 || ^5.0",
         "symfony/http-foundation": "^6.0 || ^7.0 || ^8.0",
         "symfony/security-bundle": "^6.0 || ^7.0 || ^8.0",
         "symfony/validator": "^6.0 || ^7.0 || ^8.0"
     },
     "require-dev": {
+        "contao/test-case": "^5.7",
         "markocupic/easy-coding-standard": "^13.0",
-        "symfony/webpack-encore-bundle": "^2.0",
-        "phpstan/phpstan": "^2.1"
+        "phpstan/phpstan": "^2.2",
+        "phpunit/phpunit": "^12.5|^13.0",
+        "symfony/webpack-encore-bundle": "^2.0"
     },
     "autoload": {
         "psr-4": {
             "Markocupic\\ResourceBookingBundle\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Markocupic\\ResourceBookingBundle\\Tests\\": "tests/"
+        }
+    },
     "extra": {
         "contao-manager-plugin": "Markocupic\\ResourceBookingBundle\\ContaoManager\\Plugin"
+    },
+    "config": {
+        "allow-plugins": {
+            "contao-community-alliance/composer-plugin": true,
+            "contao-components/installer": true,
+            "contao/manager-plugin": true,
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    },
+    "scripts": {
+        "cs-fixer": "@php tools/ecs/vendor/bin/ecs check config/ contao/ src/ templates/ tests/ --config tools/ecs/config/default.php --fix --ansi",
+        "phpstan": "@php tools/phpstan/vendor/bin/phpstan analyse src tests",
+        "unit-tests": "@php tools/phpunit/vendor/bin/phpunit -c tools/phpunit/phpunit.xml.dist"
     }
 }

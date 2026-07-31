@@ -18,6 +18,7 @@ use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController
 use Contao\CoreBundle\Csrf\ContaoCsrfTokenManager;
 use Contao\CoreBundle\DependencyInjection\Attribute\AsFrontendModule;
 use Contao\CoreBundle\Exception\ResponseException;
+use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Routing\ScopeMatcher;
 use Contao\ModuleModel;
 use Contao\PageModel;
@@ -43,6 +44,7 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
     public function __construct(
         private readonly AjaxResponseFactory $ajaxResponseFactory,
         private readonly ContaoCsrfTokenManager $contaoCsrfTokenManager,
+        private readonly ContaoFramework $framework,
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly Initialize $appInitializer,
         private readonly RequestStack $requestStack,
@@ -70,9 +72,13 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
              * Do only run once ModuleIndex::generateModuleIndex() per module instance; */
             $request = $this->requestStack->getCurrentRequest();
 
-            ModuleIndex::generateModuleIndex();
-            ModuleKey::setModuleKey($model->id.'_'.ModuleIndex::getModuleIndex());
-            $moduleKey = ModuleKey::getModuleKey();
+            $moduleIndexAdapter = $this->framework->getAdapter(ModuleIndex::class);
+            $moduleKeyAdapter = $this->framework->getAdapter(ModuleKey::class);
+            $tokenManagerAdapter = $this->framework->getAdapter(TokenManager::class);
+
+            $moduleIndexAdapter->generateModuleIndex();
+            $moduleKeyAdapter->setModuleKey($model->id.'_'.$moduleIndexAdapter->getModuleIndex());
+            $moduleKey = $moduleKeyAdapter->getModuleKey();
 
             // Send empty response on ajax requests, if token is missing
             if ($request->isXmlHttpRequest() && !$request->query->has('token_'.$moduleKey)) {
@@ -81,8 +87,8 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
 
             // Generate token on non-ajax requests, if token is missin then add it as query parameter to the url and reload the page.
             if (!$request->isXmlHttpRequest() && !$request->query->has('token_'.$moduleKey)) {
-                TokenManager::generateToken();
-                $request->query->add(['token_'.$moduleKey => TokenManager::getToken()]);
+                $tokenManagerAdapter->generateToken();
+                $request->query->add(['token_'.$moduleKey => $tokenManagerAdapter->getToken()]);
                 $request->overrideGlobals();
 
                 return new RedirectResponse($request->getUri());
@@ -118,9 +124,11 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
         );
 
         $response->setStatusCode(200);
+        // Set the shared max age first: setSharedMaxAge() internally calls
+        // setPublic(), so it must run before setPrivate() to keep the response private.
+        $response->setSharedMaxAge(0);
         $response->setPrivate();
         $response->setMaxAge(0);
-        $response->setSharedMaxAge(0);
         $response->headers->addCacheControlDirective('must-revalidate', true);
         $response->headers->addCacheControlDirective('no-store', true);
 
@@ -133,7 +141,7 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
     protected function getResponse(Template $template, ModuleModel $model, Request $request): Response
     {
         // Used, if multiple rbb modules are used on the same page
-        $template->moduleKey = ModuleKey::getModuleKey();
+        $template->moduleKey = $this->framework->getAdapter(ModuleKey::class)->getModuleKey();
         $template->csrfToken = $this->contaoCsrfTokenManager->getDefaultTokenValue();
 
         // Let vue.js take care of the rest ;-)

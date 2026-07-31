@@ -19,6 +19,7 @@ use Contao\ModuleModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\User\LoggedInFrontendUser;
 use Markocupic\ResourceBookingBundle\Util\Utils;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionBagInterface;
 
@@ -39,7 +40,8 @@ abstract class AbstractController
         protected LoggedInFrontendUser $user,
         protected RequestStack $requestStack,
         protected Utils $utils,
-        string $bagName,
+        #[Autowire('%markocupic_resource_booking.session.attribute_bag_name%')]
+        private readonly string $bagName,
     ) {
         // Get session from request
         if (null !== ($request = $requestStack->getCurrentRequest())) {

@@ -23,6 +23,7 @@ use Markocupic\ResourceBookingBundle\Util\DateHelper;
 use Markocupic\ResourceBookingBundle\Validator\Constraints\RbbEndTime;
 use Markocupic\ResourceBookingBundle\Validator\Constraints\RbbStartTime;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class RegExpListener
 {
@@ -32,6 +33,7 @@ class RegExpListener
 
     public function __construct(
         private readonly ContaoFramework $framework,
+        private readonly TranslatorInterface $translator,
         private readonly ValidatorInterface $validator,
     ) {
     }
@@ -48,11 +50,11 @@ class RegExpListener
             $violations = $this->validator->validate($varValue, new RbbStartTime());
 
             if (\count($violations) > 0) {
-                $objWidget->addError($GLOBALS['TL_LANG']['RBB']['MSG']['pleaseInsertValidBookingStartTime']);
+                $objWidget->addError($this->translator->trans('RBB.MSG.pleaseInsertValidBookingStartTime', [], 'contao_default'));
             }
 
             if (!$this->getDateHelper()->isValidBookingTime($varValue)) {
-                $objWidget->addError($GLOBALS['TL_LANG']['RBB']['MSG']['pleaseInsertValidBookingStartTime']);
+                $objWidget->addError($this->translator->trans('RBB.MSG.pleaseInsertValidBookingStartTime', [], 'contao_default'));
             }
 
             return true;
@@ -67,11 +69,11 @@ class RegExpListener
             $violations = $this->validator->validate($varValue, new RbbEndTime());
 
             if (\count($violations) > 0) {
-                $objWidget->addError($GLOBALS['TL_LANG']['RBB']['MSG']['pleaseInsertValidBookingEndTime']);
+                $objWidget->addError($this->translator->trans('RBB.MSG.pleaseInsertValidBookingEndTime', [], 'contao_default'));
             }
 
             if (!$this->getDateHelper()->isValidBookingTime($varValue)) {
-                $objWidget->addError($GLOBALS['TL_LANG']['RBB']['MSG']['pleaseInsertValidBookingEndTime']);
+                $objWidget->addError($this->translator->trans('RBB.MSG.pleaseInsertValidBookingEndTime', [], 'contao_default'));
             }
 
             return true;

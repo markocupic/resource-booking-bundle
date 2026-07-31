@@ -34,7 +34,7 @@ class PostCancellingEvent extends Event
 
     public function getRequest(): Request
     {
-        return $this->getRequest();
+        return $this->request;
     }
 
     public function getBookingCollection(): Collection|null
