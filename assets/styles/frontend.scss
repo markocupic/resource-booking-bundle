@@ -1,17 +1,3 @@
-$slotIsNotBookable: #e9ecef;
-$slotIsBlockedBg: $slotIsNotBookable;
-$bookableBg: rgba(115, 207, 97, 0.42);
-$fullyBookedBg: rgb(255, 222, 213);
-$bgColorAlertSuccess: $bookableBg;
-$bgColorAlertDanger: $fullyBookedBg;
-$slotIsFullyBookedButUnconfirmedBg: #ffd085;
-$loggedInUserIsHolderBg: rgba(3, 169, 244, 0.32);
-$iconBookingColor: #ffffff;
-$iconCancelBookingColor: #ffffff;
-$iconCancelBookingHoverColor: red;
-$tableBorderColor: #ccc;
-$transitionSpeed: .8s;
-
 .rbb-custom-scroll-bar-thin {
   & {
     scrollbar-width: thin;
@@ -19,6 +5,58 @@ $transitionSpeed: .8s;
 }
 
 .mod_resourceBookingWeekcalendar {
+  // ---------------------------------------------------------------------------
+  // Color tokens (light / dark) as native CSS custom properties.
+  // light-dark() only resolves when `color-scheme` is set (done right below),
+  // so the calendar automatically follows the user's OS / browser preference.
+  // Syntax: light-dark(<light value>, <dark value>)
+  //
+  // These are runtime CSS variables: they can be inspected in DevTools and
+  // overridden per instance / theme without recompiling the SCSS.
+  //
+  // NOTE: a local `color-scheme` declaration shadows the value inherited from
+  // <html>. So even though the theme toggle sets color-scheme: dark on <html>,
+  // this element would fall back to OS preference. We therefore bind
+  // color-scheme to the app-wide Bootstrap toggle (<html data-bs-theme="...">),
+  // which wins by specificity over the light-dark fallback below.
+  // ---------------------------------------------------------------------------
+  color-scheme: light dark; // Fallback (JS off): OS preference
+
+  :root[data-bs-theme="light"] & {
+    color-scheme: light; // Active binding to Bootstrap theme toggle
+  }
+
+  :root[data-bs-theme="dark"] & {
+    color-scheme: dark; // Active binding to Bootstrap theme toggle
+  }
+
+  // Slot backgrounds
+  --rbb-cell-bg: light-dark(#ffffff, #232429);
+  --rbb-cell-border-color: light-dark(#ffffff, #232429);
+  --rbb-cell-not-bookable-bg: light-dark(#e9ecef, #343a40);
+  --rbb-cell-blocked-bg: var(--rbb-cell-not-bookable-bg);
+  --rbb-cell-bookable-bg: light-dark(#c6e9c1, #00986a);
+  --rbb-cell-fully-booked-bg: light-dark(#ffded5, #8b2e2e);
+  --rbb-cell-unconfirmed-bg: light-dark(#f7d87f, #b89123);
+
+  // Alerts
+  --rbb-alert-success-bg: var(--rbb-cell-bookable-bg);
+  --rbb-alert-danger-bg: var(--rbb-cell-fully-booked-bg);
+
+  // Icons
+  --rbb-icon-booking-color: #ffffff;
+  --rbb-icon-cancel-color: #ffffff;
+  --rbb-icon-cancel-hover-color: red;
+
+  // Structure / neutrals
+  --rbb-text-color: light-dark(#000000, #e9ecef);
+  --rbb-scroll-thumb: light-dark(#000000, #adb5bd);
+  --rbb-scroll-track: var(--rbb-cell-bg);
+  --rbb-loading-spinner-color: light-dark(#d8d8d8, #6c757d);
+  --rbb-past-week-color: light-dark(#8e8e8e, #868e96);
+
+  // Misc
+  --rbb-transition-speed: .8s;
 
   .rbb-opacity-0 {
     opacity: 0;
@@ -35,8 +73,8 @@ $transitionSpeed: .8s;
   }
 
   .alert-danger {
-    background-color: $bgColorAlertDanger;
-    color: #000000;
+    background-color: var(--rbb-alert-danger-bg);
+    color: var(--rbb-text-color);
 
     .rbb-icon {
       color: #ffffff;
@@ -44,8 +82,8 @@ $transitionSpeed: .8s;
   }
 
   .alert-success {
-    background-color: $bgColorAlertSuccess;
-    color: #000000;
+    background-color: var(--rbb-alert-success-bg);
+    color: var(--rbb-text-color);
 
     .rbb-icon {
       color: #ffffff;
@@ -66,7 +104,7 @@ $transitionSpeed: .8s;
 
   .rbb-app {
     .rbb-loading-spinner {
-      color: #d8d8d8;
+      color: var(--rbb-loading-spinner-color);
     }
   }
 
@@ -79,12 +117,12 @@ $transitionSpeed: .8s;
 
     .rbb-week-select {
       option.past-week {
-        color: #8e8e8e;
+        color: var(--rbb-past-week-color);
       }
 
       option.current-week {
         font-weight: bold;
-        color: #000000;
+        color: var(--rbb-text-color);
       }
 
       option.future-week {
@@ -106,23 +144,23 @@ $transitionSpeed: .8s;
       flex-grow: 1;
       flex-basis: 0;
       overflow: hidden;
-      background-color: #ffffff;
-      border: 3px solid #ffffff;
+      background-color: var(--rbb-cell-bg);
+      border: 3px solid var(--rbb-cell-border-color);
       padding: .25rem;
 
       &.rbb-time-slot-cell {
-        background-color: $bookableBg;
+        background-color: var(--rbb-cell-bookable-bg);
         height: 6rem;
         display: flex;
       }
 
       &.rbb-time-slot-cell[data-isbooked="true"] {
-        background-color: $bookableBg;
+        background-color: var(--rbb-cell-bookable-bg);
         overflow-y: auto;
 
         & {
           scrollbar-width: thin;
-          scrollbar-color: #000000 #ffffff;
+          scrollbar-color: var(--rbb-scroll-thumb) var(--rbb-scroll-track);
         }
 
         /* Chrome, Edge, and Safari */
@@ -131,38 +169,38 @@ $transitionSpeed: .8s;
         }
 
         &::-webkit-scrollbar-track {
-          background: #ffffff;
+          background: var(--rbb-scroll-track);
         }
 
         &::-webkit-scrollbar-thumb {
-          background-color: #000000;
+          background-color: var(--rbb-scroll-thumb);
           border-radius: 3px;
-          border: 1px solid #ffffff;
+          border: 1px solid var(--rbb-cell-bg);
         }
       }
 
       &.rbb-time-slot-cell[data-isbookable="true"] {
-        background-color: $bookableBg;
+        background-color: var(--rbb-cell-bookable-bg);
       }
 
       &.rbb-time-slot-cell[data-isinvaliddate="true"] {
-        background-color: $slotIsNotBookable;
+        background-color: var(--rbb-cell-not-bookable-bg);
       }
 
       &.rbb-time-slot-cell[data-isfullybooked="true"] {
-        background-color: $fullyBookedBg;
+        background-color: var(--rbb-cell-fully-booked-bg);
       }
 
       &.rbb-time-slot-cell[data-isfullybooked="true"]:has(.rbb-booked-item[data-confirmed="false"]) {
-        background-color: $slotIsFullyBookedButUnconfirmedBg;
+        background-color: var(--rbb-cell-unconfirmed-bg);
       }
 
       &.rbb-time-slot-cell[data-isblocked="true"] {
-        background-color: $slotIsBlockedBg;
+        background-color: var(--rbb-cell-blocked-bg);
       }
 
       &.rbb-cell-headline {
-        background-color: #ffffff;
+        background-color: var(--rbb-cell-bg);
       }
     }
 
@@ -247,22 +285,17 @@ $transitionSpeed: .8s;
         z-index: 10;
         opacity: 0.7;
         border: 0;
-        transition: opacity $transitionSpeed;
+        transition: opacity var(--rbb-transition-speed);
       }
 
       .rbb-btn-cancel-booking, .rbb-icon-cancel-booking {
         font-size: 2rem;
-        color: $iconCancelBookingColor;
+        color: var(--rbb-icon-cancel-color);
       }
 
       .rbb-btn-booking, .rbb-icon-booking {
         font-size: 2rem;
-        color: $iconBookingColor;
-      }
-
-      .rbb-btn-booking .rbb-icon-cancel-booking {
-        font-size: 2rem;
-        color: $iconCancelBookingColor;
+        color: var(--rbb-icon-booking-color);
       }
 
       .rbb-btn-booking .rbb-icon-cancel-booking {
@@ -304,8 +337,8 @@ $transitionSpeed: .8s;
       }
 
       .btn-link > .rbb-icon-cancel-booking {
-        color: $iconCancelBookingHoverColor !important;
-        transition: color $transitionSpeed;
+        color: var(--rbb-icon-cancel-hover-color) !important;
+        transition: color var(--rbb-transition-speed);
       }
 
       .rbb-cell-booking-description-box, .rbb-cell-booking-owner-box, .item-counter-box, .rbb-cell-booking-still-available-box {
@@ -321,7 +354,7 @@ $transitionSpeed: .8s;
       min-height: 2.5rem;
       display: flex;
       align-items: center;
-      background-color: $bookableBg;
+      background-color: var(--rbb-cell-bookable-bg);
       justify-content: center;
       min-width: 100px;
       width: 100px;
@@ -329,7 +362,7 @@ $transitionSpeed: .8s;
 
       &.rbb-time-slot-indicator {
         justify-content: left;
-        background-color: #ffffff;
+        background-color: var(--rbb-cell-bg);
         width: 110px;
         min-width: 110px;
         max-width: 110px;
@@ -356,11 +389,11 @@ $transitionSpeed: .8s;
 
     .rbb-booking-preview-table {
       .bookable {
-        background-color: $bookableBg;
+        background-color: var(--rbb-cell-bookable-bg);
       }
 
       .not-bookable {
-        background-color: $fullyBookedBg;
+        background-color: var(--rbb-cell-fully-booked-bg);
       }
     }
 
