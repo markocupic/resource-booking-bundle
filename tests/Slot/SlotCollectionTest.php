@@ -247,7 +247,7 @@ class SlotCollectionTest extends TestCase
                 return isset($this->data[$key]);
             }
 
-            public function create(int $timeSlotId, ResourceBookingResourceModel $resource, int $startTime, int $endTime, int $desiredItems = 1, int|null $bookingRepeatStopWeekTstamp = null): SlotInterface
+            public function create(int $timeSlotId, ResourceBookingResourceModel $resource, int $startTime, int $endTime, int $requestedItems = 1, int|null $bookingRepeatStopWeekTstamp = null): SlotInterface
             {
                 return $this;
             }

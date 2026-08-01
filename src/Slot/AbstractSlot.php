@@ -94,7 +94,7 @@ abstract class AbstractSlot implements SlotInterface
     /**
      * @throws \Exception
      */
-    public function create(int $timeSlotId, ResourceBookingResourceModel $resource, int $startTime, int $endTime, int $desiredItems = 1, int|null $bookingRepeatStopWeekTstamp = null): SlotInterface
+    public function create(int $timeSlotId, ResourceBookingResourceModel $resource, int $startTime, int $endTime, int $requestedItems = 1, int|null $bookingRepeatStopWeekTstamp = null): SlotInterface
     {
         $dateAdapter = $this->framework->getAdapter(Date::class);
         $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
@@ -115,7 +115,7 @@ abstract class AbstractSlot implements SlotInterface
             'pid' => $resource->id,
             'startTime' => $startTime,
             'endTime' => $endTime,
-            'itemsBooked' => $desiredItems,
+            'itemsBooked' => $requestedItems,
             // Timestamp of the "begin week weekday" (Monday by default)
             'bookingRepeatStopWeekTstamp' => $bookingRepeatStopWeekTstamp ?? $firstDayOfWeek,
             'weekday' => strtolower(date('l', $startTime)),
