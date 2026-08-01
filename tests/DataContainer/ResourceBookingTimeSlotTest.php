@@ -231,8 +231,8 @@ class ResourceBookingTimeSlotTest extends ContaoTestCase
         $connection
             ->method('fetchAllAssociative')
             ->willReturn([
-            ['id' => 99, 'startTime' => 111, 'endTime' => 222],
-        ])
+                ['id' => 99, 'startTime' => 111, 'endTime' => 222],
+            ])
         ;
         $connection
             ->expects($this->once())

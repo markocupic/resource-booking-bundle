@@ -44,6 +44,8 @@ class CreateTimeslotTypeCommand extends Command
 
     private int $slotDuration = 0;
 
+    private int $slotPause = 0;
+
     public function __construct(
         private readonly Connection $connection,
         private readonly ValidatorInterface $validator,
@@ -79,7 +81,8 @@ class CreateTimeslotTypeCommand extends Command
                 'endTimeFormatted' => UtcTimeHelper::parseEndTime($endTimestamp),
             ];
 
-            $startTimestamp = $endTimestamp;
+            // The next slot starts after the configured pause.
+            $startTimestamp = $endTimestamp + $this->slotPause * 60;
             $endTimestamp = $startTimestamp + $this->slotDuration * 60;
 
             ++$i;
@@ -182,7 +185,7 @@ class CreateTimeslotTypeCommand extends Command
 
         $endTime = $this->askAndValidate(
             $io,
-            'Please enter the schedule end time in the format HH:MM. Notice: The end time must be greater than the start time.',
+            'Please enter the schedule end time in the format HH:MM. Notice: The end time must be greater than the start time. Allowed values are 00:01 to 24:00.',
             [
                 new RbbEndTime(),
             ],
@@ -207,6 +210,26 @@ class CreateTimeslotTypeCommand extends Command
                         if ($int < 1 || $int > 1440) {
                             $context
                                 ->buildViolation('Please enter a value between 1 and 1440 minutes (1440 min = 24 hours).')
+                                ->addViolation()
+                            ;
+                        }
+                    },
+                ),
+            ],
+        );
+
+        $this->slotPause = (int) $this->askAndValidate(
+            $io,
+            'Please enter the pause/gap between slots as an integer in minutes (0 = no pause).',
+            [
+                new Callback(
+                    static function ($value, $context): void {
+                        $int = (int) $value;
+
+                        // 1440 minutes = 24 hours
+                        if ($int < 0 || $int > 1440) {
+                            $context
+                                ->buildViolation('Please enter a value between 0 and 1440 minutes (1440 min = 24 hours).')
                                 ->addViolation()
                             ;
                         }

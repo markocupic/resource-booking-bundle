@@ -51,6 +51,46 @@ Anstatt die Buchungs-Zeitpläne aufwändig manuell anzulegen, ist es möglich ü
 php vendor/bin/contao-console rbb:create-slots
 ```
 
+Das command ist interaktiv und fragt der Reihe nach die folgenden Werte ab:
+
+1. **Name des Zeitplans** – 4 bis 200 Zeichen, erlaubt sind Buchstaben, Zahlen, Leerzeichen, Bindestriche und Unterstriche.
+2. **Startzeit** im Format `HH:MM` (`00:00`–`23:59`).
+3. **Endzeit** im Format `HH:MM` – muss grösser als die Startzeit sein (`00:01`–`24:00`).
+4. **Intervall / Slot-Dauer** in Minuten als ganze Zahl (`1`–`1440`, wobei `1440` = 24 Stunden).
+5. **Pause zwischen den Slots** in Minuten als ganze Zahl (`0`–`1440`). Mit `0` folgen die Slots nahtlos aufeinander.
+
+Aus diesen Angaben werden die Slots automatisch berechnet: Ein neuer Slot startet jeweils um die angegebene Pause nach dem Ende des vorherigen Slots. Es werden nur vollständige Slots angelegt, deren Endzeit die Endzeit des Zeitplans nicht überschreitet.
+
+**Beispiel:** Startzeit `08:00`, Endzeit `12:00`, Slot-Dauer `45` Minuten, Pause `15` Minuten ergibt vier Slots:
+
+```
+1. Slot: 08:00 - 08:45
+2. Slot: 09:00 - 09:45
+3. Slot: 10:00 - 10:45
+4. Slot: 11:00 - 11:45
+```
+
+Ein möglicher Dialog sieht so aus:
+
+```text
+Please enter the name of the new schedule.
+> Vormittag
+
+Please enter the schedule start time in the format HH:MM. Allowed values are 00:00 to 23:59.
+> 08:00
+
+Please enter the schedule end time in the format HH:MM. Notice: The end time must be greater than the start time. Allowed values are 00:00 to 24:00.
+> 12:00
+
+Please enter the interval as an integer in minutes.
+> 45
+
+Please enter the pause/gap between slots as an integer in minutes (0 = no pause).
+> 15
+```
+
+> **Hinweis:** Der Zeitplan wird unveröffentlicht (`published = 0`) angelegt. Er muss anschliessend im Contao-Backend manuell veröffentlicht werden.
+
 ## Benachrichtigung
 
 Die Benachrichtigung via [Contao Notification Center](https://github.com/terminal42/contao-notification_center) bei Buchung/Stornierung ist ein kostenpflichtiges Zusatzfeature. Bitte nehmen Sie per E-Mail mit dem Autor der Erweiterung [Kontakt](https://github.com/markocupic/resource-booking-bundle/blob/0080449a1a3fde63b1b9ad0b2fd0fd153ba82b4c/composer.json#L16) auf.

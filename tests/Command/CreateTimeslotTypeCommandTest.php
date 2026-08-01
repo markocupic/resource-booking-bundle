@@ -73,9 +73,9 @@ class CreateTimeslotTypeCommandTest extends TestCase
             ->method('rollBack')
         ;
 
-        // 08:00–10:00 in 30 minute steps => 4 slots (+1 schedule insert).
+        // 08:00–10:00 in 30 minute steps, no pause => 4 slots (+1 schedule insert).
         $tester = $this->createTester($connection);
-        $tester->setInputs(['Testplan', '08:00', '10:00', '30']);
+        $tester->setInputs(['Testplan', '08:00', '10:00', '30', '0']);
 
         $exitCode = $tester->execute([]);
 
@@ -125,7 +125,7 @@ class CreateTimeslotTypeCommandTest extends TestCase
 
         // A 30 minute interval does not fit into a 20 minute window.
         $tester = $this->createTester($connection);
-        $tester->setInputs(['Testplan', '08:00', '08:20', '30']);
+        $tester->setInputs(['Testplan', '08:00', '08:20', '30', '0']);
 
         $exitCode = $tester->execute([]);
 
@@ -157,12 +157,51 @@ class CreateTimeslotTypeCommandTest extends TestCase
         ;
 
         $tester = $this->createTester($connection);
-        $tester->setInputs(['Testplan', '08:00', '10:00', '30']);
+        $tester->setInputs(['Testplan', '08:00', '10:00', '30', '0']);
 
         $exitCode = $tester->execute([]);
 
         $this->assertSame(Command::FAILURE, $exitCode);
         $this->assertStringContainsString('db down', $this->normalizedDisplay($tester));
+    }
+
+    public function testCreatesSlotsWithAPauseBetweenThem(): void
+    {
+        $slotInserts = [];
+
+        $connection = $this->createConnection();
+        $connection
+            ->method('insert')
+            ->willReturnCallback(
+                static function (string $table, array $data) use (&$slotInserts): int {
+                    if (self::SLOT_TABLE === $table) {
+                        $slotInserts[] = ['startTime' => $data['startTime'], 'endTime' => $data['endTime']];
+                    }
+
+                    return 1;
+                },
+            )
+        ;
+        $connection
+            ->method('lastInsertId')
+            ->willReturn('7')
+        ;
+
+        // 08:00–10:00, 30 minute slots, 30 minute pause => 08:00-08:30 and 09:00-09:30.
+        $tester = $this->createTester($connection);
+        $tester->setInputs(['Testplan', '08:00', '10:00', '30', '30']);
+
+        $exitCode = $tester->execute([]);
+
+        $this->assertSame(Command::SUCCESS, $exitCode);
+        $this->assertSame(
+            [
+                ['startTime' => 28800, 'endTime' => 30600], // 08:00 - 08:30
+                ['startTime' => 32400, 'endTime' => 34200], // 09:00 - 09:30 (30 min pause after 08:30)
+            ],
+            $slotInserts,
+        );
+        $this->assertStringContainsString('Created 2 new time slots', $this->normalizedDisplay($tester));
     }
 
     /**
