@@ -61,7 +61,7 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
         if ($this->scopeMatcher->isFrontendRequest($request) && null !== $page) {
             /**
              * The module key is necessary to run multiple rbb applications on the same page
-             * and is sent as a post parameter on every xhr request.
+             * and is sent as a POST parameter on every xhr request.
              *
              * The session data of each rbb instance is stored under $_SESSION[_resource_booking_bundle_attributes][$sessionId.'_'.$userId.'_'.$moduleKey.'_'.$token]
              *
@@ -80,18 +80,23 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
             $moduleKeyAdapter->setModuleKey($model->id.'_'.$moduleIndexAdapter->getModuleIndex());
             $moduleKey = $moduleKeyAdapter->getModuleKey();
 
-            // Send empty response on ajax requests, if token is missing
+            // Send empty response on ajax requests if token is missing
             if ($request->isXmlHttpRequest() && !$request->query->has('token_'.$moduleKey)) {
                 return new Response('', Response::HTTP_NO_CONTENT);
             }
 
-            // Generate token on non-ajax requests, if token is missin then add it as query parameter to the url and reload the page.
+            // Generate token on non-ajax requests, if token is missing, then add it as a query parameter to the url and reload the page.
             if (!$request->isXmlHttpRequest() && !$request->query->has('token_'.$moduleKey)) {
+                $params = $request->query->all();
                 $tokenManagerAdapter->generateToken();
-                $request->query->add(['token_'.$moduleKey => $tokenManagerAdapter->getToken()]);
-                $request->overrideGlobals();
+                $params['token_'.$moduleKey] = $tokenManagerAdapter->getToken();
 
-                return new RedirectResponse($request->getUri());
+                $url = $request->getSchemeAndHttpHost()
+                    .$request->getBaseUrl()
+                    .$request->getPathInfo()
+                    .'?'.http_build_query($params);
+
+                return new RedirectResponse($url);
             }
 
             TokenManager::setToken($request->query->get('token_'.$moduleKey));
