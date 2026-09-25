@@ -99,7 +99,7 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
                 return new RedirectResponse($url);
             }
 
-            TokenManager::setToken($request->query->get('token_'.$moduleKey));
+            $tokenManagerAdapter->setToken($request->query->get('token_'.$moduleKey));
 
             // Initialize application
             $this->appInitializer->initialize($model->id, $page->id);
