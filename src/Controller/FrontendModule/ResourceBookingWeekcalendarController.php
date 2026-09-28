@@ -81,12 +81,12 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
             $moduleKey = $moduleKeyAdapter->getModuleKey();
 
             // Send empty response on ajax requests if token is missing
-            if ($request->isXmlHttpRequest() && !$request->query->has('token_'.$moduleKey)) {
+            if ($request->isXmlHttpRequest() && empty($request->query->get('token_'.$moduleKey))) {
                 return new Response('', Response::HTTP_NO_CONTENT);
             }
 
             // Generate token on non-ajax requests, if token is missing, then add it as a query parameter to the url and reload the page.
-            if (!$request->isXmlHttpRequest() && !$request->query->has('token_'.$moduleKey)) {
+            if (!$request->isXmlHttpRequest() && empty($request->query->get('token_'.$moduleKey))) {
                 $params = $request->query->all();
                 $tokenManagerAdapter->generateToken();
                 $params['token_'.$moduleKey] = $tokenManagerAdapter->getToken();
