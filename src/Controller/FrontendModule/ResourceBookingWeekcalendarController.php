@@ -80,8 +80,9 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
             }
 
             // Add token to query string if it is missing and reload the page with the token in the query string.
-            if (!$request->isXmlHttpRequest() && !$request->query->has('token_'.$moduleKey)) {
+            if (!$request->isXmlHttpRequest() && empty($request->query->get('token_'.$moduleKey))) {
                 $params = $request->query->all();
+                TokenManager::generateToken();
                 $params['token_'.$moduleKey] = TokenManager::getToken();
 
                 $url = $request->getSchemeAndHttpHost()
