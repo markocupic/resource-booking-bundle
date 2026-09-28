@@ -21,9 +21,8 @@ use Doctrine\DBAL\Types\Types;
 #[AsCronJob('minutely')]
 class MarkBookingsAsExpiredCron
 {
-    public function __construct(
-        private readonly Connection $connection,
-    ) {
+    public function __construct(private readonly Connection $connection)
+    {
     }
 
     public function __invoke(): void

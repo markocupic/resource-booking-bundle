@@ -27,9 +27,8 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
 
     private array $controllers = [];
 
-    public function __construct(
-        private readonly RequestStack $requestStack,
-    ) {
+    public function __construct(private readonly RequestStack $requestStack)
+    {
     }
 
     public static function getSubscribedEvents(): array

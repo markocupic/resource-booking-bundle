@@ -24,9 +24,8 @@ use Doctrine\DBAL\Exception;
 
 class ResourceBookingTimeSlotType
 {
-    public function __construct(
-        private readonly Connection $connection,
-    ) {
+    public function __construct(private readonly Connection $connection)
+    {
     }
 
     #[AsCallback(table: 'tl_resource_booking_time_slot_type', target: 'list.operations.editheader.button')]

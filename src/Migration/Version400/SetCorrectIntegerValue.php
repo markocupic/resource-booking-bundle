@@ -27,9 +27,8 @@ class SetCorrectIntegerValue extends AbstractMigration
 {
     private array $data = [];
 
-    public function __construct(
-        private readonly Connection $connection,
-    ) {
+    public function __construct(private readonly Connection $connection)
+    {
     }
 
     /**

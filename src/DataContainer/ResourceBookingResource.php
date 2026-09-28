@@ -20,9 +20,8 @@ use Doctrine\DBAL\Exception;
 
 class ResourceBookingResource
 {
-    public function __construct(
-        private readonly Connection $connection,
-    ) {
+    public function __construct(private readonly Connection $connection)
+    {
     }
 
     /**
