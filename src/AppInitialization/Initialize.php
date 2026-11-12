@@ -26,6 +26,7 @@ use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceTypeModel;
 use Markocupic\ResourceBookingBundle\Util\DateHelper;
 use Markocupic\ResourceBookingBundle\Util\Utils;
+use Markocupic\ResourceBookingBundle\Util\WeekBoundaries;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -40,6 +41,7 @@ class Initialize
         private readonly ContaoFramework $framework,
         private readonly RequestStack $requestStack,
         private readonly Utils $utils,
+        private readonly WeekBoundaries $weekBoundaries,
         #[Autowire('%markocupic_resource_booking.session.attribute_bag_name%')]
         private readonly string $bagName,
     ) {
@@ -75,11 +77,11 @@ class Initialize
         $arrResTypeIds = $this->framework->getAdapter(StringUtil::class)->deserialize($moduleModel->resourceBooking_resourceTypes, true);
 
         $resTypeId = $this->resolveAndGuardActiveResType($request, $sessionBag, $arrResTypeIds);
-        $this->resolveAndGuardActiveRes($request, $sessionBag, $resTypeId);
+        $activeResource = $this->resolveAndGuardActiveRes($request, $sessionBag, $resTypeId);
 
         $arrAppConfig = $this->utils->getAppConfig();
 
-        $this->initWeekBoundaries($sessionBag, $arrAppConfig, $moduleModel);
+        $this->initWeekBoundaries($sessionBag, $arrAppConfig, $activeResource);
         $this->initLanguage($request, $sessionBag);
     }
 
@@ -231,71 +233,61 @@ class Initialize
     /**
      * Validates access to the active resource and, if none is selected,
      * auto-selects it when the resource type only offers a single one.
+     * Returns the active resource or null if no resource is selected.
      *
      * @throws UnauthorizedHttpException
      */
-    private function resolveAndGuardActiveRes(Request $request, SessionBagInterface $sessionBag, int $resTypeId): void
+    private function resolveAndGuardActiveRes(Request $request, SessionBagInterface $sessionBag, int $resTypeId): ResourceBookingResourceModel|null
     {
         $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
 
         // Check if access to active resource is allowed.
         if (($resId = $sessionBag->get('res', 0)) > 0) {
-            $blnForbidden = false;
+            $activeResource = $resourceBookingResourceModelAdapter->findPublishedByPkAndPid((int) $resId, (int) $resTypeId);
 
-            if (null === $resourceBookingResourceModelAdapter->findPublishedByPkAndPid((int) $resId, (int) $resTypeId)) {
-                $blnForbidden = true;
-            }
-
-            if ($blnForbidden) {
+            if (null === $activeResource) {
                 throw new UnauthorizedHttpException(\sprintf('Unauthorized access to resource with ID %s.', $resId));
             }
-        } else {
-            // Auto-redirect if there is only one resource in the filter menu.
-            if (!$request->isXmlHttpRequest() && $resTypeId > 0) {
-                $oRes = $resourceBookingResourceModelAdapter->findPublishedByPid((int) $resTypeId);
 
-                if (null !== $oRes && 1 === $oRes->count()) {
-                    $sessionBag->set('res', $oRes->id);
-                }
+            return $activeResource;
+        }
+
+        // Auto-redirect if there is only one resource in the filter menu.
+        if (!$request->isXmlHttpRequest() && $resTypeId > 0) {
+            $oRes = $resourceBookingResourceModelAdapter->findPublishedByPid((int) $resTypeId);
+
+            if (null !== $oRes && 1 === $oRes->count()) {
+                $sessionBag->set('res', $oRes->id);
+                $activeResource = $oRes->current();
+
+                return $activeResource instanceof ResourceBookingResourceModel ? $activeResource : null;
             }
         }
+
+        return null;
     }
 
     /**
      * Computes the active week as well as the first/last permitted week and
      * stores them (plus their formatted dates) in the session.
+     *
+     * @throws \Exception
      */
-    private function initWeekBoundaries(SessionBagInterface $sessionBag, array $arrAppConfig, ModuleModel $moduleModel): void
+    private function initWeekBoundaries(SessionBagInterface $sessionBag, array $arrAppConfig, ResourceBookingResourceModel|null $activeResource): void
     {
         $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
         $dateAdapter = $this->framework->getAdapter(Date::class);
 
-        // Set active week timestamp.
+        // The first and last permitted weeks depend on the settings of the active resource.
+        $this->weekBoundaries->storePermittedWeeks($sessionBag, $arrAppConfig, $activeResource, $this->getCurrentTime());
+
+        // Set active week timestamp and keep it within the permitted weeks.
         $tstampCurrentWeek = (int) $sessionBag->get('activeWeekTstamp', $dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig));
+        $tstampCurrentWeek = max($tstampCurrentWeek, (int) $sessionBag->get('tstampFirstPermittedWeek'));
+        $tstampCurrentWeek = min($tstampCurrentWeek, (int) $sessionBag->get('tstampLastPermittedWeek'));
+
         $sessionBag->set('activeWeekTstamp', $tstampCurrentWeek);
         $sessionBag->set('activeWeekDate', $dateAdapter->parse('Y-m-d', $tstampCurrentWeek));
-
-        // Get first and last possible week tstamp.
-        $tstampFirstPermittedWeek = $dateHelperAdapter->addWeeksToTime($arrAppConfig['intBackWeeks'], $dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig));
-        $sessionBag->set('tstampFirstPermittedWeek', $tstampFirstPermittedWeek);
-        $sessionBag->set('tstampFirstPermittedDate', $dateAdapter->parse('Y-m-d', $tstampFirstPermittedWeek));
-
-        $intTstampLastPermittedWeek = $dateHelperAdapter->addWeeksToTime($arrAppConfig['intAheadWeeks'], $dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig));
-
-        if ($moduleModel->resourceBooking_addDateStop) {
-            $intTstampStop = $dateHelperAdapter->getFirstDayOfWeek($arrAppConfig, $moduleModel->resourceBooking_dateStop);
-
-            if ($intTstampStop < $intTstampLastPermittedWeek) {
-                $intTstampLastPermittedWeek = $intTstampStop;
-            }
-
-            if ($intTstampStop < $this->getCurrentTime()) {
-                $intTstampLastPermittedWeek = $dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig);
-            }
-        }
-
-        $sessionBag->set('tstampLastPermittedWeek', $intTstampLastPermittedWeek);
-        $sessionBag->set('tstampLastPermittedWeekDate', $dateAdapter->parse('Y-m-d', $intTstampLastPermittedWeek));
     }
 
     private function initLanguage(Request $request, SessionBagInterface $sessionBag): void

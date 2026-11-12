@@ -78,6 +78,67 @@ class SlotMainTest extends TestCase
         $this->assertTrue($slot->canFulfillRequestedItems());
     }
 
+    public function testIsOnAllowedWeekdayRespectsTheResourceRestriction(): void
+    {
+        $resource = [
+            'itemsAvailable' => 1,
+            'restrictWeekdays' => '1',
+            'allowedWeekdays' => serialize(['monday', 'tuesday']),
+        ];
+
+        $slot = $this->slotWith(1, [], resource: $resource, weekday: 'monday');
+        $this->assertTrue($slot->isOnAllowedWeekday());
+
+        $slot = $this->slotWith(1, [], resource: $resource, weekday: 'saturday');
+        $this->assertFalse($slot->isOnAllowedWeekday());
+        $this->assertFalse($slot->isBookable());
+    }
+
+    public function testIsWithinAllowedDateRangeRespectsBookableUntil(): void
+    {
+        $bookableUntil = strtotime('today +10 days');
+        $resource = [
+            'itemsAvailable' => 1,
+            'addBookableUntil' => '1',
+            'bookableUntil' => (string) $bookableUntil,
+        ];
+
+        // Slot on the last bookable day -> allowed.
+        $slot = $this->slotWith(1, [], resource: $resource, startTime: $bookableUntil + 8 * 3600, endTime: $bookableUntil + 9 * 3600);
+        $this->assertTrue($slot->isWithinAllowedDateRange());
+
+        // Slot on the day after -> not allowed.
+        $slot = $this->slotWith(1, [], resource: $resource, startTime: $bookableUntil + 86400 + 8 * 3600, endTime: $bookableUntil + 86400 + 9 * 3600);
+        $this->assertTrue($slot->isOutsideBookingPeriod());
+        $this->assertFalse($slot->isWithinAllowedDateRange());
+        $this->assertFalse($slot->isBookable());
+    }
+
+    public function testIsWithinAllowedDateRangeRespectsTheWeeksAheadLimit(): void
+    {
+        $startTime = strtotime('today +20 days 08:00');
+
+        // The slot lies in the last permitted week -> allowed.
+        $slot = $this->slotWith(1, [], startTime: $startTime, endTime: $startTime + 3600, firstDayOfWeek: 2000, lastPermittedWeek: 2000);
+        $this->assertTrue($slot->isWithinAllowedDateRange());
+
+        // The slot lies after the last permitted week -> not allowed.
+        $slot = $this->slotWith(1, [], startTime: $startTime, endTime: $startTime + 3600, firstDayOfWeek: 3000, lastPermittedWeek: 2000);
+        $this->assertTrue($slot->isOutsideBookingPeriod());
+        $this->assertFalse($slot->isWithinAllowedDateRange());
+        $this->assertFalse($slot->isBookable());
+    }
+
+    public function testSlotInThePastIsNotOutsideTheBookingPeriod(): void
+    {
+        // A slot in the past is invalid, but not "outside the booking period" (different error message).
+        $startTime = strtotime('yesterday 08:00');
+        $slot = $this->slotWith(1, [], startTime: $startTime, endTime: $startTime + 3600);
+
+        $this->assertFalse($slot->isOutsideBookingPeriod());
+        $this->assertFalse($slot->isWithinAllowedDateRange());
+    }
+
     private function setLoggedInUserId(SlotMain $slot, int $id): void
     {
         $user = $this->createMock(MemberModel::class);
@@ -94,8 +155,11 @@ class SlotMainTest extends TestCase
     /**
      * @param array<int, array<string, mixed>> $bookings
      */
-    private function slotWith(int $itemsAvailable, array $bookings, int $requestedItems = 1): SlotMain
+    private function slotWith(int $itemsAvailable, array $bookings, int $requestedItems = 1, array|null $resource = null, string $weekday = 'monday', int|null $startTime = null, int|null $endTime = null, int|null $firstDayOfWeek = null, int|null $lastPermittedWeek = null): SlotMain
     {
+        $startTime ??= strtotime('tomorrow 08:00');
+        $endTime ??= $startTime + 3600;
+
         $slot = new SlotMain(
             $this->createMock(ContaoFramework::class),
             $this->createMock(TokenStorageInterface::class),
@@ -103,9 +167,16 @@ class SlotMainTest extends TestCase
         );
 
         $slot->setRow([
-            'resource' => ['itemsAvailable' => $itemsAvailable],
+            'resource' => $resource ?? ['itemsAvailable' => $itemsAvailable],
             'itemsBooked' => $requestedItems,
             'bookings' => $bookings,
+            'weekday' => $weekday,
+            'startTime' => $startTime,
+            'endTime' => $endTime,
+            // Timestamp of the first day of the week up to which the booking is repeated.
+            'bookingRepeatStopWeekTstamp' => $startTime,
+            'beginWeekTimestampSelectedWeek' => $firstDayOfWeek,
+            'lastPermittedWeekTstamp' => $lastPermittedWeek,
         ]);
 
         return $slot;

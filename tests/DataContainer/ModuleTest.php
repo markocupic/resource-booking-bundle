@@ -28,10 +28,10 @@ class ModuleTest extends ContaoTestCase
         $module = new Module(
             $this->mockContaoFramework(),
             $this->createMock(Connection::class),
-            ['app_a' => [], 'app_b' => []],
+            ['default' => [], 'app_b' => []],
         );
 
-        $this->assertSame(['app_a', 'app_b'], $module->getAppConfigurations());
+        $this->assertSame(['default', 'app_b'], $module->getAppConfigurations());
     }
 
     public function testGetTlMemberFieldsExcludesIdAndPassword(): void
@@ -39,7 +39,6 @@ class ModuleTest extends ContaoTestCase
         $module = new Module(
             $this->frameworkWithFieldNames(['id', 'firstname', 'lastname', 'password', 'email']),
             $this->createMock(Connection::class),
-            [],
         );
 
         $this->assertSame(['firstname', 'lastname', 'email'], $module->getTlMemberFields());
@@ -50,7 +49,6 @@ class ModuleTest extends ContaoTestCase
         $module = new Module(
             $this->frameworkWithFieldNames(['id', 'pid', 'startTime', 'endTime']),
             $this->createMock(Connection::class),
-            [],
         );
 
         $this->assertSame(['id', 'pid', 'startTime', 'endTime'], $module->getTlResourceBookingFields());

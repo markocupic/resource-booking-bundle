@@ -74,6 +74,8 @@ $GLOBALS['TL_LANG']['RBB']['ERR']['cancellingBookingNotAllowed'] = 'Sie besitzen
 $GLOBALS['TL_LANG']['RBB']['ERR']['general'] = 'Es ist ein Fehler aufgetreten. Bitte überprüfen Sie die Verbindung.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['generalBookingError'] = 'Beim Versuch die Ressource zu buchen ist ein unerwarteter Fehler aufgetreten. Bitte probieren Sie es nochmals oder nehmen Sie Kontakt mit dem Administrator Kontakt auf.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['invalidStartOrEndTime'] = 'Sie haben einen Slot mit ungültiger Start- oder Endzeit ausgewählt.';
+$GLOBALS['TL_LANG']['RBB']['ERR']['weekdayNotBookable'] = 'Die Ressource kann an einem oder mehreren der gewählten Wochentage nicht gebucht werden.';
+$GLOBALS['TL_LANG']['RBB']['ERR']['outsideBookingPeriod'] = 'Ein oder mehrere der gewählten Slots liegen ausserhalb des buchbaren Zeitraums dieser Ressource.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['notAuthorized'] = 'Für diesen Vorgang verfügen Sie nicht über die nötigen Rechte.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['notEnoughItemsAvailable'] = 'In einem oder mehreren Slots sind zu wenig Einheiten für Ihre Buchungsanfrage verfügbar.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['resourceIsAlreadyFullyBooked'] = 'Die Ressource ist bereits ausgebucht.';
@@ -82,8 +84,8 @@ $GLOBALS['TL_LANG']['RBB']['ERR']['slotNotBookable'] = 'Einer oder mehrere der g
 $GLOBALS['TL_LANG']['RBB']['ERR']['slotIsBlocked'] = 'Einer oder mehrere der gewünschten Slots wurden geblockt/können nicht gebucht werden.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['somethingWentWrong'] = 'Ups! Etwas ist schief gelaufen.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['thisSlotHasNotEnoughItemsAvailable'] = 'Nicht genügend Einheiten verfügbar.';
-$GLOBALS['TL_LANG']['RBB']['ERR']['invalidUploadValueSubmitted'] = 'Ihre Buchungsanfrage konnte nicht verarbeitet werden. Grund: Für das Feld "%s" wurde ein ungültiger Wert hochgeladen.';
-$GLOBALS['TL_LANG']['RBB']['ERR']['invalidUploadFieldSubmitted'] = 'Ihre Buchungsanfrage konnte nicht verarbeitet werden. Grund: "%s" ist nicht in der Liste der erlaubten Upload Felder.';
+$GLOBALS['TL_LANG']['RBB']['ERR']['invalidFormValueSubmitted'] = 'Ihre Buchungsanfrage konnte nicht verarbeitet werden. Grund: Für das Feld "%s" wurde ein ungültiger Wert übermittelt.';
+$GLOBALS['TL_LANG']['RBB']['ERR']['invalidFormFieldSubmitted'] = 'Ihre Buchungsanfrage konnte nicht verarbeitet werden. Grund: "%s" ist nicht in der Liste der erlaubten Formularfelder.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['mandatoryFieldNotFilledIn'] = 'Ihre Buchungsanfrage konnte nicht verarbeitet werden. Grund: Das Pflichtfeld "%s" wurde nicht ausgefüllt.';
 
 // Messages

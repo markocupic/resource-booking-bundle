@@ -28,8 +28,17 @@ class Module
         private readonly ContaoFramework $framework,
         private readonly Connection $connection,
         #[Autowire('%markocupic_resource_booking.apps%')]
-        private readonly array $appConfigs,
+        private readonly array $appConfigs = [],
     ) {
+    }
+
+    /**
+     * @return list<string>
+     */
+    #[AsCallback(table: 'tl_module', target: 'fields.resourceBooking_appConfig.options')]
+    public function getAppConfigurations(): array
+    {
+        return array_map('strval', array_keys($this->appConfigs));
     }
 
     /**
@@ -41,12 +50,6 @@ class Module
         $result = $this->connection->executeQuery('SELECT id,title FROM tl_resource_booking_resource_type');
 
         return $result->fetchAllKeyValue();
-    }
-
-    #[AsCallback(table: 'tl_module', target: 'fields.resourceBooking_appConfig.options')]
-    public function getAppConfigurations(): array
-    {
-        return array_keys($this->appConfigs);
     }
 
     #[AsCallback(table: 'tl_module', target: 'fields.resourceBooking_clientPersonalData.options')]
@@ -74,8 +77,7 @@ class Module
         return $arrOpt;
     }
 
-    #[AsCallback(table: 'tl_module', target: 'fields.getTlResourceBookingFields.options')]
-    #[AsCallback(table: 'tl_module', target: 'fields.resourceBooking_bookingSubmittedFields.options')]
+    #[AsCallback(table: 'tl_module', target: 'fields.resourceBooking_bookingDetailFields.options')]
     public function getTlResourceBookingFields(): array
     {
         $fieldNames = $this->framework

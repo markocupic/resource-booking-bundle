@@ -17,12 +17,15 @@ namespace Markocupic\ResourceBookingBundle\Cron;
 use Contao\CoreBundle\DependencyInjection\Attribute\AsCronJob;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Date;
-use Contao\ModuleModel;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Types\Types;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
+/**
+ * Deletes bookings that lie further back than the user can navigate
+ * (tl_resource_booking_resource.weeksBack).
+ */
 #[AsCronJob('daily')]
 class PurgePastBookingsCron
 {
@@ -32,7 +35,7 @@ class PurgePastBookingsCron
         #[Autowire('%markocupic_resource_booking.purge_past_bookings_with_cron%')]
         private readonly bool $purgeOldBookingsWithCron,
         #[Autowire('%markocupic_resource_booking.apps%')]
-        private readonly array $appConfigs,
+        private readonly array $appConfigs = [],
         private readonly LoggerInterface|null $contaoCronLogger = null,
     ) {
     }
@@ -48,20 +51,14 @@ class PurgePastBookingsCron
 
         $intAffectedRows = 0;
 
-        foreach ($this->getModuleIdsWithBookings() as $moduleId) {
-            $appConfig = $this->resolveAppConfigForModule($moduleId);
-
-            if (null === $appConfig) {
-                continue;
-            }
-
-            $tstampLimit = $this->calculatePurgeLimit($appConfig);
+        foreach ($this->getWeeksBackByResource() as $resourceId => $weeksBack) {
+            $tstampLimit = $this->calculatePurgeLimit($weeksBack);
 
             if (null === $tstampLimit) {
                 continue;
             }
 
-            $intAffectedRows += $this->deleteExpiredBookings($moduleId, $tstampLimit);
+            $intAffectedRows += $this->deleteExpiredBookings($resourceId, $tstampLimit);
         }
 
         if ($intAffectedRows > 0) {
@@ -70,82 +67,64 @@ class PurgePastBookingsCron
     }
 
     /**
-     * Returns the distinct module ids that currently have bookings.
+     * Returns the number of weeks back (tl_resource_booking_resource.weeksBack) indexed by the resource id.
      *
-     * @return list<int>
+     * @return array<int, int>
      */
-    protected function getModuleIdsWithBookings(): array
+    protected function getWeeksBackByResource(): array
     {
-        // Select only the grouped column so the query is valid under ONLY_FULL_GROUP_BY.
-        $rows = $this->connection->fetchAllAssociative('SELECT moduleId FROM tl_resource_booking GROUP BY moduleId');
+        $rows = $this->connection->fetchAllAssociative('SELECT id, weeksBack FROM tl_resource_booking_resource');
 
-        $moduleIds = [];
+        $weeksBack = [];
 
         foreach ($rows as $row) {
-            $moduleId = (int) ($row['moduleId'] ?? 0);
+            $resourceId = (int) ($row['id'] ?? 0);
 
-            if ($moduleId > 0) {
-                $moduleIds[] = $moduleId;
+            if ($resourceId > 0) {
+                $weeksBack[$resourceId] = (int) ($row['weeksBack'] ?? 0);
             }
         }
 
-        return $moduleIds;
+        return $weeksBack;
     }
 
     /**
-     * Resolves the app configuration assigned to a module, or null if it cannot be resolved.
-     *
-     * @return array<string, mixed>|null
+     * Returns the timestamp before which bookings may be deleted, or null if
+     * the user cannot navigate back (weeksBack = 0). In that case nothing is deleted.
      */
-    protected function resolveAppConfigForModule(int $moduleId): array|null
+    protected function calculatePurgeLimit(int $weeksBack): int|null
     {
-        $moduleAdapter = $this->framework->getAdapter(ModuleModel::class);
-
-        if (null === ($objModule = $moduleAdapter->findById($moduleId))) {
-            return null;
-        }
-
-        $strConfig = $objModule->resourceBooking_appConfig ?? null;
-
-        if (null === $strConfig || !isset($this->appConfigs[$strConfig])) {
-            return null;
-        }
-
-        return $this->appConfigs[$strConfig];
-    }
-
-    /**
-     * Returns the timestamp before which bookings may be deleted, or null when
-     * the app config does not enable back-week purging (intBackWeeks >= 0).
-     *
-     * @param array<string, mixed> $appConfig
-     */
-    protected function calculatePurgeLimit(array $appConfig): int|null
-    {
-        $intBackWeeks = (int) $appConfig['intBackWeeks'];
-
-        // Only purge if bookings from past weeks are configured (negative value).
-        if ($intBackWeeks >= 0) {
+        if ($weeksBack <= 0) {
             return null;
         }
 
         $dateAdapter = $this->framework->getAdapter(Date::class);
 
-        $intWeeks = abs($intBackWeeks);
-        $beginnWeek = $appConfig['beginnWeek'];
-        $dateBeginnCurrentWeek = $dateAdapter->parse('d-m-Y', strtotime(\sprintf('%s this week', $beginnWeek)));
+        $dateBeginCurrentWeek = $dateAdapter->parse('d-m-Y', strtotime(\sprintf('%s this week', $this->getBeginWeek())));
 
-        $tstampLimit = strtotime($dateBeginnCurrentWeek.' -'.$intWeeks.' weeks');
+        $tstampLimit = strtotime($dateBeginCurrentWeek.' -'.$weeksBack.' weeks');
 
         return false === $tstampLimit ? null : $tstampLimit;
     }
 
-    protected function deleteExpiredBookings(int $moduleId, int $tstampLimit): int
+    /**
+     * Resources are not assigned to an app configuration. The week begin of the
+     * "default" app configuration (or the first one) is used to compute the limit.
+     */
+    protected function getBeginWeek(): string
+    {
+        // reset() cannot be used here, because the property is readonly.
+        $appConfig = $this->appConfigs['default'] ?? array_values($this->appConfigs)[0] ?? [];
+
+        return (string) ($appConfig['begin_week'] ?? 'monday');
+    }
+
+    protected function deleteExpiredBookings(int $resourceId, int $tstampLimit): int
     {
         return (int) $this->connection->executeStatement(
-            'DELETE FROM tl_resource_booking WHERE moduleId = ? AND endTime < ?',
+            'DELETE FROM tl_resource_booking WHERE pid = ? AND endTime < ?',
             [
-                $moduleId,
+                $resourceId,
                 $tstampLimit,
             ],
             [

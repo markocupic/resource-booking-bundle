@@ -30,6 +30,7 @@ use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Markocupic\ResourceBookingBundle\Slot\SlotFactory;
 use Markocupic\ResourceBookingBundle\Slot\SlotMain;
 use Markocupic\ResourceBookingBundle\Util\DateHelper;
+use Markocupic\ResourceBookingBundle\Util\ResourceBookingRestriction;
 use Markocupic\ResourceBookingBundle\Util\Str;
 use Markocupic\ResourceBookingBundle\Util\UtcTimeHelper;
 use Symfony\Contracts\Service\Attribute\Required;
@@ -124,7 +125,7 @@ trait RefreshDataTrait
         $arrData['bookingRepeatsSelection'] = $this->getWeekSelection((int) $this->sessionBag->get('activeWeekTstamp'), (int) $this->sessionBag->get('tstampLastPermittedWeek'), false);
 
         // Weekdays
-        $arrData['weekdays'] = $this->getWeekdays($this->sessionBag->get('activeWeekTstamp'), $this->getModuleModelFromSession());
+        $arrData['weekdays'] = $this->getWeekdays($this->sessionBag->get('activeWeekTstamp'), $this->getActiveResourceFromSession());
 
         $arrData['activeResourceTypeId'] = 'undefined';
 
@@ -233,10 +234,10 @@ trait RefreshDataTrait
         // Create 1 week back and 1 week ahead links
         $jumpTime = $dateHelperAdapter->addDaysToTime($intJumpDays, $this->sessionBag->get('activeWeekTstamp'));
 
-        // Get app config
-        $arrAppConfig = $this->utils->getAppConfig();
+        // The permitted weeks depend on the active resource and are stored in the session.
+        $isPermittedWeek = $jumpTime >= (int) $this->sessionBag->get('tstampFirstPermittedWeek') && $jumpTime <= (int) $this->sessionBag->get('tstampLastPermittedWeek');
 
-        if (!$dateHelperAdapter->isWithinAllowedDateRange($jumpTime, $arrAppConfig)) {
+        if (!$isPermittedWeek) {
             $jumpTime = $this->sessionBag->get('activeWeekTstamp');
             $arrReturn['disabled'] = true;
         }
@@ -288,25 +289,25 @@ trait RefreshDataTrait
                 $cssClass = 'future-week';
             }
 
-            $tstampBeginnWeek = $currentTstamp;
-            $dateBeginnWeek = $dateAdapter->parse('d.m.Y', $currentTstamp);
-            $tstampEndWeek = strtotime($dateBeginnWeek.' + 6 days');
+            $tstampBeginWeek = $currentTstamp;
+            $dateBeginWeek = $dateAdapter->parse('d.m.Y', $currentTstamp);
+            $tstampEndWeek = strtotime($dateBeginWeek.' + 6 days');
             $dateEndWeek = $dateAdapter->parse('d.m.Y', $tstampEndWeek);
-            $calWeek = $dateAdapter->parse('W', $tstampBeginnWeek);
-            $yearBeginnWeek = $dateAdapter->parse('Y', $tstampBeginnWeek);
+            $calWeek = $dateAdapter->parse('W', $tstampBeginWeek);
+            $yearBeginWeek = $dateAdapter->parse('Y', $tstampBeginWeek);
             $arrWeeks[] = [
                 'cssClass' => $cssClass,
                 'tstamp' => (int) $currentTstamp,
-                'tstampBeginnWeek' => (int) $tstampBeginnWeek,
+                'tstampBeginWeek' => (int) $tstampBeginWeek,
                 'tstampEndWeek' => (int) $tstampEndWeek,
-                'stringBeginnWeek' => $dateBeginnWeek,
+                'stringBeginWeek' => $dateBeginWeek,
                 'stringEndWeek' => $dateEndWeek,
-                'daySpan' => $dateBeginnWeek.' - '.$dateEndWeek,
+                'daySpan' => $dateBeginWeek.' - '.$dateEndWeek,
                 'calWeek' => (int) $calWeek,
-                'year' => $yearBeginnWeek,
-                'optionDateStart' => $dateBeginnWeek,
+                'year' => $yearBeginWeek,
+                'optionDateStart' => $dateBeginWeek,
                 'optionDateEnd' => $dateEndWeek,
-                'optionText' => $this->translator->trans('MSC.weekSelectOptionText', [$calWeek, $yearBeginnWeek, $dateBeginnWeek, $dateEndWeek], 'contao_default'),
+                'optionText' => $this->translator->trans('MSC.weekSelectOptionText', [$calWeek, $yearBeginWeek, $dateBeginWeek, $dateEndWeek], 'contao_default'),
             ];
 
             $currentTstamp = $dateHelperAdapter->addDaysToTime(7, $currentTstamp);
@@ -318,9 +319,8 @@ trait RefreshDataTrait
     /**
      * @throws \Exception
      */
-    private function getWeekdays(int $activeWeekTstamp, ModuleModel $moduleModel): array
+    private function getWeekdays(int $activeWeekTstamp, ResourceBookingResourceModel|null $resourceModel = null): array
     {
-        $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
         $dateAdapter = $this->framework->getAdapter(Date::class);
 
         // Send weekdays, dates and day
@@ -330,10 +330,11 @@ trait RefreshDataTrait
         $arrWeekdays = $this->getDaysOfWeek();
 
         foreach ($arrWeekdays as $i => $weekday) {
-            // Skip days
-            if ($moduleModel->resourceBooking_hideDays && !\in_array($weekday, $stringUtilAdapter->deserialize($moduleModel->resourceBooking_hideDaysSelection, true), false)) {
+            // Skip weekdays on which the resource cannot be booked
+            if (!ResourceBookingRestriction::isWeekdayAllowed($resourceModel, $weekday)) {
                 continue;
             }
+
             $arrWeek[] = [
                 'index' => $i,
                 'name' => $weekday,
@@ -355,8 +356,8 @@ trait RefreshDataTrait
         $arrWeekdays = RbbConfig::RBB_WEEKDAYS;
         $arrWeekdays = [...$arrWeekdays, ...$arrWeekdays];
         $arrAppConfig = $this->utils->getAppConfig();
-        $beginnWeek = $arrAppConfig['beginnWeek'];
-        $offset = array_search($beginnWeek, $arrWeekdays, true);
+        $beginWeek = $arrAppConfig['beginWeek'];
+        $offset = array_search($beginWeek, $arrWeekdays, true);
 
         return \array_slice($arrWeekdays, $offset, 7);
     }
@@ -403,8 +404,8 @@ trait RefreshDataTrait
                 $objRow->cssRowClass = $cssRowClass;
 
                 foreach ($arrWeekdays as $colCount => $weekday) {
-                    // Skip days
-                    if ($moduleModel->resourceBooking_hideDays && !\in_array($weekday, $stringUtilAdapter->deserialize($moduleModel->resourceBooking_hideDaysSelection, true), false)) {
+                    // Skip weekdays on which the resource cannot be booked
+                    if (!ResourceBookingRestriction::isWeekdayAllowed($resourceModel, $weekday)) {
                         continue;
                     }
 
@@ -463,9 +464,9 @@ trait RefreshDataTrait
                             // Send booking details (tl_resource_booking)
                             $arrShowAlways = ['id', 'pid', 'itemsBooked', 'bookingTime', 'confirmed'];
 
-                            // However, only show the fields that have been permitted in the module settings (tl_module.resourceBooking_bookingSubmittedFields).
-                            if ($moduleModel->resourceBooking_setBookingSubmittedFields) {
-                                $arrAllowed = $stringUtilAdapter->deserialize($moduleModel->resourceBooking_bookingSubmittedFields, true);
+                            // However, only show the fields that have been permitted in the module settings (tl_module.resourceBooking_bookingDetailFields).
+                            if ($moduleModel->resourceBooking_displayBookingDetails) {
+                                $arrAllowed = $stringUtilAdapter->deserialize($moduleModel->resourceBooking_bookingDetailFields, true);
 
                                 foreach ($arrAvailable as $arrField) {
                                     $field = $arrField['name'];

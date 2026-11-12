@@ -12,7 +12,6 @@ declare(strict_types=1);
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
-use Markocupic\ResourceBookingBundle\Config\RbbConfig;
 use Markocupic\ResourceBookingBundle\Controller\FrontendModule\ResourceBookingWeekcalendarController;
 
 /*
@@ -20,23 +19,19 @@ use Markocupic\ResourceBookingBundle\Controller\FrontendModule\ResourceBookingWe
  */
 $GLOBALS['TL_DCA']['tl_module']['palettes'][ResourceBookingWeekcalendarController::TYPE] = '
 {title_legend},name,headline,type;
-{config_legend},resourceBooking_appConfig,resourceBooking_resourceTypes,resourceBooking_hideDays,resourceBooking_addDateStop,resourceBooking_displayClientPersonalData,resourceBooking_setBookingSubmittedFields;
+{config_legend},resourceBooking_appConfig,resourceBooking_resourceTypes,resourceBooking_displayClientPersonalData,resourceBooking_displayBookingDetails;
 {template_legend:hide},customTpl;
 {protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space
 ';
 
-$GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'resourceBooking_hideDays';
-$GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'resourceBooking_addDateStop';
 $GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'resourceBooking_displayClientPersonalData';
-$GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'resourceBooking_setBookingSubmittedFields';
+$GLOBALS['TL_DCA']['tl_module']['palettes']['__selector__'][] = 'resourceBooking_displayBookingDetails';
 
 /*
  * Add subpalettes to tl_module
  */
-$GLOBALS['TL_DCA']['tl_module']['subpalettes']['resourceBooking_hideDays'] = 'resourceBooking_hideDaysSelection';
-$GLOBALS['TL_DCA']['tl_module']['subpalettes']['resourceBooking_addDateStop'] = 'resourceBooking_dateStop';
 $GLOBALS['TL_DCA']['tl_module']['subpalettes']['resourceBooking_displayClientPersonalData'] = 'resourceBooking_clientPersonalData';
-$GLOBALS['TL_DCA']['tl_module']['subpalettes']['resourceBooking_setBookingSubmittedFields'] = 'resourceBooking_bookingSubmittedFields';
+$GLOBALS['TL_DCA']['tl_module']['subpalettes']['resourceBooking_displayBookingDetails'] = 'resourceBooking_bookingDetailFields';
 
 /*
  * Add fields to tl_module
@@ -46,44 +41,6 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_resourceTypes'] = [
     'inputType' => 'checkbox',
     'eval'      => ['multiple' => true, 'tl_class' => 'clr'],
     'sql'       => 'blob NULL',
-];
-
-$GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_hideDays'] = [
-    'exclude'   => true,
-    'inputType' => 'checkbox',
-    'eval'      => ['submitOnChange' => true, 'tl_class' => 'clr'],
-    'sql'       => ['type' => 'boolean', 'default' => false],
-];
-
-$GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_hideDaysSelection'] = [
-    'exclude'   => true,
-    'inputType' => 'checkbox',
-    'options'   => RbbConfig::RBB_WEEKDAYS,
-    'reference' => &$GLOBALS['TL_LANG']['MSC']['DAYS_LONG'],
-    'eval'      => ['multiple' => true, 'tl_class' => 'clr'],
-    'sql'       => 'blob NULL',
-];
-
-$GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_addDateStop'] = [
-    'exclude'   => true,
-    'inputType' => 'checkbox',
-    'eval'      => ['submitOnChange' => true, 'tl_class' => 'clr'],
-    'sql'       => ['type' => 'boolean', 'default' => false],
-];
-
-$GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_dateStop'] = [
-    'exclude'   => true,
-    'default'   => time(),
-    'inputType' => 'text',
-    'eval'      => ['rgxp' => 'date', 'datepicker' => true, 'tl_class' => 'w50 wizard'],
-    'sql'       => ['type' => 'string', 'length' => 11, 'notnull' => true, 'default' => ''],
-];
-$GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_dateStop'] = [
-    'exclude'   => true,
-    'default'   => time(),
-    'inputType' => 'text',
-    'eval'      => ['rgxp' => 'date', 'datepicker' => true, 'tl_class' => 'w50 wizard'],
-    'sql'       => ['type' => 'string', 'length' => 11, 'notnull' => true, 'default' => ''],
 ];
 
 $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_displayClientPersonalData'] = [
@@ -101,14 +58,14 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_clientPersonalData'] 
     'sql'       => ['type' => 'string', 'length' => 1024, 'notnull' => true, 'default' => 'a:2:{i:0;s:9:\"firstname\";i:1;s:8:\"lastname\";}'],
 ];
 
-$GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_setBookingSubmittedFields'] = [
+$GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_displayBookingDetails'] = [
     'exclude'   => true,
     'inputType' => 'checkbox',
     'eval'      => ['submitOnChange' => true, 'tl_class' => 'clr'],
     'sql'       => ['type' => 'boolean', 'default' => true],
 ];
 
-$GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_bookingSubmittedFields'] = [
+$GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_bookingDetailFields'] = [
     'exclude'   => true,
     'reference' => &$GLOBALS['TL_LANG']['tl_resource_booking'],
     'inputType' => 'select',

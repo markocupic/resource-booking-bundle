@@ -57,7 +57,7 @@ if (typeof ResourceBookingApp !== 'function') {
                         activeResourceId: 'undefined',
                         // Contains the data in an array: id, title, etc.
                         activeResource: [],
-                        // Beginn week weekday of current week 00:00 UTC
+                        // Begin week weekday of current week 00:00 UTC
                         activeWeekTstamp: 0,
                         // Contains data about the active week: tstampStart, tstampEnd, dateStart, dateEnd, weekNumber, year
                         activeWeek: [],
@@ -182,7 +182,7 @@ if (typeof ResourceBookingApp !== 'function') {
                                 for (const colIndex of Object.keys(newVal[rowIndex]['cellData'])) {
 
                                     if (parseInt(newVal[rowIndex]['cellData'][colIndex]['bookingCount']) > parseInt(oldVal[rowIndex]['cellData'][colIndex]['bookingCount'])) {
-                                        if (newVal[rowIndex]['cellData'][colIndex]['beginnWeekTimestampSelectedWeek'] === oldVal[rowIndex]['cellData'][colIndex]['beginnWeekTimestampSelectedWeek']) {
+                                        if (newVal[rowIndex]['cellData'][colIndex]['beginWeekTimestampSelectedWeek'] === oldVal[rowIndex]['cellData'][colIndex]['beginWeekTimestampSelectedWeek']) {
                                             if (newVal[rowIndex]['cellData'][colIndex]['pid'] === oldVal[rowIndex]['cellData'][colIndex]['pid']) {
                                                 hasNewBooking = true;
                                             }

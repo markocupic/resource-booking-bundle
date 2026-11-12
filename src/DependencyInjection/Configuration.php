@@ -66,29 +66,70 @@ class Configuration implements ConfigurationInterface
         return $treeBuilder;
     }
 
+    /**
+     * App configurations: several configurations can be defined, each frontend
+     * module selects one of them (tl_module.resourceBooking_appConfig).
+     *
+     * The number of weeks back/ahead and the auto confirmation are set per
+     * resource since version 6 (tl_resource_booking_resource.weeksBack/weeksAhead/autoConfirm).
+     * The former keys are deprecated and only read by the migration.
+     */
     private function addAppNode(): NodeDefinition
     {
+        $deprecationMessage = 'The "%node%" option at "%path%" is deprecated.';
+
         return (new TreeBuilder('apps'))
             ->getRootNode()
-            ->requiresAtLeastOneElement()
+            ->info('App configurations, which can be selected in the frontend module settings.')
             ->useAttributeAsKey('name')
-            ->prototype('array')
+            ->arrayPrototype()
+                ->beforeNormalization()
+                    ->ifArray()
+                    ->then(
+                        static function (array $app): array {
+                            // Map the former keys (before version 6) to the new keys
+                            if (isset($app['beginnWeek']) && !isset($app['begin_week'])) {
+                                $app['begin_week'] = $app['beginnWeek'];
+                            }
+
+                            if (isset($app['permittedUploadFields']) && !isset($app['permitted_form_fields'])) {
+                                $app['permitted_form_fields'] = $app['permittedUploadFields'];
+                            }
+
+                            return $app;
+                        }
+                    )
+                ->end()
                 ->children()
+                    ->enumNode('begin_week')
+                        ->info('The weekday on which the week calendar starts.')
+                        ->values(RbbConfig::RBB_WEEKDAYS)
+                        ->defaultValue('monday')
+                    ->end()
+                    ->arrayNode('permitted_form_fields')
+                        ->info('Custom form fields of the booking form have to be registered here. bookingDescription, itemsBooked and bookingRepeatStopWeekTstamp are always permitted.')
+                        ->scalarPrototype()->end()
+                        ->defaultValue([])
+                    ->end()
+                    // Deprecated since version 6: use "begin_week" instead
                     ->enumNode('beginnWeek')
                         ->values(RbbConfig::RBB_WEEKDAYS)
-                        ->isRequired()
+                        ->setDeprecated('markocupic/resource-booking-bundle', '6.0', $deprecationMessage.' Use "begin_week" instead.')
                     ->end()
-                    ->integerNode('intBackWeeks')
-                        ->isRequired()
-                    ->end()
-                    ->integerNode('intAheadWeeks')
-                        ->isRequired()
-                    ->end()
-                    ->booleanNode('autoConfirm')
-                        ->defaultTrue()
-                    ->end()
+                    // Deprecated since version 6: use "permitted_form_fields" instead
                     ->arrayNode('permittedUploadFields')
                         ->scalarPrototype()->end()
+                        ->setDeprecated('markocupic/resource-booking-bundle', '6.0', $deprecationMessage.' Use "permitted_form_fields" instead.')
+                    ->end()
+                    // Deprecated since version 6: set per resource, only read by the migration
+                    ->integerNode('intBackWeeks')
+                        ->setDeprecated('markocupic/resource-booking-bundle', '6.0', $deprecationMessage.' Set "Weeks back" in the resource settings instead.')
+                    ->end()
+                    ->integerNode('intAheadWeeks')
+                        ->setDeprecated('markocupic/resource-booking-bundle', '6.0', $deprecationMessage.' Set "Weeks ahead" in the resource settings instead.')
+                    ->end()
+                    ->booleanNode('autoConfirm')
+                        ->setDeprecated('markocupic/resource-booking-bundle', '6.0', $deprecationMessage.' Set "Confirm bookings automatically" in the resource settings instead.')
                     ->end()
                 ->end()
             ->end()

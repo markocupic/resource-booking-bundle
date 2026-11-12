@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 // Legends
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['title_legend'] = 'Titel-Einstellungen';
+$GLOBALS['TL_LANG']['tl_resource_booking_resource']['booking_restriction_legend'] = 'Buchungseinschränkungen';
 
 // Operations
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['bookings'] = 'Buchungen der Ressource mit ID %s ansehen';
@@ -27,3 +28,10 @@ $GLOBALS['TL_LANG']['tl_resource_booking_resource']['title'] = ['Bezeichnung'];
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['description'] = ['Beschreibung'];
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['timeSlotType'] = ['Buchungszeitplan'];
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['itemsAvailable'] = ['Verfügbare Stückzahl (Standard: 1).', 'Bitte geben Sie eine natürliche Zahl grösser als 0 ein.'];
+$GLOBALS['TL_LANG']['tl_resource_booking_resource']['weeksBack'] = ['Wochen zurück', 'Geben Sie an, wie viele Wochen ab der aktuellen Woche zurückgeblättert werden kann (Standard: 10). Bei aktiviertem Cronjob werden ältere Buchungen gelöscht; bei 0 wird nichts gelöscht.'];
+$GLOBALS['TL_LANG']['tl_resource_booking_resource']['weeksAhead'] = ['Wochen voraus', 'Geben Sie an, wie viele Wochen ab der aktuellen Woche vorausgeblättert und gebucht werden kann (Standard: 52).'];
+$GLOBALS['TL_LANG']['tl_resource_booking_resource']['restrictWeekdays'] = ['Buchungen nur an ausgewählten Wochentagen zulassen', 'Geben Sie an, ob die Ressource nur an ausgewählten Wochentagen gebucht werden kann. Die übrigen Wochentage werden im Wochenkalender ausgeblendet.'];
+$GLOBALS['TL_LANG']['tl_resource_booking_resource']['allowedWeekdays'] = ['Buchbare Wochentage', 'Wählen Sie die Wochentage aus, an denen die Ressource gebucht werden kann.'];
+$GLOBALS['TL_LANG']['tl_resource_booking_resource']['addBookableUntil'] = ['Buchungen nur bis zu einem bestimmten Datum zulassen', 'Geben Sie an, ob die Ressource nur bis zu einem bestimmten Datum gebucht werden kann.'];
+$GLOBALS['TL_LANG']['tl_resource_booking_resource']['autoConfirm'] = ['Buchungen automatisch bestätigen', 'Neue Buchungen dieser Ressource werden automatisch bestätigt. Ist die Option deaktiviert, muss die Buchung im Backend bestätigt werden.'];
+$GLOBALS['TL_LANG']['tl_resource_booking_resource']['bookableUntil'] = ['Buchbar bis', 'Wählen Sie das Datum aus, bis zu dem die Ressource gebucht werden kann (inklusive).'];

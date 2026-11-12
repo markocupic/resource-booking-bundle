@@ -45,7 +45,7 @@ class DateHelper
     }
 
     /**
-     * Return beginn weekday of the week the timestamp is in
+     * Return begin weekday of the week the timestamp is in
      * By default this is a monday.
      *
      * @throws \Exception
@@ -60,18 +60,19 @@ class DateHelper
 
         $date->setTime(0, 0, 0);
 
-        $beginnWeek = $arrAppConfig['beginnWeek'];
+        $beginWeek = $arrAppConfig['beginWeek'];
 
-        $key = array_search($beginnWeek, RbbConfig::RBB_WEEKDAYS, true);
+        // RBB_WEEKDAYS starts with sunday (0) like the "w" format character.
+        $key = array_search($beginWeek, RbbConfig::RBB_WEEKDAYS, true);
 
-        if ($key === $date->format('N')) {
-            // If the date is already configured beginn week day, return it as-is
+        if ((string) $key === $date->format('w')) {
+            // If the date is already configured begin week day, return it as-is
             return $date->getTimestamp();
         }
 
         // Otherwise, return the date of the nearest "begin week day" in the past
         // by default this is a monday
-        return $date->modify(\sprintf('last %s', $beginnWeek))->getTimestamp();
+        return $date->modify(\sprintf('last %s', $beginWeek))->getTimestamp();
     }
 
     public static function isValidBookingTime(string $dateString): bool
@@ -84,31 +85,6 @@ class DateHelper
         $dateObj = \DateTime::createFromFormat($format, $dateString);
 
         return false !== $dateObj && $dateObj->format($format) === $dateString;
-    }
-
-    /**
-     * Check if date is in the permitted range.
-     *
-     * @throws \Exception
-     */
-    public static function isWithinAllowedDateRange(int $tstamp, array $arrAppConfig): bool
-    {
-        $intBackWeeks = $arrAppConfig['intBackWeeks'];
-        $intAheadWeeks = $arrAppConfig['intAheadWeeks'];
-
-        // Get the timestamp of the first and last possible weeks
-        $tstampFirstPermittedWeek = static::addWeeksToTime($intBackWeeks, static::getFirstDayOfCurrentWeek($arrAppConfig));
-        $tstampLastPermittedWeek = static::addWeeksToTime($intAheadWeeks, static::getFirstDayOfCurrentWeek($arrAppConfig));
-
-        if ($tstamp < $tstampFirstPermittedWeek || $tstamp > $tstampLastPermittedWeek) {
-            return false;
-        }
-        // Get numeric value of the weekday: 0 for Sunday, 1 for Monday, etc.
-        if ('1' !== Date::parse('w', $tstamp)) {
-            return false;
-        }
-
-        return true;
     }
 
     /**
@@ -145,8 +121,8 @@ class DateHelper
             $timestamp = time();
         }
 
-        $beginnWeek = $arrAppConfig['beginnWeek'];
+        $beginWeek = $arrAppConfig['beginWeek'];
 
-        return strtotime(\sprintf('%s this week', $beginnWeek), $timestamp);
+        return strtotime(\sprintf('%s this week', $beginWeek), $timestamp);
     }
 }

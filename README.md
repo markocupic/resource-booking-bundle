@@ -9,7 +9,7 @@ Ab Version 3.x kann eingestellt werden, wie viele Items einer Ressource buchbar 
 
 ## Rückwärtskompatibilität
 
-**!Achtung beim Update von Version 2.x auf 3.x ist es zu grossen Änderungen an den Templates gekommen. Unter anderem wurden die Templates für eine bessere Übersichtlichkeit gesplitet. Vorher angepasste Custom-Templates müssen neu geschrieben werden.**
+Beim Update auf eine neue Hauptversion bitte die Hinweise in der [UPGRADE.md](UPGRADE.md) beachten.
 
 ## Take a look
 
@@ -33,15 +33,15 @@ Nach der Installation mit dem Contao Manager müssen:
 * Danach darin die Reservations-Zeitfenster im Zeitformat H:i (08:00 bis 08:45) erstellt werden.
 * Ressourcen-Typen erstellt werden.
 * In jedem Ressourcen-Typ mindestens eine Ressource (z.B. Zimmer) erstellt werden.
+  In den Ressourcen-Einstellungen wird festgelegt, wie viele Wochen zurück- bzw. vorausgeblättert (und gebucht) werden kann,
+  an welchen Wochentagen und bis zu welchem Datum die Ressource gebucht werden kann und ob Buchungen automatisch bestätigt werden.
 * Mindestens 1 Mitglied (Frontend-Benutzer) angelegt werden. (Das Buchungsmodul wird nur bei eingeloggtem Benutzer angezeigt.)
 
 ![App Konfiguration anpassen](docs/screenshots/adjust-app-configuration.png "Frontendmodul-Einstellungen")
 
-Die Erweiterung wird mit einer Standardkonfiguration ausgeliefert. Weitere Konfigurationssets können erstellt werden. Mehr dazu weiter [unten](#app-konfiguration-anpassen).
+Die Erweiterung wird mit einer Standardkonfiguration ausgeliefert. Weitere Konfigurationssets können erstellt und in den Frontend-Moduleinstellungen ausgewählt werden. Mehr dazu weiter [unten](#app-konfiguration-anpassen).
 
 Das Tool setzt auf [vue.js](https://vuejs.org/) und [Bootstrap](https://getbootstrap.com/) auf. Die benötigten Libraries/Frameworks werden automatisch mitinstalliert und im Template eingebunden.
-
-Anm: Bei der Installation wird neben den oben erwähnten Erweiterungen auch [codefog/contao-haste](https://github.com/codefog/contao-haste) mitinstalliert.
 
 ## Zeitpläne per command anlegen
 
@@ -311,23 +311,26 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
 
 ## App Konfiguration anpassen
 
-Die Erweiterung wird mit einer Default-Konfiguration installiert.
-In config/config.yml können weitere Konfigurations-Sets erstellt werden,
-welche dann in den Frontend-Moduleinstellungen ausgewählt werden können.
+Die Erweiterung wird mit der App-Konfiguration `default` installiert. In config/config.yaml können weitere
+Konfigurations-Sets erstellt werden, welche dann in den Frontend-Moduleinstellungen ausgewählt werden können.
 
-Dazu muss in config/config.yml ein Eintrag erstellt werden.
+Wie viele Wochen zurück- bzw. vorausgeblättert und gebucht werden kann und ob neue Buchungen automatisch bestätigt
+werden, wird dagegen pro Ressource in den Ressourcen-Einstellungen festgelegt.
 
 ```yaml
 # config/config.yaml
 
 markocupic_resource_booking:
+    # Täglich Buchungen löschen, die weiter zurückliegen als "Wochen zurück" der Ressource (Default: false)
+    # Bei Ressourcen mit "Wochen zurück" = 0 wird nichts gelöscht.
     purge_past_bookings_with_cron: true
     apps:
         my_rbb_custom:
-            beginnWeek: 'monday'
-            intBackWeeks: -10
-            intAheadWeeks: 60
-            autoConfirm: true
+            # Wochentag, mit dem der Wochenkalender beginnt (Default: monday)
+            begin_week: 'monday'
             # Custom Inputs im Buchungsformular müssen hier registriert werden
-            permittedUploadFields: [phone,email]
+            # (bookingDescription, itemsBooked und bookingRepeatStopWeekTstamp sind immer erlaubt)
+            permitted_form_fields: [phone,email]
 ```
+
+Wie bestehende Einstellungen beim Update übernommen werden, steht in der [UPGRADE.md](UPGRADE.md#version-5-to-60).

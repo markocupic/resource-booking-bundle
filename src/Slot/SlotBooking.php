@@ -30,6 +30,10 @@ class SlotBooking extends AbstractSlot
 
     public function isBookable(): bool
     {
-        return !$this->isBlocked && $this->canFulfillRequestedItems();
+        if ($this->isBlocked || !$this->isWithinAllowedDateRange() || !$this->isOnAllowedWeekday()) {
+            return false;
+        }
+
+        return $this->canFulfillRequestedItems();
     }
 }

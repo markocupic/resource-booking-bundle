@@ -26,7 +26,7 @@ use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Markocupic\ResourceBookingBundle\Slot\SlotCollection;
 use Markocupic\ResourceBookingBundle\Slot\SlotMain;
-use Markocupic\ResourceBookingBundle\Util\Utils;
+use Markocupic\ResourceBookingBundle\Util\ResourceBookingRestriction;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -83,7 +83,7 @@ final class BookingController extends AbstractController implements ControllerIn
         $this->connection->beginTransaction();
 
         try {
-            $this->validateInputs($this->utils->getAppConfig()['permittedUploadFields']);
+            $this->validateInputs($this->utils->getAppConfig()['permittedFormFields']);
 
             $slots = $this->getSlotCollectionFromRequest($request, $this->bookingRepeatStopWeekTstamp);
 
@@ -92,7 +92,7 @@ final class BookingController extends AbstractController implements ControllerIn
             }
 
             /** @var Collection<ResourceBookingModel> $bookings */
-            $bookings = $this->getBookingCollection($slots, $this->utils);
+            $bookings = $this->getBookingCollection($slots);
 
             $this->eventDispatcher->dispatch(
                 new PreBookingEvent($request, $ajaxResponse, $this->sessionBag, $this->user->getLoggedInUser(), $bookings),
@@ -203,17 +203,17 @@ final class BookingController extends AbstractController implements ControllerIn
                     $this->throwInvalidValue($key);
                 }
             } elseif (!\in_array($key, $permittedFormFields, true)) {
-                throw new \Exception($this->translator->trans('RBB.ERR.invalidUploadFieldSubmitted', [$key], 'contao_default'));
+                throw new \Exception($this->translator->trans('RBB.ERR.invalidFormFieldSubmitted', [$key], 'contao_default'));
             }
         }
     }
 
     private function throwInvalidValue(string $key): void
     {
-        throw new \Exception($this->translator->trans('RBB.ERR.invalidUploadValueSubmitted', [$key], 'contao_default'));
+        throw new \Exception($this->translator->trans('RBB.ERR.invalidFormValueSubmitted', [$key], 'contao_default'));
     }
 
-    private function getBookingCollection(SlotCollection $slots, Utils $utils): Collection|null
+    private function getBookingCollection(SlotCollection $slots): Collection|null
     {
         $bookings = [];
 
@@ -245,8 +245,7 @@ final class BookingController extends AbstractController implements ControllerIn
                 }
 
                 // !Do not save the model here, this will be done later
-                $appConfig = $utils->getAppConfig();
-                $booking->confirmed = (bool) $appConfig['autoConfirm'];
+                $booking->confirmed = ResourceBookingRestriction::isAutoConfirmEnabled($this->getActiveResource());
                 $booking->tstamp = time();
                 $booking->bookingTime = time();
 

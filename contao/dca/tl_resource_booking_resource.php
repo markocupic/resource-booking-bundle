@@ -17,7 +17,7 @@ use Contao\DC_Table;
 use Contao\DataContainer;
 
 $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = [
-    'config'   => [
+    'config'      => [
         'dataContainer'    => DC_Table::class,
         'switchToEdit'     => true,
         'ptable'           => 'tl_resource_booking_resource_type',
@@ -30,7 +30,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = [
             ],
         ],
     ],
-    'list'     => [
+    'list'        => [
         'sorting'           => [
             'mode'         => DataContainer::MODE_PARENT,
             'fields'       => ['title ASC'],
@@ -60,22 +60,27 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = [
             'show',
         ],
     ],
-    'palettes' => [
-        'default' => '{title_legend},title,description,itemsAvailable,timeSlotType',
+    'palettes'    => [
+        '__selector__' => ['restrictWeekdays', 'addBookableUntil'],
+        'default'      => '{title_legend},title,description,itemsAvailable,timeSlotType;{booking_restriction_legend},weeksBack,weeksAhead,restrictWeekdays,addBookableUntil,autoConfirm',
     ],
-    'fields'   => [
-        'id'             => [
+    'subpalettes' => [
+        'restrictWeekdays' => 'allowedWeekdays',
+        'addBookableUntil' => 'bookableUntil',
+    ],
+    'fields'      => [
+        'id'               => [
             'sql' => ['type' => 'integer', 'length' => 10, 'unsigned' => true, 'notnull' => true, 'autoincrement' => true],
         ],
-        'pid'            => [
+        'pid'              => [
             'foreignKey' => 'tl_resource_booking_resource_type.title',
             'relation'   => ['type' => 'belongsTo', 'load' => 'lazy'],
             'sql'        => ['type' => 'integer', 'length' => 10, 'unsigned' => true, 'notnull' => true, 'default' => 0],
         ],
-        'tstamp'         => [
+        'tstamp'           => [
             'sql' => ['type' => 'integer', 'length' => 10, 'unsigned' => true, 'notnull' => true, 'default' => 0],
         ],
-        'title'          => [
+        'title'            => [
             'exclude'   => true,
             'search'    => true,
             'inputType' => 'text',
@@ -83,21 +88,21 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = [
             'eval'      => ['mandatory' => true, 'maxlength' => 255, 'tl_class' => 'clr'],
             'sql'       => ['type' => 'string', 'length' => 255, 'notnull' => true, 'default' => ''],
         ],
-        'published'      => [
+        'published'        => [
             'toggle'    => true,
             'filter'    => true,
             'inputType' => 'checkbox',
             'eval'      => ['doNotCopy' => true],
             'sql'       => ['type' => 'boolean', 'default' => false],
         ],
-        'description'    => [
+        'description'      => [
             'exclude'   => true,
             'search'    => true,
             'inputType' => 'textarea',
             'eval'      => ['tl_class' => 'clr'],
             'sql'       => 'mediumtext NULL',
         ],
-        'itemsAvailable' => [
+        'itemsAvailable'   => [
             'exclude'   => true,
             'search'    => false,
             'sorting'   => false,
@@ -106,12 +111,59 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = [
             'eval'      => ['mandatory' => true, 'rgxp' => 'custom', 'customRgxp' => '/^[1-9]\d*$/', 'tl_class' => 'w50'],
             'sql'       => ['type' => 'integer', 'length' => 10, 'unsigned' => true, 'notnull' => true, 'default' => 1],
         ],
-        'timeSlotType'   => [
+        'timeSlotType'     => [
             'inputType'  => 'select',
             'foreignKey' => 'tl_resource_booking_time_slot_type.title',
             'eval'       => ['mandatory' => true, 'tl_class' => 'clr'],
             'sql'        => ['type' => 'integer', 'length' => 11, 'unsigned' => true, 'notnull' => true, 'default' => 0],
             'relation'   => ['type' => 'belongsTo', 'load' => 'lazy'],
+        ],
+        'weeksBack'        => [
+            'exclude'   => true,
+            'inputType' => 'text',
+            'eval'      => ['mandatory' => true, 'rgxp' => 'natural', 'maxlength' => 3, 'tl_class' => 'w50'],
+            'sql'       => ['type' => 'integer', 'unsigned' => true, 'notnull' => true, 'default' => RbbConfig::RBB_DEFAULT_WEEKS_BACK],
+        ],
+        'weeksAhead'       => [
+            'exclude'   => true,
+            'inputType' => 'text',
+            'eval'      => ['mandatory' => true, 'rgxp' => 'natural', 'maxlength' => 3, 'tl_class' => 'w50'],
+            'sql'       => ['type' => 'integer', 'unsigned' => true, 'notnull' => true, 'default' => RbbConfig::RBB_DEFAULT_WEEKS_AHEAD],
+        ],
+        'restrictWeekdays' => [
+            'exclude'   => true,
+            'filter'    => true,
+            'inputType' => 'checkbox',
+            'eval'      => ['submitOnChange' => true, 'tl_class' => 'clr'],
+            'sql'       => ['type' => 'boolean', 'default' => false],
+        ],
+        'allowedWeekdays'  => [
+            'exclude'   => true,
+            'inputType' => 'checkbox',
+            'options'   => RbbConfig::RBB_WEEKDAYS,
+            'reference' => &$GLOBALS['TL_LANG']['MSC']['DAYS_LONG'],
+            'eval'      => ['mandatory' => true, 'multiple' => true, 'tl_class' => 'clr'],
+            'sql'       => 'blob NULL',
+        ],
+        'addBookableUntil' => [
+            'exclude'   => true,
+            'filter'    => true,
+            'inputType' => 'checkbox',
+            'eval'      => ['submitOnChange' => true, 'tl_class' => 'clr'],
+            'sql'       => ['type' => 'boolean', 'default' => false],
+        ],
+        'bookableUntil'    => [
+            'exclude'   => true,
+            'inputType' => 'text',
+            'eval'      => ['mandatory' => true, 'rgxp' => 'date', 'datepicker' => true, 'tl_class' => 'w50 wizard'],
+            'sql'       => ['type' => 'string', 'length' => 11, 'notnull' => true, 'default' => ''],
+        ],
+        'autoConfirm'      => [
+            'exclude'   => true,
+            'filter'    => true,
+            'inputType' => 'checkbox',
+            'eval'      => ['tl_class' => 'clr'],
+            'sql'       => ['type' => 'boolean', 'default' => true],
         ],
     ],
 ];

@@ -15,7 +15,6 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\Tests\Cron;
 
 use Contao\Date;
-use Contao\ModuleModel;
 use Contao\TestCase\ContaoTestCase;
 use Doctrine\DBAL\Connection;
 use Markocupic\ResourceBookingBundle\Cron\PurgePastBookingsCron;
@@ -37,11 +36,11 @@ class PurgePastBookingsCronTest extends ContaoTestCase
             ->method('executeStatement')
         ;
 
-        $cron = new PurgePastBookingsCron($connection, $this->mockContaoFramework(), false, [], null);
+        $cron = new PurgePastBookingsCron($connection, $this->mockContaoFramework(), false, ['default' => ['begin_week' => 'monday']], null);
         $cron();
     }
 
-    public function testInvokeDeletesExpiredBookingsAndLogsTheResult(): void
+    public function testInvokeDeletesExpiredBookingsPerResourceAndLogsTheResult(): void
     {
         $logger = $this->createMock(LoggerInterface::class);
         $logger
@@ -52,22 +51,16 @@ class PurgePastBookingsCronTest extends ContaoTestCase
 
         $cron = $this->getPartialCron($logger);
         $cron
-            ->method('getModuleIdsWithBookings')
-            ->willReturn([5, 6])
-        ;
-
-        $cron
-            ->method('resolveAppConfigForModule')
-            ->willReturnMap([
-                [5, ['intBackWeeks' => -2]],
-                [6, null], // not resolvable -> skipped
-            ])
+            ->method('getWeeksBackByResource')
+            ->willReturn([5 => 2, 6 => 0])
         ;
 
         $cron
             ->method('calculatePurgeLimit')
-            ->with(['intBackWeeks' => -2])
-            ->willReturn(1000)
+            ->willReturnMap([
+                [2, 1000],
+                [0, null], // weeksBack = 0 -> skipped
+            ])
         ;
 
         $cron
@@ -80,7 +73,7 @@ class PurgePastBookingsCronTest extends ContaoTestCase
         $cron();
     }
 
-    public function testInvokeSkipsModulesWithoutAPurgeLimitAndDoesNotLog(): void
+    public function testInvokeSkipsResourcesWithoutAPurgeLimitAndDoesNotLog(): void
     {
         $logger = $this->createMock(LoggerInterface::class);
         $logger
@@ -90,13 +83,8 @@ class PurgePastBookingsCronTest extends ContaoTestCase
 
         $cron = $this->getPartialCron($logger);
         $cron
-            ->method('getModuleIdsWithBookings')
-            ->willReturn([5])
-        ;
-
-        $cron
-            ->method('resolveAppConfigForModule')
-            ->willReturn(['intBackWeeks' => 4])
+            ->method('getWeeksBackByResource')
+            ->willReturn([5 => 0])
         ;
 
         $cron
@@ -112,107 +100,40 @@ class PurgePastBookingsCronTest extends ContaoTestCase
         $cron();
     }
 
-    public function testGetModuleIdsWithBookingsReturnsDistinctPositiveIds(): void
+    public function testGetWeeksBackByResourceReturnsTheValuesIndexedByResourceId(): void
     {
         $connection = $this->createMock(Connection::class);
         $connection
             ->expects($this->once())
             ->method('fetchAllAssociative')
-            ->with('SELECT moduleId FROM tl_resource_booking GROUP BY moduleId')
+            ->with('SELECT id, weeksBack FROM tl_resource_booking_resource')
             ->willReturn([
-                ['moduleId' => 3],
-                ['moduleId' => 0], // filtered out
-                ['moduleId' => '5'], // cast to int
-                ['moduleId' => null], // filtered out
+                ['id' => 3, 'weeksBack' => 10],
+                ['id' => 0, 'weeksBack' => 5], // filtered out
+                ['id' => '7', 'weeksBack' => '2'], // cast to int
             ])
         ;
 
-        $cron = new PurgePastBookingsCron($connection, $this->mockContaoFramework(), true, [], null);
+        $cron = new PurgePastBookingsCron($connection, $this->mockContaoFramework(), true, ['default' => ['begin_week' => 'monday']], null);
 
-        $this->assertSame([3, 5], $this->invoke($cron, 'getModuleIdsWithBookings'));
+        $this->assertSame([3 => 10, 7 => 2], $this->invoke($cron, 'getWeeksBackByResource'));
     }
 
-    public function testResolveAppConfigForModuleReturnsTheMatchingConfig(): void
-    {
-        $module = $this->mockClassWithProperties(ModuleModel::class, ['resourceBooking_appConfig' => 'default']);
-
-        $adapter = $this->mockAdapter(['findById']);
-        $adapter
-            ->method('findById')
-            ->willReturn($module)
-        ;
-
-        $framework = $this->mockContaoFramework([ModuleModel::class => $adapter]);
-
-        $cron = new PurgePastBookingsCron(
-            $this->createMock(Connection::class),
-            $framework,
-            true,
-            ['default' => ['intBackWeeks' => -2, 'beginnWeek' => 'monday']],
-            null,
-        );
-
-        $this->assertSame(
-            ['intBackWeeks' => -2, 'beginnWeek' => 'monday'],
-            $this->invoke($cron, 'resolveAppConfigForModule', [5]),
-        );
-    }
-
-    public function testResolveAppConfigForModuleReturnsNullWhenModuleIsMissing(): void
-    {
-        $adapter = $this->mockAdapter(['findById']);
-        $adapter
-            ->method('findById')
-            ->willReturn(null)
-        ;
-
-        $cron = new PurgePastBookingsCron(
-            $this->createMock(Connection::class),
-            $this->mockContaoFramework([ModuleModel::class => $adapter]),
-            true,
-            ['default' => ['intBackWeeks' => -2]],
-            null,
-        );
-
-        $this->assertNull($this->invoke($cron, 'resolveAppConfigForModule', [5]));
-    }
-
-    public function testResolveAppConfigForModuleReturnsNullWhenConfigKeyIsUnknown(): void
-    {
-        $module = $this->mockClassWithProperties(ModuleModel::class, ['resourceBooking_appConfig' => 'unknown']);
-
-        $adapter = $this->mockAdapter(['findById']);
-        $adapter
-            ->method('findById')
-            ->willReturn($module)
-        ;
-
-        $cron = new PurgePastBookingsCron(
-            $this->createMock(Connection::class),
-            $this->mockContaoFramework([ModuleModel::class => $adapter]),
-            true,
-            ['default' => ['intBackWeeks' => -2]],
-            null,
-        );
-
-        $this->assertNull($this->invoke($cron, 'resolveAppConfigForModule', [5]));
-    }
-
-    public function testCalculatePurgeLimitReturnsNullForNonNegativeBackWeeks(): void
+    public function testCalculatePurgeLimitReturnsNullIfTheUserCannotNavigateBack(): void
     {
         $cron = new PurgePastBookingsCron(
             $this->createMock(Connection::class),
             $this->mockContaoFramework(),
             true,
-            [],
+            ['default' => ['begin_week' => 'monday']],
             null,
         );
 
-        $this->assertNull($this->invoke($cron, 'calculatePurgeLimit', [['intBackWeeks' => 0]]));
-        $this->assertNull($this->invoke($cron, 'calculatePurgeLimit', [['intBackWeeks' => 3]]));
+        $this->assertNull($this->invoke($cron, 'calculatePurgeLimit', [0]));
+        $this->assertNull($this->invoke($cron, 'calculatePurgeLimit', [-3]));
     }
 
-    public function testCalculatePurgeLimitComputesTheCutoffForNegativeBackWeeks(): void
+    public function testCalculatePurgeLimitComputesTheCutoff(): void
     {
         // Mock Date::parse so the result no longer depends on the current date.
         $dateAdapter = $this->mockAdapter(['parse']);
@@ -225,16 +146,13 @@ class PurgePastBookingsCronTest extends ContaoTestCase
             $this->createMock(Connection::class),
             $this->mockContaoFramework([Date::class => $dateAdapter]),
             true,
-            [],
+            ['default' => ['begin_week' => 'monday']],
             null,
         );
 
         $expected = strtotime('01-01-2020 -2 weeks');
 
-        $this->assertSame(
-            $expected,
-            $this->invoke($cron, 'calculatePurgeLimit', [['intBackWeeks' => -2, 'beginnWeek' => 'monday']]),
-        );
+        $this->assertSame($expected, $this->invoke($cron, 'calculatePurgeLimit', [2]));
     }
 
     public function testDeleteExpiredBookingsIssuesTheDeleteStatement(): void
@@ -244,16 +162,31 @@ class PurgePastBookingsCronTest extends ContaoTestCase
             ->expects($this->once())
             ->method('executeStatement')
             ->with(
-                'DELETE FROM tl_resource_booking WHERE moduleId = ? AND endTime < ?',
+                'DELETE FROM tl_resource_booking WHERE pid = ? AND endTime < ?',
                 [5, 1000],
                 $this->anything(),
             )
             ->willReturn(4)
         ;
 
-        $cron = new PurgePastBookingsCron($connection, $this->mockContaoFramework(), true, [], null);
+        $cron = new PurgePastBookingsCron($connection, $this->mockContaoFramework(), true, ['default' => ['begin_week' => 'monday']], null);
 
         $this->assertSame(4, $this->invoke($cron, 'deleteExpiredBookings', [5, 1000]));
+    }
+
+    public function testGetBeginWeekUsesTheDefaultAppOrTheFirstApp(): void
+    {
+        $connection = $this->createMock(Connection::class);
+        $framework = $this->mockContaoFramework();
+
+        $cron = new PurgePastBookingsCron($connection, $framework, true, ['other' => ['begin_week' => 'sunday'], 'default' => ['begin_week' => 'tuesday']], null);
+        $this->assertSame('tuesday', $this->invoke($cron, 'getBeginWeek'));
+
+        $cron = new PurgePastBookingsCron($connection, $framework, true, ['other' => ['begin_week' => 'sunday']], null);
+        $this->assertSame('sunday', $this->invoke($cron, 'getBeginWeek'));
+
+        $cron = new PurgePastBookingsCron($connection, $framework, true, [], null);
+        $this->assertSame('monday', $this->invoke($cron, 'getBeginWeek'));
     }
 
     /**
@@ -266,12 +199,11 @@ class PurgePastBookingsCronTest extends ContaoTestCase
                 $this->createMock(Connection::class),
                 $this->mockContaoFramework(),
                 true,
-                [],
+                ['default' => ['begin_week' => 'monday']],
                 $logger,
             ])
             ->onlyMethods([
-                'getModuleIdsWithBookings',
-                'resolveAppConfigForModule',
+                'getWeeksBackByResource',
                 'calculatePurgeLimit',
                 'deleteExpiredBookings',
             ])

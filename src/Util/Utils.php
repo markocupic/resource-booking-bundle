@@ -17,7 +17,7 @@ namespace Markocupic\ResourceBookingBundle\Util;
 use Contao\Controller;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\ModuleModel;
-use Contao\System;
+use Markocupic\ResourceBookingBundle\Config\RbbConfig;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionBagInterface;
@@ -31,6 +31,8 @@ class Utils
         RequestStack $requestStack,
         #[Autowire('%markocupic_resource_booking.session.attribute_bag_name%')]
         private readonly string $bagName,
+        #[Autowire('%markocupic_resource_booking.apps%')]
+        private readonly array $appConfigs = [],
     ) {
         // Get session from request
         if (null !== ($request = $requestStack->getCurrentRequest())) {
@@ -77,32 +79,38 @@ class Utils
     }
 
     /**
+     * Returns the app configuration selected in the frontend module
+     * (tl_module.resourceBooking_appConfig). The number of weeks back/ahead
+     * and the auto confirmation are no longer part of it, but are set per resource.
+     *
+     * @return array{beginWeek: string, permittedFormFields: list<string>}
+     *
      * @throws \Exception
      */
     public function getAppConfig(): array
     {
-        if ($this->session->has('moduleModelId')) {
-            $moduleModelAdapter = $this->framework->getAdapter(ModuleModel::class);
-            $module = $moduleModelAdapter->findById($this->session->get('moduleModelId'));
+        $appConfigName = null;
 
-            if (null !== $module) {
-                $strConfig = $module->resourceBooking_appConfig;
-
-                if ('' !== (string) $strConfig) {
-                    $appConfig = $this->framework
-                        ->getAdapter(System::class)->getContainer()
-                        ->getParameter('markocupic_resource_booking.apps')
-                    ;
-
-                    if (isset($appConfig[$strConfig]) && \is_array($appConfig[$strConfig])) {
-                        return $appConfig[$strConfig];
-                    }
-                }
-            }
-
-            throw new \Exception('Could not find app configuration array. Please check your config.yml file and make sure you have created correctly your custom configuration.');
+        if (null !== $this->session && $this->session->has('moduleModelId')) {
+            $appConfigName = $this->getModuleModel()?->resourceBooking_appConfig;
         }
 
-        throw new \Exception('RBB application must be initialized first, before you can call '.__METHOD__.'.');
+        return $this->getAppConfigByName(\is_string($appConfigName) ? $appConfigName : null);
+    }
+
+    /**
+     * Returns the app configuration with the given name. If it does not exist,
+     * the "default" app configuration or, if there is none, the defaults apply.
+     *
+     * @return array{beginWeek: string, permittedFormFields: list<string>}
+     */
+    public function getAppConfigByName(string|null $appConfigName): array
+    {
+        $appConfig = $this->appConfigs[(string) $appConfigName] ?? $this->appConfigs['default'] ?? [];
+
+        return [
+            'beginWeek' => (string) ($appConfig['begin_week'] ?? 'monday'),
+            'permittedFormFields' => array_values(array_unique([...RbbConfig::RBB_BASE_PERMITTED_FORM_FIELDS, ...($appConfig['permitted_form_fields'] ?? [])])),
+        ];
     }
 }

@@ -28,6 +28,7 @@ use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceTypeModel;
 use Markocupic\ResourceBookingBundle\Util\DateHelper;
 use Markocupic\ResourceBookingBundle\Util\Utils;
+use Markocupic\ResourceBookingBundle\Util\WeekBoundaries;
 use PHPUnit\Framework\MockObject\MockObject;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -161,7 +162,7 @@ class InitializeTest extends ContaoTestCase
         $bag = new AttributeBag();
 
         $singleResType = $this->singleItemCollection(7);
-        $singleRes = $this->singleItemCollection(9);
+        $singleRes = $this->singleItemCollection(9, $this->mockResourceModel(9));
 
         $dateHelperAdapter = $this->mockAdapter(['getFirstDayOfCurrentWeek', 'addWeeksToTime', 'getFirstDayOfWeek']);
         $dateHelperAdapter
@@ -197,7 +198,7 @@ class InitializeTest extends ContaoTestCase
         $utils = $this->createMock(Utils::class);
         $utils
             ->method('getAppConfig')
-            ->willReturn(['intBackWeeks' => -2, 'intAheadWeeks' => 4])
+            ->willReturn(['beginWeek' => 'monday'])
         ;
 
         $request = Request::create('https://example.com/calendar');
@@ -220,16 +221,16 @@ class InitializeTest extends ContaoTestCase
         $this->assertSame('de', $bag->get('language'));
     }
 
-    public function testDateStopInThePastClampsLastPermittedWeekToCurrentWeek(): void
+    public function testBookableUntilInThePastClampsLastPermittedWeekToCurrentWeek(): void
     {
         $bag = new AttributeBag();
         // Pre-select a valid resType/res so the guards pass without auto-selection.
         $bag->set('resType', 7);
         $bag->set('res', 9);
 
-        $moduleModel = $this->mockModuleModel([
-            'resourceBooking_addDateStop' => true,
-            'resourceBooking_dateStop' => 12345,
+        $resourceModel = $this->mockResourceModel(9, [
+            'addBookableUntil' => true,
+            'bookableUntil' => '12345',
         ]);
 
         $dateHelperAdapter = $this->mockAdapter(['getFirstDayOfCurrentWeek', 'addWeeksToTime', 'getFirstDayOfWeek']);
@@ -246,7 +247,7 @@ class InitializeTest extends ContaoTestCase
             ])
         ;
 
-        // Date stop resolves to a week (300) that lies before "now".
+        // "Bookable until" resolves to a week (300) that lies before "now".
         $dateHelperAdapter
             ->method('getFirstDayOfWeek')
             ->willReturn(300)
@@ -260,11 +261,11 @@ class InitializeTest extends ContaoTestCase
 
         $framework = $this->mockContaoFramework([
             ModuleKey::class => $this->mockAdapterWithReturnValues(['getModuleKey' => '33_0']),
-            ModuleModel::class => $this->mockAdapterWithReturnValues(['findById' => $moduleModel]),
+            ModuleModel::class => $this->mockAdapterWithReturnValues(['findById' => $this->mockModuleModel()]),
             PageModel::class => $this->mockAdapterWithReturnValues(['findById' => $this->mockPageModel()]),
             StringUtil::class => $this->mockAdapterWithReturnValues(['deserialize' => [7]]),
             ResourceBookingResourceTypeModel::class => $this->mockAdapterWithReturnValues(['findPublishedByPk' => (object) ['id' => 7]]),
-            ResourceBookingResourceModel::class => $this->mockAdapterWithReturnValues(['findPublishedByPkAndPid' => (object) ['id' => 9]]),
+            ResourceBookingResourceModel::class => $this->mockAdapterWithReturnValues(['findPublishedByPkAndPid' => $resourceModel]),
             DateHelper::class => $dateHelperAdapter,
             Date::class => $dateAdapter,
         ]);
@@ -272,7 +273,7 @@ class InitializeTest extends ContaoTestCase
         $utils = $this->createMock(Utils::class);
         $utils
             ->method('getAppConfig')
-            ->willReturn(['intBackWeeks' => -2, 'intAheadWeeks' => 4])
+            ->willReturn(['beginWeek' => 'monday'])
         ;
 
         // getCurrentTime() is stubbed to a large value so 300 counts as "in the past".
@@ -283,6 +284,61 @@ class InitializeTest extends ContaoTestCase
         // Last permitted week was clamped back to the current week (1000).
         $this->assertSame(1000, $bag->get('tstampLastPermittedWeek'));
         $this->assertSame('d1000', $bag->get('tstampLastPermittedWeekDate'));
+    }
+
+    public function testActiveWeekIsClampedToThePermittedWeeksOfTheResource(): void
+    {
+        $bag = new AttributeBag();
+        $bag->set('resType', 7);
+        $bag->set('res', 9);
+        // Lies after the last permitted week of the resource (2000).
+        $bag->set('activeWeekTstamp', 9999);
+
+        $dateHelperAdapter = $this->mockAdapter(['getFirstDayOfCurrentWeek', 'addWeeksToTime', 'getFirstDayOfWeek']);
+        $dateHelperAdapter
+            ->method('getFirstDayOfCurrentWeek')
+            ->willReturn(1000)
+        ;
+
+        $dateHelperAdapter
+            ->method('addWeeksToTime')
+            ->willReturnMap([
+                [-2, 1000, 500],
+                [4, 1000, 2000],
+            ])
+        ;
+
+        $dateAdapter = $this->mockAdapter(['parse']);
+        $dateAdapter
+            ->method('parse')
+            ->willReturnCallback(static fn (string $format, int $tstamp): string => 'd'.$tstamp)
+        ;
+
+        $framework = $this->mockContaoFramework([
+            ModuleKey::class => $this->mockAdapterWithReturnValues(['getModuleKey' => '33_0']),
+            ModuleModel::class => $this->mockAdapterWithReturnValues(['findById' => $this->mockModuleModel()]),
+            PageModel::class => $this->mockAdapterWithReturnValues(['findById' => $this->mockPageModel()]),
+            StringUtil::class => $this->mockAdapterWithReturnValues(['deserialize' => [7]]),
+            ResourceBookingResourceTypeModel::class => $this->mockAdapterWithReturnValues(['findPublishedByPk' => (object) ['id' => 7]]),
+            ResourceBookingResourceModel::class => $this->mockAdapterWithReturnValues(['findPublishedByPkAndPid' => $this->mockResourceModel(9)]),
+            DateHelper::class => $dateHelperAdapter,
+            Date::class => $dateAdapter,
+        ]);
+
+        $utils = $this->createMock(Utils::class);
+        $utils
+            ->method('getAppConfig')
+            ->willReturn(['beginWeek' => 'monday'])
+        ;
+
+        $initialize = $this->getInitialize($framework, $bag, null, $utils);
+
+        $initialize->initialize(self::MODULE_ID, self::PAGE_ID);
+
+        $this->assertSame(500, $bag->get('tstampFirstPermittedWeek'));
+        $this->assertSame(2000, $bag->get('tstampLastPermittedWeek'));
+        $this->assertSame(2000, $bag->get('activeWeekTstamp'));
+        $this->assertSame('d2000', $bag->get('activeWeekDate'));
     }
 
     /**
@@ -301,6 +357,7 @@ class InitializeTest extends ContaoTestCase
                 $framework,
                 $requestStack,
                 $utils ?? $this->createMock(Utils::class),
+                new WeekBoundaries($framework),
                 'contao_resource_booking_bundle_attributes',
             ])
             ->onlyMethods(['getSessionBag', 'getCurrentTime'])
@@ -325,8 +382,20 @@ class InitializeTest extends ContaoTestCase
         return $this->mockClassWithProperties(ModuleModel::class, array_merge([
             'id' => self::MODULE_ID,
             'resourceBooking_resourceTypes' => 'serialized-res-types',
-            'resourceBooking_addDateStop' => false,
-            'resourceBooking_dateStop' => 0,
+        ], $properties));
+    }
+
+    private function mockResourceModel(int $id, array $properties = []): ResourceBookingResourceModel
+    {
+        return $this->mockClassWithProperties(ResourceBookingResourceModel::class, array_merge([
+            'id' => $id,
+            // Weeks back/ahead are set per resource
+            'weeksBack' => 2,
+            'weeksAhead' => 4,
+            'restrictWeekdays' => false,
+            'allowedWeekdays' => null,
+            'addBookableUntil' => false,
+            'bookableUntil' => '',
         ], $properties));
     }
 
@@ -355,16 +424,23 @@ class InitializeTest extends ContaoTestCase
     /**
      * A minimal stand-in for a Contao model collection holding exactly one item.
      */
-    private function singleItemCollection(int $id): object
+    private function singleItemCollection(int $id, object|null $current = null): object
     {
-        return new class($id) {
-            public function __construct(public readonly int $id)
-            {
+        return new class($id, $current) {
+            public function __construct(
+                public readonly int $id,
+                private readonly object|null $current,
+            ) {
             }
 
             public function count(): int
             {
                 return 1;
+            }
+
+            public function current(): object|null
+            {
+                return $this->current;
             }
         };
     }

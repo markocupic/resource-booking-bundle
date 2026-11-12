@@ -1,8 +1,5 @@
 markocupic_resource_booking:
     apps:
         default:
-            beginnWeek: 'monday'
-            intBackWeeks: -10
-            intAheadWeeks: 60
-            autoConfirm: true
-            permittedUploadFields: [ bookingDescription,itemsBooked,bookingRepeatStopWeekTstamp ]
+            begin_week: 'monday'
+            permitted_form_fields: [ ]

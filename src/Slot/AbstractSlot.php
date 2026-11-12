@@ -23,6 +23,7 @@ use Contao\Model\Collection;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Util\DateHelper;
+use Markocupic\ResourceBookingBundle\Util\ResourceBookingRestriction;
 use Markocupic\ResourceBookingBundle\Util\UtcTimeHelper;
 use Markocupic\ResourceBookingBundle\Util\Utils;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
@@ -35,7 +36,8 @@ use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInt
  * @property int                               $totalBookedItems
  * @property string                            $date
  * @property int|null                          $bookingRepeatStopWeekTstamp
- * @property int|null                          $beginnWeekTimestampSelectedWeek
+ * @property int|null                          $beginWeekTimestampSelectedWeek
+ * @property int|null                          $lastPermittedWeekTstamp
  * @property string                            $startTimeString
  * @property string                            $endTimeString
  * @property MemberModel|null                  $user
@@ -54,6 +56,7 @@ use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInt
  * @property int                               $pid
  * @property bool                              $isFullyBooked
  * @property bool                              $isWithinAllowedDateRange
+ * @property bool                              $isOnAllowedWeekday
  * @property string                            $cssClass
  * @property Collection|null                   $bookings
  * @property int                               $bookingCount
@@ -124,12 +127,15 @@ abstract class AbstractSlot implements SlotInterface
             'date' => $dateString,
             'datimSpanString' => \sprintf('%s, %s: %s - %s', $dateAdapter->parse('D', $startTime), $dateString, $startTimeString, $endTimeString),
             'timeSpanString' => $startTimeString.' - '.$endTimeString,
-            'beginnWeekTimestampSelectedWeek' => $firstDayOfWeek,
+            'beginWeekTimestampSelectedWeek' => $firstDayOfWeek,
+            // Timestamp of the first day of the last week the resource can be booked (tl_resource_booking_resource.weeksAhead)
+            'lastPermittedWeekTstamp' => $dateHelperAdapter->addWeeksToTime(ResourceBookingRestriction::getWeeksAhead($resource), $dateHelperAdapter->getFirstDayOfCurrentWeek($appConfig)),
             'dataBooking' => [],
         ];
 
         // Order matters below — each call depends on the previous assignments
         $this->arrData['isWithinAllowedDateRange'] = $this->isWithinAllowedDateRange();
+        $this->arrData['isOnAllowedWeekday'] = $this->isOnAllowedWeekday();
         $this->arrData['bookings'] = $this->getBookings();
         $this->arrData['isBlocked'] = $this->isBlocked;
         $this->arrData['isBookable'] = $this->isBookable();
@@ -168,13 +174,37 @@ abstract class AbstractSlot implements SlotInterface
             return false;
         }
 
-        if ($this->utils->getModuleModel()->resourceBooking_addDateStop) {
-            if ($this->arrData['endTime'] > $this->utils->getModuleModel()->resourceBooking_dateStop + self::SECONDS_IN_DAY) {
-                return false;
-            }
+        if ($this->isOutsideBookingPeriod()) {
+            return false;
         }
 
         return true;
+    }
+
+    /**
+     * Returns true if the slot lies after the booking period of the resource,
+     * i.e. after the last week that can be booked (tl_resource_booking_resource.weeksAhead)
+     * or after the "bookable until" date (tl_resource_booking_resource.bookableUntil).
+     */
+    public function isOutsideBookingPeriod(): bool
+    {
+        // The resource can only be booked a certain number of weeks ahead.
+        if (isset($this->arrData['lastPermittedWeekTstamp'], $this->arrData['beginWeekTimestampSelectedWeek']) && $this->arrData['beginWeekTimestampSelectedWeek'] > $this->arrData['lastPermittedWeekTstamp']) {
+            return true;
+        }
+
+        // The resource can only be booked up to and including the "bookable until" date.
+        $bookableUntil = ResourceBookingRestriction::getBookableUntil($this->arrData['resource']);
+
+        return null !== $bookableUntil && $this->arrData['endTime'] > $bookableUntil + self::SECONDS_IN_DAY;
+    }
+
+    /**
+     * Returns false if the resource cannot be booked on the weekday of this slot.
+     */
+    public function isOnAllowedWeekday(): bool
+    {
+        return ResourceBookingRestriction::isWeekdayAllowed($this->arrData['resource'], $this->arrData['weekday']);
     }
 
     public function canFulfillRequestedItems(): bool

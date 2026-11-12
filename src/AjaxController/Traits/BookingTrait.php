@@ -63,7 +63,7 @@ trait BookingTrait
 
         if (!empty($arrDateSelection) && \is_array($arrDateSelection)) {
             foreach ($arrDateSelection as $strTimeSlot) {
-                // slotId-startTime-endTime-beginnWeekTimestampSelectedWeek
+                // slotId-startTime-endTime-beginWeekTimestampSelectedWeek
                 $arrTimeSlot = explode('-', $strTimeSlot);
 
                 $timeSlotId = (int) $arrTimeSlot[0];
@@ -107,7 +107,7 @@ trait BookingTrait
                         $arrSlotCollection[] = $slot;
 
                         // Stop repeating
-                        if ($slot->beginnWeekTimestampSelectedWeek >= $bookingRepeatStopWeekTstamp) {
+                        if ($slot->beginWeekTimestampSelectedWeek >= $bookingRepeatStopWeekTstamp) {
                             $doRepeat = false;
                         }
                     }
@@ -211,8 +211,12 @@ trait BookingTrait
             $slot = $slotCollection->current();
 
             if (!$slot->isBookable()) {
-                if (!$slot->isWithinAllowedDateRange()) {
+                if ($slot->isOutsideBookingPeriod()) {
+                    $this->setErrorMessage('RBB.ERR.outsideBookingPeriod');
+                } elseif (!$slot->isWithinAllowedDateRange()) {
                     $this->setErrorMessage('RBB.ERR.invalidStartOrEndTime');
+                } elseif (!$slot->isOnAllowedWeekday()) {
+                    $this->setErrorMessage('RBB.ERR.weekdayNotBookable');
                 } elseif ($slot->isFullyBooked()) {
                     $this->setErrorMessage('RBB.ERR.resourceIsAlreadyFullyBooked');
                 } elseif ($slot->isBlocked()) {
