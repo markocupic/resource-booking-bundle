@@ -202,8 +202,8 @@ class ResourceBookingWeekcalendarControllerTest extends ContaoTestCase
             ->willReturn('csrf-token-value')
         ;
 
-        $framework = $this->mockContaoFramework([
-            ModuleKey::class => $this->mockAdapter(['getModuleKey']),
+        $framework = $this->createContaoFrameworkMock([
+            ModuleKey::class => $this->createAdapterMock(['getModuleKey']),
         ]);
 
         $framework->getAdapter(ModuleKey::class)
@@ -267,7 +267,7 @@ class ResourceBookingWeekcalendarControllerTest extends ContaoTestCase
         return new ResourceBookingWeekcalendarController(
             $ajaxResponseFactory ?? $this->createMock(AjaxResponseFactory::class),
             $contaoCsrfTokenManager ?? $this->createMock(ContaoCsrfTokenManager::class),
-            $framework ?? $this->mockContaoFramework(),
+            $framework ?? $this->createContaoFrameworkMock(),
             $eventDispatcher ?? $this->createMock(EventDispatcherInterface::class),
             $appInitializer ?? $this->createMock(Initialize::class),
             $requestStack ?? new RequestStack(),
@@ -281,25 +281,25 @@ class ResourceBookingWeekcalendarControllerTest extends ContaoTestCase
      */
     private function mockFrameworkWithHelperAdapters(string $token = 'generated-token'): ContaoFramework
     {
-        $moduleIndexAdapter = $this->mockAdapter(['generateModuleIndex', 'getModuleIndex']);
+        $moduleIndexAdapter = $this->createAdapterMock(['generateModuleIndex', 'getModuleIndex']);
         $moduleIndexAdapter
             ->method('getModuleIndex')
             ->willReturn(0)
         ;
 
-        $moduleKeyAdapter = $this->mockAdapter(['setModuleKey', 'getModuleKey']);
+        $moduleKeyAdapter = $this->createAdapterMock(['setModuleKey', 'getModuleKey']);
         $moduleKeyAdapter
             ->method('getModuleKey')
             ->willReturn(self::MODULE_KEY)
         ;
 
-        $tokenManagerAdapter = $this->mockAdapter(['generateToken', 'getToken']);
+        $tokenManagerAdapter = $this->createAdapterMock(['generateToken', 'getToken']);
         $tokenManagerAdapter
             ->method('getToken')
             ->willReturn($token)
         ;
 
-        return $this->mockContaoFramework([
+        return $this->createContaoFrameworkMock([
             ModuleIndex::class => $moduleIndexAdapter,
             ModuleKey::class => $moduleKeyAdapter,
             TokenManager::class => $tokenManagerAdapter,
@@ -308,12 +308,12 @@ class ResourceBookingWeekcalendarControllerTest extends ContaoTestCase
 
     private function mockModuleModel(): ModuleModel
     {
-        return $this->mockClassWithProperties(ModuleModel::class, ['id' => self::MODULE_ID]);
+        return $this->createClassWithPropertiesMock(ModuleModel::class, ['id' => self::MODULE_ID]);
     }
 
     private function mockPageModel(): PageModel
     {
-        return $this->mockClassWithProperties(PageModel::class, ['id' => self::PAGE_ID]);
+        return $this->createClassWithPropertiesMock(PageModel::class, ['id' => self::PAGE_ID]);
     }
 
     /**

@@ -2,7 +2,7 @@
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
          backupGlobals="false"
-         bootstrap="../../vendor/autoload.php"
+         bootstrap="bootstrap.php"
          colors="true"
 >
     <php>
@@ -11,7 +11,7 @@
     </php>
 
     <testsuites>
-        <testsuite name="MultipageForms Test Suite">
+        <testsuite name="Resource Booking Bundle">
             <directory>../../tests</directory>
         </testsuite>
     </testsuites>

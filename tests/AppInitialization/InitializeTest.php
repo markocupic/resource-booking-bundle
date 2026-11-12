@@ -44,7 +44,7 @@ class InitializeTest extends ContaoTestCase
 
     public function testThrowsWhenModuleKeyIsNotSet(): void
     {
-        $framework = $this->mockContaoFramework([
+        $framework = $this->createContaoFrameworkMock([
             ModuleKey::class => $this->mockAdapterWithReturnValues(['getModuleKey' => null]),
         ]);
 
@@ -58,7 +58,7 @@ class InitializeTest extends ContaoTestCase
 
     public function testThrowsWhenModuleModelIsNotFound(): void
     {
-        $framework = $this->mockContaoFramework([
+        $framework = $this->createContaoFrameworkMock([
             ModuleKey::class => $this->mockAdapterWithReturnValues(['getModuleKey' => '33_0']),
             ModuleModel::class => $this->mockAdapterWithReturnValues(['findById' => null]),
         ]);
@@ -75,7 +75,7 @@ class InitializeTest extends ContaoTestCase
     {
         $bag = new AttributeBag();
 
-        $framework = $this->mockContaoFramework([
+        $framework = $this->createContaoFrameworkMock([
             ModuleKey::class => $this->mockAdapterWithReturnValues(['getModuleKey' => '33_0']),
             ModuleModel::class => $this->mockAdapterWithReturnValues(['findById' => $this->mockModuleModel()]),
             PageModel::class => $this->mockAdapterWithReturnValues(['findById' => null]),
@@ -99,7 +99,7 @@ class InitializeTest extends ContaoTestCase
         $bag = new AttributeBag();
         $bag->set('resType', 9); // > 0, but not part of the allowed list below
 
-        $framework = $this->mockContaoFramework([
+        $framework = $this->createContaoFrameworkMock([
             ModuleKey::class => $this->mockAdapterWithReturnValues(['getModuleKey' => '33_0']),
             ModuleModel::class => $this->mockAdapterWithReturnValues(['findById' => $this->mockModuleModel()]),
             PageModel::class => $this->mockAdapterWithReturnValues(['findById' => $this->mockPageModel()]),
@@ -128,7 +128,7 @@ class InitializeTest extends ContaoTestCase
     {
         $bag = new AttributeBag();
 
-        $controllerAdapter = $this->mockAdapter(['redirect']);
+        $controllerAdapter = $this->createAdapterMock(['redirect']);
 
         // Contao's Controller::redirect() halts execution; emulate that with a sentinel.
         $controllerAdapter
@@ -136,7 +136,7 @@ class InitializeTest extends ContaoTestCase
             ->willThrowException(new \RuntimeException('redirect'))
         ;
 
-        $framework = $this->mockContaoFramework([
+        $framework = $this->createContaoFrameworkMock([
             ModuleKey::class => $this->mockAdapterWithReturnValues(['getModuleKey' => '33_0']),
             ModuleModel::class => $this->mockAdapterWithReturnValues(['findById' => $this->mockModuleModel()]),
             PageModel::class => $this->mockAdapterWithReturnValues(['findById' => $this->mockPageModel()]),
@@ -164,7 +164,7 @@ class InitializeTest extends ContaoTestCase
         $singleResType = $this->singleItemCollection(7);
         $singleRes = $this->singleItemCollection(9, $this->mockResourceModel(9));
 
-        $dateHelperAdapter = $this->mockAdapter(['getFirstDayOfCurrentWeek', 'addWeeksToTime', 'getFirstDayOfWeek']);
+        $dateHelperAdapter = $this->createAdapterMock(['getFirstDayOfCurrentWeek', 'addWeeksToTime', 'getFirstDayOfWeek']);
         $dateHelperAdapter
             ->method('getFirstDayOfCurrentWeek')
             ->willReturn(1000)
@@ -178,13 +178,13 @@ class InitializeTest extends ContaoTestCase
             ])
         ;
 
-        $dateAdapter = $this->mockAdapter(['parse']);
+        $dateAdapter = $this->createAdapterMock(['parse']);
         $dateAdapter
             ->method('parse')
             ->willReturnCallback(static fn (string $format, int $tstamp): string => 'd'.$tstamp)
         ;
 
-        $framework = $this->mockContaoFramework([
+        $framework = $this->createContaoFrameworkMock([
             ModuleKey::class => $this->mockAdapterWithReturnValues(['getModuleKey' => '33_0']),
             ModuleModel::class => $this->mockAdapterWithReturnValues(['findById' => $this->mockModuleModel()]),
             PageModel::class => $this->mockAdapterWithReturnValues(['findById' => $this->mockPageModel()]),
@@ -233,7 +233,7 @@ class InitializeTest extends ContaoTestCase
             'bookableUntil' => '12345',
         ]);
 
-        $dateHelperAdapter = $this->mockAdapter(['getFirstDayOfCurrentWeek', 'addWeeksToTime', 'getFirstDayOfWeek']);
+        $dateHelperAdapter = $this->createAdapterMock(['getFirstDayOfCurrentWeek', 'addWeeksToTime', 'getFirstDayOfWeek']);
         $dateHelperAdapter
             ->method('getFirstDayOfCurrentWeek')
             ->willReturn(1000)
@@ -253,13 +253,13 @@ class InitializeTest extends ContaoTestCase
             ->willReturn(300)
         ;
 
-        $dateAdapter = $this->mockAdapter(['parse']);
+        $dateAdapter = $this->createAdapterMock(['parse']);
         $dateAdapter
             ->method('parse')
             ->willReturnCallback(static fn (string $format, int $tstamp): string => 'd'.$tstamp)
         ;
 
-        $framework = $this->mockContaoFramework([
+        $framework = $this->createContaoFrameworkMock([
             ModuleKey::class => $this->mockAdapterWithReturnValues(['getModuleKey' => '33_0']),
             ModuleModel::class => $this->mockAdapterWithReturnValues(['findById' => $this->mockModuleModel()]),
             PageModel::class => $this->mockAdapterWithReturnValues(['findById' => $this->mockPageModel()]),
@@ -294,7 +294,7 @@ class InitializeTest extends ContaoTestCase
         // Lies after the last permitted week of the resource (2000).
         $bag->set('activeWeekTstamp', 9999);
 
-        $dateHelperAdapter = $this->mockAdapter(['getFirstDayOfCurrentWeek', 'addWeeksToTime', 'getFirstDayOfWeek']);
+        $dateHelperAdapter = $this->createAdapterMock(['getFirstDayOfCurrentWeek', 'addWeeksToTime', 'getFirstDayOfWeek']);
         $dateHelperAdapter
             ->method('getFirstDayOfCurrentWeek')
             ->willReturn(1000)
@@ -308,13 +308,13 @@ class InitializeTest extends ContaoTestCase
             ])
         ;
 
-        $dateAdapter = $this->mockAdapter(['parse']);
+        $dateAdapter = $this->createAdapterMock(['parse']);
         $dateAdapter
             ->method('parse')
             ->willReturnCallback(static fn (string $format, int $tstamp): string => 'd'.$tstamp)
         ;
 
-        $framework = $this->mockContaoFramework([
+        $framework = $this->createContaoFrameworkMock([
             ModuleKey::class => $this->mockAdapterWithReturnValues(['getModuleKey' => '33_0']),
             ModuleModel::class => $this->mockAdapterWithReturnValues(['findById' => $this->mockModuleModel()]),
             PageModel::class => $this->mockAdapterWithReturnValues(['findById' => $this->mockPageModel()]),
@@ -379,7 +379,7 @@ class InitializeTest extends ContaoTestCase
 
     private function mockModuleModel(array $properties = []): ModuleModel
     {
-        return $this->mockClassWithProperties(ModuleModel::class, array_merge([
+        return $this->createClassWithPropertiesMock(ModuleModel::class, array_merge([
             'id' => self::MODULE_ID,
             'resourceBooking_resourceTypes' => 'serialized-res-types',
         ], $properties));
@@ -387,7 +387,7 @@ class InitializeTest extends ContaoTestCase
 
     private function mockResourceModel(int $id, array $properties = []): ResourceBookingResourceModel
     {
-        return $this->mockClassWithProperties(ResourceBookingResourceModel::class, array_merge([
+        return $this->createClassWithPropertiesMock(ResourceBookingResourceModel::class, array_merge([
             'id' => $id,
             // Weeks back/ahead are set per resource
             'weeksBack' => 2,
@@ -401,7 +401,7 @@ class InitializeTest extends ContaoTestCase
 
     private function mockPageModel(): PageModel
     {
-        return $this->mockClassWithProperties(PageModel::class, ['id' => self::PAGE_ID]);
+        return $this->createClassWithPropertiesMock(PageModel::class, ['id' => self::PAGE_ID]);
     }
 
     /**
@@ -409,7 +409,7 @@ class InitializeTest extends ContaoTestCase
      */
     private function mockAdapterWithReturnValues(array $methodReturnValues): Adapter
     {
-        $adapter = $this->mockAdapter(array_keys($methodReturnValues));
+        $adapter = $this->createAdapterMock(array_keys($methodReturnValues));
 
         foreach ($methodReturnValues as $method => $value) {
             $adapter

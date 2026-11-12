@@ -60,7 +60,7 @@ class ResourceBookingRestrictionTest extends ContaoTestCase
 
     public function testWeekdayRestrictionWorksWithModel(): void
     {
-        $model = $this->mockClassWithProperties(ResourceBookingResourceModel::class, [
+        $model = $this->createClassWithPropertiesMock(ResourceBookingResourceModel::class, [
             'restrictWeekdays' => true,
             'allowedWeekdays' => serialize(['friday']),
             'addBookableUntil' => false,
@@ -111,7 +111,7 @@ class ResourceBookingRestrictionTest extends ContaoTestCase
         $this->assertFalse(ResourceBookingRestriction::isAutoConfirmEnabled(['autoConfirm' => '']));
         $this->assertFalse(ResourceBookingRestriction::isAutoConfirmEnabled(['autoConfirm' => 0]));
 
-        $model = $this->mockClassWithProperties(ResourceBookingResourceModel::class, ['autoConfirm' => false]);
+        $model = $this->createClassWithPropertiesMock(ResourceBookingResourceModel::class, ['autoConfirm' => false]);
         $this->assertFalse(ResourceBookingRestriction::isAutoConfirmEnabled($model));
     }
 }

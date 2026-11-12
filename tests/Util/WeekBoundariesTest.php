@@ -96,7 +96,7 @@ class WeekBoundariesTest extends ContaoTestCase
 
     private function getFramework(int $firstDayOfBookableUntilWeek): ContaoFramework
     {
-        $dateHelperAdapter = $this->mockAdapter(['getFirstDayOfCurrentWeek', 'addWeeksToTime', 'getFirstDayOfWeek']);
+        $dateHelperAdapter = $this->createAdapterMock(['getFirstDayOfCurrentWeek', 'addWeeksToTime', 'getFirstDayOfWeek']);
         $dateHelperAdapter
             ->method('getFirstDayOfCurrentWeek')
             ->willReturn(self::CURRENT_WEEK)
@@ -117,13 +117,13 @@ class WeekBoundariesTest extends ContaoTestCase
             ->willReturn($firstDayOfBookableUntilWeek)
         ;
 
-        $dateAdapter = $this->mockAdapter(['parse']);
+        $dateAdapter = $this->createAdapterMock(['parse']);
         $dateAdapter
             ->method('parse')
             ->willReturnCallback(static fn (string $format, int $tstamp): string => 'd'.$tstamp)
         ;
 
-        return $this->mockContaoFramework([
+        return $this->createContaoFrameworkMock([
             DateHelper::class => $dateHelperAdapter,
             Date::class => $dateAdapter,
         ]);
@@ -131,7 +131,7 @@ class WeekBoundariesTest extends ContaoTestCase
 
     private function mockResource(bool $addBookableUntil, string $bookableUntil): ResourceBookingResourceModel
     {
-        return $this->mockClassWithProperties(ResourceBookingResourceModel::class, [
+        return $this->createClassWithPropertiesMock(ResourceBookingResourceModel::class, [
             'weeksBack' => 2,
             'weeksAhead' => 4,
             'restrictWeekdays' => false,

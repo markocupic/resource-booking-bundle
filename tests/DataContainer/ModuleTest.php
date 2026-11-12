@@ -26,7 +26,7 @@ class ModuleTest extends ContaoTestCase
     public function testGetAppConfigurationsReturnsTheConfigKeys(): void
     {
         $module = new Module(
-            $this->mockContaoFramework(),
+            $this->createContaoFrameworkMock(),
             $this->createMock(Connection::class),
             ['default' => [], 'app_b' => []],
         );
@@ -74,15 +74,15 @@ class ModuleTest extends ContaoTestCase
             }
         };
 
-        $databaseAdapter = $this->mockAdapter(['getInstance']);
+        $databaseAdapter = $this->createAdapterMock(['getInstance']);
         $databaseAdapter
             ->method('getInstance')
             ->willReturn($databaseInstance)
         ;
 
-        $systemAdapter = $this->mockAdapter(['loadLanguageFile']);
+        $systemAdapter = $this->createAdapterMock(['loadLanguageFile']);
 
-        return $this->mockContaoFramework([
+        return $this->createContaoFrameworkMock([
             Database::class => $databaseAdapter,
             System::class => $systemAdapter,
         ]);

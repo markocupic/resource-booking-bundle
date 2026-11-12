@@ -30,7 +30,7 @@ class MemberTest extends ContaoTestCase
             ->with('tl_resource_booking', ['member' => 5])
         ;
 
-        $dc = $this->mockClassWithProperties(DataContainer::class, ['id' => 5]);
+        $dc = $this->createClassWithPropertiesMock(DataContainer::class, ['id' => 5]);
 
         (new Member($connection))->deleteChildRecords($dc);
     }
@@ -43,7 +43,7 @@ class MemberTest extends ContaoTestCase
             ->method('delete')
         ;
 
-        $dc = $this->mockClassWithProperties(DataContainer::class, ['id' => 0]);
+        $dc = $this->createClassWithPropertiesMock(DataContainer::class, ['id' => 0]);
 
         (new Member($connection))->deleteChildRecords($dc);
     }

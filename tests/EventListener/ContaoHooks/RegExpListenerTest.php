@@ -138,15 +138,15 @@ class RegExpListenerTest extends ContaoTestCase
 
     private function createListener(bool $isValidBookingTime): RegExpListener
     {
-        $controllerAdapter = $this->mockAdapter(['loadLanguageFile']);
+        $controllerAdapter = $this->createAdapterMock(['loadLanguageFile']);
 
-        $dateHelperAdapter = $this->mockAdapter(['isValidBookingTime']);
+        $dateHelperAdapter = $this->createAdapterMock(['isValidBookingTime']);
         $dateHelperAdapter
             ->method('isValidBookingTime')
             ->willReturn($isValidBookingTime)
         ;
 
-        $framework = $this->mockContaoFramework([
+        $framework = $this->createContaoFrameworkMock([
             Controller::class => $controllerAdapter,
             DateHelper::class => $dateHelperAdapter,
         ]);

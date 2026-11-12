@@ -99,13 +99,13 @@ class IconExtensionTest extends ContaoTestCase
     private function createExtension(Filesystem $filesystem): IconExtension
     {
         // specialcharsAttribute is stubbed as identity so the class list stays predictable.
-        $stringUtilAdapter = $this->mockAdapter(['specialcharsAttribute']);
+        $stringUtilAdapter = $this->createAdapterMock(['specialcharsAttribute']);
         $stringUtilAdapter
             ->method('specialcharsAttribute')
             ->willReturnCallback(static fn (string $value): string => $value)
         ;
 
-        $framework = $this->mockContaoFramework([StringUtil::class => $stringUtilAdapter]);
+        $framework = $this->createContaoFrameworkMock([StringUtil::class => $stringUtilAdapter]);
 
         return new IconExtension($framework, $filesystem, '/project');
     }

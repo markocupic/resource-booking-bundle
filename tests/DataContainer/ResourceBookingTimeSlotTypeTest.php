@@ -29,7 +29,7 @@ class ResourceBookingTimeSlotTypeTest extends ContaoTestCase
             ->method('executeStatement')
         ;
 
-        $dc = $this->mockClassWithProperties(DataContainer::class, ['id' => 0]);
+        $dc = $this->createClassWithPropertiesMock(DataContainer::class, ['id' => 0]);
 
         (new ResourceBookingTimeSlotType($connection))->removeChildRecords($dc);
     }
@@ -50,7 +50,7 @@ class ResourceBookingTimeSlotTypeTest extends ContaoTestCase
             )
         ;
 
-        $dc = $this->mockClassWithProperties(DataContainer::class, ['id' => 7]);
+        $dc = $this->createClassWithPropertiesMock(DataContainer::class, ['id' => 7]);
 
         (new ResourceBookingTimeSlotType($connection))->removeChildRecords($dc);
 

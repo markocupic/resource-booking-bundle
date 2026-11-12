@@ -45,7 +45,7 @@ class UtilsTest extends ContaoTestCase
 
     public function testGetAppConfigByNameFallsBackToTheDefaultsWithoutApps(): void
     {
-        $utils = new Utils($this->mockContaoFramework(), new RequestStack(), 'rbb_bag', []);
+        $utils = new Utils($this->createContaoFrameworkMock(), new RequestStack(), 'rbb_bag', []);
 
         $this->assertSame(
             ['beginWeek' => 'monday', 'permittedFormFields' => ['bookingDescription', 'itemsBooked', 'bookingRepeatStopWeekTstamp']],
@@ -60,6 +60,6 @@ class UtilsTest extends ContaoTestCase
 
     private function getUtils(): Utils
     {
-        return new Utils($this->mockContaoFramework(), new RequestStack(), 'rbb_bag', self::APP_CONFIGS);
+        return new Utils($this->createContaoFrameworkMock(), new RequestStack(), 'rbb_bag', self::APP_CONFIGS);
     }
 }

@@ -117,7 +117,7 @@ class ResourceBookingTimeSlotTest extends ContaoTestCase
         ;
 
         $dca = new ResourceBookingTimeSlot($this->framework(), $connection, new RequestStack());
-        $dca->removeChildRecords($this->mockClassWithProperties(DataContainer::class, ['id' => 0]));
+        $dca->removeChildRecords($this->createClassWithPropertiesMock(DataContainer::class, ['id' => 0]));
     }
 
     public function testRemoveChildRecordsDoesNothingWhenNoBookingsExist(): void
@@ -134,7 +134,7 @@ class ResourceBookingTimeSlotTest extends ContaoTestCase
         ;
 
         $dca = new ResourceBookingTimeSlot($this->framework(), $connection, new RequestStack());
-        $dca->removeChildRecords($this->mockClassWithProperties(DataContainer::class, ['id' => 7]));
+        $dca->removeChildRecords($this->createClassWithPropertiesMock(DataContainer::class, ['id' => 7]));
     }
 
     public function testRemoveChildRecordsDeletesBookingsAndAddsAMessage(): void
@@ -151,7 +151,7 @@ class ResourceBookingTimeSlotTest extends ContaoTestCase
             ->with('tl_resource_booking', ['timeSlotId' => 7], [Types::INTEGER])
         ;
 
-        $messageAdapter = $this->mockAdapter(['addInfo']);
+        $messageAdapter = $this->createAdapterMock(['addInfo']);
         $messageAdapter
             ->expects($this->once())
             ->method('addInfo')
@@ -164,7 +164,7 @@ class ResourceBookingTimeSlotTest extends ContaoTestCase
             new RequestStack(),
         );
 
-        $dca->removeChildRecords($this->mockClassWithProperties(DataContainer::class, ['id' => 7]));
+        $dca->removeChildRecords($this->createClassWithPropertiesMock(DataContainer::class, ['id' => 7]));
     }
 
     public function testAdaptBookingStartAndEndTimeDoesNothingWithoutAnId(): void
@@ -176,7 +176,7 @@ class ResourceBookingTimeSlotTest extends ContaoTestCase
         ;
 
         $dca = new ResourceBookingTimeSlot($this->framework(), $connection, new RequestStack());
-        $dca->adaptBookingStartAndEndTime($this->mockClassWithProperties(DataContainer::class, ['id' => 0]));
+        $dca->adaptBookingStartAndEndTime($this->createClassWithPropertiesMock(DataContainer::class, ['id' => 0]));
     }
 
     public function testAdaptBookingStartAndEndTimeReturnsWhenTheSlotIsMissing(): void
@@ -193,7 +193,7 @@ class ResourceBookingTimeSlotTest extends ContaoTestCase
         ;
 
         $dca = new ResourceBookingTimeSlot($this->framework(), $connection, new RequestStack());
-        $dca->adaptBookingStartAndEndTime($this->mockClassWithProperties(DataContainer::class, ['id' => 7]));
+        $dca->adaptBookingStartAndEndTime($this->createClassWithPropertiesMock(DataContainer::class, ['id' => 7]));
     }
 
     public function testAdaptBookingStartAndEndTimeReturnsWhenThereAreNoBookings(): void
@@ -215,7 +215,7 @@ class ResourceBookingTimeSlotTest extends ContaoTestCase
         ;
 
         $dca = new ResourceBookingTimeSlot($this->framework(), $connection, new RequestStack());
-        $dca->adaptBookingStartAndEndTime($this->mockClassWithProperties(DataContainer::class, ['id' => 7]));
+        $dca->adaptBookingStartAndEndTime($this->createClassWithPropertiesMock(DataContainer::class, ['id' => 7]));
     }
 
     public function testAdaptBookingStartAndEndTimeRewritesBookingTimesAndAddsAMessage(): void
@@ -247,13 +247,13 @@ class ResourceBookingTimeSlotTest extends ContaoTestCase
         ;
 
         // Date::parse only supplies the date part (before the space); pin it deterministically.
-        $dateAdapter = $this->mockAdapter(['parse']);
+        $dateAdapter = $this->createAdapterMock(['parse']);
         $dateAdapter
             ->method('parse')
             ->willReturn('2024-03-15 00:00')
         ;
 
-        $messageAdapter = $this->mockAdapter(['addInfo']);
+        $messageAdapter = $this->createAdapterMock(['addInfo']);
         $messageAdapter
             ->expects($this->once())
             ->method('addInfo')
@@ -266,7 +266,7 @@ class ResourceBookingTimeSlotTest extends ContaoTestCase
             new RequestStack(),
         );
 
-        $dca->adaptBookingStartAndEndTime($this->mockClassWithProperties(DataContainer::class, ['id' => 7]));
+        $dca->adaptBookingStartAndEndTime($this->createClassWithPropertiesMock(DataContainer::class, ['id' => 7]));
 
         $this->assertSame('tl_resource_booking', $captured['table']);
         $this->assertSame(['id' => 99], $captured['criteria']);
@@ -293,7 +293,7 @@ class ResourceBookingTimeSlotTest extends ContaoTestCase
      */
     private function framework(array $extraAdapters = []): ContaoFramework
     {
-        $utcAdapter = $this->mockAdapter(['parseStartTime', 'parseEndTime', 'strToTime']);
+        $utcAdapter = $this->createAdapterMock(['parseStartTime', 'parseEndTime', 'strToTime']);
         $utcAdapter
             ->method('parseStartTime')
             ->willReturnCallback(static fn (int $t): string => UtcTimeHelper::parseStartTime($t))
@@ -309,7 +309,7 @@ class ResourceBookingTimeSlotTest extends ContaoTestCase
             ->willReturnCallback(static fn (string $s): int => UtcTimeHelper::strToTime($s))
         ;
 
-        return $this->mockContaoFramework(array_merge([UtcTimeHelper::class => $utcAdapter], $extraAdapters));
+        return $this->createContaoFrameworkMock(array_merge([UtcTimeHelper::class => $utcAdapter], $extraAdapters));
     }
 
     /**
