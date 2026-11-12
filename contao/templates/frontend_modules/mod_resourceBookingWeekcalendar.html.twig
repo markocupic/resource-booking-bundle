@@ -1,9 +1,7 @@
 {% trans_default_domain "contao_default" %}
 
-{% do addJavascriptResource('assets/contao-component-bootstrap/bootstrap/dist/js/bootstrap.bundle.min.js|static') %}
 {% do addJavascriptResource(asset('vue/vue.global.prod.js', 'markocupic_resource_booking')) %}
 {% do addJavascriptResource(asset('js/app.js', 'markocupic_resource_booking')) %}
-{% do addCssResource('assets/contao-component-bootstrap/bootstrap/dist/css/bootstrap.min.css') %}
 {% do addCssResource(asset('css/frontend.css', 'markocupic_resource_booking')) %}
 
 {% extends '@Contao/block_unsearchable' %}
@@ -28,7 +26,7 @@
 
 {% block content %}
     <div id="resourceBookingApp_{{ moduleKey }}" v-cloak>
-        <div class="rbb-app py-4" :class="isReady ? 'rbb-is-ready' : ''">
+        <div class="rbb-app" :class="isReady ? 'rbb-is-ready' : ''">
             {{ block('rbb_logged_in_user') }}
             {{ block('rbb_loading_indicator') }}
             {{ block('rbb_status_message') }}

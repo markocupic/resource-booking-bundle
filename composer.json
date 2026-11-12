@@ -26,7 +26,6 @@
         "php": "^8.3",
         "ext-simplexml": "*",
         "contao/core-bundle": "^5.3",
-        "markocupic/contao-component-bootstrap": "^5.0",
         "markocupic/contao-twig-assets": "^1.1",
         "ramsey/uuid": "^3.0 || ^4.0 || ^5.0",
         "symfony/http-foundation": "^6.0 || ^7.0 || ^8.0",

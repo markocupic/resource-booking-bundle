@@ -41,7 +41,24 @@ Nach der Installation mit dem Contao Manager müssen:
 
 Die Erweiterung wird mit einer Standardkonfiguration ausgeliefert. Weitere Konfigurationssets können erstellt und in den Frontend-Moduleinstellungen ausgewählt werden. Mehr dazu weiter [unten](#app-konfiguration-anpassen).
 
-Das Tool setzt auf [vue.js](https://vuejs.org/) und [Bootstrap](https://getbootstrap.com/) auf. Die benötigten Libraries/Frameworks werden automatisch mitinstalliert und im Template eingebunden.
+Das Tool setzt auf [vue.js](https://vuejs.org/) auf, das automatisch mitinstalliert und im Template eingebunden wird. Ein CSS-Framework wie Bootstrap wird nicht benötigt: Das mitgelieferte Stylesheet ist auf das Modul beschränkt und verwendet ausschliesslich Klassen mit dem Präfix `rbb-`.
+
+### Aussehen anpassen
+
+Farben, Abstände und Rundungen lassen sich im eigenen Theme über CSS-Variablen anpassen, ohne das Stylesheet neu zu kompilieren:
+
+```css
+.mod_resourceBookingWeekcalendar {
+    --rbb-primary: #8a1538;          /* Buttons, Kopfzeile des Buchungsfensters */
+    --rbb-secondary: #6c757d;
+    --rbb-danger: #dc3545;
+    --rbb-radius: 0;                 /* eckige Buttons und Felder */
+    --rbb-section-spacing: 2rem;     /* Abstand zwischen den Bereichen */
+    --rbb-cell-bookable-bg: #d4f0d0; /* freie Zeitfenster */
+}
+```
+
+Alle verfügbaren Variablen sind am Anfang von `assets/styles/frontend.scss` aufgelistet. Die meisten Farben haben einen Hell- und einen Dunkelwert (`light-dark()`).
 
 ## Zeitpläne per command anlegen
 

@@ -4,7 +4,7 @@
     <div class="rbb-time-slot-cell-inner">
         <div class="rbb-cell-booking-still-available-box" v-if="!slot.isBlocked && slot.resource.itemsAvailable > 1 && slot.itemsStillAvailable > 0 && slot.isWithinAllowedDateRange">{{ ('RBB.stillAvailable')|trans }}: [[ slot.itemsStillAvailable ]]</div>
         <div class="rbb-booked-item" v-if="slot.hasBookings" v-for="booking in slot.bookings" :data-confirmed="booking.confirmed ? 'true' : 'false'">
-            <span class="mb-2">
+            <span class="rbb-booked-item-header">
                 <span class="rbb-cell-booking-owner-box" v-if="booking.bookedByFullname">[[ booking.bookedByFullname ]]</span>
                 <span class="item-counter-box" v-if="!slot.isBlocked && activeResource.itemsAvailable > 1"> (-[[ booking.itemsBooked ]])</span>
             </span>
@@ -16,11 +16,11 @@
             <span class="rbb-cell-booking-description-box" v-if="booking.bookingDescription"><small>[[ booking.bookingDescription ]]</small></span>
             {# <span class="rbb-cell-booking-description-box v-if="booking.bookingTitle"><small>[[ booking.bookingTitle ]]</small></span> #}
             {# <span class="rbb-cell-booking-description-box v-if="booking.bookingBookingTime"><small>[[ booking.bookingBookingTime ]]</small></span> #}
-            <button class="btn btn-link rbb-btn-cancel-booking" v-if="booking.canCancel" @click="openBookingWindow(slot, 'showCancelBookingForm', slot.userBooking)" title="{{ ('RBB.cancelResource')|trans }}">
+            <button class="rbb-btn-icon rbb-btn-cancel-booking" type="button" v-if="booking.canCancel" @click="openBookingWindow(slot, 'showCancelBookingForm', slot.userBooking)" title="{{ ('RBB.cancelResource')|trans }}">
                 {{ rbb_icon('fa-times-circle','rbb-icon-cancel-booking')|raw }}
             </button>
         </div>
-        <button class="btn btn-link rbb-btn-booking" v-if="hasLoggedInUser && (slot.isBookable && !slot.isCancelable && !slot.isBlocked)" @click="openBookingWindow(slot, 'showBookingForm', null)" title="{{ ('RBB.bookResource')|trans }}">
+        <button class="rbb-btn-icon rbb-btn-booking" type="button" v-if="hasLoggedInUser && (slot.isBookable && !slot.isCancelable && !slot.isBlocked)" @click="openBookingWindow(slot, 'showBookingForm', null)" title="{{ ('RBB.bookResource')|trans }}">
             {{ rbb_icon('fa-check-circle')|raw }}
         </button>
     </div>

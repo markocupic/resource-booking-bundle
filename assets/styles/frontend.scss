@@ -1,3 +1,23 @@
+// =============================================================================
+// Resource Booking Bundle – frontend styles
+//
+// The bundle does not depend on Bootstrap (or any other CSS framework).
+// Everything is scoped to .mod_resourceBookingWeekcalendar and all classes
+// are prefixed with "rbb-", so the styles do not leak into the page theme.
+//
+// Customize the look in your theme by overriding the CSS custom properties
+// below, e.g.:
+//
+//   .mod_resourceBookingWeekcalendar {
+//     --rbb-primary: #8a1538;
+//     --rbb-radius: 0;
+//   }
+// =============================================================================
+
+// Breakpoints
+$rbb-breakpoint-sm: 576px;
+$rbb-breakpoint-xl: 1200px;
+
 .rbb-custom-scroll-bar-thin {
   & {
     scrollbar-width: thin;
@@ -15,20 +35,43 @@
   // overridden per instance / theme without recompiling the SCSS.
   //
   // NOTE: a local `color-scheme` declaration shadows the value inherited from
-  // <html>. So even though the theme toggle sets color-scheme: dark on <html>,
-  // this element would fall back to OS preference. We therefore bind
-  // color-scheme to the app-wide Bootstrap toggle (<html data-bs-theme="...">),
-  // which wins by specificity over the light-dark fallback below.
+  // <html>. If the page theme uses a theme toggle with a data-bs-theme
+  // attribute on <html> (e.g. a Bootstrap based theme), we bind color-scheme
+  // to it. This wins by specificity over the light-dark fallback below.
   // ---------------------------------------------------------------------------
   color-scheme: light dark; // Fallback (JS off): OS preference
 
   :root[data-bs-theme="light"] & {
-    color-scheme: light; // Active binding to Bootstrap theme toggle
+    color-scheme: light;
   }
 
   :root[data-bs-theme="dark"] & {
-    color-scheme: dark; // Active binding to Bootstrap theme toggle
+    color-scheme: dark;
   }
+
+  // Brand / buttons
+  --rbb-primary: #0d6efd;
+  --rbb-primary-contrast: #ffffff;
+  --rbb-secondary: #6c757d;
+  --rbb-secondary-contrast: #ffffff;
+  --rbb-danger: #dc3545;
+  --rbb-danger-contrast: #ffffff;
+  --rbb-focus-ring: 0 0 0 .25rem color-mix(in srgb, var(--rbb-primary) 35%, transparent);
+
+  // Typography
+  --rbb-font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+  // Shape / spacing
+  --rbb-radius: .375rem;
+  --rbb-spacing: 1rem;
+  --rbb-section-spacing: 3rem;
+
+  // Form controls
+  --rbb-input-bg: light-dark(#ffffff, #212529);
+  --rbb-input-color: var(--rbb-text-color);
+  --rbb-input-border-color: light-dark(#dee2e6, #495057);
+  --rbb-input-disabled-bg: light-dark(#e9ecef, #343a40);
+  --rbb-muted-color: light-dark(#6c757d, #adb5bd);
 
   // Slot backgrounds
   --rbb-cell-bg: light-dark(#ffffff, #232429);
@@ -42,6 +85,9 @@
   // Alerts
   --rbb-alert-success-bg: var(--rbb-cell-bookable-bg);
   --rbb-alert-danger-bg: var(--rbb-cell-fully-booked-bg);
+  --rbb-alert-warning-bg: light-dark(#fff3cd, #664d03);
+  --rbb-alert-info-bg: light-dark(#cff4fc, #055160);
+  --rbb-alert-color: var(--rbb-text-color);
 
   // Icons
   --rbb-icon-booking-color: #ffffff;
@@ -58,12 +104,15 @@
   // Misc
   --rbb-transition-speed: .8s;
 
-  .rbb-opacity-0 {
-    opacity: 0;
-  }
+  font-family: var(--rbb-font-family);
 
-  .rbb-opacity-1 {
-    opacity: 1;
+  // ---------------------------------------------------------------------------
+  // Base
+  // ---------------------------------------------------------------------------
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
   }
 
   * {
@@ -72,21 +121,34 @@
     transition-timing-function: ease-in-out;
   }
 
-  .alert-danger {
-    background-color: var(--rbb-alert-danger-bg);
-    color: var(--rbb-text-color);
-
-    .rbb-icon {
-      color: #ffffff;
-    }
+  .rbb-opacity-0 {
+    opacity: 0;
   }
 
-  .alert-success {
-    background-color: var(--rbb-alert-success-bg);
-    color: var(--rbb-text-color);
+  .rbb-opacity-1 {
+    opacity: 1;
+  }
 
-    .rbb-icon {
-      color: #ffffff;
+  .rbb-visually-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+  }
+
+  // ---------------------------------------------------------------------------
+  // App container
+  // ---------------------------------------------------------------------------
+  .rbb-app {
+    padding-block: 1.5rem;
+
+    .rbb-loading-spinner {
+      color: var(--rbb-loading-spinner-color);
     }
   }
 
@@ -102,19 +164,267 @@
     visibility: visible;
   }
 
-  .rbb-app {
-    .rbb-loading-spinner {
-      color: var(--rbb-loading-spinner-color);
+  .rbb-logged-in-user-data {
+    margin-bottom: .5rem;
+  }
+
+  .rbb-loading-indicator {
+    margin-top: var(--rbb-section-spacing);
+    text-align: center;
+  }
+
+  .rbb-status-message {
+    margin-top: .5rem;
+    color: var(--rbb-muted-color);
+  }
+
+  // Vertical rhythm between the main sections
+  .rbb-message-box,
+  .rbb-filter-board-form,
+  .rbb-filter-form-messages,
+  .rbb-booking-table-main,
+  .rbb-info-table,
+  .rbb-booking-preview,
+  .rbb-booking-form,
+  .rbb-delete-repetitions,
+  .rbb-booking-window-footer {
+    margin-top: var(--rbb-section-spacing);
+  }
+
+  .rbb-message-box:has(> .rbb-active-resource-description) {
+    margin-top: calc(var(--rbb-section-spacing) * .5);
+  }
+
+  .rbb-input-help-text {
+    display: block;
+    margin-top: .25rem;
+    color: var(--rbb-muted-color);
+    font-size: .875em;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Layout tables (div based)
+  // ---------------------------------------------------------------------------
+  .rbb-layout-row {
+    display: flex;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Buttons
+  // ---------------------------------------------------------------------------
+  .rbb-btn {
+    --rbb-btn-bg: transparent;
+    --rbb-btn-color: var(--rbb-text-color);
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    padding: .375rem .75rem;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    text-align: center;
+    text-decoration: none;
+    vertical-align: middle;
+    color: var(--rbb-btn-color);
+    background-color: var(--rbb-btn-bg);
+    border: 1px solid var(--rbb-btn-bg);
+    border-radius: var(--rbb-radius);
+    cursor: pointer;
+    user-select: none;
+    transition-property: background-color, border-color, box-shadow, filter, opacity;
+    transition-duration: .15s;
+
+    &:hover {
+      filter: brightness(.9);
+    }
+
+    &:focus-visible {
+      outline: 0;
+      box-shadow: var(--rbb-focus-ring);
+    }
+
+    &:disabled,
+    &.disabled {
+      opacity: .65;
+      pointer-events: none;
+      cursor: default;
     }
   }
 
-  // filter form (restype-, res- and week selector
-  .rbb-filter-board-form {
-    > .row {
-      display: flex;
-      align-items: start;
+  .rbb-btn--primary {
+    --rbb-btn-bg: var(--rbb-primary);
+    --rbb-btn-color: var(--rbb-primary-contrast);
+  }
+
+  .rbb-btn--secondary {
+    --rbb-btn-bg: var(--rbb-secondary);
+    --rbb-btn-color: var(--rbb-secondary-contrast);
+  }
+
+  .rbb-btn--danger {
+    --rbb-btn-bg: var(--rbb-danger);
+    --rbb-btn-color: var(--rbb-danger-contrast);
+  }
+
+  .rbb-btn--sm {
+    padding: .25rem .5rem;
+    font-size: .875rem;
+    border-radius: calc(var(--rbb-radius) * .75);
+  }
+
+  .rbb-btn--block {
+    display: flex;
+    width: 100%;
+  }
+
+  // Icon only button (booking / cancel booking inside the calendar cells)
+  .rbb-btn-icon {
+    display: inline-block;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    background: none;
+    border: 0;
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 0;
+      box-shadow: var(--rbb-focus-ring);
+      border-radius: 50%;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Alerts
+  // ---------------------------------------------------------------------------
+  .rbb-alert {
+    --rbb-alert-bg: var(--rbb-alert-info-bg);
+
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: var(--rbb-spacing);
+    padding: 1rem;
+    color: var(--rbb-alert-color);
+    background-color: var(--rbb-alert-bg);
+    border-radius: var(--rbb-radius);
+
+    &:last-child {
+      margin-bottom: 0;
     }
 
+    > .rbb-icon {
+      flex-shrink: 0;
+    }
+  }
+
+  .rbb-alert--info {
+    --rbb-alert-bg: var(--rbb-alert-info-bg);
+  }
+
+  .rbb-alert--warning {
+    --rbb-alert-bg: var(--rbb-alert-warning-bg);
+  }
+
+  .rbb-alert--success {
+    --rbb-alert-bg: var(--rbb-alert-success-bg);
+
+    .rbb-icon {
+      color: #ffffff;
+    }
+  }
+
+  .rbb-alert--danger {
+    --rbb-alert-bg: var(--rbb-alert-danger-bg);
+
+    .rbb-icon {
+      color: #ffffff;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Form controls
+  // ---------------------------------------------------------------------------
+  .rbb-form-group {
+    label {
+      display: inline-block;
+      margin-bottom: .5rem;
+    }
+
+    + .rbb-form-group {
+      margin-top: 2rem;
+    }
+  }
+
+  .rbb-form-control {
+    display: block;
+    width: 100%;
+    padding: .375rem .75rem;
+    font-family: inherit;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--rbb-input-color);
+    background-color: var(--rbb-input-bg);
+    border: 1px solid var(--rbb-input-border-color);
+    border-radius: var(--rbb-radius);
+    transition-property: border-color, box-shadow;
+    transition-duration: .15s;
+
+    &:focus {
+      outline: 0;
+      border-color: var(--rbb-primary);
+      box-shadow: var(--rbb-focus-ring);
+    }
+
+    &:disabled {
+      background-color: var(--rbb-input-disabled-bg);
+      opacity: 1;
+      cursor: not-allowed;
+    }
+  }
+
+  .rbb-form-check {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+
+  .rbb-form-check-input {
+    width: 1.25em;
+    height: 1.25em;
+    margin: 0;
+    flex-shrink: 0;
+    accent-color: var(--rbb-primary);
+    cursor: pointer;
+
+    &:focus-visible {
+      outline: 0;
+      box-shadow: var(--rbb-focus-ring);
+    }
+  }
+
+  .rbb-form-check-label {
+    cursor: pointer;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Filter board (resource type, resource and week selector)
+  // ---------------------------------------------------------------------------
+  .rbb-filter-board {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: .5rem;
+    align-items: start;
+
+    @media (min-width: $rbb-breakpoint-sm) {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 3fr) minmax(0, 3fr) minmax(0, 4fr) minmax(0, 1fr);
+    }
+  }
+
+  .rbb-filter-board-form {
     .rbb-week-select {
       option.past-week {
         color: var(--rbb-past-week-color);
@@ -128,11 +438,14 @@
       option.future-week {
         /** **/
       }
-
     }
   }
 
-  .rbb-booking-table-booking-form > .rbb-layout-box-inner, .rbb-booking-table-main {
+  // ---------------------------------------------------------------------------
+  // Calendar tables (week calendar and booking form)
+  // ---------------------------------------------------------------------------
+  .rbb-booking-table-booking-form > .rbb-layout-box-inner,
+  .rbb-booking-table-main {
     overflow-x: auto;
 
     * {
@@ -210,49 +523,26 @@
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // Week calendar
+  // ---------------------------------------------------------------------------
   .rbb-booking-table-main {
+    > .rbb-layout-box-inner {
+      padding-bottom: 1.5rem;
+    }
+
     .rbb-layout-cell.rbb-time-slot-cell {
       display: flex;
       flex-direction: column;
       align-items: flex-start;
       justify-content: flex-start;
     }
-  }
 
-  .rbb-booking-table-booking-form {
-    .rbb-layout-cell.rbb-time-slot-cell {
-
-      .form-check {
-        line-height: 0;
-        padding: 0;
-        margin: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        .form-check-input {
-          margin: 0;
-          padding: 0;
-        }
-
-        .form-check-label {
-          margin: 0;
-          display: none;
-        }
-      }
+    .rbb-booked-item-header {
+      margin-bottom: .5rem;
     }
 
-    .rbb-booking-form-inputs .form-group > label {
-      margin-top: 2rem;
-    }
-
-    .rbb-booking-form-inputs .form-group:first-child > label {
-      margin-top: 0;
-    }
-  }
-
-  // Wrap long words
-  .rbb-booking-table-main {
+    // Wrap long words
     .rbb-layout-cell {
       min-width: 180px;
       max-width: 250px;
@@ -271,7 +561,7 @@
         font-size: xx-small;
       }
 
-      .btn-link {
+      .rbb-btn-icon {
         position: absolute;
         margin: auto;
         width: 2rem;
@@ -331,12 +621,12 @@
 
     // Change buttons z-index and opacity, when hovering
     .rbb-layout-cell[data-userisloggedin][data-iscancelable]:hover, .rbb-layout-cell[data-userisloggedin][data-isbookable]:hover {
-      .btn-link {
+      .rbb-btn-icon {
         z-index: 30;
         opacity: 1;
       }
 
-      .btn-link > .rbb-icon-cancel-booking {
+      .rbb-btn-icon > .rbb-icon-cancel-booking {
         color: var(--rbb-icon-cancel-hover-color) !important;
         transition: color var(--rbb-transition-speed);
       }
@@ -347,8 +637,107 @@
     }
   }
 
-  /** Booking table **/
+  // ---------------------------------------------------------------------------
+  // Booking window
+  // ---------------------------------------------------------------------------
+  .rbb-booking-window {
+    .rbb-booking-window-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: stretch;
+      color: var(--rbb-primary-contrast);
+      background-color: var(--rbb-primary);
+    }
+
+    .rbb-booking-window-header-title {
+      margin: var(--rbb-spacing);
+      font-size: 1.5rem;
+      line-height: 1.2;
+      color: var(--rbb-primary-contrast);
+    }
+
+    button.rbb-close-window {
+      padding: 0 30px;
+      font-family: inherit;
+      font-size: x-large;
+      color: var(--rbb-primary-contrast);
+      background-color: transparent;
+      border: 0;
+      border-left: 1px solid var(--rbb-primary-contrast);
+      cursor: pointer;
+
+      &:hover {
+        background-color: rgb(0 0 0 / .1);
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--rbb-primary-contrast);
+        outline-offset: -4px;
+      }
+    }
+
+    .rbb-info-table, .rbb-booking-preview-table {
+      .rbb-layout-cell {
+        padding: .35rem .25rem;
+
+        &.rbb-column-first {
+          width: 150px;
+          flex-shrink: 0;
+        }
+      }
+    }
+
+    // Booking preview (native <details> element, no JavaScript needed)
+    .rbb-booking-preview {
+      > summary {
+        list-style: none;
+
+        &::-webkit-details-marker {
+          display: none;
+        }
+      }
+
+      .rbb-booking-preview-table {
+        margin-top: var(--rbb-section-spacing);
+      }
+
+      .bookable {
+        background-color: var(--rbb-cell-bookable-bg);
+      }
+
+      .not-bookable {
+        background-color: var(--rbb-cell-fully-booked-bg);
+      }
+    }
+
+    .rbb-booking-form-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1.5rem;
+
+      @media (min-width: $rbb-breakpoint-xl) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    .rbb-booking-window-footer {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .rbb-time-span-select option[selected] {
+      background-color: #149efb;
+    }
+  }
+
+  // Booking table (checkboxes)
   .rbb-booking-table-booking-form {
+    > .rbb-layout-box-inner {
+      padding-top: 1rem;
+      padding-bottom: 1.5rem;
+    }
+
     .rbb-layout-cell {
       height: auto !important;
       min-height: 2.5rem;
@@ -369,48 +758,24 @@
         word-break: break-all;
       }
     }
-  }
 
-  // Booking window
-  .rbb-booking-window {
-    .rbb-booking-window-header-title {
-      color: #ffffff;
-    }
+    .rbb-layout-cell.rbb-time-slot-cell {
+      .rbb-form-check {
+        line-height: 0;
+        padding: 0;
+        margin: 0;
+        justify-content: center;
 
-    .rbb-info-table, .rbb-booking-preview-table {
-      .rbb-layout-cell {
-        padding: .35rem .25rem;
-
-        &.rbb-column-first {
-          width: 150px;
+        .rbb-form-check-label {
+          display: none;
         }
       }
     }
-
-    .rbb-booking-preview-table {
-      .bookable {
-        background-color: var(--rbb-cell-bookable-bg);
-      }
-
-      .not-bookable {
-        background-color: var(--rbb-cell-fully-booked-bg);
-      }
-    }
-
-    button.rbb-close-window {
-      padding: 0 30px;
-      color: #ffffff;
-      border: 0;
-      border-left: 1px solid #ffffff;
-      font-size: x-large;
-    }
-
-    .rbb-time-span-select option[selected] {
-      background-color: #149efb;
-    }
   }
 
+  // ---------------------------------------------------------------------------
   // Icons
+  // ---------------------------------------------------------------------------
   .rbb-icon {
     font-size: 1em;
     height: 1em;
@@ -449,5 +814,4 @@
       transform: rotate(360deg);
     }
   }
-
 }

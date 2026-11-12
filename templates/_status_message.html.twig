@@ -2,10 +2,10 @@
 
 {% block rbb_status_message %}
     <template v-if="isReady === false && lastResponseCode !== 200">
-        <div class="text-muted mt-2" v-if="lastResponseCode === 401">
+        <div class="rbb-status-message" v-if="lastResponseCode === 401">
             {{ ('RBB.ERR.401')|trans }}
         </div>
-        <div class="text-muted mt-2" v-else>
+        <div class="rbb-status-message" v-else>
             {{ ('RBB.ERR.general')|trans }}
         </div>
     </template>

@@ -35,5 +35,8 @@
         "doc": "docs",
         "test": "tests"
     },
-    "author": "Marko Cupic"
+    "author": "Marko Cupic",
+    "overrides": {
+        "webpack": "~5.109.2"
+    }
 }
