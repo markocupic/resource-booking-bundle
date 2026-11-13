@@ -21,9 +21,9 @@ $GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['expert_legend'] = 'Experte
 $GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['new'] = ['Neu', 'Neuen Buchungszeitraum erstellen.'];
 
 // Fields
-$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['published'] = ['Veröffentlichen'];
-$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['title'] = ['Titel'];
-$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['description'] = ['Beschreibung'];
-$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['startTime'] = ['Startzeit'];
-$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['endTime'] = ['Endzeit'];
+$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['published'] = ['Veröffentlichen', 'Das Zeitfenster im Wochenkalender anzeigen und buchbar machen.'];
+$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['title'] = ['Titel', 'Geben Sie einen Titel für das Zeitfenster ein, z. B. "1. Lektion".'];
+$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['description'] = ['Beschreibung', 'Eine optionale Beschreibung des Zeitfensters.'];
+$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['startTime'] = ['Startzeit', 'Geben Sie die Startzeit in der Form hh:mm ein, z. B. 07:30.'];
+$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['endTime'] = ['Endzeit', 'Geben Sie die Endzeit in der Form hh:mm ein, z. B. 08:15. Die Endzeit muss nach der Startzeit liegen.'];
 $GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['cssID'] = ['CSS-ID/Klasse', 'Hier können Sie eine ID oder beliebig viele Klassen definieren.'];

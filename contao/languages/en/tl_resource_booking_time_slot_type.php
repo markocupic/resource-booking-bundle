@@ -19,5 +19,6 @@ $GLOBALS['TL_LANG']['tl_resource_booking_time_slot_type']['title_legend'] = 'Tit
 $GLOBALS['TL_LANG']['tl_resource_booking_time_slot_type']['new'] = ['New', 'Add new booking timetable.'];
 
 // Fields
-$GLOBALS['TL_LANG']['tl_resource_booking_time_slot_type']['title'] = ['Title'];
-$GLOBALS['TL_LANG']['tl_resource_booking_time_slot_type']['description'] = ['Description'];
+$GLOBALS['TL_LANG']['tl_resource_booking_time_slot_type']['title'] = ['Title', 'Enter a title for the booking timetable, e.g. "Primary school timetable".'];
+$GLOBALS['TL_LANG']['tl_resource_booking_time_slot_type']['description'] = ['Description', 'An optional description of the booking timetable.'];
+$GLOBALS['TL_LANG']['tl_resource_booking_time_slot_type']['published'] = ['Publish', 'Publish the booking timetable.'];

@@ -19,5 +19,6 @@ $GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['title_legend'] = 'Tite
 $GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['new'] = ['Neu', 'Neue Ressourcen-Gruppe erstellen.'];
 
 // Fields
-$GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['title'] = ['Ressourcen-Gruppe'];
-$GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['description'] = ['Beschreibung'];
+$GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['title'] = ['Ressourcen-Gruppe', 'Geben Sie die Bezeichnung der Ressourcen-Gruppe ein, z. B. "Räume" oder "Geräte".'];
+$GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['description'] = ['Beschreibung', 'Eine optionale Beschreibung der Ressourcen-Gruppe.'];
+$GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['published'] = ['Veröffentlichen', 'Die Ressourcen-Gruppe im Frontend anzeigen.'];

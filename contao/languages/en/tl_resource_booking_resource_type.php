@@ -19,5 +19,6 @@ $GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['title_legend'] = 'Titl
 $GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['new'] = ['New', 'Add new resource type.'];
 
 // Fields
-$GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['title'] = ['Resource type'];
-$GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['description'] = ['Description'];
+$GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['title'] = ['Resource type', 'Enter the title of the resource type, e.g. "Rooms" or "Devices".'];
+$GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['description'] = ['Description', 'An optional description of the resource type.'];
+$GLOBALS['TL_LANG']['tl_resource_booking_resource_type']['published'] = ['Publish', 'Show the resource type in the front end.'];

@@ -63,6 +63,7 @@ $GLOBALS['TL_LANG']['RBB']['resource'] = 'Ressource';
 $GLOBALS['TL_LANG']['RBB']['resourceType'] = 'Ressourcen Gruppe';
 $GLOBALS['TL_LANG']['RBB']['showOccupiedResources'] = 'Besetzte Ressourcen anzeigen';
 $GLOBALS['TL_LANG']['RBB']['stillAvailable'] = 'noch verfügbar';
+$GLOBALS['TL_LANG']['RBB']['free'] = 'Frei';
 $GLOBALS['TL_LANG']['RBB']['time'] = 'Uhrzeit';
 $GLOBALS['TL_LANG']['RBB']['timeSpan'] = 'Zeitraum';
 $GLOBALS['TL_LANG']['RBB']['week'] = 'Woche';

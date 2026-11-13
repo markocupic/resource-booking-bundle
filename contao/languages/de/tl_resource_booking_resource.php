@@ -23,10 +23,10 @@ $GLOBALS['TL_LANG']['tl_resource_booking_resource']['bookings'] = 'Buchungen der
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['new'] = ['Neu', 'Neue Ressource erstellen.'];
 
 // Fields
-$GLOBALS['TL_LANG']['tl_resource_booking_resource']['published'] = ['Veröffentlichen'];
-$GLOBALS['TL_LANG']['tl_resource_booking_resource']['title'] = ['Bezeichnung'];
-$GLOBALS['TL_LANG']['tl_resource_booking_resource']['description'] = ['Beschreibung'];
-$GLOBALS['TL_LANG']['tl_resource_booking_resource']['timeSlotType'] = ['Buchungszeitplan'];
+$GLOBALS['TL_LANG']['tl_resource_booking_resource']['published'] = ['Veröffentlichen', 'Die Ressource im Frontend anzeigen und zur Buchung freigeben.'];
+$GLOBALS['TL_LANG']['tl_resource_booking_resource']['title'] = ['Bezeichnung', 'Geben Sie die Bezeichnung der Ressource ein, z. B. "Werkraum" oder "Beamer 1".'];
+$GLOBALS['TL_LANG']['tl_resource_booking_resource']['description'] = ['Beschreibung', 'Diese Beschreibung wird im Wochenkalender oberhalb der Tabelle angezeigt, z. B. für Hinweise zur Benutzung.'];
+$GLOBALS['TL_LANG']['tl_resource_booking_resource']['timeSlotType'] = ['Buchungszeitplan', 'Wählen Sie den Buchungszeitplan mit den buchbaren Zeitfenstern aus.'];
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['itemsAvailable'] = ['Verfügbare Stückzahl (Standard: 1).', 'Bitte geben Sie eine natürliche Zahl grösser als 0 ein.'];
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['weeksBack'] = ['Wochen zurück', 'Geben Sie an, wie viele Wochen ab der aktuellen Woche zurückgeblättert werden kann (Standard: 10). Bei aktiviertem Cronjob werden ältere Buchungen gelöscht; bei 0 wird nichts gelöscht.'];
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['weeksAhead'] = ['Wochen voraus', 'Geben Sie an, wie viele Wochen ab der aktuellen Woche vorausgeblättert und gebucht werden kann (Standard: 52).'];

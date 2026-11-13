@@ -23,10 +23,10 @@ $GLOBALS['TL_LANG']['tl_resource_booking_resource']['bookings'] = 'Watch booking
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['new'] = ['New', 'Add new resource.'];
 
 // Fields
-$GLOBALS['TL_LANG']['tl_resource_booking_resource']['published'] = ['Publish'];
-$GLOBALS['TL_LANG']['tl_resource_booking_resource']['title'] = ['Title'];
-$GLOBALS['TL_LANG']['tl_resource_booking_resource']['description'] = ['Description'];
-$GLOBALS['TL_LANG']['tl_resource_booking_resource']['timeSlotType'] = ['Booking timetable'];
+$GLOBALS['TL_LANG']['tl_resource_booking_resource']['published'] = ['Publish', 'Show the resource in the front end and make it available for booking.'];
+$GLOBALS['TL_LANG']['tl_resource_booking_resource']['title'] = ['Title', 'Enter the title of the resource, e.g. "Workshop" or "Projector 1".'];
+$GLOBALS['TL_LANG']['tl_resource_booking_resource']['description'] = ['Description', 'This description is displayed in the week calendar above the table, e.g. for notes on usage.'];
+$GLOBALS['TL_LANG']['tl_resource_booking_resource']['timeSlotType'] = ['Booking timetable', 'Select the booking timetable that contains the bookable time slots.'];
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['itemsAvailable'] = ['Available items (Default: 1).', 'Please enter a natural digit larger then 0.'];
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['weeksBack'] = ['Weeks back', 'Specify how many weeks back from the current week the user can navigate (default: 10). If the cron job is enabled, older bookings are deleted; with 0 nothing is deleted.'];
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['weeksAhead'] = ['Weeks ahead', 'Specify how many weeks ahead from the current week the user can navigate and book (default: 52).'];

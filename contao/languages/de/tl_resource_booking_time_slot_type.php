@@ -19,5 +19,6 @@ $GLOBALS['TL_LANG']['tl_resource_booking_time_slot_type']['title_legend'] = 'Tit
 $GLOBALS['TL_LANG']['tl_resource_booking_time_slot_type']['new'] = ['Neu', 'Neuen Buchungszeitplan erstellen.'];
 
 // Fields
-$GLOBALS['TL_LANG']['tl_resource_booking_time_slot_type']['title'] = ['Titel'];
-$GLOBALS['TL_LANG']['tl_resource_booking_time_slot_type']['description'] = ['Beschreibung'];
+$GLOBALS['TL_LANG']['tl_resource_booking_time_slot_type']['title'] = ['Titel', 'Geben Sie einen Titel für den Buchungszeitplan ein, z. B. "Stundenplan Primarschule".'];
+$GLOBALS['TL_LANG']['tl_resource_booking_time_slot_type']['description'] = ['Beschreibung', 'Eine optionale Beschreibung des Buchungszeitplans.'];
+$GLOBALS['TL_LANG']['tl_resource_booking_time_slot_type']['published'] = ['Veröffentlichen', 'Den Buchungszeitplan veröffentlichen.'];
