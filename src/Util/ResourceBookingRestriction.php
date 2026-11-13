@@ -17,13 +17,15 @@ namespace Markocupic\ResourceBookingBundle\Util;
 use Contao\StringUtil;
 use Markocupic\ResourceBookingBundle\Config\RbbConfig;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
+use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotModel;
 
 /**
  * Evaluates the booking restrictions configured on a resource
  * (tl_resource_booking_resource.weeksBack/weeksAhead,
  * tl_resource_booking_resource.restrictWeekdays/allowedWeekdays and
  * tl_resource_booking_resource.addBookableUntil/bookableUntil and
- * tl_resource_booking_resource.autoConfirm).
+ * tl_resource_booking_resource.autoConfirm) and the weekdays of a time slot
+ * (tl_resource_booking_time_slot.weekdays).
  *
  * All methods accept either the resource model or its row array, because the
  * slot classes only keep the row.
@@ -47,6 +49,31 @@ class ResourceBookingRestriction
         $allowedWeekdays = StringUtil::deserialize($row['allowedWeekdays'] ?? null, true);
 
         return \in_array(strtolower($weekday), $allowedWeekdays, true);
+    }
+
+    /**
+     * Returns true if the time slot is available on the given weekday
+     * (lowercase english weekday name, e.g. "monday").
+     *
+     * A time slot without weekdays (NULL or an empty selection, e.g. a record
+     * that has not been migrated yet) is available on every weekday.
+     *
+     * @param ResourceBookingTimeSlotModel|array<string, mixed>|null $timeSlot
+     */
+    public static function isTimeSlotAvailableOnWeekday(ResourceBookingTimeSlotModel|array|null $timeSlot, string $weekday): bool
+    {
+        if (null === $timeSlot) {
+            return true;
+        }
+
+        $weekdays = $timeSlot instanceof ResourceBookingTimeSlotModel ? $timeSlot->weekdays : ($timeSlot['weekdays'] ?? null);
+        $weekdays = StringUtil::deserialize($weekdays, true);
+
+        if (empty($weekdays)) {
+            return true;
+        }
+
+        return \in_array(strtolower($weekday), $weekdays, true);
     }
 
     /**

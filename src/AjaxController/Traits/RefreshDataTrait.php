@@ -328,10 +328,12 @@ trait RefreshDataTrait
 
         // First get a full week,
         $arrWeekdays = $this->getDaysOfWeek();
+        $visibleWeekdays = $this->getVisibleWeekdays($resourceModel);
 
         foreach ($arrWeekdays as $i => $weekday) {
             // Skip weekdays on which the resource cannot be booked
-            if (!ResourceBookingRestriction::isWeekdayAllowed($resourceModel, $weekday)) {
+            // or on which none of the time slots is available
+            if (!\in_array($weekday, $visibleWeekdays, true)) {
                 continue;
             }
 
@@ -363,6 +365,84 @@ trait RefreshDataTrait
     }
 
     /**
+     * Returns the weekdays that are displayed in the week calendar: the resource
+     * can be booked on that weekday (tl_resource_booking_resource.allowedWeekdays)
+     * and at least one of its time slots is available on that weekday
+     * (tl_resource_booking_time_slot.weekdays).
+     *
+     * @return array<int, string>
+     */
+    private function getVisibleWeekdays(ResourceBookingResourceModel|null $resourceModel): array
+    {
+        $timeSlots = $this->getPublishedTimeSlots($resourceModel);
+        $visibleWeekdays = [];
+
+        foreach ($this->getDaysOfWeek() as $weekday) {
+            if (!ResourceBookingRestriction::isWeekdayAllowed($resourceModel, $weekday)) {
+                continue;
+            }
+
+            // Without any time slot the table is empty anyway: keep the weekday.
+            if (empty($timeSlots)) {
+                $visibleWeekdays[] = $weekday;
+                continue;
+            }
+
+            foreach ($timeSlots as $timeSlot) {
+                if (ResourceBookingRestriction::isTimeSlotAvailableOnWeekday($timeSlot, $weekday)) {
+                    $visibleWeekdays[] = $weekday;
+                    break;
+                }
+            }
+        }
+
+        return $visibleWeekdays;
+    }
+
+    /**
+     * Returns false if the time slot is not available on any of the displayed weekdays.
+     * Such a time slot is not displayed as a row in the week calendar.
+     *
+     * @param array<string, mixed>   $timeSlot
+     * @param array<int, string> $visibleWeekdays
+     */
+    private function isTimeSlotDisplayed(array $timeSlot, array $visibleWeekdays): bool
+    {
+        foreach ($visibleWeekdays as $weekday) {
+            if (ResourceBookingRestriction::isTimeSlotAvailableOnWeekday($timeSlot, $weekday)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function getPublishedTimeSlots(ResourceBookingResourceModel|null $resourceModel): array
+    {
+        if (null === $resourceModel) {
+            return [];
+        }
+
+        $objTimeslot = $this->framework
+            ->getAdapter(ResourceBookingTimeSlotModel::class)
+            ->findPublishedByPid((int) $resourceModel->timeSlotType)
+        ;
+
+        $timeSlots = [];
+
+        if (null !== $objTimeslot) {
+            while ($objTimeslot->next()) {
+                $timeSlots[] = $objTimeslot->current()->row();
+            }
+        }
+
+        return $timeSlots;
+    }
+
+    /**
      * @throws \Exception
      */
     private function getBookingTableData(array $arrWeekdays, int $activeWeekTstamp, ModuleModel|null $moduleModel = null, ResourceBookingResourceModel|null $resourceModel = null, FrontendUser|null $user = null): array
@@ -382,10 +462,16 @@ trait RefreshDataTrait
         $arrAvailable = $databaseAdapter->getInstance()->listFields('tl_resource_booking');
 
         $objTimeslot = $resourceBookingTimeSlotModelAdapter->findPublishedByPid((int) $resourceModel->timeSlotType);
+        $visibleWeekdays = $this->getVisibleWeekdays($resourceModel);
         $rowCount = 0;
 
         if (null !== $objTimeslot) {
             while ($objTimeslot->next()) {
+                // Skip time slots that are not available on any of the displayed weekdays
+                if (!$this->isTimeSlotDisplayed($objTimeslot->current()->row(), $visibleWeekdays)) {
+                    continue;
+                }
+
                 $cells = [];
                 $objRow = new \stdClass();
 
@@ -404,8 +490,8 @@ trait RefreshDataTrait
                 $objRow->cssRowClass = $cssRowClass;
 
                 foreach ($arrWeekdays as $colCount => $weekday) {
-                    // Skip weekdays on which the resource cannot be booked
-                    if (!ResourceBookingRestriction::isWeekdayAllowed($resourceModel, $weekday)) {
+                    // Skip weekdays that are not displayed in the week calendar
+                    if (!\in_array($weekday, $visibleWeekdays, true)) {
                         continue;
                     }
 
@@ -523,9 +609,16 @@ trait RefreshDataTrait
 
         if (null !== $resourceBookingResourceModel) {
             $objTimeslot = $resourceBookingTimeSlotModelAdapter->findPublishedByPid((int) $resourceBookingResourceModel->timeSlotType);
+            $visibleWeekdays = $this->getVisibleWeekdays($resourceBookingResourceModel);
 
             if (null !== $objTimeslot) {
                 while ($objTimeslot->next()) {
+                    // Skip time slots that are not available on any of the displayed weekdays
+                    // (the same rows are skipped in getBookingTableData())
+                    if (!$this->isTimeSlotDisplayed($objTimeslot->current()->row(), $visibleWeekdays)) {
+                        continue;
+                    }
+
                     // Get the CSS ID
                     $arrCssCellID = $stringUtilAdapter->deserialize($objTimeslot->cssID, true);
 

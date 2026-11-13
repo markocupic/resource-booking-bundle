@@ -17,6 +17,7 @@ namespace Markocupic\ResourceBookingBundle\Tests\Util;
 use Contao\TestCase\ContaoTestCase;
 use Markocupic\ResourceBookingBundle\Config\RbbConfig;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
+use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotModel;
 use Markocupic\ResourceBookingBundle\Util\ResourceBookingRestriction;
 
 class ResourceBookingRestrictionTest extends ContaoTestCase
@@ -113,5 +114,27 @@ class ResourceBookingRestrictionTest extends ContaoTestCase
 
         $model = $this->createClassWithPropertiesMock(ResourceBookingResourceModel::class, ['autoConfirm' => false]);
         $this->assertFalse(ResourceBookingRestriction::isAutoConfirmEnabled($model));
+    }
+
+    public function testTimeSlotWithoutWeekdaysIsAvailableOnEveryWeekday(): void
+    {
+        $this->assertTrue(ResourceBookingRestriction::isTimeSlotAvailableOnWeekday(null, 'sunday'));
+        $this->assertTrue(ResourceBookingRestriction::isTimeSlotAvailableOnWeekday([], 'sunday'));
+        $this->assertTrue(ResourceBookingRestriction::isTimeSlotAvailableOnWeekday(['weekdays' => null], 'sunday'));
+        $this->assertTrue(ResourceBookingRestriction::isTimeSlotAvailableOnWeekday(['weekdays' => ''], 'sunday'));
+        $this->assertTrue(ResourceBookingRestriction::isTimeSlotAvailableOnWeekday(['weekdays' => serialize([])], 'sunday'));
+    }
+
+    public function testTimeSlotIsOnlyAvailableOnItsWeekdays(): void
+    {
+        $row = ['weekdays' => serialize(['monday', 'tuesday', 'thursday'])];
+
+        $this->assertTrue(ResourceBookingRestriction::isTimeSlotAvailableOnWeekday($row, 'monday'));
+        $this->assertTrue(ResourceBookingRestriction::isTimeSlotAvailableOnWeekday($row, 'Thursday'));
+        $this->assertFalse(ResourceBookingRestriction::isTimeSlotAvailableOnWeekday($row, 'wednesday'));
+
+        $model = $this->createClassWithPropertiesStub(ResourceBookingTimeSlotModel::class, ['weekdays' => serialize(['friday'])]);
+        $this->assertTrue(ResourceBookingRestriction::isTimeSlotAvailableOnWeekday($model, 'friday'));
+        $this->assertFalse(ResourceBookingRestriction::isTimeSlotAvailableOnWeekday($model, 'monday'));
     }
 }

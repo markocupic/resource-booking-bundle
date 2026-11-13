@@ -13,6 +13,7 @@ declare(strict_types=1);
  */
 
 use Contao\DataContainer;
+use Markocupic\ResourceBookingBundle\Config\RbbConfig;
 use Markocupic\ResourceBookingBundle\EventListener\ContaoHooks\RegExpListener;
 use Contao\DC_Table;
 
@@ -48,7 +49,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = [
     'palettes' => [
         'default' => '
         {title_legend},title,description;
-        {time_legend},startTime,endTime;
+        {time_legend},startTime,endTime,weekdays;
         {expert_legend:hide},cssID
         ',
     ],
@@ -104,6 +105,16 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = [
             'inputType' => 'text',
             'eval'      => ['rgxp' => RegExpListener::REGEX_RESOURCE_BOOKING_END_TIME, 'mandatory' => true, 'tl_class' => 'w50'],
             'sql'       => ['type' => 'integer', 'length' => 10, 'notnull' => true, 'unsigned' => true, 'default' => 0],
+        ],
+        'weekdays'    => [
+            'default'   => RbbConfig::RBB_WEEKDAYS,
+            'exclude'   => true,
+            'filter'    => true,
+            'inputType' => 'checkbox',
+            'options'   => RbbConfig::RBB_WEEKDAYS,
+            'reference' => &$GLOBALS['TL_LANG']['MSC']['DAYS_LONG'],
+            'eval'      => ['mandatory' => true, 'multiple' => true, 'tl_class' => 'clr'],
+            'sql'       => 'blob NULL',
         ],
         'cssID'       => [
             'exclude'   => true,

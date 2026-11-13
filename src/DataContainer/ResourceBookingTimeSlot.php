@@ -14,15 +14,19 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\DataContainer;
 
+use Contao\Config;
 use Contao\CoreBundle\DependencyInjection\Attribute\AsCallback;
+use Contao\CoreBundle\Exception\RedirectResponseException;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\DataContainer;
 use Contao\Date;
 use Contao\Message;
+use Contao\System;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Types\Types;
 use Markocupic\ResourceBookingBundle\Util\UtcTimeHelper;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 readonly class ResourceBookingTimeSlot
 {
@@ -30,6 +34,7 @@ readonly class ResourceBookingTimeSlot
         private ContaoFramework $framework,
         private Connection $connection,
         private RequestStack $requestStack,
+        private TranslatorInterface $translator,
     ) {
     }
 
@@ -165,44 +170,44 @@ readonly class ResourceBookingTimeSlot
         return $timestampEndTime;
     }
 
+    /**
+     * A time slot with future bookings must not be deleted: the deletion is
+     * aborted and an error message with the number of affected bookings is shown.
+     * Past bookings are kept, so the booking history is not lost.
+     */
     #[AsCallback(table: 'tl_resource_booking_time_slot', target: 'config.ondelete')]
-    public function removeChildRecords(DataContainer $dc): void
+    public function preventDeletionWithFutureBookings(DataContainer $dc): void
     {
         if (!$dc->id) {
             return;
         }
 
-        $arrIdsDel = $this->connection
-            ->fetchFirstColumn(
-                'SELECT id FROM tl_resource_booking WHERE timeSlotId = ?',
-                [$dc->id],
-                [Types::INTEGER],
-            )
-        ;
+        $count = (int) $this->connection->fetchOne(
+            'SELECT COUNT(*) FROM tl_resource_booking WHERE timeSlotId = ? AND endTime > ?',
+            [(int) $dc->id, time()],
+            [Types::INTEGER, Types::INTEGER],
+        );
 
-        if (empty($arrIdsDel)) {
+        if ($count < 1) {
             return;
         }
 
-        // Delete child bookings
-        $this->connection
-            ->delete(
-                'tl_resource_booking',
-                ['timeSlotId' => $dc->id],
-                [Types::INTEGER],
-            )
-        ;
-
         $this->framework
             ->getAdapter(Message::class)
-            ->addInfo('Deleted bookings with ids '.implode(',', $arrIdsDel))
+            ->addError($this->translator->trans('RBB.BE.deleteTimeSlotBlocked', [$count], 'contao_default'))
         ;
+
+        throw new RedirectResponseException($this->framework->getAdapter(System::class)->getReferer());
     }
 
+    /**
+     * Adapts the start and end time of the future bookings (not started yet)
+     * of a time slot after its times have been changed. Past bookings are not touched.
+     */
     #[AsCallback(table: 'tl_resource_booking_time_slot', target: 'config.onsubmit')]
     public function adaptBookingStartAndEndTime(DataContainer $dc): void
     {
-        $intId = $dc->id;
+        $intId = (int) $dc->id;
 
         if (!$intId) {
             return;
@@ -218,58 +223,64 @@ readonly class ResourceBookingTimeSlot
             return;
         }
 
-        $arrAdapted = [];
         $arrBookings = $this->connection->fetchAllAssociative(
-            'SELECT * FROM tl_resource_booking WHERE timeSlotId = ?',
-            [$arrSlot['id']],
-            [Types::INTEGER],
+            'SELECT * FROM tl_resource_booking WHERE timeSlotId = ? AND startTime > ?',
+            [$intId, time()],
+            [Types::INTEGER, Types::INTEGER],
         );
 
         if (empty($arrBookings)) {
             return;
         }
 
+        $dateAdapter = $this->framework->getAdapter(Date::class);
+        $utcTimeHelperAdapter = $this->framework->getAdapter(UtcTimeHelper::class);
+        $datimFormat = (string) $this->framework->getAdapter(Config::class)->get('datimFormat');
+
+        $newTimes = [
+            'startTime' => $utcTimeHelperAdapter->parseStartTime((int) $arrSlot['startTime']),
+            'endTime' => $utcTimeHelperAdapter->parseEndTime((int) $arrSlot['endTime']),
+        ];
+
+        $adapted = 0;
+
         foreach ($arrBookings as $arrBooking) {
             $set = [];
-            $arrFields = ['startTime', 'endTime'];
 
-            foreach ($arrFields as $field) {
-                $strDateOld = $this->framework
-                    ->getAdapter(Date::class)
-                    ->parse('Y-m-d H:i', $arrBooking[$field])
-                ;
-
-                $arrDateOld = explode(' ', $strDateOld);
-
-                $strTimeNew = 'startTime' === $field
-                    ?
-                    $this->framework
-                        ->getAdapter(UtcTimeHelper::class)
-                        ->parseStartTime($arrSlot[$field])
-                    :
-                    $this->framework->getAdapter(UtcTimeHelper::class)
-                        ->parseEndTime($arrSlot[$field])
-                ;
-
-                $strDateNew = $arrDateOld[0].' '.$strTimeNew;
-
-                $set[$field] = strtotime($strDateNew);
+            foreach ($newTimes as $field => $strTimeNew) {
+                // Keep the date of the booking, take the new time of the time slot
+                $strDate = explode(' ', $dateAdapter->parse('Y-m-d H:i', (int) $arrBooking[$field]))[0];
+                $set[$field] = strtotime($strDate.' '.$strTimeNew);
             }
 
-            $arrAdapted[] = $arrBooking['id'];
+            if ((int) $set['startTime'] === (int) $arrBooking['startTime'] && (int) $set['endTime'] === (int) $arrBooking['endTime']) {
+                continue;
+            }
+
+            // The title ends with the booked time span, e.g. "Room : booked by John Doe [16.11.2026 08:00 - 16.11.2026 08:45]"
+            $title = (string) ($arrBooking['title'] ?? '');
+
+            if ('' !== $title && preg_match('/\[[^\]]*\]\s*$/', $title)) {
+                $set['title'] = preg_replace(
+                    '/\[[^\]]*\]\s*$/',
+                    \sprintf('[%s - %s]', $dateAdapter->parse($datimFormat, $set['startTime']), $dateAdapter->parse($datimFormat, $set['endTime'])),
+                    $title,
+                );
+            }
 
             $this->connection->update(
                 'tl_resource_booking',
                 $set,
                 ['id' => $arrBooking['id']],
-                [Types::INTEGER],
             );
+
+            ++$adapted;
         }
 
-        if (!empty($arrAdapted)) {
+        if ($adapted > 0) {
             $this->framework
                 ->getAdapter(Message::class)
-                ->addInfo('Adapted start- and end-time for booking with ids '.implode(',', $arrAdapted))
+                ->addInfo($this->translator->trans('RBB.BE.bookingsAdapted', [$adapted], 'contao_default'))
             ;
         }
     }

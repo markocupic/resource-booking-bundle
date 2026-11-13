@@ -217,6 +217,8 @@ trait BookingTrait
                     $this->setErrorMessage('RBB.ERR.invalidStartOrEndTime');
                 } elseif (!$slot->isOnAllowedWeekday()) {
                     $this->setErrorMessage('RBB.ERR.weekdayNotBookable');
+                } elseif (!$slot->isTimeSlotAvailable()) {
+                    $this->setErrorMessage('RBB.ERR.timeSlotNotAvailableOnWeekday');
                 } elseif ($slot->isFullyBooked()) {
                     $this->setErrorMessage('RBB.ERR.resourceIsAlreadyFullyBooked');
                 } elseif ($slot->isBlocked()) {

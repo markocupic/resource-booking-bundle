@@ -14,54 +14,87 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\Tests\DataContainer;
 
+use Contao\CoreBundle\Exception\RedirectResponseException;
 use Contao\DataContainer;
+use Contao\Message;
+use Contao\System;
 use Contao\TestCase\ContaoTestCase;
 use Doctrine\DBAL\Connection;
 use Markocupic\ResourceBookingBundle\DataContainer\ResourceBookingTimeSlotType;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ResourceBookingTimeSlotTypeTest extends ContaoTestCase
 {
-    public function testRemoveChildRecordsDoesNothingWithoutAnId(): void
+    public function testDeletionIsAllowedWithoutAnId(): void
     {
         $connection = $this->createMock(Connection::class);
+        $connection
+            ->expects($this->never())
+            ->method('fetchOne')
+        ;
+
+        $dc = $this->createClassWithPropertiesStub(DataContainer::class, ['id' => 0]);
+
+        (new ResourceBookingTimeSlotType($this->createContaoFrameworkStub(), $connection, $this->translator()))->preventDeletionWithFutureBookings($dc);
+    }
+
+    public function testDeletionIsAllowedWithoutFutureBookings(): void
+    {
+        $connection = $this->createMock(Connection::class);
+        $connection
+            ->expects($this->once())
+            ->method('fetchOne')
+            ->with($this->stringContains('endTime > ?'))
+            ->willReturn(0)
+        ;
+
+        // Neither bookings nor time slots are deleted by the callback: Contao deletes
+        // the time slots (ctable), past bookings are kept.
         $connection
             ->expects($this->never())
             ->method('executeStatement')
         ;
 
-        $dc = $this->createClassWithPropertiesMock(DataContainer::class, ['id' => 0]);
+        $dc = $this->createClassWithPropertiesStub(DataContainer::class, ['id' => 7]);
 
-        (new ResourceBookingTimeSlotType($connection))->removeChildRecords($dc);
+        (new ResourceBookingTimeSlotType($this->createContaoFrameworkStub(), $connection, $this->translator()))->preventDeletionWithFutureBookings($dc);
     }
 
-    public function testRemoveChildRecordsDeletesBookingsAndTimeSlots(): void
+    public function testDeletionIsBlockedWithFutureBookings(): void
     {
-        $calls = [];
-
-        $connection = $this->createMock(Connection::class);
+        $connection = $this->createStub(Connection::class);
         $connection
-            ->method('executeStatement')
-            ->willReturnCallback(
-                static function (string $sql, array $params) use (&$calls): int {
-                    $calls[] = ['sql' => $sql, 'params' => $params];
-
-                    return 0;
-                },
-            )
+            ->method('fetchOne')
+            ->willReturn(5)
         ;
 
-        $dc = $this->createClassWithPropertiesMock(DataContainer::class, ['id' => 7]);
+        $messageAdapter = $this->createAdapterMock(['addError']);
+        $messageAdapter
+            ->expects($this->once())
+            ->method('addError')
+            ->with('RBB.BE.deleteTimeSlotTypeBlocked:5')
+        ;
 
-        (new ResourceBookingTimeSlotType($connection))->removeChildRecords($dc);
+        $framework = $this->createContaoFrameworkStub([
+            Message::class => $messageAdapter,
+            System::class => $this->createConfiguredAdapterStub(['getReferer' => 'https://example.com/contao']),
+        ]);
 
-        // One statement deletes the child bookings, the other the time slots themselves.
-        $this->assertCount(2, $calls);
+        $dc = $this->createClassWithPropertiesStub(DataContainer::class, ['id' => 7]);
 
-        foreach ($calls as $call) {
-            $this->assertSame([7], $call['params']);
-        }
+        $this->expectException(RedirectResponseException::class);
 
-        $this->assertStringContainsString('DELETE FROM tl_resource_booking', $calls[0]['sql']);
-        $this->assertStringContainsString('DELETE FROM tl_resource_booking_time_slot WHERE pid', $calls[1]['sql']);
+        (new ResourceBookingTimeSlotType($framework, $connection, $this->translator()))->preventDeletionWithFutureBookings($dc);
+    }
+
+    private function translator(): TranslatorInterface
+    {
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator
+            ->method('trans')
+            ->willReturnCallback(static fn (string $id, array $parameters = []): string => $id.($parameters ? ':'.implode(',', $parameters) : ''))
+        ;
+
+        return $translator;
     }
 }

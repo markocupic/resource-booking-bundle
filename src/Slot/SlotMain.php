@@ -49,7 +49,7 @@ class SlotMain extends AbstractSlot
      */
     public function isBookable(): bool
     {
-        if ($this->isBlocked || !$this->isWithinAllowedDateRange() || !$this->isOnAllowedWeekday()) {
+        if ($this->isBlocked || !$this->isWithinAllowedDateRange() || !$this->isOnAllowedWeekday() || !$this->isTimeSlotAvailable()) {
             return false;
         }
 

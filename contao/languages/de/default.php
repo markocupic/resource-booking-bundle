@@ -64,6 +64,7 @@ $GLOBALS['TL_LANG']['RBB']['resourceType'] = 'Ressourcen Gruppe';
 $GLOBALS['TL_LANG']['RBB']['showOccupiedResources'] = 'Besetzte Ressourcen anzeigen';
 $GLOBALS['TL_LANG']['RBB']['stillAvailable'] = 'noch verfügbar';
 $GLOBALS['TL_LANG']['RBB']['free'] = 'Frei';
+$GLOBALS['TL_LANG']['RBB']['notAvailable'] = 'nicht verfügbar';
 $GLOBALS['TL_LANG']['RBB']['time'] = 'Uhrzeit';
 $GLOBALS['TL_LANG']['RBB']['timeSpan'] = 'Zeitraum';
 $GLOBALS['TL_LANG']['RBB']['week'] = 'Woche';
@@ -76,6 +77,7 @@ $GLOBALS['TL_LANG']['RBB']['ERR']['general'] = 'Es ist ein Fehler aufgetreten. B
 $GLOBALS['TL_LANG']['RBB']['ERR']['generalBookingError'] = 'Beim Versuch die Ressource zu buchen ist ein unerwarteter Fehler aufgetreten. Bitte probieren Sie es nochmals oder nehmen Sie Kontakt mit dem Administrator Kontakt auf.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['invalidStartOrEndTime'] = 'Sie haben einen Slot mit ungültiger Start- oder Endzeit ausgewählt.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['weekdayNotBookable'] = 'Die Ressource kann an einem oder mehreren der gewählten Wochentage nicht gebucht werden.';
+$GLOBALS['TL_LANG']['RBB']['ERR']['timeSlotNotAvailableOnWeekday'] = 'Das gewählte Zeitfenster ist an einem oder mehreren der gewählten Wochentage nicht verfügbar.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['outsideBookingPeriod'] = 'Ein oder mehrere der gewählten Slots liegen ausserhalb des buchbaren Zeitraums dieser Ressource.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['notAuthorized'] = 'Für diesen Vorgang verfügen Sie nicht über die nötigen Rechte.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['notEnoughItemsAvailable'] = 'In einem oder mehreren Slots sind zu wenig Einheiten für Ihre Buchungsanfrage verfügbar.';
@@ -101,3 +103,9 @@ $GLOBALS['TL_LANG']['RBB']['MSG']['successfullyBookedXItems'] = 'Für %s konnte(
 $GLOBALS['TL_LANG']['RBB']['MSG']['successfullyCanceledBooking'] = 'Ihre Buchung mit ID %s wurde erfolgreich storniert.';
 $GLOBALS['TL_LANG']['RBB']['MSG']['successfullyCanceledBookingAndItsRepetitions'] = 'Ihre Buchung mit ID %s und weitere %s Wiederholunge(en) wurde(n) erfolgreich storniert.';
 $GLOBALS['TL_LANG']['RBB']['MSG']['windowClosesAutomatically'] = 'Dieses Fenster schliesst automatisch.';
+
+// Backend messages
+$GLOBALS['TL_LANG']['RBB']['BE']['deleteTimeSlotBlocked'] = 'Das Zeitfenster kann nicht gelöscht werden, weil noch %s zukünftige Buchung(en) darauf bestehen. Stornieren Sie diese Buchungen zuerst oder deaktivieren Sie das Zeitfenster.';
+$GLOBALS['TL_LANG']['RBB']['BE']['deleteTimeSlotTypeBlocked'] = 'Der Buchungszeitplan kann nicht gelöscht werden, weil auf seinen Zeitfenstern noch %s zukünftige Buchung(en) bestehen. Stornieren Sie diese Buchungen zuerst oder deaktivieren Sie den Zeitplan bzw. einzelne Zeitfenster.';
+$GLOBALS['TL_LANG']['RBB']['BE']['bookingsAdapted'] = '%s zukünftige Buchung(en) wurden an die neuen Zeiten des Zeitfensters angepasst. Vergangene Buchungen bleiben unverändert.';
+$GLOBALS['TL_LANG']['RBB']['BE']['futureBookingsNotMatchingTimetable'] = 'Achtung: %s zukünftige Buchung(en) dieser Ressource passen nicht zum Buchungszeitplan (Zeiten oder Wochentage). Sie werden im Wochenkalender nicht angezeigt und können von den Mitgliedern nicht storniert werden.';

@@ -94,6 +94,24 @@ class SlotMainTest extends TestCase
         $this->assertFalse($slot->isBookable());
     }
 
+    public function testIsTimeSlotAvailableRespectsTheWeekdaysOfTheTimeSlot(): void
+    {
+        $weekdays = serialize(['monday', 'tuesday']);
+
+        $slot = $this->slotWith(1, [], weekday: 'monday', timeSlotWeekdays: $weekdays);
+        $this->assertTrue($slot->isTimeSlotAvailable());
+        $this->assertTrue($slot->isBookable());
+
+        $slot = $this->slotWith(1, [], weekday: 'wednesday', timeSlotWeekdays: $weekdays);
+        $this->assertFalse($slot->isTimeSlotAvailable());
+        $this->assertTrue($slot->isOnAllowedWeekday());
+        $this->assertFalse($slot->isBookable());
+
+        // Time slots without weekdays (not migrated yet) are available on every weekday.
+        $slot = $this->slotWith(1, [], weekday: 'sunday');
+        $this->assertTrue($slot->isTimeSlotAvailable());
+    }
+
     public function testIsWithinAllowedDateRangeRespectsBookableUntil(): void
     {
         $bookableUntil = strtotime('today +10 days');
@@ -155,7 +173,7 @@ class SlotMainTest extends TestCase
     /**
      * @param array<int, array<string, mixed>> $bookings
      */
-    private function slotWith(int $itemsAvailable, array $bookings, int $requestedItems = 1, array|null $resource = null, string $weekday = 'monday', int|null $startTime = null, int|null $endTime = null, int|null $firstDayOfWeek = null, int|null $lastPermittedWeek = null): SlotMain
+    private function slotWith(int $itemsAvailable, array $bookings, int $requestedItems = 1, array|null $resource = null, string $weekday = 'monday', int|null $startTime = null, int|null $endTime = null, int|null $firstDayOfWeek = null, int|null $lastPermittedWeek = null, string|null $timeSlotWeekdays = null): SlotMain
     {
         $startTime ??= strtotime('tomorrow 08:00');
         $endTime ??= $startTime + 3600;
@@ -177,6 +195,7 @@ class SlotMainTest extends TestCase
             'bookingRepeatStopWeekTstamp' => $startTime,
             'beginWeekTimestampSelectedWeek' => $firstDayOfWeek,
             'lastPermittedWeekTstamp' => $lastPermittedWeek,
+            'timeSlotWeekdays' => $timeSlotWeekdays,
         ]);
 
         return $slot;

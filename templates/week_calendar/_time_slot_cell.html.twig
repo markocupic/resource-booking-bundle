@@ -2,8 +2,9 @@
 
 {% block rbb_week_calendar_window__time_slot_cell %}
     <div class="rbb-time-slot-cell-inner">
+        <div class="rbb-cell-not-available-label" v-if="!slot.isTimeSlotAvailable && !slot.hasBookings">{{ ('RBB.notAvailable')|trans }}</div>
         <div class="rbb-cell-free-label" v-if="slot.isBookable && !slot.hasBookings && !slot.isBlocked && slot.isWithinAllowedDateRange">{{ ('RBB.free')|trans }}</div>
-        <div class="rbb-cell-booking-still-available-box" v-if="!slot.isBlocked && slot.resource.itemsAvailable > 1 && slot.itemsStillAvailable > 0 && slot.isWithinAllowedDateRange" :title="'{{ ('RBB.stillAvailable')|trans }}: ' + slot.itemsStillAvailable">+ [[ slot.itemsStillAvailable ]]</div>
+        <div class="rbb-cell-booking-still-available-box" v-if="!slot.isBlocked && slot.isTimeSlotAvailable && slot.resource.itemsAvailable > 1 && slot.itemsStillAvailable > 0 && slot.isWithinAllowedDateRange" :title="'{{ ('RBB.stillAvailable')|trans }}: ' + slot.itemsStillAvailable">+ [[ slot.itemsStillAvailable ]]</div>
         <div class="rbb-booked-item" v-if="slot.hasBookings" v-for="booking in slot.bookings" :data-confirmed="booking.confirmed ? 'true' : 'false'">
             <span class="rbb-booked-item-header">
                 <span class="rbb-cell-booking-owner-box" v-if="booking.bookedByFullname">[[ booking.bookedByFullname ]]</span>

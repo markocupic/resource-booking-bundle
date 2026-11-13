@@ -14,18 +14,21 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\Tests\DataContainer;
 
+use Contao\Config;
+use Contao\CoreBundle\Exception\RedirectResponseException;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\DataContainer;
 use Contao\Date;
 use Contao\Message;
+use Contao\System;
 use Contao\TestCase\ContaoTestCase;
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Types\Types;
 use Markocupic\ResourceBookingBundle\DataContainer\ResourceBookingTimeSlot;
 use Markocupic\ResourceBookingBundle\Util\UtcTimeHelper;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ResourceBookingTimeSlotTest extends ContaoTestCase
 {
@@ -103,68 +106,65 @@ class ResourceBookingTimeSlotTest extends ContaoTestCase
         $this->assertSame(36060, $dca->setCorrectEndTime('09:00', $this->createMock(DataContainer::class)));
     }
 
-    public function testRemoveChildRecordsDoesNothingWithoutAnId(): void
+    public function testDeletionIsAllowedWithoutAnId(): void
     {
         $connection = $this->createMock(Connection::class);
         $connection
             ->expects($this->never())
-            ->method('fetchFirstColumn')
+            ->method('fetchOne')
         ;
 
-        $connection
-            ->expects($this->never())
-            ->method('delete')
-        ;
-
-        $dca = new ResourceBookingTimeSlot($this->framework(), $connection, new RequestStack());
-        $dca->removeChildRecords($this->createClassWithPropertiesMock(DataContainer::class, ['id' => 0]));
+        $dca = new ResourceBookingTimeSlot($this->framework(), $connection, new RequestStack(), $this->translator());
+        $dca->preventDeletionWithFutureBookings($this->createClassWithPropertiesStub(DataContainer::class, ['id' => 0]));
     }
 
-    public function testRemoveChildRecordsDoesNothingWhenNoBookingsExist(): void
+    public function testDeletionIsAllowedWithoutFutureBookings(): void
     {
         $connection = $this->createMock(Connection::class);
-        $connection
-            ->method('fetchFirstColumn')
-            ->willReturn([])
-        ;
-
-        $connection
-            ->expects($this->never())
-            ->method('delete')
-        ;
-
-        $dca = new ResourceBookingTimeSlot($this->framework(), $connection, new RequestStack());
-        $dca->removeChildRecords($this->createClassWithPropertiesMock(DataContainer::class, ['id' => 7]));
-    }
-
-    public function testRemoveChildRecordsDeletesBookingsAndAddsAMessage(): void
-    {
-        $connection = $this->createMock(Connection::class);
-        $connection
-            ->method('fetchFirstColumn')
-            ->willReturn([11, 12])
-        ;
-
         $connection
             ->expects($this->once())
-            ->method('delete')
-            ->with('tl_resource_booking', ['timeSlotId' => 7], [Types::INTEGER])
+            ->method('fetchOne')
+            ->with($this->stringContains('endTime > ?'))
+            ->willReturn(0)
         ;
 
-        $messageAdapter = $this->createAdapterMock(['addInfo']);
+        // Past bookings are never deleted
+        $connection
+            ->expects($this->never())
+            ->method('delete')
+        ;
+
+        $dca = new ResourceBookingTimeSlot($this->framework(), $connection, new RequestStack(), $this->translator());
+        $dca->preventDeletionWithFutureBookings($this->createClassWithPropertiesStub(DataContainer::class, ['id' => 7]));
+    }
+
+    public function testDeletionIsBlockedWithFutureBookings(): void
+    {
+        $connection = $this->createStub(Connection::class);
+        $connection
+            ->method('fetchOne')
+            ->willReturn(3)
+        ;
+
+        $messageAdapter = $this->createAdapterMock(['addError']);
         $messageAdapter
             ->expects($this->once())
-            ->method('addInfo')
-            ->with($this->stringContains('11,12'))
+            ->method('addError')
+            ->with('RBB.BE.deleteTimeSlotBlocked:3')
         ;
 
+        $systemAdapter = $this->createConfiguredAdapterStub(['getReferer' => 'https://example.com/contao']);
+
         $dca = new ResourceBookingTimeSlot(
-            $this->framework([Message::class => $messageAdapter]),
+            $this->framework([Message::class => $messageAdapter, System::class => $systemAdapter]),
             $connection,
             new RequestStack(),
+            $this->translator(),
         );
 
-        $dca->removeChildRecords($this->createClassWithPropertiesMock(DataContainer::class, ['id' => 7]));
+        $this->expectException(RedirectResponseException::class);
+
+        $dca->preventDeletionWithFutureBookings($this->createClassWithPropertiesStub(DataContainer::class, ['id' => 7]));
     }
 
     public function testAdaptBookingStartAndEndTimeDoesNothingWithoutAnId(): void
@@ -175,8 +175,8 @@ class ResourceBookingTimeSlotTest extends ContaoTestCase
             ->method('fetchAssociative')
         ;
 
-        $dca = new ResourceBookingTimeSlot($this->framework(), $connection, new RequestStack());
-        $dca->adaptBookingStartAndEndTime($this->createClassWithPropertiesMock(DataContainer::class, ['id' => 0]));
+        $dca = new ResourceBookingTimeSlot($this->framework(), $connection, new RequestStack(), $this->translator());
+        $dca->adaptBookingStartAndEndTime($this->createClassWithPropertiesStub(DataContainer::class, ['id' => 0]));
     }
 
     public function testAdaptBookingStartAndEndTimeReturnsWhenTheSlotIsMissing(): void
@@ -192,11 +192,11 @@ class ResourceBookingTimeSlotTest extends ContaoTestCase
             ->method('fetchAllAssociative')
         ;
 
-        $dca = new ResourceBookingTimeSlot($this->framework(), $connection, new RequestStack());
-        $dca->adaptBookingStartAndEndTime($this->createClassWithPropertiesMock(DataContainer::class, ['id' => 7]));
+        $dca = new ResourceBookingTimeSlot($this->framework(), $connection, new RequestStack(), $this->translator());
+        $dca->adaptBookingStartAndEndTime($this->createClassWithPropertiesStub(DataContainer::class, ['id' => 7]));
     }
 
-    public function testAdaptBookingStartAndEndTimeReturnsWhenThereAreNoBookings(): void
+    public function testAdaptBookingStartAndEndTimeOnlyLoadsFutureBookings(): void
     {
         $connection = $this->createMock(Connection::class);
         $connection
@@ -205,7 +205,9 @@ class ResourceBookingTimeSlotTest extends ContaoTestCase
         ;
 
         $connection
+            ->expects($this->once())
             ->method('fetchAllAssociative')
+            ->with($this->stringContains('startTime > ?'))
             ->willReturn([])
         ;
 
@@ -214,13 +216,15 @@ class ResourceBookingTimeSlotTest extends ContaoTestCase
             ->method('update')
         ;
 
-        $dca = new ResourceBookingTimeSlot($this->framework(), $connection, new RequestStack());
-        $dca->adaptBookingStartAndEndTime($this->createClassWithPropertiesMock(DataContainer::class, ['id' => 7]));
+        $dca = new ResourceBookingTimeSlot($this->framework(), $connection, new RequestStack(), $this->translator());
+        $dca->adaptBookingStartAndEndTime($this->createClassWithPropertiesStub(DataContainer::class, ['id' => 7]));
     }
 
-    public function testAdaptBookingStartAndEndTimeRewritesBookingTimesAndAddsAMessage(): void
+    public function testAdaptBookingStartAndEndTimeRewritesTimesAndTitle(): void
     {
         $captured = null;
+        $oldStart = strtotime('2030-03-15 07:30');
+        $oldEnd = strtotime('2030-03-15 08:15');
 
         $connection = $this->createMock(Connection::class);
         $connection
@@ -231,9 +235,10 @@ class ResourceBookingTimeSlotTest extends ContaoTestCase
         $connection
             ->method('fetchAllAssociative')
             ->willReturn([
-                ['id' => 99, 'startTime' => 111, 'endTime' => 222],
+                ['id' => 99, 'startTime' => $oldStart, 'endTime' => $oldEnd, 'title' => 'Room : booked by John Doe [15.03.2030 07:30 - 15.03.2030 08:15]'],
             ])
         ;
+
         $connection
             ->expects($this->once())
             ->method('update')
@@ -246,43 +251,85 @@ class ResourceBookingTimeSlotTest extends ContaoTestCase
             )
         ;
 
-        // Date::parse only supplies the date part (before the space); pin it deterministically.
-        $dateAdapter = $this->createAdapterMock(['parse']);
+        $dateAdapter = $this->createAdapterStub(['parse']);
         $dateAdapter
             ->method('parse')
-            ->willReturn('2024-03-15 00:00')
+            ->willReturnCallback(static fn (string $format, int $tstamp): string => date('' === $format ? 'd.m.Y H:i' : $format, $tstamp))
         ;
+
+        $configAdapter = $this->createConfiguredAdapterStub(['get' => 'd.m.Y H:i']);
 
         $messageAdapter = $this->createAdapterMock(['addInfo']);
         $messageAdapter
             ->expects($this->once())
             ->method('addInfo')
-            ->with($this->stringContains('99'))
+            ->with('RBB.BE.bookingsAdapted:1')
         ;
 
         $dca = new ResourceBookingTimeSlot(
-            $this->framework([Date::class => $dateAdapter, Message::class => $messageAdapter]),
+            $this->framework([Date::class => $dateAdapter, Config::class => $configAdapter, Message::class => $messageAdapter]),
             $connection,
             new RequestStack(),
+            $this->translator(),
         );
 
-        $dca->adaptBookingStartAndEndTime($this->createClassWithPropertiesMock(DataContainer::class, ['id' => 7]));
+        $dca->adaptBookingStartAndEndTime($this->createClassWithPropertiesStub(DataContainer::class, ['id' => 7]));
 
         $this->assertSame('tl_resource_booking', $captured['table']);
         $this->assertSame(['id' => 99], $captured['criteria']);
-        $this->assertSame(
-            [
-                // date part from Date::parse + new slot start/end times (08:00 / 10:00).
-                'startTime' => strtotime('2024-03-15 08:00'),
-                'endTime' => strtotime('2024-03-15 10:00'),
-            ],
-            $captured['set'],
-        );
+        // Date of the booking + new slot start/end times (08:00 / 10:00)
+        $this->assertSame(strtotime('2030-03-15 08:00'), $captured['set']['startTime']);
+        $this->assertSame(strtotime('2030-03-15 10:00'), $captured['set']['endTime']);
+        $this->assertSame('Room : booked by John Doe [15.03.2030 08:00 - 15.03.2030 10:00]', $captured['set']['title']);
+    }
+
+    public function testAdaptBookingStartAndEndTimeSkipsUnchangedBookings(): void
+    {
+        $connection = $this->createMock(Connection::class);
+        $connection
+            ->method('fetchAssociative')
+            ->willReturn(['id' => 7, 'startTime' => 28800, 'endTime' => 36000])
+        ;
+
+        $connection
+            ->method('fetchAllAssociative')
+            ->willReturn([
+                ['id' => 99, 'startTime' => strtotime('2030-03-15 08:00'), 'endTime' => strtotime('2030-03-15 10:00'), 'title' => ''],
+            ])
+        ;
+
+        $connection
+            ->expects($this->never())
+            ->method('update')
+        ;
+
+        $dateAdapter = $this->createAdapterStub(['parse']);
+        $dateAdapter
+            ->method('parse')
+            ->willReturnCallback(static fn (string $format, int $tstamp): string => date('' === $format ? 'd.m.Y H:i' : $format, $tstamp))
+        ;
+
+        $dca = new ResourceBookingTimeSlot($this->framework([Date::class => $dateAdapter]), $connection, new RequestStack(), $this->translator());
+        $dca->adaptBookingStartAndEndTime($this->createClassWithPropertiesStub(DataContainer::class, ['id' => 7]));
     }
 
     private function createInstance(RequestStack $requestStack): ResourceBookingTimeSlot
     {
-        return new ResourceBookingTimeSlot($this->framework(), $this->createMock(Connection::class), $requestStack);
+        return new ResourceBookingTimeSlot($this->framework(), $this->createStub(Connection::class), $requestStack, $this->translator());
+    }
+
+    /**
+     * Returns "key:param1,param2" so the messages can be asserted.
+     */
+    private function translator(): TranslatorInterface
+    {
+        $translator = $this->createStub(TranslatorInterface::class);
+        $translator
+            ->method('trans')
+            ->willReturnCallback(static fn (string $id, array $parameters = []): string => $id.($parameters ? ':'.implode(',', $parameters) : ''))
+        ;
+
+        return $translator;
     }
 
     /**

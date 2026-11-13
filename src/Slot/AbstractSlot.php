@@ -22,6 +22,7 @@ use Contao\MemberModel;
 use Contao\Model\Collection;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
+use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotModel;
 use Markocupic\ResourceBookingBundle\Util\DateHelper;
 use Markocupic\ResourceBookingBundle\Util\ResourceBookingRestriction;
 use Markocupic\ResourceBookingBundle\Util\UtcTimeHelper;
@@ -57,6 +58,8 @@ use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInt
  * @property bool                              $isFullyBooked
  * @property bool                              $isWithinAllowedDateRange
  * @property bool                              $isOnAllowedWeekday
+ * @property bool                              $isTimeSlotAvailable
+ * @property string|null                       $timeSlotWeekdays
  * @property string                            $cssClass
  * @property Collection|null                   $bookings
  * @property int                               $bookingCount
@@ -110,9 +113,12 @@ abstract class AbstractSlot implements SlotInterface
         $endTimeString = UtcTimeHelper::parseEndTime($endTime);
         $dateString = $dateAdapter->parse($configAdapter->get('dateFormat'), $startTime);
         $firstDayOfWeek = $dateHelperAdapter->getFirstDayOfCurrentWeek($appConfig, $startTime);
+        $timeSlot = $this->framework->getAdapter(ResourceBookingTimeSlotModel::class)->findById($timeSlotId);
 
         $this->arrData = [
             'timeSlotId' => $timeSlotId,
+            // Weekdays on which the time slot is available (tl_resource_booking_time_slot.weekdays)
+            'timeSlotWeekdays' => $timeSlot?->weekdays,
             'userIsLoggedIn' => (bool) $this->user,
             'resource' => $resource->row(),
             'pid' => $resource->id,
@@ -136,6 +142,7 @@ abstract class AbstractSlot implements SlotInterface
         // Order matters below — each call depends on the previous assignments
         $this->arrData['isWithinAllowedDateRange'] = $this->isWithinAllowedDateRange();
         $this->arrData['isOnAllowedWeekday'] = $this->isOnAllowedWeekday();
+        $this->arrData['isTimeSlotAvailable'] = $this->isTimeSlotAvailable();
         $this->arrData['bookings'] = $this->getBookings();
         $this->arrData['isBlocked'] = $this->isBlocked;
         $this->arrData['isBookable'] = $this->isBookable();
@@ -205,6 +212,15 @@ abstract class AbstractSlot implements SlotInterface
     public function isOnAllowedWeekday(): bool
     {
         return ResourceBookingRestriction::isWeekdayAllowed($this->arrData['resource'], $this->arrData['weekday']);
+    }
+
+    /**
+     * Returns false if the time slot is not available on the weekday of this slot
+     * (tl_resource_booking_time_slot.weekdays).
+     */
+    public function isTimeSlotAvailable(): bool
+    {
+        return ResourceBookingRestriction::isTimeSlotAvailableOnWeekday(['weekdays' => $this->arrData['timeSlotWeekdays'] ?? null], $this->arrData['weekday']);
     }
 
     public function canFulfillRequestedItems(): bool

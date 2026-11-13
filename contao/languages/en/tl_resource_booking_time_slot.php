@@ -26,4 +26,5 @@ $GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['title'] = ['Title', 'Enter
 $GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['description'] = ['Description', 'An optional description of the time slot.'];
 $GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['startTime'] = ['Start time', 'Enter the start time in the format hh:mm, e.g. 07:30.'];
 $GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['endTime'] = ['End time', 'Enter the end time in the format hh:mm, e.g. 08:15. The end time must be after the start time.'];
+$GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['weekdays'] = ['Weekdays', 'Select the weekdays on which the time slot is available. On the other days it is shown as "not available" in the week calendar.'];
 $GLOBALS['TL_LANG']['tl_resource_booking_time_slot']['cssID'] = ['CSS-ID/Class', 'Define an element ID ore one or more CSS classes.'];

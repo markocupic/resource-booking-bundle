@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\Command;
 
 use Doctrine\DBAL\Connection;
+use Markocupic\ResourceBookingBundle\Config\RbbConfig;
 use Markocupic\ResourceBookingBundle\Util\UtcTimeHelper;
 use Markocupic\ResourceBookingBundle\Validator\Constraints\RbbEndTime;
 use Markocupic\ResourceBookingBundle\Validator\Constraints\RbbStartTime;
@@ -127,6 +128,8 @@ class CreateTimeslotTypeCommand extends Command
                         'startTime' => $slot['startTimestamp'],
                         'endTime' => $slot['endTimestamp'],
                         'sorting' => $i * 100,
+                        // Available on every weekday
+                        'weekdays' => serialize(RbbConfig::RBB_WEEKDAYS),
                     ];
 
                     // Persist the new time slot

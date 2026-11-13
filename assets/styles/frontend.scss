@@ -652,6 +652,14 @@ $rbb-breakpoint-xl: 1200px;
         box-shadow: none;
         outline: 0;
       }
+
+      // The time slot is not available on this weekday (tl_resource_booking_time_slot.weekdays)
+      &.rbb-time-slot-cell[data-istimeslotavailable="false"] {
+        background: var(--rbb-cell-blocked-bg);
+        color: var(--rbb-cell-blocked-color);
+        box-shadow: none;
+        outline: 0;
+      }
     }
 
     .rbb-booked-item {
@@ -742,6 +750,13 @@ $rbb-breakpoint-xl: 1200px;
         color: var(--rbb-cell-bookable-color);
         background-color: var(--rbb-card-bg);
         border-radius: 999px;
+      }
+
+      // "nicht verfügbar" label of a slot that is not available on this weekday
+      .rbb-cell-not-available-label {
+        font-size: .8125rem;
+        font-weight: 600;
+        color: var(--rbb-cell-blocked-color);
       }
 
       // "Frei" label of a free slot

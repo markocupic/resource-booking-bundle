@@ -64,6 +64,7 @@ $GLOBALS['TL_LANG']['RBB']['resourceType'] = 'Resource type';
 $GLOBALS['TL_LANG']['RBB']['showOccupiedResources'] = 'Show already booked resources';
 $GLOBALS['TL_LANG']['RBB']['stillAvailable'] = 'still available';
 $GLOBALS['TL_LANG']['RBB']['free'] = 'Available';
+$GLOBALS['TL_LANG']['RBB']['notAvailable'] = 'not available';
 $GLOBALS['TL_LANG']['RBB']['time'] = 'Time';
 $GLOBALS['TL_LANG']['RBB']['timeSpan'] = 'Time span';
 $GLOBALS['TL_LANG']['RBB']['week'] = 'Week';
@@ -76,6 +77,7 @@ $GLOBALS['TL_LANG']['RBB']['ERR']['general'] = 'An error has occured. Please che
 $GLOBALS['TL_LANG']['RBB']['ERR']['generalBookingError'] = 'An unexpected error occurred while trying to book the resource. Please try again or contact the administrator.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['invalidStartOrEndTime'] = 'You\'ve selected a slot with a invalid start- or end time.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['weekdayNotBookable'] = 'The resource cannot be booked on one or more of the selected weekdays.';
+$GLOBALS['TL_LANG']['RBB']['ERR']['timeSlotNotAvailableOnWeekday'] = 'The selected time slot is not available on one or more of the selected weekdays.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['outsideBookingPeriod'] = 'One or more of the selected slots lie outside the booking period of this resource.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['notAuthorized'] = 'You are not authorized for this action.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['notEnoughItemsAvailable'] = 'There aren\'t enough items available in one ore more slots you\'ve requested.';
@@ -101,3 +103,9 @@ $GLOBALS['TL_LANG']['RBB']['MSG']['successfullyBookedXItems'] = 'Successfully bo
 $GLOBALS['TL_LANG']['RBB']['MSG']['successfullyCanceledBooking'] = 'Booking with ID %s has been successfully canceled.';
 $GLOBALS['TL_LANG']['RBB']['MSG']['successfullyCanceledBookingAndItsRepetitions'] = 'Successfully canceled booking with ID %s and %s of its repetitions.';
 $GLOBALS['TL_LANG']['RBB']['MSG']['windowClosesAutomatically'] = 'This window will close automatically.';
+
+// Backend messages
+$GLOBALS['TL_LANG']['RBB']['BE']['deleteTimeSlotBlocked'] = 'The time slot cannot be deleted because %s future booking(s) still exist. Cancel these bookings first or unpublish the time slot.';
+$GLOBALS['TL_LANG']['RBB']['BE']['deleteTimeSlotTypeBlocked'] = 'The booking timetable cannot be deleted because %s future booking(s) still exist on its time slots. Cancel these bookings first or unpublish the timetable or individual time slots.';
+$GLOBALS['TL_LANG']['RBB']['BE']['bookingsAdapted'] = '%s future booking(s) have been adapted to the new times of the time slot. Past bookings remain unchanged.';
+$GLOBALS['TL_LANG']['RBB']['BE']['futureBookingsNotMatchingTimetable'] = 'Attention: %s future booking(s) of this resource do not fit the booking timetable (times or weekdays). They are not displayed in the week calendar and cannot be cancelled by the members.';
