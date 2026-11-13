@@ -6,7 +6,7 @@
             <div class="rbb-layout-box-inner">
                 <div class="rbb-layout-row">
                     <div class="rbb-layout-cell rbb-cell-headline rbb-time-slot-indicator"><strong>{{ ('RBB.time')|trans }}</strong></div>
-                    <div class="rbb-layout-cell rbb-cell-headline" v-for="(weekday, index) in weekdays" :data-day-index="weekday.index"><strong>[[ weekday.title ]]</strong><br>[[ weekday.date ]]</div>
+                    <div class="rbb-layout-cell rbb-cell-headline" v-for="(weekday, index) in weekdays" :data-day-index="weekday.index"><strong class="rbb-weekday-title">[[ weekday.title ]]</strong><span class="rbb-weekday-date">[[ weekday.date ]]</span></div>
                 </div>
 
                 <div v-for="(row, rowIndex) in rows" :data-row-index="rowIndex" :id="row.rowData.cssRowId" class="rbb-layout-row" :class="row.rowData.cssRowClass">

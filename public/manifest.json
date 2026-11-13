@@ -1,5 +1,5 @@
 {
-  "css/frontend.css": "/bundles/markocupicresourcebooking/css/frontend.728b6f38.css",
+  "css/frontend.css": "/bundles/markocupicresourcebooking/css/frontend.a7b0d346.css",
   "vue/vue.global.prod.js": "/bundles/markocupicresourcebooking/vue/vue.global.prod.872012b0.js",
   "audio/booking-alert.mp3": "/bundles/markocupicresourcebooking/audio/booking-alert.a7c4507e.mp3",
   "js/app.js": "/bundles/markocupicresourcebooking/js/app.9a2b687f.js",
@@ -12,6 +12,7 @@
   "icons/frontend/fa-exclamation-circle.svg": "/bundles/markocupicresourcebooking/icons/frontend/fa-exclamation-circle.svg",
   "icons/frontend/fa-chevron-right.svg": "/bundles/markocupicresourcebooking/icons/frontend/fa-chevron-right.svg",
   "icons/frontend/fa-chevron-left.svg": "/bundles/markocupicresourcebooking/icons/frontend/fa-chevron-left.svg",
+  "icons/frontend/fa-plus.svg": "/bundles/markocupicresourcebooking/icons/frontend/fa-plus.svg",
   "css/backend.css": "/bundles/markocupicresourcebooking/css/backend.dfb70caf.css",
-  "frontend.728b6f38.css.map": "/bundles/markocupicresourcebooking/css/frontend.728b6f38.css.map"
+  "frontend.a7b0d346.css.map": "/bundles/markocupicresourcebooking/css/frontend.a7b0d346.css.map"
 }
