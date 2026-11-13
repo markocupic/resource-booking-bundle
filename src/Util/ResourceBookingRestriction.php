@@ -25,7 +25,8 @@ use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotModel;
  * tl_resource_booking_resource.restrictWeekdays/allowedWeekdays and
  * tl_resource_booking_resource.addBookableUntil/bookableUntil and
  * tl_resource_booking_resource.autoConfirm) and the weekdays of a time slot
- * (tl_resource_booking_time_slot.weekdays).
+ * (tl_resource_booking_time_slot.weekdays) and the blocked periods
+ * (tl_resource_booking_blocked_period).
  *
  * All methods accept either the resource model or its row array, because the
  * slot classes only keep the row.
@@ -74,6 +75,68 @@ class ResourceBookingRestriction
         }
 
         return \in_array(strtolower($weekday), $weekdays, true);
+    }
+
+    /**
+     * Returns true if the blocked period (row of tl_resource_booking_blocked_period)
+     * applies to the resource and covers the slot from $startTime to $endTime.
+     *
+     * The slot is covered if its day lies between dateFrom and dateTo (inclusive)
+     * and, if the period is limited to a time range, if the slot overlaps that
+     * time range. The time range applies to every day of the period.
+     *
+     * @param array<string, mixed> $period
+     * @param array<string, mixed> $resource
+     */
+    public static function isInBlockedPeriod(array $period, array $resource, int $startTime, int $endTime): bool
+    {
+        if (empty($period['published'])) {
+            return false;
+        }
+
+        if (!self::blockedPeriodAppliesToResource($period, $resource)) {
+            return false;
+        }
+
+        $dayStart = strtotime(date('Y-m-d', $startTime));
+        $dateFrom = strtotime(date('Y-m-d', (int) ($period['dateFrom'] ?? 0)));
+        $dateTo = strtotime(date('Y-m-d', (int) ($period['dateTo'] ?? 0)));
+
+        if ($dayStart < $dateFrom || $dayStart > $dateTo) {
+            return false;
+        }
+
+        if (empty($period['addTimeRange'])) {
+            return true;
+        }
+
+        $timeFrom = self::timeToSeconds($period['timeFrom'] ?? null);
+        $timeTo = self::timeToSeconds($period['timeTo'] ?? null);
+
+        // An incomplete time range blocks the whole day.
+        if (null === $timeFrom || null === $timeTo) {
+            return true;
+        }
+
+        return $startTime - $dayStart < $timeTo && $endTime - $dayStart > $timeFrom;
+    }
+
+    /**
+     * Returns true if the blocked period applies to the resource
+     * (scope "all", the resource type or the resource itself has been selected).
+     *
+     * @param array<string, mixed> $period
+     * @param array<string, mixed> $resource
+     */
+    public static function blockedPeriodAppliesToResource(array $period, array $resource): bool
+    {
+        $scope = (string) ($period['scope'] ?? 'all');
+
+        return match ($scope) {
+            'resourceTypes' => \in_array((int) ($resource['pid'] ?? 0), array_map('intval', StringUtil::deserialize($period['resourceTypes'] ?? null, true)), true),
+            'resources' => \in_array((int) ($resource['id'] ?? 0), array_map('intval', StringUtil::deserialize($period['resources'] ?? null, true)), true),
+            default => true,
+        };
     }
 
     /**
@@ -139,6 +202,30 @@ class ResourceBookingRestriction
         }
 
         return (bool) $row['autoConfirm'];
+    }
+
+    /**
+     * Converts a time into seconds since midnight. The time is either a string
+     * "hh:mm" (00:00 - 24:00) or a Contao time value (timestamp of 1970-01-01
+     * in the local time zone, as stored by fields with rgxp "time").
+     */
+    public static function timeToSeconds(mixed $time): int|null
+    {
+        if (null === $time || '' === $time) {
+            return null;
+        }
+
+        if (\is_int($time) || (\is_string($time) && preg_match('/^-?\d+$/', $time))) {
+            $time = date('H:i', (int) $time);
+        }
+
+        if (!\is_string($time) || !preg_match('/^(\d{1,2}):(\d{2})$/', trim($time), $matches)) {
+            return null;
+        }
+
+        $seconds = (int) $matches[1] * 3600 + (int) $matches[2] * 60;
+
+        return $seconds <= 86400 ? $seconds : null;
     }
 
     /**

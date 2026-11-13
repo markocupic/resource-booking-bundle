@@ -13,6 +13,7 @@ declare(strict_types=1);
  */
 
 use Markocupic\ResourceBookingBundle\Config\RbbConfig;
+use Markocupic\ResourceBookingBundle\Model\ResourceBookingBlockedPeriodModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceTypeModel;
@@ -27,10 +28,14 @@ $GLOBALS['BE_MOD']['resourceBookingTool'] = [
     'timeSlotType' => [
         'tables' => ['tl_resource_booking_time_slot_type', 'tl_resource_booking_time_slot'],
     ],
+    'blockedPeriod' => [
+        'tables' => ['tl_resource_booking_blocked_period'],
+    ],
 ];
 
 // Register contao models
 $GLOBALS['TL_MODELS']['tl_resource_booking'] = ResourceBookingModel::class;
+$GLOBALS['TL_MODELS']['tl_resource_booking_blocked_period'] = ResourceBookingBlockedPeriodModel::class;
 $GLOBALS['TL_MODELS']['tl_resource_booking_resource'] = ResourceBookingResourceModel::class;
 $GLOBALS['TL_MODELS']['tl_resource_booking_resource_type'] = ResourceBookingResourceTypeModel::class;
 $GLOBALS['TL_MODELS']['tl_resource_booking_time_slot'] = ResourceBookingTimeSlotModel::class;

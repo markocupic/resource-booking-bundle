@@ -101,6 +101,8 @@ final class BookingFormValidationController extends AbstractController implement
 
             if (!$slot->isBookable) {
                 $key = match (true) {
+                    false === $slot->isTimeSlotAvailable => 'RBB.ERR.timeSlotNotAvailableOnWeekday',
+                    true === $slot->isInBlockedPeriod => 'RBB.ERR.slotInBlockedPeriod',
                     $slot->isFullyBooked => 'RBB.ERR.resourceIsAlreadyFullyBooked',
                     $slot->isBlocked => 'RBB.ERR.slotIsBlocked',
                     default => 'RBB.ERR.notEnoughItemsAvailable',

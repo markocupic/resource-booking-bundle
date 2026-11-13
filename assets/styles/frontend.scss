@@ -654,6 +654,8 @@ $rbb-breakpoint-xl: 1200px;
       }
 
       // The time slot is not available on this weekday (tl_resource_booking_time_slot.weekdays)
+      // or lies in a blocked period, e.g. holidays (tl_resource_booking_blocked_period)
+      &.rbb-time-slot-cell[data-isinblockedperiod="true"],
       &.rbb-time-slot-cell[data-istimeslotavailable="false"] {
         background: var(--rbb-cell-blocked-bg);
         color: var(--rbb-cell-blocked-color);
@@ -753,7 +755,8 @@ $rbb-breakpoint-xl: 1200px;
       }
 
       // "nicht verfügbar" label of a slot that is not available on this weekday
-      .rbb-cell-not-available-label {
+      .rbb-cell-not-available-label,
+      .rbb-cell-blocked-period-label {
         font-size: .8125rem;
         font-weight: 600;
         color: var(--rbb-cell-blocked-color);

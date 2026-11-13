@@ -112,6 +112,17 @@ class SlotMainTest extends TestCase
         $this->assertTrue($slot->isTimeSlotAvailable());
     }
 
+    public function testSlotInABlockedPeriodIsNotBookable(): void
+    {
+        $slot = $this->slotWith(1, []);
+        $this->assertFalse($slot->isInBlockedPeriod());
+        $this->assertTrue($slot->isBookable());
+
+        $slot = $this->slotWith(1, [], blockedPeriod: ['id' => 1, 'title' => 'Herbstferien']);
+        $this->assertTrue($slot->isInBlockedPeriod());
+        $this->assertFalse($slot->isBookable());
+    }
+
     public function testIsWithinAllowedDateRangeRespectsBookableUntil(): void
     {
         $bookableUntil = strtotime('today +10 days');
@@ -173,7 +184,7 @@ class SlotMainTest extends TestCase
     /**
      * @param array<int, array<string, mixed>> $bookings
      */
-    private function slotWith(int $itemsAvailable, array $bookings, int $requestedItems = 1, array|null $resource = null, string $weekday = 'monday', int|null $startTime = null, int|null $endTime = null, int|null $firstDayOfWeek = null, int|null $lastPermittedWeek = null, string|null $timeSlotWeekdays = null): SlotMain
+    private function slotWith(int $itemsAvailable, array $bookings, int $requestedItems = 1, array|null $resource = null, string $weekday = 'monday', int|null $startTime = null, int|null $endTime = null, int|null $firstDayOfWeek = null, int|null $lastPermittedWeek = null, string|null $timeSlotWeekdays = null, array|null $blockedPeriod = null): SlotMain
     {
         $startTime ??= strtotime('tomorrow 08:00');
         $endTime ??= $startTime + 3600;
@@ -196,6 +207,7 @@ class SlotMainTest extends TestCase
             'beginWeekTimestampSelectedWeek' => $firstDayOfWeek,
             'lastPermittedWeekTstamp' => $lastPermittedWeek,
             'timeSlotWeekdays' => $timeSlotWeekdays,
+            'blockedPeriod' => $blockedPeriod,
         ]);
 
         return $slot;

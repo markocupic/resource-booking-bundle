@@ -20,6 +20,7 @@ use Contao\Date;
 use Contao\FrontendUser;
 use Contao\MemberModel;
 use Contao\Model\Collection;
+use Markocupic\ResourceBookingBundle\Model\ResourceBookingBlockedPeriodModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotModel;
@@ -60,6 +61,9 @@ use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInt
  * @property bool                              $isOnAllowedWeekday
  * @property bool                              $isTimeSlotAvailable
  * @property string|null                       $timeSlotWeekdays
+ * @property array|null                        $blockedPeriod
+ * @property bool                              $isInBlockedPeriod
+ * @property string                            $blockedPeriodTitle
  * @property string                            $cssClass
  * @property Collection|null                   $bookings
  * @property int                               $bookingCount
@@ -114,11 +118,16 @@ abstract class AbstractSlot implements SlotInterface
         $dateString = $dateAdapter->parse($configAdapter->get('dateFormat'), $startTime);
         $firstDayOfWeek = $dateHelperAdapter->getFirstDayOfCurrentWeek($appConfig, $startTime);
         $timeSlot = $this->framework->getAdapter(ResourceBookingTimeSlotModel::class)->findById($timeSlotId);
+        $blockedPeriod = $this->findBlockedPeriod($resource->row(), $startTime, $endTime);
 
         $this->arrData = [
             'timeSlotId' => $timeSlotId,
             // Weekdays on which the time slot is available (tl_resource_booking_time_slot.weekdays)
             'timeSlotWeekdays' => $timeSlot?->weekdays,
+            // Blocked period covering this slot, e.g. holidays (tl_resource_booking_blocked_period)
+            'blockedPeriod' => null === $blockedPeriod ? null : ['id' => (int) $blockedPeriod['id'], 'title' => (string) $blockedPeriod['title']],
+            'isInBlockedPeriod' => null !== $blockedPeriod,
+            'blockedPeriodTitle' => null === $blockedPeriod ? '' : (string) $blockedPeriod['title'],
             'userIsLoggedIn' => (bool) $this->user,
             'resource' => $resource->row(),
             'pid' => $resource->id,
@@ -221,6 +230,14 @@ abstract class AbstractSlot implements SlotInterface
     public function isTimeSlotAvailable(): bool
     {
         return ResourceBookingRestriction::isTimeSlotAvailableOnWeekday(['weekdays' => $this->arrData['timeSlotWeekdays'] ?? null], $this->arrData['weekday']);
+    }
+
+    /**
+     * Returns true if a blocked period (e.g. holidays) covers this slot.
+     */
+    public function isInBlockedPeriod(): bool
+    {
+        return !empty($this->arrData['blockedPeriod']);
     }
 
     public function canFulfillRequestedItems(): bool
@@ -362,6 +379,29 @@ abstract class AbstractSlot implements SlotInterface
                     ->getAdapter(ResourceBookingModel::class)
                     ->findById($booking['id'])?->row()
                 ;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Returns the first published blocked period that covers the slot, or null.
+     *
+     * @param array<string, mixed> $resource
+     *
+     * @return array<string, mixed>|null
+     */
+    private function findBlockedPeriod(array $resource, int $startTime, int $endTime): array|null
+    {
+        $periods = $this->framework
+            ->getAdapter(ResourceBookingBlockedPeriodModel::class)
+            ->findPublishedRows()
+        ;
+
+        foreach ($periods as $period) {
+            if (ResourceBookingRestriction::isInBlockedPeriod($period, $resource, $startTime, $endTime)) {
+                return $period;
             }
         }
 

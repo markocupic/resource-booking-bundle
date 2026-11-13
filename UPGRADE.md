@@ -23,6 +23,42 @@ Standardwerte für neue Ressourcen: 10 Wochen zurück, 52 Wochen voraus, Buchung
 Aus den Frontend-Moduleinstellungen wurden die Felder "Buchungen nur für ausgewählte Wochentage zulassen" und
 "Buchungsstop-Datum" entfernt. Die Auswahl der App-Konfiguration (`resourceBooking_appConfig`) bleibt im Modul.
 
+### Wochentage pro Zeitfenster
+
+Zeitfenster (`tl_resource_booking_time_slot`) haben das neue Feld `weekdays` "Wochentage". Damit lässt sich pro
+Zeitfenster festlegen, an welchen Wochentagen es verfügbar ist, z. B. eine Lektion, die es am Mittwochnachmittag nicht
+gibt. Die Migration `AddTimeSlotWeekdays` legt die Spalte an und setzt alle bestehenden Zeitfenster auf "alle
+Wochentage", sodass sich am Wochenkalender nichts ändert.
+
+Ein Feld des Wochenkalenders ist nur buchbar, wenn sowohl das Zeitfenster als auch die Ressource
+(`allowedWeekdays`) den Wochentag zulassen. Im Wochenkalender gilt:
+
+* Eine Spalte wird ausgeblendet, wenn an diesem Wochentag kein Zeitfenster verfügbar ist.
+* Eine Zeile wird ausgeblendet, wenn das Zeitfenster an keinem der angezeigten Wochentage verfügbar ist.
+* Eine einzelne Zelle, deren Zeitfenster an diesem Tag nicht verfügbar ist, wird grau schraffiert mit "nicht verfügbar"
+  angezeigt (`data-istimeslotavailable="false"`, Klasse `rbb-cell-not-available-label`, Übersetzung `RBB.notAvailable`).
+
+Buchungsanfragen für ein Zeitfenster an einem nicht verfügbaren Wochentag werden mit `RBB.ERR.timeSlotNotAvailableOnWeekday`
+abgelehnt. Die Slot-Daten im Frontend enthalten die neuen Schlüssel `isTimeSlotAvailable` und `timeSlotWeekdays`.
+
+### Sperrzeiten (z. B. Ferien)
+
+Neu gibt es im Backend unter "Ressourcen-Buchung" das Modul "Sperrzeiten" (Tabelle
+`tl_resource_booking_blocked_period`). Eine Sperrzeit hat einen Titel (z. B. "Herbstferien"), einen Zeitraum
+(Datum von–bis, inklusive), optional eine Uhrzeit (gilt für jeden Tag im Zeitraum) und einen Geltungsbereich
+(alle Ressourcen, ausgewählte Ressourcen-Typen oder ausgewählte Ressourcen).
+
+* Im Wochenkalender werden die betroffenen Zellen grau schraffiert und mit dem Titel der Sperrzeit angezeigt
+  (`data-isinblockedperiod="true"`, Klasse `rbb-cell-blocked-period-label`). Die Slot-Daten enthalten die neuen
+  Schlüssel `isInBlockedPeriod`, `blockedPeriod` und `blockedPeriodTitle`.
+* Buchungen in einer Sperrzeit werden serverseitig mit `RBB.ERR.slotInBlockedPeriod` abgelehnt.
+* Bestehende Buchungen in einer neuen Sperrzeit werden nicht gelöscht. Beim Speichern der Sperrzeit zeigt das
+  Backend die Anzahl betroffener zukünftiger Buchungen an (`RBB.BE.bookingsInBlockedPeriod`).
+* Die bisherigen gesperrten Buchungen (`tl_resource_booking.isBlocked`) funktionieren weiterhin, z. B. um einzelne
+  Zeitfenster zu sperren.
+
+Die Tabelle wird beim Datenbank-Update angelegt.
+
 ### Umbenannte Modulfelder
 
 | Bisher (`tl_module`)                        | Neu (`tl_module`)                       |
@@ -168,6 +204,21 @@ Das Aussehen lässt sich über CSS-Variablen anpassen (z. B. `--rbb-primary`, `-
   die App-Konfiguration `default` verwendet (oder die erste vorhandene).
 * `DateHelper::getFirstDayOfWeek()` gab für ein Datum, das selbst auf den Wochenbeginn fällt, den Wochenbeginn der
   Vorwoche zurück. Dieser Fehler ist behoben.
+* Zeitfenster und Buchungszeitpläne mit zukünftigen Buchungen lassen sich nicht mehr löschen. Contao zeigt eine
+  Fehlermeldung mit der Anzahl betroffener Buchungen (`RBB.BE.deleteTimeSlotBlocked` bzw.
+  `RBB.BE.deleteTimeSlotTypeBlocked`). Stattdessen kann das Zeitfenster bzw. der Zeitplan deaktiviert werden.
+  Beim Löschen werden vergangene Buchungen nicht mehr mitgelöscht (bisher wurden alle Buchungen des Zeitfensters
+  ohne Rückfrage gelöscht).
+* Werden Start- oder Endzeit eines Zeitfensters geändert, werden nur noch Buchungen angepasst, die noch nicht
+  begonnen haben. Der Titel der Buchung (`[Start - Ende]`) wird mit aktualisiert. Vergangene Buchungen bleiben
+  unverändert.
+* Beim Speichern einer Ressource erscheint ein Hinweis, wenn zukünftige Buchungen nicht mehr zum Buchungszeitplan
+  oder zu den buchbaren Wochentagen passen (`RBB.BE.futureBookingsNotMatchingTimetable`). Solche Buchungen werden
+  im Wochenkalender nicht angezeigt.
+* `ResourceBookingTimeSlot::removeChildRecords()` und `ResourceBookingTimeSlotType::removeChildRecords()` heissen
+  neu `preventDeletionWithFutureBookings()`. Die DataContainer-Klassen `ResourceBookingTimeSlot`,
+  `ResourceBookingTimeSlotType` und `ResourceBookingResource` erhalten zusätzlich den Translator (und das Framework)
+  per Konstruktor.
 
 ### API-Änderungen
 

@@ -20,6 +20,7 @@ use Markocupic\ResourceBookingBundle\Controller\FrontendModule\ResourceBookingWe
 $GLOBALS['TL_LANG']['MOD']['resourceBookingTool'] = 'Resource booking tool';
 $GLOBALS['TL_LANG']['MOD']['resource'] = ['Resources', 'Manage resources'];
 $GLOBALS['TL_LANG']['MOD']['timeSlotType'] = ['Timetables', 'Manage timetables'];
+$GLOBALS['TL_LANG']['MOD']['blockedPeriod'] = ['Blocked periods', 'Manage blocked periods like holidays'];
 
 /**
  * Frontend modules

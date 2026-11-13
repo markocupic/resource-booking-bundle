@@ -31,10 +31,13 @@ Nach der Installation mit dem Contao Manager müssen:
 
 * Mindestens 1 Reservations-Zeitfenster-Typ erstellt werden.
 * Danach darin die Reservations-Zeitfenster im Zeitformat H:i (08:00 bis 08:45) erstellt werden.
+  Pro Zeitfenster lässt sich festlegen, an welchen Wochentagen es verfügbar ist (Standard: alle Tage).
 * Ressourcen-Typen erstellt werden.
 * In jedem Ressourcen-Typ mindestens eine Ressource (z.B. Zimmer) erstellt werden.
   In den Ressourcen-Einstellungen wird festgelegt, wie viele Wochen zurück- bzw. vorausgeblättert (und gebucht) werden kann,
   an welchen Wochentagen und bis zu welchem Datum die Ressource gebucht werden kann und ob Buchungen automatisch bestätigt werden.
+* Optional Sperrzeiten (z. B. Ferien) unter "Sperrzeiten" erfasst werden. In einer Sperrzeit kann nicht gebucht werden;
+  sie gilt für alle Ressourcen, ausgewählte Ressourcen-Typen oder einzelne Ressourcen und kann auf bestimmte Uhrzeiten beschränkt werden.
 * Mindestens 1 Mitglied (Frontend-Benutzer) angelegt werden. (Das Buchungsmodul wird nur bei eingeloggtem Benutzer angezeigt.)
 
 ![App Konfiguration anpassen](docs/screenshots/adjust-app-configuration.png "Frontendmodul-Einstellungen")
