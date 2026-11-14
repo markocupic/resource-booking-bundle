@@ -41,20 +41,13 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = [
             'fields'      => ['title'],
             'showColumns' => true,
         ],
-        'global_operations' => [
-            'all' => [
-                'label'      => &$GLOBALS['TL_LANG']['MSC']['all'],
-                'href'       => 'act=select',
-                'class'      => 'header_edit_all',
-                'attributes' => 'onclick="Backend.getScrollOffset()" accesskey="e"',
-            ],
-        ],
         'operations'        => [
             'edit',
             'bookings' => [
                 'href' => 'table=tl_resource_booking',
                 'icon' => RbbConfig::RBB_ASSET_PATH . '/icons/calendar.svg',
             ],
+            'copy',
             'delete',
             'toggle',
             'show',

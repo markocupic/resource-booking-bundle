@@ -11,7 +11,8 @@ Projektsprache: Deutsch (Schweizer Rechtschreibung, «ss» statt «ß»). Code, 
 - Contao-Bundle `markocupic/resource-booking-bundle`: Online-Reservation von Ressourcen (Zimmer, Geräte, Fahrzeuge)
   in Zeitfenstern, Frontend als Wochenkalender (Vue 3), Buchen nur für eingeloggte Mitglieder.
 - Unterstützt: **Contao 5.7 und 6**, PHP ≥ 8.3, Symfony 7.4/8. Ältere Versionen nicht mehr berücksichtigen.
-- Entwickelt in `C:\phpstorm\schuleettiswil\vendor\markocupic\resource-booking-bundle` (Projekt Schule Ettiswil).
+- Entwickelt in `C:\phpstorm\contao5\vendor\markocupic\resource-booking-bundle` (Testinstallation contao5;
+  das Plugin `hochfelden/resource-booking-custom` liegt in `C:\phpstorm\contao5\vendor\hochfelden`).
 - Zusatz-Bundle `markocupic/resource-booking-notification-bundle` (Notification Center, kostenpflichtig) bleibt auf
   Contao ^5.7, weil terminal42/notification_center Contao 6 noch nicht unterstützt.
 - Doku: `README.md` (Anwender, kurz und gestylt), `docs/EVENTS.md` (Events für Entwickler), `UPGRADE.md` (alle

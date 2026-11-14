@@ -23,6 +23,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = [
         'enableVersioning' => true,
         'notCreatable'     => true,
         'notCopyable'      => true,
+        'doNotCopyRecords' => true,
         'sql'              => [
             'keys' => [
                 'id'                           => 'primary',
@@ -40,14 +41,6 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = [
         'label'             => [
             'fields'      => ['title'],
             'showColumns' => true,
-        ],
-        'global_operations' => [
-            'all' => [
-                'label'      => &$GLOBALS['TL_LANG']['MSC']['all'],
-                'href'       => 'act=select',
-                'class'      => 'header_edit_all',
-                'attributes' => 'onclick="Backend.getScrollOffset()" accesskey="e"',
-            ],
         ],
         'operations'        => [
             'edit',

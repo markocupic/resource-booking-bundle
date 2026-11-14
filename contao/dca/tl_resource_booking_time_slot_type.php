@@ -39,13 +39,6 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot_type'] = [
             'fields' => ['title'],
             'format' => '%s',
         ],
-        'global_operations' => [
-            'all' => [
-                'href'       => 'act=select',
-                'class'      => 'header_edit_all',
-                'attributes' => 'onclick="Backend.getScrollOffset()" accesskey="e"',
-            ],
-        ],
         'operations'        => [
             'all',
         ],

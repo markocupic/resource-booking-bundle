@@ -44,13 +44,6 @@ $GLOBALS['TL_DCA']['tl_resource_booking_blocked_period'] = [
             'fields'      => ['title', 'dateFrom', 'dateTo'],
             'showColumns' => true,
         ],
-        'global_operations' => [
-            'all' => [
-                'href'       => 'act=select',
-                'class'      => 'header_edit_all',
-                'attributes' => 'onclick="Backend.getScrollOffset()" accesskey="e"',
-            ],
-        ],
         'operations'        => [
             'all',
         ],

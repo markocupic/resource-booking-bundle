@@ -36,14 +36,6 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = [
             'panelLayout'  => 'filter;search,limit',
             'headerFields' => ['title'],
         ],
-        'global_operations' => [
-            'all' => [
-                'label'      => &$GLOBALS['TL_LANG']['MSC']['all'],
-                'href'       => 'act=select',
-                'class'      => 'header_edit_all',
-                'attributes' => 'onclick="Backend.getScrollOffset()" accesskey="e"',
-            ],
-        ],
         'operations'        => 'all',
     ],
     'palettes' => [
