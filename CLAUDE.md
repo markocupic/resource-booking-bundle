@@ -140,7 +140,7 @@ Alte Spalten erst nach erfolgreicher Migration löschen. Jede Verhaltensänderun
 - Aufbau Wochenkalender (wie Design-Vorlage «Weich & freundlich»): Kopfzeile `_header.html.twig` (Kategorie als
   Kicker, Ressource als Titel, «KW 47 · Montag, 16. bis Freitag, 20. November 2026»; rechts «Angemeldet als
   **Name**») → Filter mit sichtbaren Labels (Kategorie / Ressource / Woche) → Hinweis der Ressource (grüner Kasten)
-  → Legende (frei, meine Buchung, ausgebucht, noch nicht bestätigt, gesperrt) → Tabelle.
+  → Tabelle → Legende (frei, meine Buchung, ausgebucht, noch nicht bestätigt, gesperrt).
 - Zell-Zustände über `data-*`-Attribute in `_table.html.twig` (`data-isbookable`, `data-isbooked`,
   `data-iscancelable`, `data-isfullybooked`, `data-isinvaliddate`, `data-istimeslotavailable`,
   `data-isinblockedperiod`, `data-hasunconfirmedbookings`, `data-bookedbyanonymous` am Buchungseintrag, …).

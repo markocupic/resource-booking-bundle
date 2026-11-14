@@ -204,7 +204,7 @@ Neuer Aufbau des Wochenkalenders:
   im Modul-Template den Aufruf von `rbb_logged_in_user`. Der Block `rbb_logged_in_user` gibt neu
   "Angemeldet als **Name**" aus.
 * Die Filterfelder haben sichtbare Beschriftungen (`RBB.filterResourceType`, `RBB.filterResource`, `RBB.filterWeek`).
-* Die Beschreibung der Ressource steht neu unter den Filterfeldern, darunter folgt die neue Legende
+* Die Beschreibung der Ressource steht neu unter den Filterfeldern, unter der Tabelle folgt die neue Legende
   (`week_calendar/_legend.html.twig`, Block `rbb_week_calendar_window__legend`, Übersetzungen `RBB.legend.*`).
   Zellen mit mindestens einer unbestätigten Buchung werden orange hinterlegt
   (`data-hasunconfirmedbookings="true"`), die Buchung zeigt "wartet auf Bestätigung" (`RBB.awaitingConfirmation`).

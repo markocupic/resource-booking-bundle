@@ -42,10 +42,10 @@
                         <div class="rbb-week-calendar" v-if="mode === 'week-calendar'">
                             {{ block('rbb_week_calendar_window__filter_board') }}
                             {{ block('rbb_week_calendar_window__active_resource_description') }}
-                            {{ block('rbb_week_calendar_window__legend') }}
                             {% with {time_slot_cell: block('rbb_week_calendar_window__time_slot_cell')} %}
                                 {{ block('rbb_week_calendar_window__table') }}
                             {% endwith %}
+                            {{ block('rbb_week_calendar_window__legend') }}
                         </div>
                     {% endblock %}
                     {# End main window / mode === 'week-calendar' #}

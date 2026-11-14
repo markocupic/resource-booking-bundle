@@ -302,10 +302,6 @@ $rbb-breakpoint-xl: 1200px;
     list-style: none;
     font-size: .8125rem;
     color: var(--rbb-muted-color);
-
-    + .rbb-booking-table-main {
-      margin-top: calc(var(--rbb-section-spacing) * .5);
-    }
   }
 
   .rbb-legend-item {
