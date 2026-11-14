@@ -55,25 +55,6 @@ class ResourceBookingResourceTest extends ContaoTestCase
         $this->assertSame(2, $dca->countFutureBookingsNotMatchingTheTimetable(3));
     }
 
-    public function testBookingsOnWeekdaysTheResourceCannotBeBookedDoNotFit(): void
-    {
-        $monday = strtotime('next monday');
-
-        $bookings = [
-            ['id' => 1, 'startTime' => $monday + 8 * 3600, 'endTime' => $monday + 9 * 3600],
-        ];
-
-        $timeSlots = [
-            ['startTime' => 8 * 3600, 'endTime' => 9 * 3600, 'weekdays' => null],
-        ];
-
-        $resource = ['id' => 3, 'timeSlotType' => 4, 'restrictWeekdays' => '1', 'allowedWeekdays' => serialize(['tuesday'])];
-
-        $dca = new ResourceBookingResource($this->createContaoFrameworkStub(), $this->connection($resource, $bookings, $timeSlots), $this->translator());
-
-        $this->assertSame(1, $dca->countFutureBookingsNotMatchingTheTimetable(3));
-    }
-
     public function testShowsAWarningOnSubmit(): void
     {
         $monday = strtotime('next monday');

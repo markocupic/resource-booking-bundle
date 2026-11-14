@@ -36,8 +36,11 @@
                                 <small>[[ slot.datimSpanString ]]: </small>
                             </div>
                             <div class="rbb-layout-cell">
-                                <span v-if="slot.invalidDate"><small>{{ ('RBB.ERR.invalidStartOrEndTime')|trans }}</small></span>
-                                <span v-else-if="slot.isInBlockedPeriod"><small>[[ slot.blockedPeriodTitle ]]</small></span>
+                                <span v-if="slot.isValidTimeSlot === false"><small>{{ ('RBB.ERR.invalidTimeSlot')|trans }}</small></span>
+                                <span v-else-if="slot.hasValidItemCount === false"><small>{{ ('RBB.ERR.invalidItemsBooked')|trans }}</small></span>
+                                <span v-else-if="slot.invalidDate"><small>{{ ('RBB.ERR.invalidStartOrEndTime')|trans }}</small></span>
+                                <span v-else-if="slot.isInBlockedPeriod && slot.blockedPeriodDescription"><small>[[ slot.blockedPeriodDescription ]]</small></span>
+                                <span v-else-if="slot.isInBlockedPeriod"><small>{{ ('RBB.blocked')|trans }}</small></span>
                                 <span v-else-if="slot.isTimeSlotAvailable === false"><small>{{ ('RBB.notAvailable')|trans }}</small></span>
                                 <span v-else-if="slot.isBlocked"><small>{{ ('RBB.ERR.slotIsBlocked')|trans }}</small></span>
                                 <span v-else-if="!slot.enoughItemsAvailable"><small>{{ ('RBB.ERR.thisSlotHasNotEnoughItemsAvailable')|trans }}</small></span>

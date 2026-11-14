@@ -2,11 +2,11 @@
 
 {% block rbb_week_calendar_window__time_slot_cell %}
     <div class="rbb-time-slot-cell-inner">
-        <div class="rbb-cell-blocked-period-label" v-if="slot.isInBlockedPeriod && !slot.hasBookings">[[ slot.blockedPeriodTitle ]]</div>
+        <div class="rbb-cell-blocked-period-label" v-if="slot.isInBlockedPeriod && slot.blockedPeriodDescription && !slot.hasBookings">[[ slot.blockedPeriodDescription ]]</div>
         <div class="rbb-cell-not-available-label" v-if="!slot.isTimeSlotAvailable && !slot.isInBlockedPeriod && !slot.hasBookings">{{ ('RBB.notAvailable')|trans }}</div>
         <div class="rbb-cell-free-label" v-if="slot.isBookable && !slot.hasBookings && !slot.isBlocked && slot.isWithinAllowedDateRange">{{ ('RBB.free')|trans }}</div>
         <div class="rbb-cell-booking-still-available-box" v-if="!slot.isBlocked && slot.isTimeSlotAvailable && !slot.isInBlockedPeriod && slot.resource.itemsAvailable > 1 && slot.itemsStillAvailable > 0 && slot.isWithinAllowedDateRange" :title="'{{ ('RBB.stillAvailable')|trans }}: ' + slot.itemsStillAvailable">+ [[ slot.itemsStillAvailable ]]</div>
-        <div class="rbb-booked-item" v-if="slot.hasBookings" v-for="booking in slot.bookings" :data-confirmed="booking.confirmed ? 'true' : 'false'">
+        <div class="rbb-booked-item" v-if="slot.hasBookings" v-for="booking in slot.bookings" :data-confirmed="booking.confirmed ? 'true' : 'false'" :data-bookedbyanonymous="booking.bookedByAnonymous ? 'true' : 'false'">
             <span class="rbb-booked-item-header">
                 <span class="rbb-cell-booking-owner-box" v-if="booking.bookedByFullname">[[ booking.bookedByFullname ]]</span>
                 <span class="item-counter-box" v-if="!slot.isBlocked && activeResource.itemsAvailable > 1"> (-[[ booking.itemsBooked ]])</span>
@@ -17,6 +17,7 @@
             {# <span class="rbb-cell-booking-owner-box" v-if="booking.bookedByCity">[[ booking.bookedByCity ]]</span> #}
             {# Feel free and add more details about the booking (tl_resource_booking) #}
             <span class="rbb-cell-booking-description-box" v-if="booking.bookingDescription"><small>[[ booking.bookingDescription ]]</small></span>
+            <span class="rbb-cell-booking-unconfirmed-box" v-if="!booking.confirmed"><small>{{ ('RBB.awaitingConfirmation')|trans }}</small></span>
             {# <span class="rbb-cell-booking-description-box v-if="booking.bookingTitle"><small>[[ booking.bookingTitle ]]</small></span> #}
             {# <span class="rbb-cell-booking-description-box v-if="booking.bookingBookingTime"><small>[[ booking.bookingBookingTime ]]</small></span> #}
             <button class="rbb-btn-icon rbb-btn-cancel-booking" type="button" v-if="booking.canCancel" @click="openBookingWindow(slot, 'showCancelBookingForm', slot.userBooking)" title="{{ ('RBB.cancelResource')|trans }}">

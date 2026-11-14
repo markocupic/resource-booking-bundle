@@ -126,10 +126,6 @@ class ResourceBookingResource
         $endTime = (int) $booking['endTime'];
         $weekday = strtolower(date('l', $startTime));
 
-        if (!ResourceBookingRestriction::isWeekdayAllowed($resource, $weekday)) {
-            return false;
-        }
-
         // The week calendar adds the time of the time slot (seconds) to the midnight of the day.
         $midnight = strtotime(date('Y-m-d', $startTime));
 

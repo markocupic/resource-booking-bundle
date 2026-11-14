@@ -14,10 +14,10 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\Tests\Cron;
 
-use Contao\Date;
 use Contao\TestCase\ContaoTestCase;
 use Doctrine\DBAL\Connection;
 use Markocupic\ResourceBookingBundle\Cron\PurgePastBookingsCron;
+use Markocupic\ResourceBookingBundle\Util\DateHelper;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
 
@@ -36,7 +36,7 @@ class PurgePastBookingsCronTest extends ContaoTestCase
             ->method('executeStatement')
         ;
 
-        $cron = new PurgePastBookingsCron($connection, $this->createContaoFrameworkMock(), false, ['default' => ['begin_week' => 'monday']], null);
+        $cron = new PurgePastBookingsCron($connection, $this->createContaoFrameworkMock(), false, null);
         $cron();
     }
 
@@ -51,15 +51,18 @@ class PurgePastBookingsCronTest extends ContaoTestCase
 
         $cron = $this->getPartialCron($logger);
         $cron
-            ->method('getWeeksBackByResource')
-            ->willReturn([5 => 2, 6 => 0])
+            ->method('getPurgeSettingsByResource')
+            ->willReturn([
+                5 => ['weeksBack' => 2, 'beginWeek' => 'sunday'],
+                6 => ['weeksBack' => 0, 'beginWeek' => 'monday'],
+            ])
         ;
 
         $cron
             ->method('calculatePurgeLimit')
             ->willReturnMap([
-                [2, 1000],
-                [0, null], // weeksBack = 0 -> skipped
+                [2, 'sunday', 1000],
+                [0, 'monday', null], // weeksBack = 0 -> skipped
             ])
         ;
 
@@ -83,8 +86,8 @@ class PurgePastBookingsCronTest extends ContaoTestCase
 
         $cron = $this->getPartialCron($logger);
         $cron
-            ->method('getWeeksBackByResource')
-            ->willReturn([5 => 0])
+            ->method('getPurgeSettingsByResource')
+            ->willReturn([5 => ['weeksBack' => 0, 'beginWeek' => 'monday']])
         ;
 
         $cron
@@ -100,59 +103,66 @@ class PurgePastBookingsCronTest extends ContaoTestCase
         $cron();
     }
 
-    public function testGetWeeksBackByResourceReturnsTheValuesIndexedByResourceId(): void
+    public function testGetPurgeSettingsByResourceReturnsTheValuesIndexedByResourceId(): void
     {
         $connection = $this->createMock(Connection::class);
         $connection
             ->expects($this->once())
             ->method('fetchAllAssociative')
-            ->with('SELECT id, weeksBack FROM tl_resource_booking_resource')
+            ->with($this->stringContains('LEFT JOIN tl_resource_booking_time_slot_type'))
             ->willReturn([
-                ['id' => 3, 'weeksBack' => 10],
-                ['id' => 0, 'weeksBack' => 5], // filtered out
-                ['id' => '7', 'weeksBack' => '2'], // cast to int
+                ['id' => 3, 'weeksBack' => 10, 'beginWeek' => 'sunday'],
+                ['id' => 0, 'weeksBack' => 5, 'beginWeek' => 'monday'], // filtered out
+                ['id' => '7', 'weeksBack' => '2', 'beginWeek' => null], // no timetable -> monday
+                ['id' => 8, 'weeksBack' => 1, 'beginWeek' => 'invalid'], // invalid -> monday
             ])
         ;
 
-        $cron = new PurgePastBookingsCron($connection, $this->createContaoFrameworkMock(), true, ['default' => ['begin_week' => 'monday']], null);
+        $cron = new PurgePastBookingsCron($connection, $this->createContaoFrameworkMock(), true, null);
 
-        $this->assertSame([3 => 10, 7 => 2], $this->invoke($cron, 'getWeeksBackByResource'));
+        $this->assertSame(
+            [
+                3 => ['weeksBack' => 10, 'beginWeek' => 'sunday'],
+                7 => ['weeksBack' => 2, 'beginWeek' => 'monday'],
+                8 => ['weeksBack' => 1, 'beginWeek' => 'monday'],
+            ],
+            $this->invoke($cron, 'getPurgeSettingsByResource'),
+        );
     }
 
     public function testCalculatePurgeLimitReturnsNullIfTheUserCannotNavigateBack(): void
     {
-        $cron = new PurgePastBookingsCron(
-            $this->createMock(Connection::class),
-            $this->createContaoFrameworkMock(),
-            true,
-            ['default' => ['begin_week' => 'monday']],
-            null,
-        );
+        $cron = new PurgePastBookingsCron($this->createMock(Connection::class), $this->createContaoFrameworkMock(), true, null);
 
-        $this->assertNull($this->invoke($cron, 'calculatePurgeLimit', [0]));
-        $this->assertNull($this->invoke($cron, 'calculatePurgeLimit', [-3]));
+        $this->assertNull($this->invoke($cron, 'calculatePurgeLimit', [0, 'monday']));
+        $this->assertNull($this->invoke($cron, 'calculatePurgeLimit', [-3, 'monday']));
     }
 
-    public function testCalculatePurgeLimitComputesTheCutoff(): void
+    public function testCalculatePurgeLimitCountsTheWeeksFromTheFirstDayOfTheWeekOfTheTimetable(): void
     {
-        // Mock Date::parse so the result no longer depends on the current date.
-        $dateAdapter = $this->createAdapterMock(['parse']);
-        $dateAdapter
-            ->method('parse')
-            ->willReturn('01-01-2020')
+        $dateHelperAdapter = $this->createAdapterMock(['getFirstDayOfCurrentWeek', 'addWeeksToTime']);
+        $dateHelperAdapter
+            ->expects($this->once())
+            ->method('getFirstDayOfCurrentWeek')
+            ->with(['beginWeek' => 'sunday'])
+            ->willReturn(1000)
+        ;
+
+        $dateHelperAdapter
+            ->expects($this->once())
+            ->method('addWeeksToTime')
+            ->with(-2, 1000)
+            ->willReturn(500)
         ;
 
         $cron = new PurgePastBookingsCron(
             $this->createMock(Connection::class),
-            $this->createContaoFrameworkMock([Date::class => $dateAdapter]),
+            $this->createContaoFrameworkMock([DateHelper::class => $dateHelperAdapter]),
             true,
-            ['default' => ['begin_week' => 'monday']],
             null,
         );
 
-        $expected = strtotime('01-01-2020 -2 weeks');
-
-        $this->assertSame($expected, $this->invoke($cron, 'calculatePurgeLimit', [2]));
+        $this->assertSame(500, $this->invoke($cron, 'calculatePurgeLimit', [2, 'sunday']));
     }
 
     public function testDeleteExpiredBookingsIssuesTheDeleteStatement(): void
@@ -169,24 +179,9 @@ class PurgePastBookingsCronTest extends ContaoTestCase
             ->willReturn(4)
         ;
 
-        $cron = new PurgePastBookingsCron($connection, $this->createContaoFrameworkMock(), true, ['default' => ['begin_week' => 'monday']], null);
+        $cron = new PurgePastBookingsCron($connection, $this->createContaoFrameworkMock(), true, null);
 
         $this->assertSame(4, $this->invoke($cron, 'deleteExpiredBookings', [5, 1000]));
-    }
-
-    public function testGetBeginWeekUsesTheDefaultAppOrTheFirstApp(): void
-    {
-        $connection = $this->createMock(Connection::class);
-        $framework = $this->createContaoFrameworkMock();
-
-        $cron = new PurgePastBookingsCron($connection, $framework, true, ['other' => ['begin_week' => 'sunday'], 'default' => ['begin_week' => 'tuesday']], null);
-        $this->assertSame('tuesday', $this->invoke($cron, 'getBeginWeek'));
-
-        $cron = new PurgePastBookingsCron($connection, $framework, true, ['other' => ['begin_week' => 'sunday']], null);
-        $this->assertSame('sunday', $this->invoke($cron, 'getBeginWeek'));
-
-        $cron = new PurgePastBookingsCron($connection, $framework, true, [], null);
-        $this->assertSame('monday', $this->invoke($cron, 'getBeginWeek'));
     }
 
     /**
@@ -199,11 +194,10 @@ class PurgePastBookingsCronTest extends ContaoTestCase
                 $this->createMock(Connection::class),
                 $this->createContaoFrameworkMock(),
                 true,
-                ['default' => ['begin_week' => 'monday']],
                 $logger,
             ])
             ->onlyMethods([
-                'getWeeksBackByResource',
+                'getPurgeSettingsByResource',
                 'calculatePurgeLimit',
                 'deleteExpiredBookings',
             ])

@@ -1,5 +1,4 @@
 markocupic_resource_booking:
     apps:
         default:
-            begin_week: 'monday'
             permitted_form_fields: [ ]

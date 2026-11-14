@@ -14,7 +14,6 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\AjaxController;
 
-use Contao\Input;
 use Contao\Model\Collection;
 use Contao\System;
 use Doctrine\DBAL\Connection;
@@ -27,6 +26,8 @@ use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Markocupic\ResourceBookingBundle\Slot\SlotCollection;
 use Markocupic\ResourceBookingBundle\Slot\SlotMain;
 use Markocupic\ResourceBookingBundle\Util\ResourceBookingRestriction;
+use Markocupic\ResourceBookingBundle\Validator\BookingRequestValidator;
+use Markocupic\ResourceBookingBundle\Validator\InvalidBookingRequestException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -83,7 +84,7 @@ final class BookingController extends AbstractController implements ControllerIn
         $this->connection->beginTransaction();
 
         try {
-            $this->validateInputs($this->utils->getAppConfig()['permittedFormFields']);
+            $this->validateInputs($request, $this->utils->getAppConfig()['permittedFormFields']);
 
             $slots = $this->getSlotCollectionFromRequest($request, $this->bookingRepeatStopWeekTstamp);
 
@@ -174,43 +175,18 @@ final class BookingController extends AbstractController implements ControllerIn
         $ajaxResponse->setData('bookingSelection', $bookings->fetchAll());
     }
 
-    private function validateInputs(array $permittedFormFields): void
+    /**
+     * @param array<int, string> $permittedFormFields
+     *
+     * @throws \Exception
+     */
+    private function validateInputs(Request $request, array $permittedFormFields): void
     {
-        static $fieldTypes = [
-            'string' => ['REQUEST_TOKEN', 'action', 'moduleKey', 'bookingDescription'],
-            'array' => ['bookingDateSelection'],
-            'boolean' => ['isBlocked'],
-            'integer' => ['resourceId', 'bookingRepeatStopWeekTstamp'],
-        ];
-
-        foreach (array_keys($_POST) as $key) {
-            $value = Input::post($key);
-
-            if (\in_array($key, $fieldTypes['string'], true)) {
-                if (!empty($value) && !\is_string($value)) {
-                    $this->throwInvalidValue($key);
-                }
-            } elseif (\in_array($key, $fieldTypes['array'], true)) {
-                if (!\is_array($value)) {
-                    $this->throwInvalidValue($key);
-                }
-            } elseif (\in_array($key, $fieldTypes['boolean'], true)) {
-                if ('' !== $value && '1' !== $value) {
-                    $this->throwInvalidValue($key);
-                }
-            } elseif (\in_array($key, $fieldTypes['integer'], true)) {
-                if (empty($value) || (string) (int) $value !== $value) {
-                    $this->throwInvalidValue($key);
-                }
-            } elseif (!\in_array($key, $permittedFormFields, true)) {
-                throw new \Exception($this->translator->trans('RBB.ERR.invalidFormFieldSubmitted', [$key], 'contao_default'));
-            }
+        try {
+            (new BookingRequestValidator())->validate($request->request->all(), $permittedFormFields);
+        } catch (InvalidBookingRequestException $e) {
+            throw new \Exception($this->translator->trans($e->getTranslationKey(), [$e->getField()], 'contao_default'), 0, $e);
         }
-    }
-
-    private function throwInvalidValue(string $key): void
-    {
-        throw new \Exception($this->translator->trans('RBB.ERR.invalidFormValueSubmitted', [$key], 'contao_default'));
     }
 
     private function getBookingCollection(SlotCollection $slots): Collection|null

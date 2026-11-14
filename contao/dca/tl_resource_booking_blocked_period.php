@@ -16,10 +16,11 @@ use Contao\DataContainer;
 use Contao\DC_Table;
 
 /*
- * Blocked periods (e.g. school holidays): no bookings are possible during
- * a blocked period. A blocked period applies to all resources, to selected
- * resource types or to selected resources and can be limited to a time range
- * (the time range applies to every day of the period).
+ * Blocked periods (e.g. school holidays, weekends): no bookings are possible
+ * during a blocked period. A blocked period applies to all resources, to selected
+ * resource types or to selected resources. Without "blocked times" the whole
+ * period is blocked. With blocked times only the listed weekdays (and times)
+ * within the period are blocked. A period without end date is unlimited.
  */
 $GLOBALS['TL_DCA']['tl_resource_booking_blocked_period'] = [
     'config'      => [
@@ -55,16 +56,15 @@ $GLOBALS['TL_DCA']['tl_resource_booking_blocked_period'] = [
         ],
     ],
     'palettes'    => [
-        '__selector__' => ['addTimeRange', 'scope'],
+        '__selector__' => ['scope'],
         'default'      => '
         {title_legend},title,description;
-        {date_legend},dateFrom,dateTo,addTimeRange;
+        {date_legend},dateFrom,dateTo,blockedTimes;
         {scope_legend},scope;
         {publish_legend},published
         ',
     ],
     'subpalettes' => [
-        'addTimeRange'        => 'timeFrom,timeTo',
         'scope_resourceTypes' => 'resourceTypes',
         'scope_resources'     => 'resources',
     ],
@@ -87,8 +87,8 @@ $GLOBALS['TL_DCA']['tl_resource_booking_blocked_period'] = [
         'description'   => [
             'exclude'   => true,
             'search'    => true,
-            'inputType' => 'textarea',
-            'eval'      => ['tl_class' => 'clr'],
+            'inputType' => 'text',
+            'eval'      => ['maxlength' => 255, 'decodeEntities' => true, 'tl_class' => 'w50'],
             'sql'       => 'mediumtext NULL',
         ],
         'dateFrom'      => [
@@ -104,28 +104,32 @@ $GLOBALS['TL_DCA']['tl_resource_booking_blocked_period'] = [
             'default'   => strtotime('today'),
             'exclude'   => true,
             'inputType' => 'text',
-            'eval'      => ['rgxp' => 'date', 'mandatory' => true, 'datepicker' => true, 'tl_class' => 'w50 wizard'],
+            'eval'      => ['rgxp' => 'date', 'datepicker' => true, 'tl_class' => 'w50 wizard'],
             'sql'       => ['type' => 'integer', 'length' => 10, 'unsigned' => true, 'notnull' => true, 'default' => 0],
         ],
-        'addTimeRange'  => [
+        'blockedTimes'  => [
             'exclude'   => true,
-            'filter'    => true,
-            'inputType' => 'checkbox',
-            'eval'      => ['submitOnChange' => true, 'tl_class' => 'clr'],
-            'sql'       => ['type' => 'boolean', 'default' => false],
-        ],
-        'timeFrom'      => [
-            'exclude'   => true,
-            'inputType' => 'text',
-            'eval'      => ['rgxp' => 'time', 'datepicker' => true, 'mandatory' => true, 'tl_class' => 'w50 wizard'],
-            // Contao stores the time as timestamp of 1970-01-01 in the local time zone (may be negative)
-            'sql'       => ['type' => 'integer', 'notnull' => false, 'default' => null],
-        ],
-        'timeTo'        => [
-            'exclude'   => true,
-            'inputType' => 'text',
-            'eval'      => ['rgxp' => 'time', 'datepicker' => true, 'mandatory' => true, 'tl_class' => 'w50 wizard'],
-            'sql'       => ['type' => 'integer', 'notnull' => false, 'default' => null],
+            'inputType' => 'rowWizard',
+            'fields'    => [
+                'weekday'  => [
+                    'label'     => &$GLOBALS['TL_LANG']['tl_resource_booking_blocked_period']['blockedTimes_weekday'],
+                    'inputType' => 'select',
+                    'options'   => ['daily', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
+                    'reference' => &$GLOBALS['TL_LANG']['tl_resource_booking_blocked_period']['weekdayOptions'],
+                ],
+                'timeFrom' => [
+                    'label'     => &$GLOBALS['TL_LANG']['tl_resource_booking_blocked_period']['blockedTimes_timeFrom'],
+                    'inputType' => 'text',
+                    'eval'      => ['maxlength' => 5, 'placeholder' => 'hh:mm'],
+                ],
+                'timeTo'   => [
+                    'label'     => &$GLOBALS['TL_LANG']['tl_resource_booking_blocked_period']['blockedTimes_timeTo'],
+                    'inputType' => 'text',
+                    'eval'      => ['maxlength' => 5, 'placeholder' => 'hh:mm'],
+                ],
+            ],
+            'eval'      => ['tl_class' => 'clr', 'actions' => ['copy', 'delete']],
+            'sql'       => 'blob NULL',
         ],
         'scope'         => [
             'default'   => 'all',

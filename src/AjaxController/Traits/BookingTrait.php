@@ -23,6 +23,7 @@ use Markocupic\ResourceBookingBundle\Slot\SlotCollection;
 use Markocupic\ResourceBookingBundle\Slot\SlotFactory;
 use Markocupic\ResourceBookingBundle\Slot\SlotMain;
 use Markocupic\ResourceBookingBundle\Util\DateHelper;
+use Markocupic\ResourceBookingBundle\Validator\BookingRequestValidator;
 use Ramsey\Uuid\Uuid;
 use Symfony\Component\HtmlSanitizer\HtmlSanitizerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -53,7 +54,8 @@ trait BookingTrait
     {
         $arrSlotCollection = [];
         $resource = $this->getActiveResource();
-        $itemsBooked = empty((int) $request->request->get('itemsBooked')) ? 1 : (int) $request->request->get('itemsBooked');
+        // Anything that is not a positive integer becomes 0 and is rejected by the slot (see AbstractSlot::hasValidItemCount())
+        $itemsBooked = BookingRequestValidator::parseItemCount($request->request->all()['itemsBooked'] ?? null);
         // Consider input encoding!!!
         $description = (string) $this->framework->getAdapter(Input::class)->post('bookingDescription');
         $description = $this->htmlSanitizer->sanitize($description); // Remove malicious code
@@ -135,6 +137,11 @@ trait BookingTrait
         $keys = array_keys($request->request->all());
 
         foreach ($keys as $k) {
+            // Fields like isBlocked, confirmed or member are set by the server only
+            if (\in_array($k, BookingRequestValidator::PROTECTED_BOOKING_FIELDS, true)) {
+                continue;
+            }
+
             if (!isset($arrUserInput[$k])) {
                 $blnDecode = ($dca['fields'][$k]['eval']['decodeEntities'] ?? false) === true;
                 // Consider input encoding!!!
@@ -211,12 +218,14 @@ trait BookingTrait
             $slot = $slotCollection->current();
 
             if (!$slot->isBookable()) {
-                if ($slot->isOutsideBookingPeriod()) {
+                if (!$slot->isValidTimeSlot()) {
+                    $this->setErrorMessage('RBB.ERR.invalidTimeSlot');
+                } elseif (!$slot->hasValidItemCount()) {
+                    $this->setErrorMessage('RBB.ERR.invalidItemsBooked');
+                } elseif ($slot->isOutsideBookingPeriod()) {
                     $this->setErrorMessage('RBB.ERR.outsideBookingPeriod');
                 } elseif (!$slot->isWithinAllowedDateRange()) {
                     $this->setErrorMessage('RBB.ERR.invalidStartOrEndTime');
-                } elseif (!$slot->isOnAllowedWeekday()) {
-                    $this->setErrorMessage('RBB.ERR.weekdayNotBookable');
                 } elseif (!$slot->isTimeSlotAvailable()) {
                     $this->setErrorMessage('RBB.ERR.timeSlotNotAvailableOnWeekday');
                 } elseif ($slot->isInBlockedPeriod()) {

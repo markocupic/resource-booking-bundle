@@ -76,6 +76,11 @@ class Initialize
         // Get resource type IDS from module settings.
         $arrResTypeIds = $this->framework->getAdapter(StringUtil::class)->deserialize($moduleModel->resourceBooking_resourceTypes, true);
 
+        // Display the first available resource if nothing is selected yet (can be disabled in the app configuration).
+        if (!$request->isXmlHttpRequest() && $this->isAutoSelectFirstResourceEnabled($moduleModel)) {
+            $this->autoSelectFirstResource($sessionBag, $arrResTypeIds);
+        }
+
         $resTypeId = $this->resolveAndGuardActiveResType($request, $sessionBag, $arrResTypeIds);
         $activeResource = $this->resolveAndGuardActiveRes($request, $sessionBag, $resTypeId);
 
@@ -190,6 +195,45 @@ class Initialize
         $this->framework->getAdapter(Controller::class)->redirect($request->getUri());
     }
 
+    private function isAutoSelectFirstResourceEnabled(ModuleModel $moduleModel): bool
+    {
+        $appConfigName = $moduleModel->resourceBooking_appConfig;
+        $appConfig = $this->utils->getAppConfigByName(\is_string($appConfigName) ? $appConfigName : null);
+
+        return true === ($appConfig['autoSelectFirstResource'] ?? false);
+    }
+
+    /**
+     * If neither a resource type nor a resource is selected (empty session),
+     * selects the first published resource of the first resource type of the
+     * module that has one. The order is the same as in the filter dropdowns.
+     */
+    private function autoSelectFirstResource(SessionBagInterface $sessionBag, array $arrResTypeIds): void
+    {
+        if ((int) $sessionBag->get('resType', 0) > 0 || (int) $sessionBag->get('res', 0) > 0) {
+            return;
+        }
+
+        $resourceTypes = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class)->findPublishedByIds($arrResTypeIds);
+
+        if (null === $resourceTypes) {
+            return;
+        }
+
+        $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
+
+        foreach ($resourceTypes as $resourceType) {
+            $resources = $resourceBookingResourceModelAdapter->findPublishedByPid((int) $resourceType->id);
+
+            if (null !== $resources && null !== ($resource = $resources->current())) {
+                $sessionBag->set('resType', (int) $resourceType->id);
+                $sessionBag->set('res', (int) $resource->id);
+
+                return;
+            }
+        }
+    }
+
     /**
      * Validates access to the active resource type and, if none is selected,
      * auto-selects it when the filter menu only offers a single one.
@@ -283,6 +327,9 @@ class Initialize
 
         // Set active week timestamp and keep it within the permitted weeks.
         $tstampCurrentWeek = (int) $sessionBag->get('activeWeekTstamp', $dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig));
+
+        // The resources may have timetables with different week beginnings.
+        $tstampCurrentWeek = $dateHelperAdapter->getFirstDayOfWeek($arrAppConfig, $tstampCurrentWeek);
         $tstampCurrentWeek = max($tstampCurrentWeek, (int) $sessionBag->get('tstampFirstPermittedWeek'));
         $tstampCurrentWeek = min($tstampCurrentWeek, (int) $sessionBag->get('tstampLastPermittedWeek'));
 

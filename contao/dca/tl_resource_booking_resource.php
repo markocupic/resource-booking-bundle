@@ -61,11 +61,10 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = [
         ],
     ],
     'palettes'    => [
-        '__selector__' => ['restrictWeekdays', 'addBookableUntil'],
-        'default'      => '{title_legend},title,description,itemsAvailable,timeSlotType;{booking_restriction_legend},weeksBack,weeksAhead,restrictWeekdays,addBookableUntil,autoConfirm',
+        '__selector__' => ['addBookableUntil'],
+        'default'      => '{title_legend},title,description,itemsAvailable,timeSlotType;{booking_restriction_legend},weeksBack,weeksAhead,addBookableUntil,autoConfirm',
     ],
     'subpalettes' => [
-        'restrictWeekdays' => 'allowedWeekdays',
         'addBookableUntil' => 'bookableUntil',
     ],
     'fields'      => [
@@ -129,21 +128,6 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = [
             'inputType' => 'text',
             'eval'      => ['mandatory' => true, 'rgxp' => 'natural', 'maxlength' => 3, 'tl_class' => 'w50'],
             'sql'       => ['type' => 'integer', 'unsigned' => true, 'notnull' => true, 'default' => RbbConfig::RBB_DEFAULT_WEEKS_AHEAD],
-        ],
-        'restrictWeekdays' => [
-            'exclude'   => true,
-            'filter'    => true,
-            'inputType' => 'checkbox',
-            'eval'      => ['submitOnChange' => true, 'tl_class' => 'clr'],
-            'sql'       => ['type' => 'boolean', 'default' => false],
-        ],
-        'allowedWeekdays'  => [
-            'exclude'   => true,
-            'inputType' => 'checkbox',
-            'options'   => RbbConfig::RBB_WEEKDAYS,
-            'reference' => &$GLOBALS['TL_LANG']['MSC']['DAYS_LONG'],
-            'eval'      => ['mandatory' => true, 'multiple' => true, 'tl_class' => 'clr'],
-            'sql'       => 'blob NULL',
         ],
         'addBookableUntil' => [
             'exclude'   => true,

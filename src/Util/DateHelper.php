@@ -60,7 +60,7 @@ class DateHelper
 
         $date->setTime(0, 0, 0);
 
-        $beginWeek = $arrAppConfig['beginWeek'];
+        $beginWeek = $arrAppConfig['beginWeek'] ?? RbbConfig::RBB_DEFAULT_BEGIN_WEEK;
 
         // RBB_WEEKDAYS starts with sunday (0) like the "w" format character.
         $key = array_search($beginWeek, RbbConfig::RBB_WEEKDAYS, true);
@@ -113,7 +113,14 @@ class DateHelper
     }
 
     /**
+     * Returns the first day of the week the timestamp (default: now) is in.
      * By default, this is the timestamp of a monday.
+     *
+     * "<weekday> this week" must not be used here: PHP always counts the week
+     * from monday, so "sunday this week" would return the sunday at the end of
+     * the week instead of the sunday at its beginning.
+     *
+     * @throws \Exception
      */
     public static function getFirstDayOfCurrentWeek(array $arrAppConfig, int|null $timestamp = null): int
     {
@@ -121,8 +128,6 @@ class DateHelper
             $timestamp = time();
         }
 
-        $beginWeek = $arrAppConfig['beginWeek'];
-
-        return strtotime(\sprintf('%s this week', $beginWeek), $timestamp);
+        return static::getFirstDayOfWeek($arrAppConfig, $timestamp);
     }
 }

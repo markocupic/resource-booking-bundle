@@ -106,10 +106,13 @@ final class ApplyFilterController extends AbstractController implements Controll
 
         $intTstampDate = (int) $request->request->get('date', 0);
 
-        // The date must be the first day of a week; otherwise fall back to the current week.
-        if ($intTstampDate <= 0 || $dateHelperAdapter->getFirstDayOfWeek($appConfig, $intTstampDate) !== $intTstampDate) {
-            $intTstampDate = $dateHelperAdapter->getFirstDayOfCurrentWeek($appConfig);
-        }
+        // Without a date the current week is displayed. Otherwise, the date is
+        // moved to the first day of its week: after switching to a resource
+        // whose timetable starts the week on another weekday, the date sent by
+        // the browser is not the first day of the week anymore.
+        $intTstampDate = $intTstampDate <= 0
+            ? $dateHelperAdapter->getFirstDayOfCurrentWeek($appConfig)
+            : $dateHelperAdapter->getFirstDayOfWeek($appConfig, $intTstampDate);
 
         // Clamp the date to the permitted weeks of the active resource.
         $intTstampDate = max($intTstampDate, (int) $this->sessionBag->get('tstampFirstPermittedWeek'));

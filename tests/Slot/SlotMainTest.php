@@ -78,22 +78,6 @@ class SlotMainTest extends TestCase
         $this->assertTrue($slot->canFulfillRequestedItems());
     }
 
-    public function testIsOnAllowedWeekdayRespectsTheResourceRestriction(): void
-    {
-        $resource = [
-            'itemsAvailable' => 1,
-            'restrictWeekdays' => '1',
-            'allowedWeekdays' => serialize(['monday', 'tuesday']),
-        ];
-
-        $slot = $this->slotWith(1, [], resource: $resource, weekday: 'monday');
-        $this->assertTrue($slot->isOnAllowedWeekday());
-
-        $slot = $this->slotWith(1, [], resource: $resource, weekday: 'saturday');
-        $this->assertFalse($slot->isOnAllowedWeekday());
-        $this->assertFalse($slot->isBookable());
-    }
-
     public function testIsTimeSlotAvailableRespectsTheWeekdaysOfTheTimeSlot(): void
     {
         $weekdays = serialize(['monday', 'tuesday']);
@@ -104,12 +88,40 @@ class SlotMainTest extends TestCase
 
         $slot = $this->slotWith(1, [], weekday: 'wednesday', timeSlotWeekdays: $weekdays);
         $this->assertFalse($slot->isTimeSlotAvailable());
-        $this->assertTrue($slot->isOnAllowedWeekday());
         $this->assertFalse($slot->isBookable());
 
         // Time slots without weekdays (not migrated yet) are available on every weekday.
         $slot = $this->slotWith(1, [], weekday: 'sunday');
         $this->assertTrue($slot->isTimeSlotAvailable());
+    }
+
+    public function testInvalidTimeSlotIsNotBookable(): void
+    {
+        $slot = $this->slotWith(1, [], isValidTimeSlot: false);
+
+        $this->assertFalse($slot->isValidTimeSlot());
+        $this->assertFalse($slot->isBookable());
+    }
+
+    public function testSlotWithoutValidationResultIsNotBookable(): void
+    {
+        // A slot that has not been created by AbstractSlot::create() must never be bookable
+        $slot = $this->slotWith(1, [], isValidTimeSlot: null);
+
+        $this->assertFalse($slot->isValidTimeSlot());
+        $this->assertFalse($slot->isBookable());
+    }
+
+    public function testItemCountMustBeBetweenOneAndTheAvailableItems(): void
+    {
+        $this->assertTrue($this->slotWith(3, [], requestedItems: 3)->isBookable());
+
+        foreach ([0, -5, 4] as $requestedItems) {
+            $slot = $this->slotWith(3, [], requestedItems: $requestedItems);
+
+            $this->assertFalse($slot->hasValidItemCount(), (string) $requestedItems);
+            $this->assertFalse($slot->isBookable(), (string) $requestedItems);
+        }
     }
 
     public function testSlotInABlockedPeriodIsNotBookable(): void
@@ -118,7 +130,7 @@ class SlotMainTest extends TestCase
         $this->assertFalse($slot->isInBlockedPeriod());
         $this->assertTrue($slot->isBookable());
 
-        $slot = $this->slotWith(1, [], blockedPeriod: ['id' => 1, 'title' => 'Herbstferien']);
+        $slot = $this->slotWith(1, [], blockedPeriod: ['id' => 1]);
         $this->assertTrue($slot->isInBlockedPeriod());
         $this->assertFalse($slot->isBookable());
     }
@@ -184,7 +196,7 @@ class SlotMainTest extends TestCase
     /**
      * @param array<int, array<string, mixed>> $bookings
      */
-    private function slotWith(int $itemsAvailable, array $bookings, int $requestedItems = 1, array|null $resource = null, string $weekday = 'monday', int|null $startTime = null, int|null $endTime = null, int|null $firstDayOfWeek = null, int|null $lastPermittedWeek = null, string|null $timeSlotWeekdays = null, array|null $blockedPeriod = null): SlotMain
+    private function slotWith(int $itemsAvailable, array $bookings, int $requestedItems = 1, array|null $resource = null, string $weekday = 'monday', int|null $startTime = null, int|null $endTime = null, int|null $firstDayOfWeek = null, int|null $lastPermittedWeek = null, string|null $timeSlotWeekdays = null, array|null $blockedPeriod = null, bool|null $isValidTimeSlot = true): SlotMain
     {
         $startTime ??= strtotime('tomorrow 08:00');
         $endTime ??= $startTime + 3600;
@@ -208,6 +220,7 @@ class SlotMainTest extends TestCase
             'lastPermittedWeekTstamp' => $lastPermittedWeek,
             'timeSlotWeekdays' => $timeSlotWeekdays,
             'blockedPeriod' => $blockedPeriod,
+            'isValidTimeSlot' => $isValidTimeSlot,
         ]);
 
         return $slot;

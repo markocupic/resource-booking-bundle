@@ -1,0 +1,18 @@
+{% trans_default_domain "contao_default" %}
+
+{#
+    Header: resource type, resource and displayed days of the active week on
+    the left, the logged in user on the right.
+#}
+{% block rbb_header %}
+    <div class="rbb-header">
+        {% block rbb_header__title %}
+            <div class="rbb-header-title" v-if="activeResource.title">
+                <span class="rbb-header-kicker" v-if="activeResourceType.title">[[ activeResourceType.title ]]</span>
+                <h2 class="rbb-header-headline">[[ activeResource.title ]]</h2>
+                <span class="rbb-header-week" v-if="activeWeek.daySpan">{{ ('RBB.calWeekShort')|trans }} [[ activeWeek.calWeek ]] · [[ activeWeek.daySpan ]]</span>
+            </div>
+        {% endblock %}
+        {{ block('rbb_logged_in_user') }}
+    </div>
+{% endblock %}

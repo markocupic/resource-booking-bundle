@@ -51,7 +51,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot_type'] = [
         ],
     ],
     'palettes' => [
-        'default' => '{title_legend},title,description',
+        'default' => '{title_legend},title,description;{calendar_legend},beginWeek',
     ],
     'fields'   => [
         'id'          => [
@@ -68,6 +68,14 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot_type'] = [
             'search'    => true,
             'eval'      => ['mandatory' => true, 'decodeEntities' => true, 'maxlength' => 255, 'tl_class' => 'clr'],
             'sql'       => ['type' => 'string', 'length' => 255, 'notnull' => true, 'default' => ''],
+        ],
+        'beginWeek'   => [
+            'exclude'   => true,
+            'inputType' => 'select',
+            'options'   => ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'],
+            'reference' => &$GLOBALS['TL_LANG']['MSC']['DAYS_LONG'],
+            'eval'      => ['mandatory' => true, 'tl_class' => 'w50'],
+            'sql'       => ['type' => 'string', 'length' => 16, 'notnull' => true, 'default' => 'monday'],
         ],
         'published'   => [
             'toggle'    => true,

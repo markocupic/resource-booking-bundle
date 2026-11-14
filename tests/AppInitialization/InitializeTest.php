@@ -178,6 +178,12 @@ class InitializeTest extends ContaoTestCase
             ])
         ;
 
+        // The active week already is the first day of its week.
+        $dateHelperAdapter
+            ->method('getFirstDayOfWeek')
+            ->willReturnArgument(1)
+        ;
+
         $dateAdapter = $this->createAdapterMock(['parse']);
         $dateAdapter
             ->method('parse')
@@ -308,6 +314,12 @@ class InitializeTest extends ContaoTestCase
             ])
         ;
 
+        // The active week already is the first day of its week.
+        $dateHelperAdapter
+            ->method('getFirstDayOfWeek')
+            ->willReturnArgument(1)
+        ;
+
         $dateAdapter = $this->createAdapterMock(['parse']);
         $dateAdapter
             ->method('parse')
@@ -339,6 +351,146 @@ class InitializeTest extends ContaoTestCase
         $this->assertSame(2000, $bag->get('tstampLastPermittedWeek'));
         $this->assertSame(2000, $bag->get('activeWeekTstamp'));
         $this->assertSame('d2000', $bag->get('activeWeekDate'));
+    }
+
+    public function testAutoSelectsTheFirstAvailableResourceIfTheSessionIsEmpty(): void
+    {
+        $bag = new AttributeBag();
+
+        // Resource type 7 has no published resource, resource type 8 has resource 20.
+        $resourceTypeAdapter = $this->mockAdapterWithReturnValues([
+            'findPublishedByIds' => [(object) ['id' => 7], (object) ['id' => 8]],
+            'findPublishedByPk' => (object) ['id' => 8],
+        ]);
+
+        $resourceModel = $this->mockResourceModel(20);
+
+        $resourceAdapter = $this->createAdapterMock(['findPublishedByPid', 'findPublishedByPkAndPid']);
+        $resourceAdapter
+            ->method('findPublishedByPid')
+            ->willReturnCallback(fn (int $pid): object|null => 8 === $pid ? $this->singleItemCollection(20, $resourceModel) : null)
+        ;
+
+        $resourceAdapter
+            ->method('findPublishedByPkAndPid')
+            ->with(20, 8)
+            ->willReturn($resourceModel)
+        ;
+
+        $initialize = $this->getInitialize(
+            $this->frameworkForAutoSelect($resourceTypeAdapter, $resourceAdapter),
+            $bag,
+            null,
+            $this->utilsWithAutoSelect(true),
+        );
+
+        $initialize->initialize(self::MODULE_ID, self::PAGE_ID);
+
+        $this->assertSame(8, $bag->get('resType'));
+        $this->assertSame(20, $bag->get('res'));
+    }
+
+    public function testDoesNotAutoSelectTheFirstResourceIfDisabled(): void
+    {
+        $bag = new AttributeBag();
+
+        $resourceAdapter = $this->createAdapterMock(['findPublishedByPid', 'findPublishedByPkAndPid']);
+        $resourceAdapter
+            ->expects($this->never())
+            ->method('findPublishedByPid')
+        ;
+
+        $initialize = $this->getInitialize(
+            $this->frameworkForAutoSelect($this->mockAdapterWithReturnValues(['findPublishedByIds' => null]), $resourceAdapter),
+            $bag,
+            null,
+            $this->utilsWithAutoSelect(false),
+        );
+
+        $initialize->initialize(self::MODULE_ID, self::PAGE_ID);
+
+        $this->assertFalse($bag->has('res'));
+    }
+
+    public function testDoesNotAutoSelectIfAResourceTypeIsAlreadySelected(): void
+    {
+        $bag = new AttributeBag();
+        $bag->set('resType', 7);
+
+        $resourceTypeAdapter = $this->createAdapterMock(['findPublishedByIds', 'findPublishedByPk']);
+        $resourceTypeAdapter
+            ->expects($this->never())
+            ->method('findPublishedByIds')
+        ;
+
+        $resourceTypeAdapter
+            ->method('findPublishedByPk')
+            ->willReturn((object) ['id' => 7])
+        ;
+
+        $initialize = $this->getInitialize(
+            $this->frameworkForAutoSelect($resourceTypeAdapter, $this->mockAdapterWithReturnValues(['findPublishedByPid' => null])),
+            $bag,
+            null,
+            $this->utilsWithAutoSelect(true),
+        );
+
+        $initialize->initialize(self::MODULE_ID, self::PAGE_ID);
+
+        $this->assertSame(7, $bag->get('resType'));
+        $this->assertFalse($bag->has('res'));
+    }
+
+    private function frameworkForAutoSelect(Adapter $resourceTypeAdapter, Adapter $resourceAdapter): ContaoFramework
+    {
+        $dateHelperAdapter = $this->createAdapterMock(['getFirstDayOfCurrentWeek', 'addWeeksToTime', 'getFirstDayOfWeek']);
+        $dateHelperAdapter
+            ->method('getFirstDayOfCurrentWeek')
+            ->willReturn(1000)
+        ;
+
+        $dateHelperAdapter
+            ->method('addWeeksToTime')
+            ->willReturnCallback(static fn (int $weeks, int $time): int => $time + $weeks * 100)
+        ;
+
+        $dateHelperAdapter
+            ->method('getFirstDayOfWeek')
+            ->willReturnArgument(1)
+        ;
+
+        $dateAdapter = $this->createAdapterMock(['parse']);
+        $dateAdapter
+            ->method('parse')
+            ->willReturnCallback(static fn (string $format, int $tstamp): string => 'd'.$tstamp)
+        ;
+
+        return $this->createContaoFrameworkMock([
+            ModuleKey::class => $this->mockAdapterWithReturnValues(['getModuleKey' => '33_0']),
+            ModuleModel::class => $this->mockAdapterWithReturnValues(['findById' => $this->mockModuleModel()]),
+            PageModel::class => $this->mockAdapterWithReturnValues(['findById' => $this->mockPageModel()]),
+            StringUtil::class => $this->mockAdapterWithReturnValues(['deserialize' => [7, 8]]),
+            ResourceBookingResourceTypeModel::class => $resourceTypeAdapter,
+            ResourceBookingResourceModel::class => $resourceAdapter,
+            DateHelper::class => $dateHelperAdapter,
+            Date::class => $dateAdapter,
+        ]);
+    }
+
+    private function utilsWithAutoSelect(bool $enabled): Utils
+    {
+        $utils = $this->createMock(Utils::class);
+        $utils
+            ->method('getAppConfig')
+            ->willReturn(['beginWeek' => 'monday'])
+        ;
+
+        $utils
+            ->method('getAppConfigByName')
+            ->willReturn(['autoSelectFirstResource' => $enabled, 'permittedFormFields' => []])
+        ;
+
+        return $utils;
     }
 
     /**
@@ -392,8 +544,6 @@ class InitializeTest extends ContaoTestCase
             // Weeks back/ahead are set per resource
             'weeksBack' => 2,
             'weeksAhead' => 4,
-            'restrictWeekdays' => false,
-            'allowedWeekdays' => null,
             'addBookableUntil' => false,
             'bookableUntil' => '',
         ], $properties));

@@ -42,6 +42,8 @@ class MarkocupicResourceBookingExtension extends Extension
         $container->setParameter('markocupic_resource_booking.cookie.name', $config['cookie']['name']);
         $container->setParameter('markocupic_resource_booking.purge_past_bookings_with_cron', $config['purge_past_bookings_with_cron']);
         $container->setParameter('markocupic_resource_booking.apps', $config['apps']);
+        $container->setParameter('markocupic_resource_booking.displayable_member_fields', array_values(array_unique($config['displayable_member_fields'])));
+        $container->setParameter('markocupic_resource_booking.displayable_booking_fields', array_values(array_unique($config['displayable_booking_fields'])));
     }
 
     public function getAlias(): string

@@ -14,7 +14,6 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\Tests\DataContainer;
 
-use Contao\Input;
 use Contao\TestCase\ContaoTestCase;
 use Doctrine\DBAL\Connection;
 use Markocupic\ResourceBookingBundle\DataContainer\ResourceBookingBlockedPeriod;
@@ -42,20 +41,41 @@ class ResourceBookingBlockedPeriodTest extends ContaoTestCase
         );
     }
 
-    public function testTheEndTimeMustBeAfterTheStartTime(): void
+    public function testValidBlockedTimesAreAccepted(): void
     {
-        $dca = new ResourceBookingBlockedPeriod(
-            $this->createContaoFrameworkStub([Input::class => $this->createConfiguredAdapterStub(['post' => '12:00'])]),
-            $this->createStub(Connection::class),
-            $this->translator(),
-        );
+        $dca = new ResourceBookingBlockedPeriod($this->createContaoFrameworkStub(), $this->createStub(Connection::class), $this->translator());
 
-        $this->assertSame('18:00', $dca->validateTimeTo('18:00'));
+        $value = serialize([
+            ['weekday' => 'saturday', 'timeFrom' => '', 'timeTo' => ''],
+            ['weekday' => 'friday', 'timeFrom' => '14:00', 'timeTo' => '24:00'],
+            ['weekday' => 'daily', 'timeFrom' => '7:30', 'timeTo' => ''],
+        ]);
+
+        $this->assertSame($value, $dca->validateBlockedTimes($value));
+        $this->assertSame([], $dca->validateBlockedTimes([]));
+    }
+
+    public function testInvalidBlockedTimeIsRejected(): void
+    {
+        $dca = new ResourceBookingBlockedPeriod($this->createContaoFrameworkStub(), $this->createStub(Connection::class), $this->translator());
 
         $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('RBB.BE.timeToBeforeTimeFrom');
+        $this->expectExceptionMessage('RBB.BE.invalidBlockedTime:2');
 
-        $dca->validateTimeTo('11:00');
+        $dca->validateBlockedTimes([
+            ['weekday' => 'monday', 'timeFrom' => '08:00', 'timeTo' => '09:00'],
+            ['weekday' => 'monday', 'timeFrom' => '25:00', 'timeTo' => ''],
+        ]);
+    }
+
+    public function testTheEndTimeMustBeAfterTheStartTime(): void
+    {
+        $dca = new ResourceBookingBlockedPeriod($this->createContaoFrameworkStub(), $this->createStub(Connection::class), $this->translator());
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('RBB.BE.timeToBeforeTimeFrom:1');
+
+        $dca->validateBlockedTimes([['weekday' => 'monday', 'timeFrom' => '12:00', 'timeTo' => '11:00']]);
     }
 
     public function testCountsFutureBookingsInTheBlockedPeriod(): void
@@ -78,7 +98,7 @@ class ResourceBookingBlockedPeriodTest extends ContaoTestCase
             'published' => '1',
             'dateFrom' => $dateFrom,
             'dateTo' => $dateTo,
-            'addTimeRange' => '',
+            'blockedTimes' => null,
             'scope' => 'resourceTypes',
             'resourceTypes' => serialize(['4']),
         ];

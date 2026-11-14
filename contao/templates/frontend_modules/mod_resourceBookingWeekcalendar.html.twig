@@ -8,6 +8,7 @@
 
 {# Partials for mode "week-calendar" and  mode "booking_window" #}
 {% use '@MarkocupicResourceBooking/_logged_in_user.html.twig' %}
+{% use '@MarkocupicResourceBooking/_header.html.twig' %}
 {% use '@MarkocupicResourceBooking/_loading_indicator.html.twig' %}
 {% use '@MarkocupicResourceBooking/_status_message.html.twig' %}
 {% use '@MarkocupicResourceBooking/_messages.html.twig' %}
@@ -15,6 +16,7 @@
 {# Partials for mode "week-calendar" #}
 {% use '@MarkocupicResourceBooking/week_calendar/_active_resource_description.html.twig' %}
 {% use '@MarkocupicResourceBooking/week_calendar/_filter_board.html.twig' %}
+{% use '@MarkocupicResourceBooking/week_calendar/_legend.html.twig' %}
 {% use '@MarkocupicResourceBooking/week_calendar/_table.html.twig' %}
 {% use '@MarkocupicResourceBooking/week_calendar/_time_slot_cell.html.twig' %}
 
@@ -27,7 +29,7 @@
 {% block content %}
     <div id="resourceBookingApp_{{ moduleKey }}" v-cloak>
         <div class="rbb-app" :class="isReady ? 'rbb-is-ready' : ''">
-            {{ block('rbb_logged_in_user') }}
+            {{ block('rbb_header') }}
             {{ block('rbb_loading_indicator') }}
             {{ block('rbb_status_message') }}
 
@@ -38,8 +40,9 @@
                     {# Start main window / mode === 'week-calendar' #}
                     {% block rbb_week_calendar_window %}
                         <div class="rbb-week-calendar" v-if="mode === 'week-calendar'">
-                            {{ block('rbb_week_calendar_window__active_resource_description') }}
                             {{ block('rbb_week_calendar_window__filter_board') }}
+                            {{ block('rbb_week_calendar_window__active_resource_description') }}
+                            {{ block('rbb_week_calendar_window__legend') }}
                             {% with {time_slot_cell: block('rbb_week_calendar_window__time_slot_cell')} %}
                                 {{ block('rbb_week_calendar_window__table') }}
                             {% endwith %}

@@ -19,8 +19,8 @@ use Contao\CoreBundle\DependencyInjection\Attribute\AsCallback;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\DataContainer;
 use Contao\Date;
-use Contao\Input;
 use Contao\Message;
+use Contao\StringUtil;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Types\Types;
@@ -68,30 +68,67 @@ class ResourceBookingBlockedPeriod
         $dateFormat = (string) $this->framework->getAdapter(Config::class)->get('dateFormat');
 
         $columns[1] = $dateAdapter->parse($dateFormat, (int) $row['dateFrom']);
-        $columns[2] = $dateAdapter->parse($dateFormat, (int) $row['dateTo']);
+        $columns[2] = empty($row['dateTo'])
+            ? $this->translator->trans('tl_resource_booking_blocked_period.unlimited', [], 'contao_tl_resource_booking_blocked_period')
+            : $dateAdapter->parse($dateFormat, (int) $row['dateTo']);
 
-        $timeFrom = ResourceBookingRestriction::timeToSeconds($row['timeFrom'] ?? null);
-        $timeTo = ResourceBookingRestriction::timeToSeconds($row['timeTo'] ?? null);
+        $summary = [];
 
-        if (!empty($row['addTimeRange']) && null !== $timeFrom && null !== $timeTo) {
-            $columns[0] .= \sprintf(' <span class="tl_gray">(%s - %s)</span>', gmdate('H:i', $timeFrom), gmdate('H:i', $timeTo));
+        foreach (ResourceBookingRestriction::getBlockedTimes($row) as $blockedTime) {
+            $text = 'daily' === $blockedTime['weekday']
+                ? $this->translator->trans('tl_resource_booking_blocked_period.weekdayOptions.daily', [], 'contao_tl_resource_booking_blocked_period')
+                : $this->translator->trans('MSC.DAYS_SHORTENED.'.$blockedTime['weekday'], [], 'contao_default');
+
+            if (0 !== $blockedTime['timeFrom'] || 86400 !== $blockedTime['timeTo']) {
+                $text .= ' '.self::formatTime($blockedTime['timeFrom']).'–'.self::formatTime($blockedTime['timeTo']);
+            }
+
+            $summary[] = $text;
+        }
+
+        if (!empty($summary)) {
+            $columns[0] .= ' <span class="tl_gray">('.implode(', ', $summary).')</span>';
         }
 
         return $columns;
     }
 
     /**
-     * The end time has to be after the start time.
+     * Shows an empty field instead of 01.01.1970 if no date is set (dateTo = unlimited).
      */
-    #[AsCallback(table: 'tl_resource_booking_blocked_period', target: 'fields.timeTo.save')]
-    public function validateTimeTo(mixed $value): mixed
+    #[AsCallback(table: 'tl_resource_booking_blocked_period', target: 'fields.dateTo.load')]
+    public function loadDateTo(mixed $value): mixed
     {
-        // The posted start time ("hh:mm") and the converted end time (Contao time value)
-        $timeFrom = ResourceBookingRestriction::timeToSeconds($this->framework->getAdapter(Input::class)->post('timeFrom'));
-        $timeTo = ResourceBookingRestriction::timeToSeconds($value);
+        return empty($value) ? '' : $value;
+    }
 
-        if (null !== $timeFrom && null !== $timeTo && $timeTo <= $timeFrom) {
-            throw new \RuntimeException($this->translator->trans('RBB.BE.timeToBeforeTimeFrom', [], 'contao_default'));
+    /**
+     * Validates the blocked times (row wizard): the times must be empty or "hh:mm"
+     * (00:00 - 24:00) and the end time must be after the start time.
+     */
+    #[AsCallback(table: 'tl_resource_booking_blocked_period', target: 'fields.blockedTimes.save')]
+    public function validateBlockedTimes(mixed $value): mixed
+    {
+        $rows = \is_array($value) ? $value : StringUtil::deserialize($value, true);
+
+        foreach (array_values($rows) as $i => $row) {
+            if (!\is_array($row)) {
+                continue;
+            }
+
+            $timeFrom = trim((string) ($row['timeFrom'] ?? ''));
+            $timeTo = trim((string) ($row['timeTo'] ?? ''));
+
+            $from = '' === $timeFrom ? 0 : self::parseTime($timeFrom);
+            $to = '' === $timeTo ? 86400 : self::parseTime($timeTo);
+
+            if (null === $from || null === $to) {
+                throw new \RuntimeException($this->translator->trans('RBB.BE.invalidBlockedTime', [$i + 1], 'contao_default'));
+            }
+
+            if ($to <= $from) {
+                throw new \RuntimeException($this->translator->trans('RBB.BE.timeToBeforeTimeFrom', [$i + 1], 'contao_default'));
+            }
         }
 
         return $value;
@@ -120,7 +157,7 @@ class ResourceBookingBlockedPeriod
             return;
         }
 
-        if ((int) $period['dateTo'] < (int) $period['dateFrom']) {
+        if (!empty($period['dateTo']) && (int) $period['dateTo'] < (int) $period['dateFrom']) {
             [$period['dateFrom'], $period['dateTo']] = [$period['dateTo'], $period['dateFrom']];
 
             $this->connection->update(
@@ -157,7 +194,7 @@ class ResourceBookingBlockedPeriod
             'SELECT b.startTime, b.endTime, r.id, r.pid FROM tl_resource_booking b
                 INNER JOIN tl_resource_booking_resource r ON r.id = b.pid
                 WHERE b.isBlocked = 0 AND b.endTime > ? AND b.startTime < ? AND b.endTime > ?',
-            [time(), strtotime('+1 day', (int) $period['dateTo']), (int) $period['dateFrom']],
+            [time(), empty($period['dateTo']) ? PHP_INT_MAX : strtotime('+1 day', (int) $period['dateTo']), (int) $period['dateFrom']],
             [Types::INTEGER, Types::INTEGER, Types::INTEGER],
         );
 
@@ -172,5 +209,24 @@ class ResourceBookingBlockedPeriod
         }
 
         return $count;
+    }
+
+    /**
+     * Converts "hh:mm" (00:00 - 24:00) into seconds since midnight.
+     */
+    private static function parseTime(string $time): int|null
+    {
+        if (!preg_match('/^([01]?\d|2[0-4]):([0-5]\d)$/', $time, $matches)) {
+            return null;
+        }
+
+        $seconds = (int) $matches[1] * 3600 + (int) $matches[2] * 60;
+
+        return $seconds <= 86400 ? $seconds : null;
+    }
+
+    private static function formatTime(int $seconds): string
+    {
+        return 86400 === $seconds ? '24:00' : gmdate('H:i', $seconds);
     }
 }

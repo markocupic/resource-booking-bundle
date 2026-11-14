@@ -15,7 +15,6 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\AjaxController\Traits;
 
 use Contao\Config;
-use Contao\Database;
 use Contao\Date;
 use Contao\FrontendUser;
 use Contao\MemberModel;
@@ -127,6 +126,14 @@ trait RefreshDataTrait
         // Weekdays
         $arrData['weekdays'] = $this->getWeekdays($this->sessionBag->get('activeWeekTstamp'), $this->getActiveResourceFromSession());
 
+        // Displayed days of the active week for the header, e.g. "Montag, 16. bis Freitag, 20. November 2026"
+        $arrData['activeWeek']['calWeek'] = (int) $arrData['activeWeek']['weekNumber'];
+        $arrData['activeWeek']['daySpan'] = $this->getDaySpan($arrData['weekdays'], (int) $this->sessionBag->get('activeWeekTstamp'));
+
+        // Always send the active resource type and resource, so that the
+        // front end does not keep the previous ones after a filter change.
+        $arrData['activeResourceType'] = [];
+        $arrData['activeResource'] = [];
         $arrData['activeResourceTypeId'] = 'undefined';
 
         if (null !== $this->getActiveResourceTypeFromSession()) {
@@ -331,14 +338,14 @@ trait RefreshDataTrait
         $visibleWeekdays = $this->getVisibleWeekdays($resourceModel);
 
         foreach ($arrWeekdays as $i => $weekday) {
-            // Skip weekdays on which the resource cannot be booked
-            // or on which none of the time slots is available
+            // Skip weekdays on which none of the time slots is available
             if (!\in_array($weekday, $visibleWeekdays, true)) {
                 continue;
             }
 
             $arrWeek[] = [
                 'index' => $i,
+                'tstamp' => strtotime($dateAdapter->parse('Y-m-d', $activeWeekTstamp).' +'.$i.' day'),
                 'name' => $weekday,
                 'title' => $this->translator->trans('MSC.DAYS_LONG.'.$weekday, [], 'contao_default'),
                 'titleShort' => $this->translator->trans('MSC.DAYS_SHORTENED.'.$weekday, [], 'contao_default'),
@@ -347,6 +354,45 @@ trait RefreshDataTrait
         }
 
         return $arrWeek;
+    }
+
+    /**
+     * Returns the displayed days of the week as text, e.g.
+     * "Montag, 16. bis Freitag, 20. November 2026". The month and the year
+     * are only repeated if they differ. The date formats and the separator
+     * can be changed in the language files (RBB.daySpan*).
+     *
+     * @param array<int, array{tstamp: int}> $weekdays
+     */
+    private function getDaySpan(array $weekdays, int $activeWeekTstamp): string
+    {
+        if ($activeWeekTstamp <= 0) {
+            return '';
+        }
+
+        $dateAdapter = $this->framework->getAdapter(Date::class);
+
+        if (empty($weekdays)) {
+            $start = $activeWeekTstamp;
+            $end = strtotime($dateAdapter->parse('Y-m-d', $activeWeekTstamp).' +6 days');
+        } else {
+            $start = (int) reset($weekdays)['tstamp'];
+            $end = (int) end($weekdays)['tstamp'];
+        }
+
+        $formatFull = $this->translator->trans('RBB.daySpanFormatFull', [], 'contao_default');
+
+        if ($dateAdapter->parse('Y-m-d', $start) === $dateAdapter->parse('Y-m-d', $end)) {
+            return $dateAdapter->parse($formatFull, $start);
+        }
+
+        $formatStart = match (true) {
+            $dateAdapter->parse('Y', $start) !== $dateAdapter->parse('Y', $end) => $formatFull,
+            $dateAdapter->parse('m', $start) !== $dateAdapter->parse('m', $end) => $this->translator->trans('RBB.daySpanFormatDayMonth', [], 'contao_default'),
+            default => $this->translator->trans('RBB.daySpanFormatDay', [], 'contao_default'),
+        };
+
+        return $this->translator->trans('RBB.daySpan', [$dateAdapter->parse($formatStart, $start), $dateAdapter->parse($formatFull, $end)], 'contao_default');
     }
 
     /**
@@ -365,10 +411,11 @@ trait RefreshDataTrait
     }
 
     /**
-     * Returns the weekdays that are displayed in the week calendar: the resource
-     * can be booked on that weekday (tl_resource_booking_resource.allowedWeekdays)
-     * and at least one of its time slots is available on that weekday
-     * (tl_resource_booking_time_slot.weekdays).
+     * Returns the weekdays that are displayed in the week calendar: at least one
+     * time slot of the timetable is available on that weekday
+     * (tl_resource_booking_time_slot.weekdays). Only the timetable decides which
+     * weekdays are displayed. Blocked periods (e.g. weekends) do not hide weekdays,
+     * their slots are displayed as blocked.
      *
      * @return array<int, string>
      */
@@ -378,10 +425,6 @@ trait RefreshDataTrait
         $visibleWeekdays = [];
 
         foreach ($this->getDaysOfWeek() as $weekday) {
-            if (!ResourceBookingRestriction::isWeekdayAllowed($resourceModel, $weekday)) {
-                continue;
-            }
-
             // Without any time slot the table is empty anyway: keep the weekday.
             if (empty($timeSlots)) {
                 $visibleWeekdays[] = $weekday;
@@ -457,9 +500,9 @@ trait RefreshDataTrait
             return $rows;
         }
 
-        // Resolve the list of available booking fields once; it is constant for the whole request.
-        $databaseAdapter = $this->framework->getAdapter(Database::class);
-        $arrAvailable = $databaseAdapter->getInstance()->listFields('tl_resource_booking');
+        // Fields that may be sent to the front end (module settings and bundle configuration)
+        $displayedMemberFields = null === $moduleModel ? [] : $this->utils->getDisplayedMemberFields($moduleModel);
+        $displayedBookingFields = null === $moduleModel ? [] : $this->utils->getDisplayedBookingFields($moduleModel);
 
         $objTimeslot = $resourceBookingTimeSlotModelAdapter->findPublishedByPid((int) $resourceModel->timeSlotType);
         $visibleWeekdays = $this->getVisibleWeekdays($resourceModel);
@@ -511,70 +554,49 @@ trait RefreshDataTrait
                         $iterator = (new \ArrayObject($slot->bookings))->getIterator();
 
                         while ($iterator->valid()) {
-                            $booking = $iterator->current();
+                            $row = $iterator->current();
 
-                            // Presets
-                            $booking['bookedByFirstname'] = '';
-                            $booking['bookedByLastname'] = '';
+                            // Only explicitly permitted data is sent to the front end: it is
+                            // visible to all logged-in members (also in the browser's dev tools).
+                            $booking = [];
 
-                            // Fallback
-                            $booking['bookedByFullname'] = $stringUtilAdapter->decodeEntities($this->translator->trans('RBB.anonymous', [], 'contao_default'));
-
-                            $arrAllowed = $stringUtilAdapter->deserialize($moduleModel->resourceBooking_clientPersonalData, true);
-
-                            $objMember = $memberModelAdapter->findById($booking['member']);
-
-                            // Send data about the booking owner (tl_member)
-                            if (null !== $objMember) {
-                                // However, only show the fields that have been permitted in the module settings (tl_module.resourceBooking_displayClientPersonalData).
-                                if ($moduleModel->resourceBooking_displayClientPersonalData) {
-                                    foreach ($arrAllowed as $fieldName) {
-                                        $booking['bookedBy'.ucfirst($fieldName)] = $stringUtilAdapter->decodeEntities($objMember->$fieldName);
-                                    }
-
-                                    if (\in_array('firstname', $arrAllowed, true) && \in_array('lastname', $arrAllowed, true)) {
-                                        $booking['bookedByFullname'] = $stringUtilAdapter->decodeEntities($objMember->firstname.' '.$objMember->lastname);
-                                    }
-                                }
-
-                                // Show first- and lastname of the booking owner is the currently logged in frontend user.
-                                if (null !== $user && (int) $user->id === (int) $objMember->id) {
-                                    $booking['bookedByFullname'] = $stringUtilAdapter->decodeEntities($objMember->firstname.' '.$objMember->lastname);
-                                }
-
-                                // Newer send the password or session data.
-                                $booking['bookedBySession'] = null;
-                                $booking['bookedByPassword'] = null;
+                            foreach (RbbConfig::RBB_ALWAYS_SENT_BOOKING_FIELDS as $field) {
+                                $booking[$field] = $row[$field] ?? null;
                             }
 
-                            // Send booking details (tl_resource_booking)
-                            $arrShowAlways = ['id', 'pid', 'itemsBooked', 'bookingTime', 'confirmed'];
+                            $booking['id'] = (int) $booking['id'];
+                            $booking['pid'] = (int) $booking['pid'];
+                            $booking['itemsBooked'] = (int) $booking['itemsBooked'];
+                            $booking['bookingTime'] = (int) $booking['bookingTime'];
+                            // The database may return "0" as string, which is true in JavaScript
+                            $booking['confirmed'] = (bool) $booking['confirmed'];
 
-                            // However, only show the fields that have been permitted in the module settings (tl_module.resourceBooking_bookingDetailFields).
-                            if ($moduleModel->resourceBooking_displayBookingDetails) {
-                                $arrAllowed = $stringUtilAdapter->deserialize($moduleModel->resourceBooking_bookingDetailFields, true);
+                            // Fallback, if the name of the booking person must not be displayed
+                            $booking['bookedByFullname'] = $stringUtilAdapter->decodeEntities($this->translator->trans('RBB.anonymous', [], 'contao_default'));
+                            $booking['bookedByAnonymous'] = true;
 
-                                foreach ($arrAvailable as $arrField) {
-                                    $field = $arrField['name'];
+                            $objMember = $memberModelAdapter->findById($row['member']);
 
-                                    if (\in_array($field, $arrShowAlways, true) || \in_array($field, $arrAllowed, true)) {
-                                        $booking['booking'.ucfirst((string) $field)] = $stringUtilAdapter->decodeEntities((string) $booking[$field]);
-                                    } else {
-                                        $booking['booking'.ucfirst((string) $field)] = null;
-                                        $booking[$field] = null;
-                                    }
+                            // Data about the booking person (tl_member) as "bookedBy<Field>",
+                            // only the fields selected in the module and permitted in the bundle configuration
+                            if (null !== $objMember) {
+                                foreach ($displayedMemberFields as $fieldName) {
+                                    $booking['bookedBy'.ucfirst($fieldName)] = $stringUtilAdapter->decodeEntities((string) $objMember->$fieldName);
                                 }
-                            } else {
-                                foreach ($arrAvailable as $arrField) {
-                                    $field = $arrField['name'];
 
-                                    if (\in_array($field, $arrShowAlways, true)) {
-                                        $booking['booking'.ucfirst((string) $field)] = $stringUtilAdapter->decodeEntities((string) $booking[$field]);
-                                    } else {
-                                        $booking['booking'.ucfirst((string) $field)] = null;
-                                        $booking[$field] = null;
-                                    }
+                                $showFullname = \in_array('firstname', $displayedMemberFields, true) && \in_array('lastname', $displayedMemberFields, true);
+
+                                // The logged-in member always sees their own name
+                                if ($showFullname || (null !== $user && (int) $user->id === (int) $objMember->id)) {
+                                    $booking['bookedByFullname'] = $stringUtilAdapter->decodeEntities($objMember->firstname.' '.$objMember->lastname);
+                                    $booking['bookedByAnonymous'] = false;
                                 }
+                            }
+
+                            // Booking details (tl_resource_booking) as "booking<Field>",
+                            // only the fields selected in the module and permitted in the bundle configuration
+                            foreach ($displayedBookingFields as $field) {
+                                $booking['booking'.ucfirst($field)] = $stringUtilAdapter->decodeEntities((string) ($row[$field] ?? ''));
                             }
 
                             // A user may only cancel their own bookings: both must exist and share the same id.

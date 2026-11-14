@@ -18,58 +18,25 @@ use Contao\TestCase\ContaoTestCase;
 use Markocupic\ResourceBookingBundle\Config\RbbConfig;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotModel;
+use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotTypeModel;
 use Markocupic\ResourceBookingBundle\Util\ResourceBookingRestriction;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 class ResourceBookingRestrictionTest extends ContaoTestCase
 {
-    public function testAllWeekdaysAreAllowedWithoutResource(): void
+    public function testBeginWeekIsReadFromTheTimetable(): void
     {
-        $this->assertTrue(ResourceBookingRestriction::isWeekdayAllowed(null, 'sunday'));
+        $this->assertSame('sunday', ResourceBookingRestriction::getBeginWeek(['beginWeek' => 'sunday']));
+        $this->assertSame('saturday', ResourceBookingRestriction::getBeginWeek(['beginWeek' => ' Saturday ']));
+        $this->assertSame('sunday', ResourceBookingRestriction::getBeginWeek($this->createClassWithPropertiesStub(ResourceBookingTimeSlotTypeModel::class, ['beginWeek' => 'sunday'])));
     }
 
-    public function testAllWeekdaysAreAllowedIfRestrictionIsDisabled(): void
+    public function testBeginWeekFallsBackToMonday(): void
     {
-        $row = [
-            'restrictWeekdays' => '',
-            'allowedWeekdays' => serialize(['monday']),
-        ];
-
-        $this->assertTrue(ResourceBookingRestriction::isWeekdayAllowed($row, 'tuesday'));
-    }
-
-    public function testOnlySelectedWeekdaysAreAllowedIfRestrictionIsEnabled(): void
-    {
-        $row = [
-            'restrictWeekdays' => '1',
-            'allowedWeekdays' => serialize(['monday', 'wednesday']),
-        ];
-
-        $this->assertTrue(ResourceBookingRestriction::isWeekdayAllowed($row, 'monday'));
-        $this->assertTrue(ResourceBookingRestriction::isWeekdayAllowed($row, 'Wednesday'));
-        $this->assertFalse(ResourceBookingRestriction::isWeekdayAllowed($row, 'tuesday'));
-    }
-
-    public function testNoWeekdayIsAllowedIfRestrictionIsEnabledWithoutSelection(): void
-    {
-        $row = [
-            'restrictWeekdays' => 1,
-            'allowedWeekdays' => null,
-        ];
-
-        $this->assertFalse(ResourceBookingRestriction::isWeekdayAllowed($row, 'monday'));
-    }
-
-    public function testWeekdayRestrictionWorksWithModel(): void
-    {
-        $model = $this->createClassWithPropertiesMock(ResourceBookingResourceModel::class, [
-            'restrictWeekdays' => true,
-            'allowedWeekdays' => serialize(['friday']),
-            'addBookableUntil' => false,
-            'bookableUntil' => '',
-        ]);
-
-        $this->assertTrue(ResourceBookingRestriction::isWeekdayAllowed($model, 'friday'));
-        $this->assertFalse(ResourceBookingRestriction::isWeekdayAllowed($model, 'monday'));
+        $this->assertSame('monday', ResourceBookingRestriction::getBeginWeek(null));
+        $this->assertSame('monday', ResourceBookingRestriction::getBeginWeek([]));
+        $this->assertSame('monday', ResourceBookingRestriction::getBeginWeek(['beginWeek' => null]));
+        $this->assertSame('monday', ResourceBookingRestriction::getBeginWeek(['beginWeek' => 'someday']));
     }
 
     public function testBookableUntilIsNullIfDisabledOrEmpty(): void
@@ -157,16 +124,64 @@ class ResourceBookingRestrictionTest extends ContaoTestCase
         $this->assertFalse(ResourceBookingRestriction::isInBlockedPeriod($period, ['id' => 3, 'pid' => 4], strtotime('2030-10-07 08:00'), strtotime('2030-10-07 09:00')));
     }
 
-    public function testBlockedPeriodWithTimeRangeOnlyBlocksOverlappingSlots(): void
+    public function testBlockedPeriodWithoutEndDateIsUnlimited(): void
     {
-        $period = $this->blockedPeriod(['addTimeRange' => '1', 'timeFrom' => '12:00', 'timeTo' => '18:00']);
+        $period = $this->blockedPeriod(['dateTo' => 0]);
+        $resource = ['id' => 3, 'pid' => 4];
+
+        $this->assertTrue(ResourceBookingRestriction::isInBlockedPeriod($period, $resource, strtotime('2045-06-01 08:00'), strtotime('2045-06-01 09:00')));
+        $this->assertFalse(ResourceBookingRestriction::isInBlockedPeriod($period, $resource, strtotime('2030-10-06 08:00'), strtotime('2030-10-06 09:00')));
+    }
+
+    public function testBlockedTimesOnlyBlockTheirWeekdays(): void
+    {
+        // 2030-10-07 is a monday, 2030-10-12 a saturday
+        $period = $this->blockedPeriod(['blockedTimes' => serialize([
+            ['weekday' => 'saturday', 'timeFrom' => '', 'timeTo' => ''],
+            ['weekday' => 'sunday', 'timeFrom' => '', 'timeTo' => ''],
+        ])]);
         $resource = ['id' => 3, 'pid' => 4];
 
         $this->assertFalse(ResourceBookingRestriction::isInBlockedPeriod($period, $resource, strtotime('2030-10-07 08:00'), strtotime('2030-10-07 09:00')));
+        $this->assertTrue(ResourceBookingRestriction::isInBlockedPeriod($period, $resource, strtotime('2030-10-12 08:00'), strtotime('2030-10-12 09:00')));
+        $this->assertTrue(ResourceBookingRestriction::isInBlockedPeriod($period, $resource, strtotime('2030-10-13 23:00'), strtotime('2030-10-14 00:00')));
+    }
+
+    public function testBlockedTimesWithTimesOnlyBlockOverlappingSlots(): void
+    {
+        $period = $this->blockedPeriod(['blockedTimes' => serialize([
+            ['weekday' => 'monday', 'timeFrom' => '12:00', 'timeTo' => '18:00'],
+            ['weekday' => 'friday', 'timeFrom' => '14:00', 'timeTo' => ''],
+        ])]);
+        $resource = ['id' => 3, 'pid' => 4];
+
+        // Monday
+        $this->assertFalse(ResourceBookingRestriction::isInBlockedPeriod($period, $resource, strtotime('2030-10-07 08:00'), strtotime('2030-10-07 09:00')));
         $this->assertFalse(ResourceBookingRestriction::isInBlockedPeriod($period, $resource, strtotime('2030-10-07 11:00'), strtotime('2030-10-07 12:00')));
         $this->assertTrue(ResourceBookingRestriction::isInBlockedPeriod($period, $resource, strtotime('2030-10-07 11:30'), strtotime('2030-10-07 12:15')));
-        $this->assertTrue(ResourceBookingRestriction::isInBlockedPeriod($period, $resource, strtotime('2030-10-08 13:30'), strtotime('2030-10-08 14:15')));
         $this->assertFalse(ResourceBookingRestriction::isInBlockedPeriod($period, $resource, strtotime('2030-10-07 18:00'), strtotime('2030-10-07 19:00')));
+        // Tuesday: no blocked time
+        $this->assertFalse(ResourceBookingRestriction::isInBlockedPeriod($period, $resource, strtotime('2030-10-08 13:00'), strtotime('2030-10-08 14:00')));
+        // Friday from 14:00 until the end of the day
+        $this->assertFalse(ResourceBookingRestriction::isInBlockedPeriod($period, $resource, strtotime('2030-10-11 13:00'), strtotime('2030-10-11 14:00')));
+        $this->assertTrue(ResourceBookingRestriction::isInBlockedPeriod($period, $resource, strtotime('2030-10-11 20:00'), strtotime('2030-10-11 21:00')));
+    }
+
+    public function testDailyBlockedTimeAppliesToEveryDay(): void
+    {
+        $period = $this->blockedPeriod(['blockedTimes' => serialize([['weekday' => 'daily', 'timeFrom' => '12:00', 'timeTo' => '13:00']])]);
+        $resource = ['id' => 3, 'pid' => 4];
+
+        $this->assertTrue(ResourceBookingRestriction::isInBlockedPeriod($period, $resource, strtotime('2030-10-08 12:15'), strtotime('2030-10-08 12:45')));
+        $this->assertTrue(ResourceBookingRestriction::isInBlockedPeriod($period, $resource, strtotime('2030-10-12 12:15'), strtotime('2030-10-12 12:45')));
+        $this->assertFalse(ResourceBookingRestriction::isInBlockedPeriod($period, $resource, strtotime('2030-10-12 13:00'), strtotime('2030-10-12 14:00')));
+    }
+
+    public function testInvalidBlockedTimeRowsAreIgnored(): void
+    {
+        $period = $this->blockedPeriod(['blockedTimes' => serialize([['weekday' => 'someday'], 'foo'])]);
+
+        $this->assertSame([], ResourceBookingRestriction::getBlockedTimes($period));
     }
 
     public function testBlockedPeriodScope(): void
@@ -183,6 +198,100 @@ class ResourceBookingRestrictionTest extends ContaoTestCase
         $this->assertFalse(ResourceBookingRestriction::isInBlockedPeriod($byResource, ['id' => 9, 'pid' => 4], $start, $end));
     }
 
+    public function testValidTimeSlot(): void
+    {
+        [$timeSlot, $timeSlotType, $resource] = $this->timeSlotFixture();
+
+        // 08:00 - 08:45 on the day of the slot
+        $start = strtotime('2030-10-07 08:00');
+        $end = strtotime('2030-10-07 08:45');
+
+        $this->assertTrue(ResourceBookingRestriction::isValidTimeSlot($timeSlot, $timeSlotType, $resource, $start, $end));
+
+        // Repetition one week later
+        $this->assertTrue(ResourceBookingRestriction::isValidTimeSlot($timeSlot, $timeSlotType, $resource, strtotime('+7 days', $start), strtotime('+7 days', $end)));
+    }
+
+    public function testRepetitionOverADaylightSavingTimeChangeIsValid(): void
+    {
+        $timezone = date_default_timezone_get();
+        date_default_timezone_set('Europe/Zurich');
+
+        try {
+            [$timeSlot, $timeSlotType, $resource] = $this->timeSlotFixture();
+
+            // The clocks change on 2030-03-31; "+7 days" keeps the wall clock time
+            $start = strtotime('+7 days', strtotime('2030-03-24 08:00'));
+            $end = strtotime('+7 days', strtotime('2030-03-24 08:45'));
+
+            $this->assertTrue(ResourceBookingRestriction::isValidTimeSlot($timeSlot, $timeSlotType, $resource, $start, $end));
+        } finally {
+            date_default_timezone_set($timezone);
+        }
+    }
+
+    public function testTimeSlotEndingAtMidnightIsValid(): void
+    {
+        [$timeSlot, $timeSlotType, $resource] = $this->timeSlotFixture(['startTime' => 23 * 3600, 'endTime' => 24 * 3600]);
+
+        $midnight = strtotime('2030-10-07');
+
+        $this->assertTrue(ResourceBookingRestriction::isValidTimeSlot($timeSlot, $timeSlotType, $resource, $midnight + 23 * 3600, $midnight + 24 * 3600));
+    }
+
+    public static function invalidTimeSlotProvider(): iterable
+    {
+        yield 'time slot not published' => [['published' => ''], [], [], '08:00', '08:45'];
+        yield 'timetable not published' => [[], ['published' => ''], [], '08:00', '08:45'];
+        yield 'time slot of another timetable' => [['pid' => 99], [], [], '08:00', '08:45'];
+        yield 'timetable of another resource' => [[], [], ['timeSlotType' => 99], '08:00', '08:45'];
+        yield 'wrong start time' => [[], [], [], '07:00', '08:45'];
+        yield 'wrong end time' => [[], [], [], '08:00', '23:00'];
+        yield 'arbitrary time span' => [[], [], [], '03:00', '23:00'];
+        yield 'end before start' => [[], [], [], '08:45', '08:00'];
+    }
+
+    /**
+     * @param array<string, mixed> $timeSlot
+     * @param array<string, mixed> $timeSlotType
+     * @param array<string, mixed> $resource
+     */
+    #[DataProvider('invalidTimeSlotProvider')]
+    public function testInvalidTimeSlot(array $timeSlot, array $timeSlotType, array $resource, string $start, string $end): void
+    {
+        [$validTimeSlot, $validTimeSlotType, $validResource] = $this->timeSlotFixture();
+
+        $this->assertFalse(ResourceBookingRestriction::isValidTimeSlot(
+            array_merge($validTimeSlot, $timeSlot),
+            array_merge($validTimeSlotType, $timeSlotType),
+            array_merge($validResource, $resource),
+            strtotime('2030-10-07 '.$start),
+            strtotime('2030-10-07 '.$end),
+        ));
+    }
+
+    public function testMissingTimeSlotIsInvalid(): void
+    {
+        [, $timeSlotType, $resource] = $this->timeSlotFixture();
+
+        $this->assertFalse(ResourceBookingRestriction::isValidTimeSlot(null, $timeSlotType, $resource, strtotime('2030-10-07 08:00'), strtotime('2030-10-07 08:45')));
+        $this->assertFalse(ResourceBookingRestriction::isValidTimeSlot($this->timeSlotFixture()[0], null, $resource, strtotime('2030-10-07 08:00'), strtotime('2030-10-07 08:45')));
+    }
+
+    /**
+     * @param array<string, mixed> $timeSlotOverride
+     *
+     * @return array{0: array<string, mixed>, 1: array<string, mixed>, 2: array<string, mixed>}
+     */
+    private function timeSlotFixture(array $timeSlotOverride = []): array
+    {
+        return [
+            array_merge(['id' => 12, 'pid' => 4, 'published' => '1', 'startTime' => 8 * 3600, 'endTime' => 8 * 3600 + 45 * 60], $timeSlotOverride),
+            ['id' => 4, 'published' => '1'],
+            ['id' => 3, 'pid' => 7, 'timeSlotType' => 4, 'itemsAvailable' => 1],
+        ];
+    }
+
     /**
      * @param array<string, mixed> $override
      *
@@ -196,9 +305,7 @@ class ResourceBookingRestrictionTest extends ContaoTestCase
             'published' => '1',
             'dateFrom' => strtotime('2030-10-07'),
             'dateTo' => strtotime('2030-10-18'),
-            'addTimeRange' => '',
-            'timeFrom' => '',
-            'timeTo' => '',
+            'blockedTimes' => null,
             'scope' => 'all',
             'resourceTypes' => null,
             'resources' => null,

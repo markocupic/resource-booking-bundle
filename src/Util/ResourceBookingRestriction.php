@@ -18,15 +18,16 @@ use Contao\StringUtil;
 use Markocupic\ResourceBookingBundle\Config\RbbConfig;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotModel;
+use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotTypeModel;
 
 /**
  * Evaluates the booking restrictions configured on a resource
  * (tl_resource_booking_resource.weeksBack/weeksAhead,
- * tl_resource_booking_resource.restrictWeekdays/allowedWeekdays and
  * tl_resource_booking_resource.addBookableUntil/bookableUntil and
  * tl_resource_booking_resource.autoConfirm) and the weekdays of a time slot
- * (tl_resource_booking_time_slot.weekdays) and the blocked periods
- * (tl_resource_booking_blocked_period).
+ * (tl_resource_booking_time_slot.weekdays), the first day of the week of a
+ * timetable (tl_resource_booking_time_slot_type.beginWeek) and the blocked
+ * periods (tl_resource_booking_blocked_period).
  *
  * All methods accept either the resource model or its row array, because the
  * slot classes only keep the row.
@@ -34,22 +35,19 @@ use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotModel;
 class ResourceBookingRestriction
 {
     /**
-     * Returns true if the resource may be booked on the given weekday
-     * (lowercase english weekday name, e.g. "monday").
+     * Returns the weekday on which the week calendar of the timetable starts
+     * (tl_resource_booking_time_slot_type.beginWeek), e.g. "monday".
      *
-     * @param ResourceBookingResourceModel|array<string, mixed>|null $resource
+     * Without a timetable or with an invalid value, the week starts on monday.
+     *
+     * @param ResourceBookingTimeSlotTypeModel|array<string, mixed>|null $timeSlotType
      */
-    public static function isWeekdayAllowed(ResourceBookingResourceModel|array|null $resource, string $weekday): bool
+    public static function getBeginWeek(ResourceBookingTimeSlotTypeModel|array|null $timeSlotType): string
     {
-        $row = self::toArray($resource);
+        $beginWeek = $timeSlotType instanceof ResourceBookingTimeSlotTypeModel ? $timeSlotType->beginWeek : ($timeSlotType['beginWeek'] ?? null);
+        $beginWeek = strtolower(trim((string) $beginWeek));
 
-        if (empty($row['restrictWeekdays'])) {
-            return true;
-        }
-
-        $allowedWeekdays = StringUtil::deserialize($row['allowedWeekdays'] ?? null, true);
-
-        return \in_array(strtolower($weekday), $allowedWeekdays, true);
+        return \in_array($beginWeek, RbbConfig::RBB_WEEKDAYS, true) ? $beginWeek : RbbConfig::RBB_DEFAULT_BEGIN_WEEK;
     }
 
     /**
@@ -78,12 +76,65 @@ class ResourceBookingRestriction
     }
 
     /**
+     * Returns true if a slot from $startTime to $endTime is a valid slot of the resource:
+     *
+     *  - the time slot exists and is published,
+     *  - its timetable (tl_resource_booking_time_slot_type) exists and is published,
+     *  - the timetable is the booking timetable of the resource and
+     *  - start and end time match the times of the time slot on that day.
+     *
+     * This prevents bookings of hidden time slots or of arbitrary times via manipulated requests.
+     *
+     * @param array<string, mixed>|null $timeSlot     row of tl_resource_booking_time_slot
+     * @param array<string, mixed>|null $timeSlotType row of tl_resource_booking_time_slot_type
+     * @param array<string, mixed>      $resource     row of tl_resource_booking_resource
+     */
+    public static function isValidTimeSlot(array|null $timeSlot, array|null $timeSlotType, array $resource, int $startTime, int $endTime): bool
+    {
+        if (null === $timeSlot || null === $timeSlotType) {
+            return false;
+        }
+
+        if (empty($timeSlot['published']) || empty($timeSlotType['published'])) {
+            return false;
+        }
+
+        $timeSlotTypeId = (int) ($timeSlotType['id'] ?? 0);
+
+        if ($timeSlotTypeId < 1 || (int) ($timeSlot['pid'] ?? 0) !== $timeSlotTypeId || (int) ($resource['timeSlotType'] ?? 0) !== $timeSlotTypeId) {
+            return false;
+        }
+
+        if ($endTime <= $startTime) {
+            return false;
+        }
+
+        $slotStart = (int) ($timeSlot['startTime'] ?? 0);
+        $slotEnd = (int) ($timeSlot['endTime'] ?? 0);
+
+        // The week calendar adds the time of the time slot (seconds) to the midnight of the day.
+        $midnight = strtotime(date('Y-m-d', $startTime));
+
+        if ($startTime - $midnight === $slotStart && $endTime - $midnight === $slotEnd) {
+            return true;
+        }
+
+        // Repetitions are calculated with "+7 days", which keeps the wall clock time.
+        // On days with a daylight saving time change, this differs from the seconds since midnight.
+        $day = date('Y-m-d', $startTime);
+
+        return $startTime === strtotime($day.' '.UtcTimeHelper::parseStartTime($slotStart))
+            && $endTime === strtotime($day.' '.UtcTimeHelper::parseEndTime($slotEnd));
+    }
+
+    /**
      * Returns true if the blocked period (row of tl_resource_booking_blocked_period)
      * applies to the resource and covers the slot from $startTime to $endTime.
      *
-     * The slot is covered if its day lies between dateFrom and dateTo (inclusive)
-     * and, if the period is limited to a time range, if the slot overlaps that
-     * time range. The time range applies to every day of the period.
+     * The slot is covered if its day lies between dateFrom and dateTo (inclusive,
+     * an empty dateTo means unlimited) and, if the period has blocked times, if the
+     * slot overlaps one of the blocked times on its weekday. Without blocked times
+     * the whole period is blocked.
      *
      * @param array<string, mixed> $period
      * @param array<string, mixed> $resource
@@ -100,25 +151,72 @@ class ResourceBookingRestriction
 
         $dayStart = strtotime(date('Y-m-d', $startTime));
         $dateFrom = strtotime(date('Y-m-d', (int) ($period['dateFrom'] ?? 0)));
-        $dateTo = strtotime(date('Y-m-d', (int) ($period['dateTo'] ?? 0)));
 
-        if ($dayStart < $dateFrom || $dayStart > $dateTo) {
+        if ($dayStart < $dateFrom) {
             return false;
         }
 
-        if (empty($period['addTimeRange'])) {
+        // A period without end date is unlimited
+        if (!empty($period['dateTo']) && $dayStart > strtotime(date('Y-m-d', (int) $period['dateTo']))) {
+            return false;
+        }
+
+        $blockedTimes = self::getBlockedTimes($period);
+
+        // Without blocked times the whole period is blocked
+        if (empty($blockedTimes)) {
             return true;
         }
 
-        $timeFrom = self::timeToSeconds($period['timeFrom'] ?? null);
-        $timeTo = self::timeToSeconds($period['timeTo'] ?? null);
+        $weekday = strtolower(date('l', $startTime));
+        $slotStart = $startTime - $dayStart;
+        $slotEnd = $endTime - $dayStart;
 
-        // An incomplete time range blocks the whole day.
-        if (null === $timeFrom || null === $timeTo) {
-            return true;
+        foreach ($blockedTimes as $blockedTime) {
+            if ('daily' !== $blockedTime['weekday'] && $weekday !== $blockedTime['weekday']) {
+                continue;
+            }
+
+            if ($slotStart < $blockedTime['timeTo'] && $slotEnd > $blockedTime['timeFrom']) {
+                return true;
+            }
         }
 
-        return $startTime - $dayStart < $timeTo && $endTime - $dayStart > $timeFrom;
+        return false;
+    }
+
+    /**
+     * Returns the blocked times of a blocked period (tl_resource_booking_blocked_period.blockedTimes)
+     * as a list of ['weekday' => 'daily'|'monday'|..., 'timeFrom' => seconds, 'timeTo' => seconds].
+     * An empty time means the start or the end of the day.
+     *
+     * @param array<string, mixed> $period
+     *
+     * @return array<int, array{weekday: string, timeFrom: int, timeTo: int}>
+     */
+    public static function getBlockedTimes(array $period): array
+    {
+        $blockedTimes = [];
+
+        foreach (StringUtil::deserialize($period['blockedTimes'] ?? null, true) as $row) {
+            if (!\is_array($row)) {
+                continue;
+            }
+
+            $weekday = strtolower((string) ($row['weekday'] ?? ''));
+
+            if ('daily' !== $weekday && !\in_array($weekday, RbbConfig::RBB_WEEKDAYS, true)) {
+                continue;
+            }
+
+            $blockedTimes[] = [
+                'weekday' => $weekday,
+                'timeFrom' => self::timeToSeconds($row['timeFrom'] ?? null) ?? 0,
+                'timeTo' => self::timeToSeconds($row['timeTo'] ?? null) ?? 86400,
+            ];
+        }
+
+        return $blockedTimes;
     }
 
     /**
@@ -243,8 +341,6 @@ class ResourceBookingRestriction
             return [
                 'weeksBack' => $resource->weeksBack,
                 'weeksAhead' => $resource->weeksAhead,
-                'restrictWeekdays' => $resource->restrictWeekdays,
-                'allowedWeekdays' => $resource->allowedWeekdays,
                 'addBookableUntil' => $resource->addBookableUntil,
                 'bookableUntil' => $resource->bookableUntil,
                 'autoConfirm' => $resource->autoConfirm,

@@ -2,3 +2,5 @@
 * text=auto
 /.ecs export-ignore
 /node_modules
+/CLAUDE.md export-ignore
+/docs/video export-ignore

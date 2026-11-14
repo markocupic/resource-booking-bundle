@@ -134,8 +134,6 @@ class WeekBoundariesTest extends ContaoTestCase
         return $this->createClassWithPropertiesMock(ResourceBookingResourceModel::class, [
             'weeksBack' => 2,
             'weeksAhead' => 4,
-            'restrictWeekdays' => false,
-            'allowedWeekdays' => null,
             'addBookableUntil' => $addBookableUntil,
             'bookableUntil' => $bookableUntil,
         ]);

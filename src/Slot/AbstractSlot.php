@@ -20,10 +20,13 @@ use Contao\Date;
 use Contao\FrontendUser;
 use Contao\MemberModel;
 use Contao\Model\Collection;
+use Contao\StringUtil;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingBlockedPeriodModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotModel;
+use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotTypeModel;
+use Markocupic\ResourceBookingBundle\Validator\BookingRequestValidator;
 use Markocupic\ResourceBookingBundle\Util\DateHelper;
 use Markocupic\ResourceBookingBundle\Util\ResourceBookingRestriction;
 use Markocupic\ResourceBookingBundle\Util\UtcTimeHelper;
@@ -58,12 +61,13 @@ use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInt
  * @property int                               $pid
  * @property bool                              $isFullyBooked
  * @property bool                              $isWithinAllowedDateRange
- * @property bool                              $isOnAllowedWeekday
  * @property bool                              $isTimeSlotAvailable
  * @property string|null                       $timeSlotWeekdays
  * @property array|null                        $blockedPeriod
  * @property bool                              $isInBlockedPeriod
- * @property string                            $blockedPeriodTitle
+ * @property bool                              $isValidTimeSlot
+ * @property bool                              $hasValidItemCount
+ * @property string                            $blockedPeriodDescription
  * @property string                            $cssClass
  * @property Collection|null                   $bookings
  * @property int                               $bookingCount
@@ -109,25 +113,36 @@ abstract class AbstractSlot implements SlotInterface
         $dateAdapter = $this->framework->getAdapter(Date::class);
         $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
         $configAdapter = $this->framework->getAdapter(Config::class);
-        $appConfig = $this->utils->getAppConfig();
 
         $this->initializeUser();
 
         $startTimeString = UtcTimeHelper::parseStartTime($startTime);
         $endTimeString = UtcTimeHelper::parseEndTime($endTime);
         $dateString = $dateAdapter->parse($configAdapter->get('dateFormat'), $startTime);
-        $firstDayOfWeek = $dateHelperAdapter->getFirstDayOfCurrentWeek($appConfig, $startTime);
         $timeSlot = $this->framework->getAdapter(ResourceBookingTimeSlotModel::class)->findById($timeSlotId);
+        $timeSlotType = null === $timeSlot ? null : $this->framework->getAdapter(ResourceBookingTimeSlotTypeModel::class)->findById((int) $timeSlot->pid);
+
+        // The first day of the week is set in the timetable of the resource.
+        $resourceTimeSlotType = null !== $timeSlotType && (int) $timeSlotType->id === (int) $resource->timeSlotType
+            ? $timeSlotType
+            : $this->framework->getAdapter(ResourceBookingTimeSlotTypeModel::class)->findById((int) $resource->timeSlotType);
+        $appConfig = ['beginWeek' => ResourceBookingRestriction::getBeginWeek($resourceTimeSlotType)];
+        $firstDayOfWeek = $dateHelperAdapter->getFirstDayOfCurrentWeek($appConfig, $startTime);
         $blockedPeriod = $this->findBlockedPeriod($resource->row(), $startTime, $endTime);
 
         $this->arrData = [
             'timeSlotId' => $timeSlotId,
             // Weekdays on which the time slot is available (tl_resource_booking_time_slot.weekdays)
             'timeSlotWeekdays' => $timeSlot?->weekdays,
-            // Blocked period covering this slot, e.g. holidays (tl_resource_booking_blocked_period)
-            'blockedPeriod' => null === $blockedPeriod ? null : ['id' => (int) $blockedPeriod['id'], 'title' => (string) $blockedPeriod['title']],
+            // The time slot exists, is published, belongs to the (published) timetable of the resource
+            // and the start and end time match the time slot (protection against manipulated requests)
+            'isValidTimeSlot' => ResourceBookingRestriction::isValidTimeSlot($timeSlot?->row(), $timeSlotType?->row(), $resource->row(), $startTime, $endTime),
+            'hasValidItemCount' => BookingRequestValidator::isValidItemCount($requestedItems, (int) $resource->itemsAvailable),
+            // Blocked period covering this slot, e.g. holidays (tl_resource_booking_blocked_period).
+            // The title is an internal name and is not sent to the front end, only the description is displayed.
+            'blockedPeriod' => null === $blockedPeriod ? null : ['id' => (int) $blockedPeriod['id']],
             'isInBlockedPeriod' => null !== $blockedPeriod,
-            'blockedPeriodTitle' => null === $blockedPeriod ? '' : (string) $blockedPeriod['title'],
+            'blockedPeriodDescription' => null === $blockedPeriod ? '' : trim(StringUtil::decodeEntities((string) ($blockedPeriod['description'] ?? ''))),
             'userIsLoggedIn' => (bool) $this->user,
             'resource' => $resource->row(),
             'pid' => $resource->id,
@@ -150,7 +165,6 @@ abstract class AbstractSlot implements SlotInterface
 
         // Order matters below — each call depends on the previous assignments
         $this->arrData['isWithinAllowedDateRange'] = $this->isWithinAllowedDateRange();
-        $this->arrData['isOnAllowedWeekday'] = $this->isOnAllowedWeekday();
         $this->arrData['isTimeSlotAvailable'] = $this->isTimeSlotAvailable();
         $this->arrData['bookings'] = $this->getBookings();
         $this->arrData['isBlocked'] = $this->isBlocked;
@@ -216,20 +230,30 @@ abstract class AbstractSlot implements SlotInterface
     }
 
     /**
-     * Returns false if the resource cannot be booked on the weekday of this slot.
-     */
-    public function isOnAllowedWeekday(): bool
-    {
-        return ResourceBookingRestriction::isWeekdayAllowed($this->arrData['resource'], $this->arrData['weekday']);
-    }
-
-    /**
      * Returns false if the time slot is not available on the weekday of this slot
      * (tl_resource_booking_time_slot.weekdays).
      */
     public function isTimeSlotAvailable(): bool
     {
         return ResourceBookingRestriction::isTimeSlotAvailableOnWeekday(['weekdays' => $this->arrData['timeSlotWeekdays'] ?? null], $this->arrData['weekday']);
+    }
+
+    /**
+     * Returns true if the slot belongs to a published time slot of the published timetable
+     * of the resource and its start and end time match the time slot.
+     */
+    public function isValidTimeSlot(): bool
+    {
+        return true === ($this->arrData['isValidTimeSlot'] ?? false);
+    }
+
+    /**
+     * Returns true if the number of requested items is between 1 and the number
+     * of available items of the resource.
+     */
+    public function hasValidItemCount(): bool
+    {
+        return BookingRequestValidator::isValidItemCount((int) ($this->arrData['itemsBooked'] ?? 0), (int) ($this->arrData['resource']['itemsAvailable'] ?? 0));
     }
 
     /**

@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 // Legends
 $GLOBALS['TL_LANG']['tl_resource_booking_time_slot_type']['title_legend'] = 'Title settings';
+$GLOBALS['TL_LANG']['tl_resource_booking_time_slot_type']['calendar_legend'] = 'Calendar settings';
 
 // Global operations
 $GLOBALS['TL_LANG']['tl_resource_booking_time_slot_type']['new'] = ['New', 'Add new booking timetable.'];
@@ -21,4 +22,5 @@ $GLOBALS['TL_LANG']['tl_resource_booking_time_slot_type']['new'] = ['New', 'Add 
 // Fields
 $GLOBALS['TL_LANG']['tl_resource_booking_time_slot_type']['title'] = ['Title', 'Enter a title for the booking timetable, e.g. "Primary school timetable".'];
 $GLOBALS['TL_LANG']['tl_resource_booking_time_slot_type']['description'] = ['Description', 'An optional description of the booking timetable.'];
+$GLOBALS['TL_LANG']['tl_resource_booking_time_slot_type']['beginWeek'] = ['First day of the week', 'Select the weekday on which the week starts in the week calendar (default: Monday).'];
 $GLOBALS['TL_LANG']['tl_resource_booking_time_slot_type']['published'] = ['Publish', 'Publish the booking timetable.'];

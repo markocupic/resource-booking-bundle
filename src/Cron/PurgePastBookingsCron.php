@@ -16,15 +16,18 @@ namespace Markocupic\ResourceBookingBundle\Cron;
 
 use Contao\CoreBundle\DependencyInjection\Attribute\AsCronJob;
 use Contao\CoreBundle\Framework\ContaoFramework;
-use Contao\Date;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Types\Types;
+use Markocupic\ResourceBookingBundle\Util\DateHelper;
+use Markocupic\ResourceBookingBundle\Util\ResourceBookingRestriction;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * Deletes bookings that lie further back than the user can navigate
- * (tl_resource_booking_resource.weeksBack).
+ * (tl_resource_booking_resource.weeksBack). The weeks are counted from the
+ * first day of the week set in the timetable of the resource
+ * (tl_resource_booking_time_slot_type.beginWeek).
  */
 #[AsCronJob('daily')]
 class PurgePastBookingsCron
@@ -34,8 +37,6 @@ class PurgePastBookingsCron
         private readonly ContaoFramework $framework,
         #[Autowire('%markocupic_resource_booking.purge_past_bookings_with_cron%')]
         private readonly bool $purgeOldBookingsWithCron,
-        #[Autowire('%markocupic_resource_booking.apps%')]
-        private readonly array $appConfigs = [],
         private readonly LoggerInterface|null $contaoCronLogger = null,
     ) {
     }
@@ -51,8 +52,8 @@ class PurgePastBookingsCron
 
         $intAffectedRows = 0;
 
-        foreach ($this->getWeeksBackByResource() as $resourceId => $weeksBack) {
-            $tstampLimit = $this->calculatePurgeLimit($weeksBack);
+        foreach ($this->getPurgeSettingsByResource() as $resourceId => $settings) {
+            $tstampLimit = $this->calculatePurgeLimit($settings['weeksBack'], $settings['beginWeek']);
 
             if (null === $tstampLimit) {
                 continue;
@@ -67,56 +68,51 @@ class PurgePastBookingsCron
     }
 
     /**
-     * Returns the number of weeks back (tl_resource_booking_resource.weeksBack) indexed by the resource id.
+     * Returns the number of weeks back (tl_resource_booking_resource.weeksBack)
+     * and the first day of the week of the timetable
+     * (tl_resource_booking_time_slot_type.beginWeek) indexed by the resource id.
      *
-     * @return array<int, int>
+     * @return array<int, array{weeksBack: int, beginWeek: string}>
      */
-    protected function getWeeksBackByResource(): array
+    protected function getPurgeSettingsByResource(): array
     {
-        $rows = $this->connection->fetchAllAssociative('SELECT id, weeksBack FROM tl_resource_booking_resource');
+        $rows = $this->connection->fetchAllAssociative(
+            'SELECT r.id, r.weeksBack, t.beginWeek FROM tl_resource_booking_resource r LEFT JOIN tl_resource_booking_time_slot_type t ON t.id = r.timeSlotType',
+        );
 
-        $weeksBack = [];
+        $settings = [];
 
         foreach ($rows as $row) {
             $resourceId = (int) ($row['id'] ?? 0);
 
             if ($resourceId > 0) {
-                $weeksBack[$resourceId] = (int) ($row['weeksBack'] ?? 0);
+                $settings[$resourceId] = [
+                    'weeksBack' => (int) ($row['weeksBack'] ?? 0),
+                    'beginWeek' => ResourceBookingRestriction::getBeginWeek($row),
+                ];
             }
         }
 
-        return $weeksBack;
+        return $settings;
     }
 
     /**
      * Returns the timestamp before which bookings may be deleted, or null if
      * the user cannot navigate back (weeksBack = 0). In that case nothing is deleted.
+     *
+     * @throws \Exception
      */
-    protected function calculatePurgeLimit(int $weeksBack): int|null
+    protected function calculatePurgeLimit(int $weeksBack, string $beginWeek = 'monday'): int|null
     {
         if ($weeksBack <= 0) {
             return null;
         }
 
-        $dateAdapter = $this->framework->getAdapter(Date::class);
+        $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
 
-        $dateBeginCurrentWeek = $dateAdapter->parse('d-m-Y', strtotime(\sprintf('%s this week', $this->getBeginWeek())));
+        $tstampBeginCurrentWeek = $dateHelperAdapter->getFirstDayOfCurrentWeek(['beginWeek' => $beginWeek]);
 
-        $tstampLimit = strtotime($dateBeginCurrentWeek.' -'.$weeksBack.' weeks');
-
-        return false === $tstampLimit ? null : $tstampLimit;
-    }
-
-    /**
-     * Resources are not assigned to an app configuration. The week begin of the
-     * "default" app configuration (or the first one) is used to compute the limit.
-     */
-    protected function getBeginWeek(): string
-    {
-        // reset() cannot be used here, because the property is readonly.
-        $appConfig = $this->appConfigs['default'] ?? array_values($this->appConfigs)[0] ?? [];
-
-        return (string) ($appConfig['begin_week'] ?? 'monday');
+        return $dateHelperAdapter->addWeeksToTime(-$weeksBack, $tstampBeginCurrentWeek);
     }
 
     protected function deleteExpiredBookings(int $resourceId, int $tstampLimit): int

@@ -13,7 +13,7 @@
 
             {% block rbb_filter_board__resource_type_select %}
                 <div class="rbb-ressource-type-select">
-                    <label for="ctrlResType_{{ moduleKey }}" class="rbb-visually-hidden">{{ ('RBB.resourceType')|trans }}</label>
+                    <label for="ctrlResType_{{ moduleKey }}" class="rbb-filter-label">{{ ('RBB.filterResourceType')|trans }}</label>
                     <select id="ctrlResType_{{ moduleKey }}" class="rbb-form-control" name="resType" v-model="activeResourceTypeId">
                         <option value="undefined">{{ ('RBB.formOptionSelectResourceType')|trans }}</option>
                         <option v-for="(resourceType, index) in filterBoard.resourceTypes" :value="resourceType.id">[[ resourceType.title ]]</option>
@@ -23,7 +23,7 @@
 
             {% block rbb_filter_board__resource_select %}
                 <div class="rbb-ressource-select">
-                    <label for="ctrlRes_{{ moduleKey }}" class="rbb-visually-hidden">{{ ('RBB.resource')|trans }}</label>
+                    <label for="ctrlRes_{{ moduleKey }}" class="rbb-filter-label">{{ ('RBB.filterResource')|trans }}</label>
                     <select id="ctrlRes_{{ moduleKey }}" class="rbb-form-control" name="res" v-model="activeResourceId" :disabled="activeResourceTypeId === 'undefined'">
                         <option value="undefined">{{ ('RBB.formOptionSelectResource')|trans }}</option>
                         <option v-for="(resource, index) in filterBoard.resources" :value="resource.id">[[ resource.title ]]</option>
@@ -33,7 +33,7 @@
 
             {% block rbb_filter_board__week_select %}
                 <div class="rbb-week-select">
-                    <label for="date_{{ moduleKey }}" class="rbb-visually-hidden">{{ ('RBB.timeSpan')|trans }}</label>
+                    <label for="date_{{ moduleKey }}" class="rbb-filter-label">{{ ('RBB.filterWeek')|trans }}</label>
                     <select id="date_{{ moduleKey }}" :disabled="!rows.length" class="rbb-time-span-select rbb-form-control" name="date" v-model="activeWeekTstamp">
                         <option v-for="(week, index) in filterBoard.weekSelection" :class="week.cssClass" :value="week.tstampBeginWeek">[[ week.optionText ]]</option>
                     </select>

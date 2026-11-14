@@ -38,6 +38,9 @@ use Markocupic\ResourceBookingBundle\Migration\ResourceMigrationTrait;
  *   - Weekdays: intersection of the allowed weekdays (falls back to the union if the intersection is empty)
  *   - Date: the earliest "bookable until" date
  *
+ * The weekdays are converted into blocked periods afterwards
+ * (see MoveWeekdayRestrictionsToBlockedPeriods).
+ *
  * Resources whose new fields have already been set are not touched.
  * After the migration, the old flags in tl_module are reset, so the migration runs only once.
  */

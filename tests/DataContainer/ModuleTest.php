@@ -34,24 +34,48 @@ class ModuleTest extends ContaoTestCase
         $this->assertSame(['default', 'app_b'], $module->getAppConfigurations());
     }
 
-    public function testGetTlMemberFieldsExcludesIdAndPassword(): void
+    public function testGetTlMemberFieldsReturnsTheConfiguredFieldsThatExist(): void
     {
         $module = new Module(
-            $this->frameworkWithFieldNames(['id', 'firstname', 'lastname', 'password', 'email']),
+            $this->frameworkWithFieldNames(['id', 'firstname', 'lastname', 'password', 'email', 'city', 'secret']),
             $this->createMock(Connection::class),
+            [],
+            // "company" does not exist, "secret" is never permitted
+            ['lastname', 'firstname', 'company', 'city', 'secret'],
         );
 
-        $this->assertSame(['firstname', 'lastname', 'email'], $module->getTlMemberFields());
+        $this->assertSame(['lastname', 'firstname', 'city'], $module->getTlMemberFields());
     }
 
-    public function testGetTlResourceBookingFieldsReturnsAllFields(): void
+    public function testGetTlMemberFieldsUsesTheDefaultFields(): void
     {
         $module = new Module(
-            $this->frameworkWithFieldNames(['id', 'pid', 'startTime', 'endTime']),
+            $this->frameworkWithFieldNames(['id', 'firstname', 'lastname', 'password', 'email', 'company', 'city', 'phone']),
             $this->createMock(Connection::class),
         );
 
-        $this->assertSame(['id', 'pid', 'startTime', 'endTime'], $module->getTlResourceBookingFields());
+        $this->assertSame(['firstname', 'lastname', 'company', 'city', 'phone'], $module->getTlMemberFields());
+    }
+
+    public function testGetTlResourceBookingFieldsReturnsTheConfiguredFieldsThatExist(): void
+    {
+        $module = new Module(
+            $this->frameworkWithFieldNames(['id', 'pid', 'member', 'title', 'description', 'bookingUuid']),
+            $this->createMock(Connection::class),
+        );
+
+        // Default: title and description, not member or bookingUuid
+        $this->assertSame(['title', 'description'], $module->getTlResourceBookingFields());
+
+        $module = new Module(
+            $this->frameworkWithFieldNames(['id', 'pid', 'member', 'title', 'description']),
+            $this->createMock(Connection::class),
+            [],
+            [],
+            ['description', 'unknown'],
+        );
+
+        $this->assertSame(['description'], $module->getTlResourceBookingFields());
     }
 
     /**

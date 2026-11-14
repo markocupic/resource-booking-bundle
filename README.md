@@ -1,96 +1,149 @@
-![Logo](https://github.com/markocupic/markocupic/blob/main/logo.png)
+<p align="center">
+  <img src="https://raw.githubusercontent.com/markocupic/markocupic/main/logo.png" alt="Logo" width="120">
+</p>
 
-# resource-booking-bundle
+<h1 align="center">Resource Booking Bundle</h1>
 
-Mit diesem Modul für Contao kann eine einfache Online-Ressourcenverwaltung betrieben werden.
-Das Modul wurde für eine Schule entwickelt, wo ein Zimmerreservations-System benötigt wurde. Natürlich kann das Plugin auch im Zusammenhang mit anderen Ressourcen betrieben werden.
+<p align="center">
+  <strong>Zimmer, Geräte und andere Ressourcen einfach online reservieren – direkt in Contao.</strong>
+</p>
 
-Ab Version 3.x kann eingestellt werden, wie viele Items einer Ressource buchbar sein können. Damit wird es möglich eine Ressource von mehreren Personen buchen zu lassen, bis diese ausgebucht ist. Ein typischer use case können buchbare Geräte/Computer sein.
+<p align="center">
+  <img src="https://img.shields.io/badge/Contao-5.7%20%7C%206-f47c00?style=flat-square" alt="Contao 5.7 | 6">
+  <img src="https://img.shields.io/badge/PHP-%E2%89%A5%208.3-777bb4?style=flat-square" alt="PHP ≥ 8.3">
+  <img src="https://img.shields.io/badge/Vue.js-3-42b883?style=flat-square" alt="Vue.js 3">
+  <img src="https://img.shields.io/badge/Lizenz-MIT-blue?style=flat-square" alt="Lizenz MIT">
+</p>
 
-## Rückwärtskompatibilität
+---
 
-Beim Update auf eine neue Hauptversion bitte die Hinweise in der [UPGRADE.md](UPGRADE.md) beachten.
+Entstanden ist die Erweiterung an einer Schule, die ein Reservationssystem für ihre Zimmer brauchte. Sie eignet sich aber für alles, was sich in Zeitfenstern buchen lässt: Turnhallen, Sitzungszimmer, Laptops, Beamer oder Fahrzeuge.
 
-## Take a look
+Mitglieder sehen eine übersichtliche Wochenansicht, wählen ein freies Zeitfenster und buchen mit wenigen Klicks – auf Wunsch gleich für mehrere Wochen im Voraus.
 
-![preview animated](https://github.com/markocupic/markocupic/blob/main/resource-booking-bundle/resource-booking-bundle.gif)
+## ✨ Highlights
 
-[Downlaod als mp4](https://github.com/markocupic/markocupic/blob/main/resource-booking-bundle/resource-booking-bundle.mp4?raw=true)
+| | |
+|---|---|
+| 📅 **Wochenkalender** | Übersichtliche Wochenansicht mit freien, gebuchten und gesperrten Zeitfenstern. |
+| 🔁 **Serienbuchungen** | Ein Zeitfenster gleich für mehrere Wochen am Stück reservieren. |
+| 🔢 **Mehrfach buchbar** | Pro Ressource festlegen, wie viele Stück verfügbar sind – ideal für Laptops oder Tablets. |
+| 🗓️ **Flexible Zeitpläne** | Eigene Zeitfenster pro Zeitplan, jedes mit eigenen Wochentagen. |
+| 🏖️ **Sperrzeiten** | Ferien, Wochenenden oder einzelne Nachmittage sperren – für alle oder nur für bestimmte Ressourcen. |
+| 🛡️ **Sicher** | Bestehende Buchungen bleiben geschützt, wenn Zeitpläne geändert oder gelöscht werden. |
+| 🎨 **Anpassbares Design** | Eigenes, schlankes Stylesheet ohne Bootstrap. Farben und Abstände über CSS-Variablen. |
+| 🌗 **Dark Mode** | Hell- und Dunkelmodus werden automatisch unterstützt. |
 
-### Buchungstabelle mit Wochenübersicht:
+## 👀 So sieht es aus
 
-![preview frontend](docs/screenshots/screenshot.png "Buchungstool im Frontend-Ansicht")
+<p>
+  <a href="docs/video/demo.mp4">
+    <img src="docs/video/demo.gif" alt="Demo" width="800">
+  </a>
+</p>
 
-### Buchungsfenster:
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/screenshot.png" alt="Wochenübersicht"></td>
+    <td width="50%"><img src="docs/screenshots/screenshot2.png" alt="Buchungsfenster"></td>
+  </tr>
+  <tr>
+    <td align="center"><em>Wochenübersicht</em></td>
+    <td align="center"><em>Buchungsfenster</em></td>
+  </tr>
+</table>
 
-![preview frontend](docs/screenshots/screenshot2.png "Buchungstool im Frontend-Ansicht")
+## 📦 Installation
 
-## Konfiguration
+Die Erweiterung lässt sich bequem über den **Contao Manager** installieren oder per Composer:
 
-Nach der Installation mit dem Contao Manager müssen:
+```bash
+composer require markocupic/resource-booking-bundle
+```
 
-* Mindestens 1 Reservations-Zeitfenster-Typ erstellt werden.
-* Danach darin die Reservations-Zeitfenster im Zeitformat H:i (08:00 bis 08:45) erstellt werden.
-  Pro Zeitfenster lässt sich festlegen, an welchen Wochentagen es verfügbar ist (Standard: alle Tage).
-* Ressourcen-Typen erstellt werden.
-* In jedem Ressourcen-Typ mindestens eine Ressource (z.B. Zimmer) erstellt werden.
-  In den Ressourcen-Einstellungen wird festgelegt, wie viele Wochen zurück- bzw. vorausgeblättert (und gebucht) werden kann,
-  an welchen Wochentagen und bis zu welchem Datum die Ressource gebucht werden kann und ob Buchungen automatisch bestätigt werden.
-* Optional Sperrzeiten (z. B. Ferien) unter "Sperrzeiten" erfasst werden. In einer Sperrzeit kann nicht gebucht werden;
-  sie gilt für alle Ressourcen, ausgewählte Ressourcen-Typen oder einzelne Ressourcen und kann auf bestimmte Uhrzeiten beschränkt werden.
-* Mindestens 1 Mitglied (Frontend-Benutzer) angelegt werden. (Das Buchungsmodul wird nur bei eingeloggtem Benutzer angezeigt.)
+Anschliessend die Datenbank aktualisieren (Contao Manager oder `contao:migrate`).
 
-![App Konfiguration anpassen](docs/screenshots/adjust-app-configuration.png "Frontendmodul-Einstellungen")
+**Voraussetzungen:** Contao 5.7 oder 6 · PHP 8.3 oder höher
 
-Die Erweiterung wird mit einer Standardkonfiguration ausgeliefert. Weitere Konfigurationssets können erstellt und in den Frontend-Moduleinstellungen ausgewählt werden. Mehr dazu weiter [unten](#app-konfiguration-anpassen).
+> [!IMPORTANT]
+> Beim Update auf eine neue Hauptversion bitte unbedingt die [UPGRADE.md](UPGRADE.md) lesen.
 
-Das Tool setzt auf [vue.js](https://vuejs.org/) auf, das automatisch mitinstalliert und im Template eingebunden wird. Ein CSS-Framework wie Bootstrap wird nicht benötigt: Das mitgelieferte Stylesheet ist auf das Modul beschränkt und verwendet ausschliesslich Klassen mit dem Präfix `rbb-`.
+## 🚀 In fünf Schritten startklar
 
-### Aussehen anpassen
+1. **Zeitplan anlegen** – z. B. «Schulalltag» – und darin die Zeitfenster erfassen (z. B. 08:00–08:45). Für jedes Zeitfenster lässt sich wählen, an welchen Wochentagen es gilt. Im Zeitplan legen Sie auch fest, mit welchem Tag die Woche beginnt (Standard: Montag).
+2. **Ressourcen-Typ anlegen** – z. B. «Zimmer» oder «Geräte».
+3. **Ressourcen erfassen** – z. B. «Zimmer 101». Hier legen Sie fest, welcher Zeitplan gilt, wie viele Stück verfügbar sind, wie weit im Voraus gebucht werden darf und ob Buchungen automatisch bestätigt werden.
+4. **Frontend-Modul einbinden** – das Modul «Wochenkalender mit Resourcen-Buchung» auf einer geschützten Seite einfügen.
+5. **Mitglieder anlegen** – gebucht werden kann nur mit Login.
 
-Farben, Abstände und Rundungen lassen sich im eigenen Theme über CSS-Variablen anpassen, ohne das Stylesheet neu zu kompilieren:
+> [!TIP]
+> Viele Zeitfenster auf einmal anlegen? Das erledigt ein [Konsolenbefehl](#zeitplaene-automatisch) für Sie.
+
+![Frontend-Moduleinstellungen](docs/screenshots/adjust-app-configuration.png)
+
+## 🏖️ Sperrzeiten
+
+Unter **Sperrzeiten** erfassen Sie Zeiträume, in denen nicht gebucht werden kann. Eine Sperrzeit gilt wahlweise für alle Ressourcen, für bestimmte Ressourcen-Typen oder für einzelne Ressourcen.
+
+Mit **«Gesperrte Zeiten»** lässt sich die Sperre auf einzelne Wochentage oder Uhrzeiten beschränken:
+
+| Beispiel | Datum | Gesperrte Zeiten |
+|---|---|---|
+| Sommerferien | 06.07. – 09.08. | *(leer = ganzer Zeitraum)* |
+| Wochenende nie buchbar | ab heute, ohne Enddatum | Samstag · Sonntag |
+| Freitagnachmittag Hauswartung | ab heute, ohne Enddatum | Freitag 14:00 – 24:00 |
+
+Gesperrte Zeitfenster bleiben im Kalender sichtbar, sind aber schraffiert. Die Bezeichnung der Sperrzeit ist intern und erscheint nur im Backend. Soll im Kalender ein Text stehen, z. B. «Herbstferien», tragen Sie ihn unter **«Hinweis im Wochenkalender»** ein.
+
+## 🎨 Aussehen anpassen
+
+Das Modul bringt ein eigenes, schlankes Stylesheet mit – Bootstrap oder ein anderes CSS-Framework ist nicht nötig. Alle Klassen beginnen mit `rbb-`, Konflikte mit Ihrem Theme sind daher kaum möglich.
+
+Farben, Abstände und Rundungen passen Sie bequem über CSS-Variablen an:
 
 ```css
 .mod_resourceBookingWeekcalendar {
     --rbb-primary: #8a1538;          /* Buttons, Kopfzeile des Buchungsfensters */
-    --rbb-secondary: #6c757d;
-    --rbb-danger: #dc3545;
     --rbb-radius: 0;                 /* eckige Buttons und Felder */
-    --rbb-section-spacing: 2rem;     /* Abstand zwischen den Bereichen */
     --rbb-cell-bookable-bg: #d4f0d0; /* freie Zeitfenster */
 }
 ```
 
-Alle verfügbaren Variablen sind am Anfang von `assets/styles/frontend.scss` aufgelistet. Die meisten Farben haben einen Hell- und einen Dunkelwert (`light-dark()`).
+Alle verfügbaren Variablen stehen am Anfang von [`assets/styles/frontend.scss`](assets/styles/frontend.scss).
 
-## Zeitpläne per command anlegen
+### Zusätzliche Mitgliederdaten anzeigen
 
-Anstatt die Buchungs-Zeitpläne aufwändig manuell anzulegen, ist es möglich über ein command die Slots automatisch anlegen zu lassen.
+Soll in der Buchungsübersicht z. B. auch die Firma oder der Wohnort erscheinen, wählen Sie das Feld in den Moduleinstellungen aus und ergänzen das Template, etwa mit `[[ booking.bookedByCompany ]]` oder `[[ booking.bookedByCity ]]`.
+
+<details>
+<summary>Screenshots dazu anzeigen</summary>
+
+![Feld in den Moduleinstellungen wählen](docs/screenshots/screenshot3.png)
+![Template anpassen](docs/screenshots/screenshot4.png)
+
+</details>
+
+> [!NOTE]
+> `[[ … ]]` ist kein Contao-Insert-Tag, sondern die Platzhalter-Schreibweise von Vue.js.
+
+<a id="zeitplaene-automatisch"></a>
+
+## ⚙️ Zeitpläne automatisch anlegen
+
+Statt jedes Zeitfenster einzeln zu erfassen, erstellt ein Konsolenbefehl den ganzen Zeitplan:
 
 ```bash
 php vendor/bin/contao-console rbb:create-slots
 ```
 
-Das command ist interaktiv und fragt der Reihe nach die folgenden Werte ab:
-
-1. **Name des Zeitplans** – 4 bis 200 Zeichen, erlaubt sind Buchstaben, Zahlen, Leerzeichen, Bindestriche und Unterstriche.
-2. **Startzeit** im Format `HH:MM` (`00:00`–`23:59`).
-3. **Endzeit** im Format `HH:MM` – muss grösser als die Startzeit sein (`00:01`–`24:00`).
-4. **Intervall / Slot-Dauer** in Minuten als ganze Zahl (`1`–`1440`, wobei `1440` = 24 Stunden).
-5. **Pause zwischen den Slots** in Minuten als ganze Zahl (`0`–`1440`). Mit `0` folgen die Slots nahtlos aufeinander.
-
-Aus diesen Angaben werden die Slots automatisch berechnet: Ein neuer Slot startet jeweils um die angegebene Pause nach dem Ende des vorherigen Slots. Es werden nur vollständige Slots angelegt, deren Endzeit die Endzeit des Zeitplans nicht überschreitet.
-
-**Beispiel:** Startzeit `08:00`, Endzeit `12:00`, Slot-Dauer `45` Minuten, Pause `15` Minuten ergibt vier Slots:
+Der Befehl fragt nach Name, Start- und Endzeit, der Dauer eines Zeitfensters und der Pause dazwischen. Aus **08:00–12:00, 45 Minuten, 15 Minuten Pause** werden zum Beispiel:
 
 ```
-1. Slot: 08:00 - 08:45
-2. Slot: 09:00 - 09:45
-3. Slot: 10:00 - 10:45
-4. Slot: 11:00 - 11:45
+08:00 – 08:45 · 09:00 – 09:45 · 10:00 – 10:45 · 11:00 – 11:45
 ```
 
-Ein möglicher Dialog sieht so aus:
+<details>
+<summary>Beispiel-Dialog anzeigen</summary>
 
 ```text
 Please enter the name of the new schedule.
@@ -109,248 +162,51 @@ Please enter the pause/gap between slots as an integer in minutes (0 = no pause)
 > 15
 ```
 
-> **Hinweis:** Der Zeitplan wird unveröffentlicht (`published = 0`) angelegt. Er muss anschliessend im Contao-Backend manuell veröffentlicht werden.
+</details>
 
-## Benachrichtigung
+> [!NOTE]
+> Der neue Zeitplan ist zunächst unveröffentlicht und muss im Backend noch veröffentlicht werden.
 
-Die Benachrichtigung via [Contao Notification Center](https://github.com/terminal42/contao-notification_center) bei Buchung/Stornierung ist ein kostenpflichtiges Zusatzfeature. Bitte nehmen Sie per E-Mail mit dem Autor der Erweiterung [Kontakt](https://github.com/markocupic/resource-booking-bundle/blob/0080449a1a3fde63b1b9ad0b2fd0fd153ba82b4c/composer.json#L16) auf.
+## 🔧 Konfiguration
 
-## Template mit zusätzlichen Mitgliederdaten erweitern
-
-Sollen zusätzliche Mitgliederdaten in der Buchungsübersicht angezeigt weden, müssen zwei Dinge angepasst werden.
-
-Erstens muss in der Moduleinstellung das Feld, welches zusätzlich angezeigt werden soll, ausgewählt werden.
-
-![Alt text](docs/screenshots/screenshot3.png "Weitere Mitgliederfelder anzeigen")
-
-Weiter muss zusätzlich das Template angepasst werden. Mit *[[ booking.bookedByCompany ]]* kann der Firmenname oder mit *[[ booking.bookedByCity ]]* der Wohnort mitangezeigt werden. Achtung! Hierbei handelt es sich nicht um einen Contao Inserttag, sondern um die "vue.js-Mustache-Syntax-Schreibweise". Das Leerzeichen nach bzw. vor der geschweiften Klammer ist nötig.
-
-![Alt text](docs/screenshots/screenshot4.png "Weitere Mitgliederfelder anzeigen")
-
-## Events
-
-Der ***rbb.event.pre_booking*** Event wird unmittelbar vor dem Datenbank-Insert ausgelöst. Mit einer Event-Subscriber-Klasse lassen sich beispielsweise die Datenbankeinträge manipulieren.
-
-Der ***rbb.event.post_booking*** Event wird nach dem Buchungs-Request ausgelöst. Mit einer Event-Subscriber-Klasse, die auf den Event hört, können unmittelbar nach der Buchung Aktionen durchgeführt werden. Beispielsweise kann eine Benachrichtigung gesendet werden oder es können weitere Einträge in der Datenbank getätigt werden.
-
-Der ***rbb.event.pre_cancelling*** Event wird unmittelbar vor dem Stornieren einer Buchung ausgelöst.
-
-Der ***rbb.event.post_cancelling*** Event wird unmittelbar nach dem Stornieren einer Buchung ausgelöst.
-
-## Event Subscriber
-
-Mit event subscribern/listeners kann die Applikation an mehreren Stellen erweitert werden. Dazu muss eine Subscriber/Listener Klasse erstellt werden.
+Die Erweiterung funktioniert ohne weitere Einstellungen. Wer mehr möchte, kann in `config/config.yaml` eigene Konfigurationen anlegen und im Frontend-Modul auswählen:
 
 ```yaml
-# Registrierung anhand des rbb.event.post_booking Events in listener.yml
-services:
-  App\EventSubscriber\BookingEventSubscriber:
-    tags:
-    - { name: kernel.event_subscriber }
-```
-
-Weiter muss eine entsprechende Event-Subscriber-Klasse erstellt werden (hier anhand rbb.event.post_booking):
-
-```php
-<?php
-
-declare(strict_types=1);
-
-namespace App\EventSubscriber;
-
-use Contao\Date;
-use Markocupic\ResourceBookingBundle\Event\PostBookingEvent;
-use Markocupic\ResourceBookingBundle\Event\PreBookingEvent;
-use Markocupic\ResourceBookingBundle\Exception\StopBookingProcessException;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-
-final class BookingEventSubscriber implements EventSubscriberInterface
-{
-   const priority = 10000;
-
-   public static function getSubscribedEvents(): array
-    {
-        return [
-            PreBookingEvent::NAME => ['onPreBooking', self::PRIORITY],
-            PostBookingEvent::NAME => ['onPostBooking', self::PRIORITY],
-        ];
-    }
-
-    public function onPreBooking(PostBookingEvent $objPostBookingEvent): void
-    {
-       // E.g. do some checks
-       // Abort the booking process and throw a StopBookingProcessException.
-       throw new StopBookingProcessException('You are not old enough to book the room.');
-    }
-
-    public function onPostBooking(PostBookingEvent $objPostBookingEvent): void
-    {
-        // For demo usage only
-        $objBookingCollection = $objPostBookingEvent->getBookingCollection();
-        $objUser = $objPostBookingEvent->getUser();
-
-        while ($objBookingCollection->next()) {
-            if (null !== $objUser) {
-                // Send notifications, manipulate database
-                // or do some other insane stuff
-                $strMessage = sprintf(
-                    'Dear %s %s'."\n".'You have successfully booked %s on %s from %s to %s.',
-                    $objUser->firstname,
-                    $objUser->lastname,
-                    $objBookingCollection->getRelated('pid')->title,
-                    Date::parse('d.m.Y', $objBookingCollection->startTime),
-                    Date::parse('H:i', $objBookingCollection->startTime),
-                    Date::parse('H:i', $objBookingCollection->endTime)
-                );
-                mail(
-                    $objUser->email,
-                    utf8_decode((string) $objBookingCollection->title),
-                    utf8_decode((string) $strMessage)
-                );
-            }
-        }
-
-       // ...
-       // or revert the booking and throw a StopBookingProcessException.
-       throw new StopBookingProcessException('You are not old enough to book the room.');
-    }
-}
-
-```
-
-### XmlHttp event subscriber
-
-Das Buchungstool basiert fast vollständig auf Ajax Requests. Mit einer eigenen Event Subscriber Klasse können die Responses auf diese Ajax Anfragen angepasst werden oder es lassen sich auch custom Anfragen implementieren.
-Der *rbb.event.xml_http_request* Event wird bei Ajax-Anfragen vor dem Absenden der Response zurück an den Browser getriggert.
-
-Dazu muss die Subscriber-Klasse, die auf den *rbb.event.xml_http_request* Event hört, in der listener.yml registriert werden:
-
-```yaml
-services:
-  App\EventSubscriber\AjaxRequestEventSubscriber:
-    arguments:
-    - '@request_stack'
-    tags:
-    - { name: kernel.event_subscriber }
-
-```
-
-Weiter muss eine entsprechende Event-Subscriber-Klasse erstellt werden.
-Mit der Konstante "priority" kann die Reihenfolge eingestellt werden. Je grösser der Wert, umso eher wird der Subscriber aufgerufen. Der Originalsubscriber hat als Priorität den Wert 1000 zugewiesen.
-
-```php
-<?php
-
-declare(strict_types=1);
-
-namespace App\EventSubscriber;
-
-use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
-use Markocupic\ResourceBookingBundle\Exception\StopBookingProcessException;
-use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\HttpFoundation\RequestStack;
-
-final class AjaxRequestEventSubscriber implements EventSubscriberInterface
-{
-    const priority = 1010;
-
-    public function __construct(private readonly RequestStack $requestStack)
-    {
-    }
-
-    public static function getSubscribedEvents(): array
-    {
-        return [
-            AjaxRequestEvent::NAME => ['onXmlHttpRequest', self::PRIORITY],
-        ];
-    }
-
-    public function onXmlHttpRequest(AjaxRequestEvent $ajaxRequestEvent): void
-    {
-        $request = $this->requestStack->getCurrentRequest();
-
-        if ($request->isXmlHttpRequest()) {
-            $action = $request->request->get('action', null);
-
-            if (null !== $action) {
-                if (\is_callable([self::class, 'on'.ucfirst($action)])) {
-                    $this->{'on'.ucfirst($action)}($ajaxRequestEvent);
-                }
-            }
-        }
-    }
-
-    /**
-     * @throws \Exception
-     */
-    protected function onFetchDataRequest(AjaxRequestEvent $ajaxRequestEvent): void
-    {
-        // Stop propagation and do not run original event handler
-        // Works only if the priority is > 10
-        $ajaxRequestEvent->stopPropagation();
-
-        // Get response object
-        $ajaxResponse = $ajaxRequestEvent->getAjaxResponse();
-
-        // Add some custom data to the response object
-        $ajaxResponse->setData('foo', 'bar');
-        $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
-    }
-
-    protected function onMyCustomRequest(AjaxRequestEvent $ajaxRequestEvent): void
-    {
-        // Respond to custom ajax requests
-    }
-
-    protected function onApplyFilterRequest(AjaxRequestEvent $ajaxRequestEvent): void
-    {
-        // Do some stuff here
-    }
-
-    protected function onJumpWeekRequest(AjaxRequestEvent $ajaxRequestEvent): void
-    {
-        // Do some stuff here
-    }
-
-    protected function onBookingRequest(AjaxRequestEvent $ajaxRequestEvent): void
-    {
-        // Do some stuff here
-    }
-
-    protected function onBookingFormValidationRequest(AjaxRequestEvent $ajaxRequestEvent): void
-    {
-        // Do some stuff here
-    }
-
-    protected function onCancelBookingRequest(AjaxRequestEvent $ajaxRequestEvent): void
-    {
-        // Do some stuff here
-    }
-}
-```
-
-## App Konfiguration anpassen
-
-Die Erweiterung wird mit der App-Konfiguration `default` installiert. In config/config.yaml können weitere
-Konfigurations-Sets erstellt werden, welche dann in den Frontend-Moduleinstellungen ausgewählt werden können.
-
-Wie viele Wochen zurück- bzw. vorausgeblättert und gebucht werden kann und ob neue Buchungen automatisch bestätigt
-werden, wird dagegen pro Ressource in den Ressourcen-Einstellungen festgelegt.
-
-```yaml
-# config/config.yaml
-
 markocupic_resource_booking:
-    # Täglich Buchungen löschen, die weiter zurückliegen als "Wochen zurück" der Ressource (Default: false)
-    # Bei Ressourcen mit "Wochen zurück" = 0 wird nichts gelöscht.
+    # Alte Buchungen täglich automatisch löschen (Standard: false)
     purge_past_bookings_with_cron: true
+    # Angaben, die im Frontend-Modul zur Anzeige ausgewählt werden können.
+    # Achtung: Sie sind für alle eingeloggten Mitglieder sichtbar.
+    displayable_member_fields: [firstname, lastname, company, city, phone]   # Standard
+    displayable_booking_fields: [title, description]                         # Standard
     apps:
         my_rbb_custom:
-            # Wochentag, mit dem der Wochenkalender beginnt (Default: monday)
-            begin_week: 'monday'
-            # Custom Inputs im Buchungsformular müssen hier registriert werden
-            # (bookingDescription, itemsBooked und bookingRepeatStopWeekTstamp sind immer erlaubt)
-            permitted_form_fields: [phone,email]
+            # Beim ersten Aufruf direkt die erste verfügbare Ressource anzeigen (Standard: true)
+            auto_select_first_resource: true
+            # Zusätzliche Felder im Buchungsformular
+            permitted_form_fields: [phone, email]
 ```
 
-Wie bestehende Einstellungen beim Update übernommen werden, steht in der [UPGRADE.md](UPGRADE.md#version-5-to-60).
+## 🧩 Erweitern mit Events
+
+An mehreren Stellen lässt sich eigener Code einklinken – etwa um vor einer Buchung zusätzliche Bedingungen zu prüfen oder danach eine Nachricht zu verschicken.
+
+| Event | Wann? | Typische Verwendung |
+|---|---|---|
+| `PreBookingEvent` | vor dem Speichern einer Buchung | eigene Prüfungen, Buchung abbrechen |
+| `PostBookingEvent` | nach dem Speichern einer Buchung | Bestätigung senden, Daten weitergeben |
+| `PreCancellingEvent` | vor dem Stornieren | Stornierung verhindern |
+| `PostCancellingEvent` | nach dem Stornieren | Benachrichtigung senden |
+| `AjaxRequestEvent` | bei jeder Anfrage aus dem Buchungstool | Antworten anpassen, eigene Aktionen |
+
+👉 Beispiele und Details: **[docs/EVENTS.md](docs/EVENTS.md)**
+
+## 🔔 Benachrichtigungen
+
+E-Mail-Benachrichtigungen bei Buchung und Stornierung über das [Notification Center](https://github.com/terminal42/contao-notification_center) gibt es als kostenpflichtige Zusatzerweiterung. Bei Interesse melden Sie sich gerne beim [Autor](https://github.com/markocupic).
+
+---
+
+<p align="center">
+  Mit ❤️ entwickelt von <a href="https://github.com/markocupic">Marko Cupic</a> · <a href="LICENSE">MIT-Lizenz</a>
+</p>

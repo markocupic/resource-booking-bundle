@@ -65,7 +65,12 @@ final class BookingFormValidationController extends AbstractController implement
             $this->setSlotErrorMessage($ajaxResponse, $slots);
         }
 
-        $ajaxResponse->setData('slotSelection', $slots->fetchAll());
+        // The booking preview does not need the bookings of other members:
+        // remove them, so that no personal data is sent to the front end.
+        $ajaxResponse->setData('slotSelection', array_map(
+            static fn (array $slot): array => ['bookings' => [], ...array_diff_key($slot, ['bookings' => true])],
+            $slots->fetchAll(),
+        ));
 
         if ($ajaxResponse->hasErrorMessage()) {
             $ajaxResponse->setStatus(AjaxResponse::STATUS_ERROR);
@@ -101,6 +106,8 @@ final class BookingFormValidationController extends AbstractController implement
 
             if (!$slot->isBookable) {
                 $key = match (true) {
+                    true !== $slot->isValidTimeSlot => 'RBB.ERR.invalidTimeSlot',
+                    true !== $slot->hasValidItemCount => 'RBB.ERR.invalidItemsBooked',
                     false === $slot->isTimeSlotAvailable => 'RBB.ERR.timeSlotNotAvailableOnWeekday',
                     true === $slot->isInBlockedPeriod => 'RBB.ERR.slotInBlockedPeriod',
                     $slot->isFullyBooked => 'RBB.ERR.resourceIsAlreadyFullyBooked',

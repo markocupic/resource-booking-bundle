@@ -9,6 +9,7 @@ services:
         exclude:
             - '../src/{DependencyInjection,Session,Config,Model,Event}'
             - '../src/Response/AjaxResponse.php'
+            - '../src/Validator/InvalidBookingRequestException.php'
 
     # Register session bag
     markocupic.rbb.session_bag:

@@ -33,7 +33,7 @@ class ResourceBookingBlockedPeriodModel extends Model
     private static array|null $publishedRows = null;
 
     /**
-     * Returns the rows of all published blocked periods that ended at most one year ago.
+     * Returns the rows of all published blocked periods that are unlimited or ended at most one year ago.
      *
      * The result is cached for the current request, because the week calendar
      * checks every slot against the blocked periods.
@@ -51,7 +51,8 @@ class ResourceBookingBlockedPeriodModel extends Model
         $t = static::$strTable;
 
         $collection = static::findBy(
-            [$t.'.published = ?', $t.'.dateTo >= ?'],
+            // A period without end date (dateTo = 0) is unlimited
+            [$t.'.published = ?', '('.$t.'.dateTo = 0 OR '.$t.'.dateTo >= ?)'],
             [1, strtotime('today -1 year')],
             ['order' => $t.'.dateFrom ASC'],
         );

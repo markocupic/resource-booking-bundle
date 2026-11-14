@@ -1,0 +1,12 @@
+{% trans_default_domain "contao_default" %}
+
+{# Legend of the cell colors, displayed above the week calendar #}
+{% block rbb_week_calendar_window__legend %}
+    <ul class="rbb-legend" v-if="rows.length > 0" aria-label="{{ ('RBB.legend.title')|trans }}">
+        <li class="rbb-legend-item"><span class="rbb-legend-swatch rbb-legend-swatch--free" aria-hidden="true"></span>{{ ('RBB.legend.free')|trans }}</li>
+        <li class="rbb-legend-item"><span class="rbb-legend-swatch rbb-legend-swatch--own" aria-hidden="true"></span>{{ ('RBB.legend.own')|trans }}</li>
+        <li class="rbb-legend-item"><span class="rbb-legend-swatch rbb-legend-swatch--fully-booked" aria-hidden="true"></span>{{ ('RBB.legend.fullyBooked')|trans }}</li>
+        <li class="rbb-legend-item"><span class="rbb-legend-swatch rbb-legend-swatch--unconfirmed" aria-hidden="true"></span>{{ ('RBB.legend.unconfirmed')|trans }}</li>
+        <li class="rbb-legend-item"><span class="rbb-legend-swatch rbb-legend-swatch--blocked" aria-hidden="true"></span>{{ ('RBB.legend.blocked')|trans }}</li>
+    </ul>
+{% endblock %}
