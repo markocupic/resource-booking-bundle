@@ -443,6 +443,24 @@ Contao 5, bis das Notification Center Contao 6 unterstützt.
   `PrepareNotificationEvent` (Benachrichtigung unterdrücken, Tokens, Benachrichtigung oder Sprache ändern), siehe
   `docs/EVENTS.md`.
 
+### Modernes Twig-Template des Wochenkalenders
+
+Das Frontend-Modul verwendet die modernen Fragment-Templates von Contao 5:
+
+| Bisher | Neu |
+|---|---|
+| `contao/templates/frontend_modules/mod_resourceBookingWeekcalendar.html.twig` (erweitert `block_unsearchable`) | `contao/templates/twig/frontend_module/resource_booking_weekcalendar.html.twig` (erweitert `@Contao/frontend_module/_base.html.twig`) |
+| eigene Templates `mod_resourceBookingWeekcalendar_<name>` | Varianten `templates/frontend_module/resource_booking_weekcalendar/<name>.html.twig` |
+
+* Eigene Templates umbenennen und `{% extends '@Contao/frontend_module/resource_booking_weekcalendar.html.twig' %}`
+  verwenden. Die Blöcke (`content`, `rbb_*`) und Variablen (`moduleKey`, `csrfToken`) sind unverändert.
+* Der Wrapper trägt zusätzlich die Klasse `module-resourceBookingWeekcalendar`; die Klasse
+  `mod_resourceBookingWeekcalendar` bleibt erhalten, eigenes CSS funktioniert weiter. Der Kalender wird weiterhin
+  nicht indexiert (`searchable: false`).
+* `getResponse()` des Controllers erhält ein `FragmentTemplate` (`$template->set()`).
+* Die Migration `UseModernWeekcalendarTemplate` setzt Module, die ausdrücklich `mod_resourceBookingWeekcalendar`
+  gewählt hatten, auf das Standard-Template zurück.
+
 ### Herkunft der Buchung
 
 Neues Feld `tl_resource_booking.bookingSource` («Erfasst über»): `week_calendar` (Wochenkalender), `backend` oder

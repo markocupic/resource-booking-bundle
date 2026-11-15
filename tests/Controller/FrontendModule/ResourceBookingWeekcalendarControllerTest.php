@@ -16,11 +16,12 @@ namespace Markocupic\ResourceBookingBundle\Tests\Controller\FrontendModule;
 
 use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController;
 use Contao\CoreBundle\Csrf\ContaoCsrfTokenManager;
+use Contao\CoreBundle\DependencyInjection\Attribute\AsFrontendModule;
 use Contao\CoreBundle\Exception\ResponseException;
 use Contao\CoreBundle\Routing\ScopeMatcher;
+use Contao\CoreBundle\Twig\FragmentTemplate;
 use Contao\ModuleModel;
 use Contao\PageModel;
-use Contao\Template;
 use Contao\TestCase\ContaoTestCase;
 use Markocupic\ResourceBookingBundle\AppState\AppState;
 use Markocupic\ResourceBookingBundle\AppState\AppStateFactory;
@@ -160,7 +161,8 @@ class ResourceBookingWeekcalendarControllerTest extends ContaoTestCase
     }
 
     /**
-     * getResponse() exposes the module key and the CSRF token to the template.
+     * getResponse() exposes the module key and the CSRF token to the template and
+     * excludes the calendar from the search index.
      */
     public function testGetResponseAssignsModuleKeyAndCsrfTokenToTemplate(): void
     {
@@ -172,23 +174,7 @@ class ResourceBookingWeekcalendarControllerTest extends ContaoTestCase
             ->willReturn('csrf-token-value')
         ;
 
-        // PHPUnit 12 removed withConsecutive(); record the __set() calls and
-        // assert on them afterwards instead.
-        $assignedTemplateVars = [];
-
-        $template = $this->createMock(Template::class);
-        $template
-            ->method('__set')
-            ->willReturnCallback(
-                static function (string $key, mixed $value) use (&$assignedTemplateVars): void {
-                    $assignedTemplateVars[$key] = $value;
-                },
-            )
-        ;
-        $template
-            ->method('getResponse')
-            ->willReturn($expectedResponse)
-        ;
+        $template = new FragmentTemplate('frontend_module/resource_booking_weekcalendar', static fn (): Response => $expectedResponse);
 
         $request = Request::create('https://example.com/calendar');
         $request->attributes->set('_rbb_module_key', '33_1');
@@ -198,7 +184,14 @@ class ResourceBookingWeekcalendarControllerTest extends ContaoTestCase
         $response = $this->invokeProtected($controller, 'getResponse', [$template, $this->mockModuleModel(), $request]);
 
         $this->assertSame($expectedResponse, $response);
-        $this->assertSame(['moduleKey' => '33_1', 'csrfToken' => 'csrf-token-value'], $assignedTemplateVars);
+        $this->assertSame(['moduleKey' => '33_1', 'csrfToken' => 'csrf-token-value', 'searchable' => false], $template->getData());
+    }
+
+    public function testUsesTheModernTemplate(): void
+    {
+        $attribute = (new \ReflectionClass(ResourceBookingWeekcalendarController::class))->getAttributes(AsFrontendModule::class)[0]->newInstance();
+
+        $this->assertSame('frontend_module/resource_booking_weekcalendar', $attribute->attributes['template']);
     }
 
     /**

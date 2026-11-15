@@ -1,10 +1,17 @@
+{% extends '@Contao/frontend_module/_base.html.twig' %}
 {% trans_default_domain "contao_default" %}
+
+{#
+    Front end module "Ressourcenbuchung: Wochenkalender" (ResourceBookingWeekcalendarController).
+
+    Variants of this template are placed in templates/frontend_module/resource_booking_weekcalendar/
+    (e.g. resource_booking_weekcalendar/my_variant.html.twig) and selected in the module settings.
+    Most parts are blocks of the partials below and can be overridden one by one.
+#}
 
 {% do addJavascriptResource(asset('vue/vue.global.prod.js', 'markocupic_resource_booking')) %}
 {% do addJavascriptResource(asset('js/app.js', 'markocupic_resource_booking')) %}
 {% do addCssResource(asset('css/frontend.css', 'markocupic_resource_booking')) %}
-
-{% extends '@Contao/block_unsearchable' %}
 
 {# Partials for mode "week-calendar" and  mode "booking_window" #}
 {% use '@MarkocupicResourceBooking/_logged_in_user.html.twig' %}
@@ -25,6 +32,9 @@
 {% use '@MarkocupicResourceBooking/booking_window/_main_cancel.html.twig' %}
 {% use '@MarkocupicResourceBooking/booking_window/_info_table.html.twig' %}
 {% use '@MarkocupicResourceBooking/booking_window/_booking_form_inputs.html.twig' %}
+
+{# The styles of the bundle are scoped to the class .mod_resourceBookingWeekcalendar #}
+{% block attributes %}{{ attributes.addClass('mod_resourceBookingWeekcalendar') }}{% endblock %}
 
 {% block content %}
     <div id="resourceBookingApp_{{ moduleKey }}" v-cloak>

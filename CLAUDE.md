@@ -164,8 +164,9 @@ Alte Spalten erst nach erfolgreicher Migration löschen. Jede Verhaltensänderun
 
 ## Frontend
 
-- Templates: `contao/templates/frontend_modules/mod_resourceBookingWeekcalendar.html.twig` bindet die Partials aus
-  `templates/` per `{% use %}` ein (überschreibbar über Blöcke). Vue-Ausdrücke mit `[[ … ]]` (nicht `{{ }}`).
+- Templates: modernes Fragment-Template `contao/templates/twig/frontend_module/resource_booking_weekcalendar.html.twig`
+  (erweitert `@Contao/frontend_module/_base.html.twig`, Varianten unter `…/resource_booking_weekcalendar/<name>`, Wrapper
+  behält die Klasse `mod_resourceBookingWeekcalendar`) bindet die Partials aus `templates/` per `{% use %}` ein (überschreibbar über Blöcke). Vue-Ausdrücke mit `[[ … ]]` (nicht `{{ }}`).
 - Aufbau Wochenkalender (wie Design-Vorlage «Weich & freundlich»): Kopfzeile `_header.html.twig` (Kategorie als
   Kicker, Ressource als Titel, «KW 47 · Montag, 16. bis Freitag, 20. November 2026»; rechts «Angemeldet als
   **Name**») → Filter mit sichtbaren Labels (Kategorie / Ressource / Woche) → Hinweis der Ressource (grüner Kasten)

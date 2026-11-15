@@ -19,9 +19,9 @@ use Contao\CoreBundle\Csrf\ContaoCsrfTokenManager;
 use Contao\CoreBundle\DependencyInjection\Attribute\AsFrontendModule;
 use Contao\CoreBundle\Exception\ResponseException;
 use Contao\CoreBundle\Routing\ScopeMatcher;
+use Contao\CoreBundle\Twig\FragmentTemplate;
 use Contao\ModuleModel;
 use Contao\PageModel;
-use Contao\Template;
 use Markocupic\ResourceBookingBundle\AppState\AppStateFactory;
 use Markocupic\ResourceBookingBundle\AppState\ModuleKeyGenerator;
 use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
@@ -32,7 +32,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 
-#[AsFrontendModule(ResourceBookingWeekcalendarController::TYPE, category: 'resourceBooking', template: 'mod_resourceBookingWeekcalendar')]
+#[AsFrontendModule(ResourceBookingWeekcalendarController::TYPE, category: 'resourceBooking', template: 'frontend_module/resource_booking_weekcalendar')]
 class ResourceBookingWeekcalendarController extends AbstractFrontendModuleController
 {
     public const TYPE = 'resourceBookingWeekcalendar';
@@ -122,11 +122,14 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
         return $response;
     }
 
-    protected function getResponse(Template $template, ModuleModel $model, Request $request): Response
+    protected function getResponse(FragmentTemplate $template, ModuleModel $model, Request $request): Response
     {
         // Used, if multiple rbb modules are used on the same page
-        $template->moduleKey = $request->attributes->get(self::MODULE_KEY_ATTRIBUTE, $model->id.'_0');
-        $template->csrfToken = $this->contaoCsrfTokenManager->getDefaultTokenValue();
+        $template->set('moduleKey', $request->attributes->get(self::MODULE_KEY_ATTRIBUTE, $model->id.'_0'));
+        $template->set('csrfToken', $this->contaoCsrfTokenManager->getDefaultTokenValue());
+
+        // The calendar changes with every booking: not indexed by the search
+        $template->set('searchable', false);
 
         // Let vue.js take care of the rest ;-)
         return $template->getResponse();
