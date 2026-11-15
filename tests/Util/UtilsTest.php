@@ -14,13 +14,13 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\Tests\Util;
 
+use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\ModuleModel;
 use Contao\StringUtil;
 use Contao\TestCase\ContaoTestCase;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotTypeModel;
 use Markocupic\ResourceBookingBundle\Util\Utils;
-use Symfony\Component\HttpFoundation\RequestStack;
 
 class UtilsTest extends ContaoTestCase
 {
@@ -51,7 +51,7 @@ class UtilsTest extends ContaoTestCase
 
     public function testGetAppConfigByNameFallsBackToTheDefaultsWithoutApps(): void
     {
-        $utils = new Utils($this->createContaoFrameworkMock(), new RequestStack(), 'rbb_bag', []);
+        $utils = new Utils($this->createContaoFrameworkMock(), []);
 
         $this->assertSame(
             ['autoSelectFirstResource' => true, 'permittedFormFields' => ['bookingDescription', 'itemsBooked', 'bookingRepeatStopWeekTstamp']],
@@ -61,7 +61,7 @@ class UtilsTest extends ContaoTestCase
 
     public function testAutoSelectFirstResourceCanBeDisabledPerApp(): void
     {
-        $utils = new Utils($this->createContaoFrameworkMock(), new RequestStack(), 'rbb_bag', [
+        $utils = new Utils($this->createContaoFrameworkMock(), [
             'default' => [],
             'no_auto_select' => ['auto_select_first_resource' => false],
         ]);
@@ -72,7 +72,7 @@ class UtilsTest extends ContaoTestCase
 
     public function testGetAppConfigWithoutActiveResourceStartsTheWeekOnMonday(): void
     {
-        $appConfig = $this->getUtils()->getAppConfig();
+        $appConfig = $this->getUtils()->getAppConfig(null, null);
 
         $this->assertSame('monday', $appConfig['beginWeek']);
         $this->assertSame(['bookingDescription', 'itemsBooked', 'bookingRepeatStopWeekTstamp'], $appConfig['permittedFormFields']);
@@ -92,8 +92,6 @@ class UtilsTest extends ContaoTestCase
 
         $utils = new Utils(
             $this->createContaoFrameworkMock([ResourceBookingTimeSlotTypeModel::class => $adapter]),
-            new RequestStack(),
-            'rbb_bag',
             self::APP_CONFIGS,
         );
 
@@ -112,8 +110,6 @@ class UtilsTest extends ContaoTestCase
 
         $utils = new Utils(
             $this->createContaoFrameworkMock([ResourceBookingTimeSlotTypeModel::class => $adapter]),
-            new RequestStack(),
-            'rbb_bag',
             self::APP_CONFIGS,
         );
 
@@ -128,7 +124,7 @@ class UtilsTest extends ContaoTestCase
 
     public function testGetDisplayedMemberFieldsOnlyReturnsPermittedFields(): void
     {
-        $utils = new Utils($this->frameworkWithDeserialize(), new RequestStack(), 'rbb_bag', self::APP_CONFIGS, ['firstname', 'lastname', 'city'], ['description']);
+        $utils = new Utils($this->frameworkWithDeserialize(), self::APP_CONFIGS, ['firstname', 'lastname', 'city'], ['description']);
 
         $module = $this->createClassWithPropertiesStub(ModuleModel::class, [
             'resourceBooking_displayClientPersonalData' => '1',
@@ -141,7 +137,7 @@ class UtilsTest extends ContaoTestCase
 
     public function testGetDisplayedMemberFieldsIsEmptyIfDisabled(): void
     {
-        $utils = new Utils($this->frameworkWithDeserialize(), new RequestStack(), 'rbb_bag', self::APP_CONFIGS);
+        $utils = new Utils($this->frameworkWithDeserialize(), self::APP_CONFIGS);
 
         $module = $this->createClassWithPropertiesStub(ModuleModel::class, [
             'resourceBooking_displayClientPersonalData' => '',
@@ -153,7 +149,7 @@ class UtilsTest extends ContaoTestCase
 
     public function testGetDisplayedBookingFieldsOnlyReturnsPermittedFields(): void
     {
-        $utils = new Utils($this->frameworkWithDeserialize(), new RequestStack(), 'rbb_bag', self::APP_CONFIGS);
+        $utils = new Utils($this->frameworkWithDeserialize(), self::APP_CONFIGS);
 
         $module = $this->createClassWithPropertiesStub(ModuleModel::class, [
             'resourceBooking_displayBookingDetails' => '1',
@@ -171,7 +167,7 @@ class UtilsTest extends ContaoTestCase
         $this->assertSame([], $utils->getDisplayedBookingFields($module));
     }
 
-    private function frameworkWithDeserialize(): \Contao\CoreBundle\Framework\ContaoFramework
+    private function frameworkWithDeserialize(): ContaoFramework
     {
         $stringUtil = $this->createAdapterMock(['deserialize']);
         $stringUtil
@@ -184,6 +180,6 @@ class UtilsTest extends ContaoTestCase
 
     private function getUtils(): Utils
     {
-        return new Utils($this->createContaoFrameworkMock(), new RequestStack(), 'rbb_bag', self::APP_CONFIGS);
+        return new Utils($this->createContaoFrameworkMock(), self::APP_CONFIGS);
     }
 }

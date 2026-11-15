@@ -9,10 +9,6 @@ Encore
     //.addEntry('frontend', './assets/frontend.js')
 
     .copyFiles({
-        from: './assets/audio',
-        to: 'audio/[path][name].[hash:8].[ext]',
-    })
-    .copyFiles({
         from: './assets/icons',
         to: 'icons/[path][name].[ext]',
     })

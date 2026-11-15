@@ -138,7 +138,7 @@ erfolgreicher Migration ausgeführt werden.
 
 Es können weiterhin mehrere App-Konfigurationen (`markocupic_resource_booking.apps`) angelegt und im Frontend-Modul
 ausgewählt werden. Eine App-Konfiguration enthält nur noch die erlaubten Formularfelder und den neuen Schalter
-`auto_select_first_resource` (Standard: `true`): Ist noch weder Ressourcen-Typ noch Ressource gewählt (leere Session),
+`auto_select_first_resource` (Standard: `true`): Ist noch weder Ressourcen-Typ noch Ressource gewählt (erster Aufruf der Seite),
 zeigt der Wochenkalender beim ersten Aufruf direkt die erste veröffentlichte Ressource des ersten Ressourcen-Typs des
 Moduls an, der eine hat (Reihenfolge wie in den Auswahlfeldern). Bisher wurde nur automatisch gewählt, wenn es genau
 einen Typ bzw. genau eine Ressource gab.
@@ -281,6 +281,59 @@ der Wrapper um Name und Anzahl einer Buchung in der Zelle hat neu die Klasse `rb
 
 Das Aussehen lässt sich über CSS-Variablen anpassen (z. B. `--rbb-primary`, `--rbb-radius`), siehe README.
 
+### Buchungsfenster als Dialog, Barrierefreiheit, kein Ton mehr
+
+* Das Buchungs- bzw. Stornierungsfenster ist neu ein modaler `<dialog>` (`.rbb-booking-dialog`), der über dem
+  Wochenkalender geöffnet wird. Der Fokus bleibt im Dialog, Esc schliesst ihn, danach steht der Fokus wieder auf dem
+  auslösenden Button. Der Wochenkalender wird nicht mehr ausgeblendet (`v-if="mode === 'week-calendar'"` entfällt).
+  Angepasste Modul-Templates müssen den Block `rbb_booking_window` entsprechend übernehmen (`ref="bookingDialog"`).
+* Icon-Buttons haben eine Beschriftung für Screenreader (`aria-label` mit Datum und Zeit des Slots), die
+  Schliessen-Buttons sind übersetzt, Meldungen werden mit `role="status"` angesagt.
+* Eigene Buchungen sind zusätzlich mit einem Häkchen markiert (nicht nur farblich), auch in der Legende. Neues Feld
+  `booking.isOwn` im Ajax-Response.
+* Auf kleinen Bildschirmen (unter 576 px) zeigt der Wochenkalender einen Tag auf einmal. Über der Tabelle stehen
+  Tages-Buttons (Block `rbb_week_calendar_window__day_tabs` in `_table.html.twig`, Übersetzung `RBB.filterDay`), ein
+  Wischen nach links oder rechts wechselt den Tag, die Pfeiltasten ebenso. Angezeigt wird zuerst der heutige Tag, sonst
+  der erste Tag der Woche. Die Tabelle hat dafür das Attribut `data-activedayindex`.
+  Ebenfalls auf kleinen Bildschirmen: Die Filter stehen in zwei Zeilen (Woche mit Pfeilen, darunter Kategorie und
+  Ressource nebeneinander), Kopfzeile und Abstände sind kompakter.
+* Im Buchungsdialog ersetzt auf kleinen Bildschirmen eine Liste die Checkbox-Tabelle: Tages-Buttons mit der Anzahl
+  gewählter Slots, darunter die Zeitfenster des gewählten Tags (Block `rbb_booking_window__booking_form__slot_list`
+  in `_main_booking.html.twig`, Übersetzung `RBB.selected`). Geöffnet wird der Tag des angeklickten Slots. Die
+  Info-Tabelle zeigt Bezeichnung und Wert untereinander, die Buttons bleiben unten im Dialog sichtbar.
+* Der Wochenkalender ist für Screenreader eine Tabelle (`role="table"` mit Beschriftung «Wochenkalender: Ressource,
+  Tage», `row`, `columnheader`, `rowheader`, `cell`). Jede Zelle wird so mit Tag und Uhrzeit angesagt. Vergangene
+  Slots ohne Text erhalten unsichtbar «nicht buchbar» (`RBB.notBookable`). Auf kleinen Bildschirmen bleibt die
+  Kopfzeile für Screenreader erhalten (nur visuell ausgeblendet, Klasse `rbb-layout-row-head`). Die Checkboxen im
+  Buchungsdialog haben eine Beschriftung (Datum und Zeit).
+* Kontraste nach WCAG 2.2 AA: Rahmen der Formularfelder (`--rbb-input-border-color`) mindestens 3:1, graue Texte
+  (`--rbb-faint-color`) mindestens 4.5:1. Neue Variable `--rbb-divider-color` für Trennlinien.
+* Der Buchungsdialog schliesst sich nach dem Buchen bzw. Stornieren nicht mehr automatisch (kein Zeitlimit,
+  WCAG 2.2.1). Der Fokus springt auf «Schliessen». Die Option `autocloseWindowsAfter` und die Übersetzung
+  `RBB.MSG.windowClosesAutomatically` wurden entfernt.
+* Während einer Anfrage sind Wochenkalender und Buchungsformular mit `aria-busy` markiert. Hinweise der Filter
+  (z. B. «Bitte Ressource wählen») stehen in einem Live-Bereich (`role="status"`). Mit der Systemeinstellung
+  «Bewegung reduzieren» dreht sich das Lade-Icon nicht und es gibt keine Übergänge. Auf Touch-Geräten haben die
+  Buttons «Buchen» und «Stornieren» in den Zellen eine Klickfläche von mindestens 44 × 44 px.
+* Meldungen (Info, Warnung, Fehler) erscheinen nur im aktiven Fenster: bei offenem Buchungsdialog nur im Dialog,
+  sonst unter den Filtern des Wochenkalenders.
+* Fehler bei Formularfeldern werden dem Feld zugeordnet: Neue `Exception\FieldValidationException` (erweitert
+  `StopBookingProcessException`, die dafür nicht mehr `final` ist) mit Feldname und Meldung, z. B. aus einem
+  `PreBookingEvent`-Listener. Die Ajax-Antwort enthält dazu `fieldErrors` (Feld => Meldung, `AjaxResponse::
+  setFieldError()`). Das Buchungsfenster listet die Meldungen auf (Block `rbb_booking_window__booking_form__field_errors`,
+  `role="alert"`) und setzt am Feld `aria-invalid`, `aria-describedby` und die Klasse `rbb-is-invalid`; der Fokus
+  springt auf das erste Feld. Ungültige Werte (`InvalidBookingRequestException`) und nicht ausgefüllte Pflichtfelder
+  werden ebenfalls so gemeldet. `src/Exception` ist von der Service-Registrierung ausgenommen.
+* Der Wochenkalender fragt die Daten nicht mehr ab, solange der Browser-Tab im Hintergrund ist; beim Zurückkehren
+  und wenn das Gerät wieder online ist, werden sie sofort neu geladen.
+* Kann der Server nicht erreicht werden (Netzwerkfehler), bleibt der Kalender sichtbar, und ein Hinweis erscheint
+  (`RBB.ERR.connectionLost`, Block `rbb_status_message`); im Buchungsdialog erscheint `RBB.ERR.networkError`. Bisher
+  drehte sich nur der Lade-Spinner. Die Texte werden über die neue Option `texts.networkError` an die App übergeben.
+  Die `alert()`-Meldungen (veraltete Browser, ungültiger Meldungstyp) wurden entfernt.
+* `tl_resource_booking_time_slot`: Die überflüssige Angabe `'operations' => 'all'` wurde entfernt (Contao verwendet
+  die Standard-Operationen).
+* Der Ton bei neuen Buchungen wurde entfernt (Optionen `audio` und `enableAudio`, Datei `audio/booking-alert.mp3`).
+
 ### Geändertes Verhalten
 
 * Buchungsanfragen werden serverseitig strenger geprüft, damit auch manipulierte Ajax-Requests nichts buchen können,
@@ -297,6 +350,27 @@ Das Aussehen lässt sich über CSS-Variablen anpassen (z. B. `--rbb-primary`, `-
     Slots haben die neuen Methoden `isValidTimeSlot()` und `hasValidItemCount()`; `isBookable()` berücksichtigt beide.
   * Ressourcen ohne gültige Stückzahl (`itemsAvailable` leer, NULL oder 0) wären damit nicht mehr buchbar. Die
     Migration `EnsureItemsAvailable` setzt sie auf 1 und nennt die betroffenen Ressourcen.
+* Weitere Schutzmassnahmen gegen manipulierte Ajax-Requests:
+  * **Keine Doppelbuchungen:** Der `BookingController` sperrt beim Buchen den Datensatz der Ressource
+    (`SELECT … FOR UPDATE`) bis zum Ende der Transaktion. Buchen zwei Mitglieder gleichzeitig denselben Slot, wird
+    die zweite Buchung mit "ausgebucht" abgelehnt. Bisher konnten beide die Verfügbarkeitsprüfung bestehen.
+  * **Wiederholungen begrenzt:** `bookingRepeatStopWeekTstamp` wird auf die letzte buchbare Woche der Ressource
+    begrenzt (`weeksAhead`, `bookableUntil`), höchstens 520 Wiederholungen pro Slot
+    (`BookingTrait::MAX_REPETITIONS`). Ein manipulierter Wert erzeugte bisher beliebig viele Slots und Abfragen.
+  * **Slot-Auswahl geprüft:** `bookingDateSelection` muss aus höchstens 100 Einträgen im Format
+    `Zeitfenster-Start-Ende-Wochenbeginn` bestehen (`BookingRequestValidator::parseSlotSelection()`,
+    `MAX_SELECTED_SLOTS`). Sonst: `RBB.ERR.invalidFormValueSubmitted`.
+  * **Ressource des Moduls:** Gebucht werden können nur Ressourcen der im Modul gewählten Ressourcen-Typen
+    (`AbstractController::isResourceOfModule()`). Bisher genügte eine veröffentlichte Ressource.
+  * **Stornieren:** Vergangene Buchungen können nicht mehr storniert werden (`RBB.ERR.cancelingPastBookingNotPossible`);
+    bisher wurde nur der Button im Frontend ausgeblendet. Beim Stornieren einer Serie werden vergangene Termine der
+    Serie nicht mehr mitgelöscht.
+  * Abgelehnte Buchungen (z. B. Slot inzwischen belegt) werden als `info` statt als `error` protokolliert. Fehler bei
+    der Prüfung des Buchungsformulars (`bookingFormValidationRequest`) führen zu einer Fehlermeldung im Fenster statt
+    zu einem HTTP-Fehler 500.
+* Der Wochenkalender lädt die Buchungen der angezeigten Woche mit einer einzigen Abfrage (`SlotDataProvider`).
+  Mitglied, Zeitfenster und Zeitplan werden pro Request nur einmal geladen. Bisher führte jede Zelle mehrere eigene
+  Abfragen aus.
 * Die Wochentag- und Datumseinschränkungen sowie die Anzahl Wochen voraus werden nicht mehr nur im Frontend
   (Ausblenden), sondern auch beim Buchen serverseitig geprüft. Ungültige Buchungen werden mit den neuen
   Fehlermeldungen `RBB.ERR.outsideBookingPeriod` bzw. `RBB.ERR.slotInBlockedPeriod` abgelehnt.
@@ -335,19 +409,90 @@ Das Aussehen lässt sich über CSS-Variablen anpassen (z. B. `--rbb-primary`, `-
   Statt einer Exception wird bei fehlender Konfiguration die App-Konfiguration `default` verwendet.
 * Neue Methoden `Utils::getAppConfigByName()` (nur `permittedFormFields`) und `Utils::getBeginWeek()`.
 * Der Konstruktor von `Utils` erhält den neuen Parameter `$appConfigs`.
-* Der Konstruktor von `Initialize` erhält den neuen Service `WeekBoundaries`.
 * Die Methoden von `PurgePastBookingsCron`
   `getModuleIdsWithBookings()` und `resolveAppConfigForModule()` wurden durch `getPurgeSettingsByResource()`
   ersetzt, `calculatePurgeLimit()` erwartet die Anzahl Wochen und den Wochenbeginn, `deleteExpiredBookings()` die
   Ressourcen-ID. Der Konstruktor erhält die App-Konfigurationen nicht mehr.
 * `DateHelper::isWithinAllowedDateRange()` wurde entfernt. Die erlaubten Wochen werden mit `WeekBoundaries`
-  berechnet und in der Session (`tstampFirstPermittedWeek`, `tstampLastPermittedWeek`) abgelegt.
+  berechnet.
 * Neue Klassen: `Util\WeekBoundaries` und `Util\ResourceBookingRestriction`.
 * Neue Methoden in `AbstractSlot`: `isOutsideBookingPeriod()`, `isTimeSlotAvailable()`, `isInBlockedPeriod()`,
   `isValidTimeSlot()` und `hasValidItemCount()`.
 * Neue Konstanten in `RbbConfig`: `RBB_DEFAULT_WEEKS_BACK`, `RBB_DEFAULT_WEEKS_AHEAD`,
   `RBB_DEFAULT_BEGIN_WEEK` und `RBB_BASE_PERMITTED_FORM_FIELDS`.
 * Neue Methode `ResourceBookingRestriction::getBeginWeek()`.
+* Neue Klasse `Slot\SlotDataProvider` (Daten der Slots pro Request, `preloadBookings()`); `SlotFactory` und
+  `AbstractSlot` erhalten sie als optionalen letzten Konstruktor-Parameter, `SlotFactory::preloadBookings()` ist neu.
+  `AbstractSlot::getUserBooking()` liefert die Buchungszeile direkt (ohne erneutes Laden).
+* `BookingTrait` erhält zusätzlich `WeekBoundaries` (Setter `setWeekBoundaries()`).
+* Die Tabelle des Wochenkalenders wird neu von `WeekCalendar\WeekTableBuilder` erzeugt, die Daten einer Buchung von
+  `WeekCalendar\BookingPresenter`.
+
+### Benachrichtigungen im Bundle
+
+Die Benachrichtigungen bei Buchung und Stornierung (bisher `markocupic/resource-booking-notification-bundle`) sind
+jetzt Teil des Bundles. Das Bundle benötigt deshalb `terminal42/notification_center` (^2.0) und läuft vorerst nur mit
+Contao 5, bis das Notification Center Contao 6 unterstützt.
+
+* `markocupic/resource-booking-notification-bundle` muss entfernt werden (`composer remove …`), die Pakete schliessen
+  sich gegenseitig aus. Benachrichtigungstypen, Felder (`tl_resource_booking_resource.bookingNotification`,
+  `cancellationNotification`), Tokens und Migrationen sind unverändert, bestehende Benachrichtigungen funktionieren weiter.
+* Klassen neu im Namespace `Markocupic\ResourceBookingBundle`: `NotificationType\{Booking,Cancellation}NotificationType`,
+  `Notification\TokenBuilder`, `EventListener\SendNotificationListener`.
+* Neu: `Notification\NotificationSender::send()` für Erweiterungen mit eigenem Buchungsablauf und das
+  `PrepareNotificationEvent` (Benachrichtigung unterdrücken, Tokens, Benachrichtigung oder Sprache ändern), siehe
+  `docs/EVENTS.md`.
+
+### Herkunft der Buchung
+
+Neues Feld `tl_resource_booking.bookingSource` («Erfasst über»): `week_calendar` (Wochenkalender), `backend` oder
+der Wert einer Erweiterung mit eigenem Buchungsablauf (Konstanten in `Booking\BookingSource`). Das Feld kann nicht
+bearbeitet werden, es steht im Filter und in der Detailansicht. Die Migration `AddBookingSource` setzt bei
+bestehenden Buchungen von Mitgliedern `week_calendar`, Buchungen ohne Mitglied bleiben leer (unbekannt).
+Erweiterungen ergänzen die Bezeichnung in `$GLOBALS['TL_LANG']['tl_resource_booking']['bookingSources'][<Wert>]`.
+`NotificationSender::send()` verwendet die Herkunft der Buchung als Kontext, wenn kein Kontext übergeben wird.
+
+### Buchungssuche im Backend
+
+Neu steht auf der Startseite des Backends eine Suche nach der Buchungs-ID (`tl_resource_booking.bookingUuid`) zur
+Verfügung (Hook `parseBackendTemplate`, `EventListener\ContaoHooks\AddBookingSearchToWelcomeScreenListener` und
+`Backend\BookingSearch`). Sichtbar für Administratoren und Benutzer mit Zugriff auf das Modul «Ressourcen». Das
+Core-Template `be_welcome` wird nicht überschrieben. Direktlink: `/contao?rbb_booking_uuid=<ID>`, erzeugt von `Backend\BookingSearchUrlGenerator`.
+
+### Kein Zustand mehr in der Session, kein Token in der URL
+
+Der Wochenkalender speichert nichts mehr auf dem Server. Bisher hängte das Modul beim ersten Aufruf einen Token an
+die URL (`?token_<moduleKey>=…`, mit Redirect) und legte Auswahl und Woche im Session-Bag ab. Neu schickt das
+Frontend bei jedem Ajax-Request den Modul-Schlüssel und die Auswahl mit (`resType`, `res`, `date`); der Server prüft
+sie und baut daraus den `AppState`, der am Request hängt. Folgen:
+
+* Keine Redirects und keine Session mehr beim Aufruf der Seite (cachebar, keine Session-Cookies nur für den Kalender).
+* Mehrere Browser-Tabs mit unterschiedlicher Auswahl stören sich nicht mehr. Die Auswahl bleibt pro Tab beim
+  Neuladen erhalten (`sessionStorage`, Schlüssel `rbb:<Pfad und Query-String>:<moduleKey>`).
+* Direktlinks: `?resType=<id>`, `?res=<id>` (wählt auch den Typ) und `?date=<Zeitstempel oder JJJJ-MM-TT>`.
+  Ressourcen bzw. Typen, die nicht zum Modul gehören oder nicht veröffentlicht sind, werden ignoriert.
+* Mehrere Wochenkalender auf einer Seite funktionieren weiterhin (Schlüssel `<Modul-ID>_<Index>`).
+
+API-Änderungen:
+
+* **Events:** `getSessionBag()` von `PreBookingEvent`, `PostBookingEvent`, `PreCancellingEvent` und
+  `PostCancellingEvent` heisst neu `getAppState()` und liefert einen `AppState\AppState` (öffentliche, unveränderliche
+  Eigenschaften `moduleKey`, `module`, `page`, `resourceType`, `resource`, `appConfig`, `activeWeekTstamp`,
+  `firstPermittedWeekTstamp`, `lastPermittedWeekTstamp`, `language`). Statt `$sessionBag->get('language')` also
+  `$event->getAppState()->language`. In anderen Listenern: `AppState::fromRequest($event->getRequest())`.
+* **Entfernt:** `AppInitialization\Initialize`, `AppInitialization\Helper\{ModuleIndex,ModuleKey,TokenManager}`,
+  `Session\Attribute\ArrayAttributeBag`, `Session\SessionFactory`, die Services `markocupic.rbb.session_bag` und
+  `markocupic.rbb.session.factory`, `WeekBoundaries::storePermittedWeeks()` sowie `AjaxController\Traits\RefreshDataTrait`
+  (neu der Service `WeekCalendar\CalendarDataBuilder::build(AppState, AjaxResponse)`).
+* **Neu:** `AppState\AppState`, `AppState\AppStateFactory` (prüft die Auswahl, wählt beim ersten Request automatisch
+  eine Ressource, begrenzt die Woche) und `AppState\ModuleKeyGenerator`.
+* `Utils` erhält weder `RequestStack` noch den Namen des Session-Bags; `getAppConfig(ModuleModel|null, Resource|null)`
+  und `getBeginWeek(Resource|null)` erwarten Modul bzw. Ressource. `getModuleModel()` und `getActiveResource()` wurden
+  entfernt.
+* Die Ajax-Controller und `BookingTrait` erhalten ihre Abhängigkeiten per Konstruktor (keine Setter mehr);
+  `BookingTrait::isBookingPossible()` ist durch `getBookingErrorKey(SlotCollection)` ersetzt.
+  `AjaxRequestEventSubscriber` liest den Request aus dem Event (kein `RequestStack` mehr).
+* Die Konfiguration `markocupic_resource_booking.session` ist veraltet und wird nicht mehr verwendet.
 
 ## Version 2.* to 3.0
 

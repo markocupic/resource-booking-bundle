@@ -33,3 +33,8 @@ $GLOBALS['TL_LANG']['tl_resource_booking_resource']['weeksAhead'] = ['Wochen vor
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['addBookableUntil'] = ['Buchungen nur bis zu einem bestimmten Datum zulassen', 'Geben Sie an, ob die Ressource nur bis zu einem bestimmten Datum gebucht werden kann.'];
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['autoConfirm'] = ['Buchungen automatisch bestätigen', 'Neue Buchungen dieser Ressource werden automatisch bestätigt. Ist die Option deaktiviert, muss die Buchung im Backend bestätigt werden.'];
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['bookableUntil'] = ['Buchbar bis', 'Wählen Sie das Datum aus, bis zu dem die Ressource gebucht werden kann (inklusive).'];
+
+// Notifications
+$GLOBALS['TL_LANG']['tl_resource_booking_resource']['notification_legend'] = 'Benachrichtigungen';
+$GLOBALS['TL_LANG']['tl_resource_booking_resource']['bookingNotification'] = ['Benachrichtigung bei Buchungen', 'Wählen Sie die Benachrichtigung aus, die nach einer Buchung dieser Ressource versandt wird.'];
+$GLOBALS['TL_LANG']['tl_resource_booking_resource']['cancellationNotification'] = ['Benachrichtigung bei Stornierungen', 'Wählen Sie die Benachrichtigung aus, die nach einer Stornierung einer Buchung dieser Ressource versandt wird.'];

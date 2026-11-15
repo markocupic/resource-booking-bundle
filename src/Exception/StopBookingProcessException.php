@@ -14,6 +14,6 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\Exception;
 
-final class StopBookingProcessException extends \RuntimeException
+class StopBookingProcessException extends \RuntimeException
 {
 }

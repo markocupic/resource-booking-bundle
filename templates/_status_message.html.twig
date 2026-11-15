@@ -1,6 +1,10 @@
 {% trans_default_domain "contao_default" %}
 
 {% block rbb_status_message %}
+    {# The server cannot be reached (network error): the data displayed may be outdated #}
+    <div class="rbb-connection-lost rbb-alert rbb-alert--warning" v-if="connectionLost" role="status">
+        {{ rbb_icon('fa-exclamation-circle','rbb-icon-2x')|raw }}<span>{{ ('RBB.ERR.connectionLost')|trans }}</span>
+    </div>
     <template v-if="isReady === false && lastResponseCode !== 200">
         <div class="rbb-status-message" v-if="lastResponseCode === 401">
             {{ ('RBB.ERR.401')|trans }}

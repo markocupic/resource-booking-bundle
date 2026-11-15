@@ -15,8 +15,8 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\Event;
 
 use Contao\Model\Collection;
+use Markocupic\ResourceBookingBundle\AppState\AppState;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
-use Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Contracts\EventDispatcher\Event;
@@ -26,7 +26,7 @@ class PostCancellingEvent extends Event
     public function __construct(
         private readonly Request $request,
         private readonly AjaxResponse $ajaxResponse,
-        private readonly ArrayAttributeBag $sessionBag,
+        private readonly AppState $appState,
         private readonly UserInterface $user,
         private readonly Collection|null $bookingCollection,
     ) {
@@ -47,9 +47,12 @@ class PostCancellingEvent extends Event
         return $this->user;
     }
 
-    public function getSessionBag(): ArrayAttributeBag
+    /**
+     * State of the week calendar: module, page, resource type, resource, week and language.
+     */
+    public function getAppState(): AppState
     {
-        return $this->sessionBag;
+        return $this->appState;
     }
 
     public function getAjaxResponse(): AjaxResponse

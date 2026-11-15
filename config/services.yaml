@@ -7,26 +7,11 @@ services:
     Markocupic\ResourceBookingBundle\:
         resource: ../src/
         exclude:
-            - '../src/{DependencyInjection,Session,Config,Model,Event}'
+            - '../src/{DependencyInjection,Session,Config,Model,Event,Exception}'
             - '../src/Response/AjaxResponse.php'
+            - '../src/AppState/AppState.php'
+            - '../src/Booking/BookingSource.php'
             - '../src/Validator/InvalidBookingRequestException.php'
-
-    # Register session bag
-    markocupic.rbb.session_bag:
-        class: Markocupic\ResourceBookingBundle\Session\Attribute\ArrayAttributeBag
-        arguments:
-            - '@request_stack'
-            - '@security.token_storage'
-            - _resource_booking_bundle_attributes
-        calls:
-            - [ 'setName', [ resource_booking_bundle_attributes ] ]
-
-    markocupic.rbb.session.factory:
-        class: Markocupic\ResourceBookingBundle\Session\SessionFactory
-        decorates: session.factory
-        arguments:
-            - '@markocupic.rbb.session.factory.inner'
-            - '@markocupic.rbb.session_bag'
 
     # Subscribers: Handle ajax requests
     Markocupic\ResourceBookingBundle\EventSubscriber\AjaxRequestEventSubscriber:

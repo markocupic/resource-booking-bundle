@@ -299,16 +299,19 @@ class ResourceBookingRestrictionTest extends ContaoTestCase
      */
     private function blockedPeriod(array $override = []): array
     {
-        return array_merge([
-            'id' => 1,
-            'title' => 'Herbstferien',
-            'published' => '1',
-            'dateFrom' => strtotime('2030-10-07'),
-            'dateTo' => strtotime('2030-10-18'),
-            'blockedTimes' => null,
-            'scope' => 'all',
-            'resourceTypes' => null,
-            'resources' => null,
-        ], $override);
+        return array_merge(
+            [
+                'id' => 1,
+                'title' => 'Herbstferien',
+                'published' => '1',
+                'dateFrom' => strtotime('2030-10-07'),
+                'dateTo' => strtotime('2030-10-18'),
+                'blockedTimes' => null,
+                'scope' => 'all',
+                'resourceTypes' => null,
+                'resources' => null,
+            ],
+            $override,
+        );
     }
 }

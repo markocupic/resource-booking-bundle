@@ -31,9 +31,12 @@ class ConfigurationTest extends TestCase
 
     public function testDisplayableFieldsCanBeConfigured(): void
     {
-        $config = (new Processor())->processConfiguration(new Configuration(), [
-            ['displayable_member_fields' => ['firstname', 'lastname'], 'displayable_booking_fields' => ['description']],
-        ]);
+        $config = (new Processor())->processConfiguration(
+            new Configuration(),
+            [
+                ['displayable_member_fields' => ['firstname', 'lastname'], 'displayable_booking_fields' => ['description']],
+            ],
+        );
 
         $this->assertSame(['firstname', 'lastname'], $config['displayable_member_fields']);
         $this->assertSame(['description'], $config['displayable_booking_fields']);
@@ -43,8 +46,11 @@ class ConfigurationTest extends TestCase
     {
         $this->expectException(InvalidConfigurationException::class);
 
-        (new Processor())->processConfiguration(new Configuration(), [
-            ['displayable_member_fields' => ['firstname', 'password']],
-        ]);
+        (new Processor())->processConfiguration(
+            new Configuration(),
+            [
+                ['displayable_member_fields' => ['firstname', 'password']],
+            ],
+        );
     }
 }

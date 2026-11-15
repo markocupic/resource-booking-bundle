@@ -99,13 +99,17 @@ $rbb-breakpoint-xl: 1200px;
   // Form controls
   --rbb-input-bg: light-dark(#ffffff, #15181c);
   --rbb-input-color: var(--rbb-text-color);
-  --rbb-input-border-color: light-dark(#d9dee4, #3a424c);
+  // Borders of form controls: at least 3:1 against the background (WCAG 1.4.11)
+  --rbb-input-border-color: light-dark(#8592a0, #66707c);
+  // Lines between sections (decoration, no contrast requirement)
+  --rbb-divider-color: light-dark(#e3e7eb, #343b43);
   --rbb-input-disabled-bg: light-dark(#eef1f4, #2a3037);
 
   // Text
   --rbb-text-color: light-dark(#1f2933, #e9edf1);
   --rbb-muted-color: light-dark(#52606d, #a7b1bc);
-  --rbb-faint-color: light-dark(#7b8794, #7d8893);
+  // At least 4.5:1 on the muted surfaces (past slots, disabled controls)
+  --rbb-faint-color: light-dark(#64707d, #8f9aa5);
 
   // Slot backgrounds / text
   --rbb-cell-bg: transparent;
@@ -263,6 +267,26 @@ $rbb-breakpoint-xl: 1200px;
     }
   }
 
+  @media (max-width: ($rbb-breakpoint-sm - 1px)) {
+    .rbb-header {
+      gap: .5rem;
+    }
+
+    .rbb-header-headline {
+      font-size: 1.5rem;
+    }
+
+    .rbb-header-week {
+      font-size: .875rem;
+    }
+
+    .rbb-logged-in-user-data {
+      margin-left: 0;
+      padding: .25rem .625rem;
+      font-size: .8125rem;
+    }
+  }
+
   .rbb-loading-indicator {
     margin-top: var(--rbb-section-spacing);
     text-align: center;
@@ -308,6 +332,17 @@ $rbb-breakpoint-xl: 1200px;
     display: flex;
     align-items: center;
     gap: .375rem;
+  }
+
+  .rbb-legend-icon {
+    display: inline-flex;
+    margin-left: -.125rem;
+    color: var(--rbb-primary);
+
+    .rbb-icon {
+      width: 1em;
+      height: 1em;
+    }
   }
 
   .rbb-legend-swatch {
@@ -613,8 +648,11 @@ $rbb-breakpoint-xl: 1200px;
       --rbb-btn-color: var(--rbb-text-color);
       --rbb-btn-border: var(--rbb-input-border-color);
 
+      flex-shrink: 0;
       width: 44px;
       height: 44px;
+      // .rbb-btn has min-height: 44px, which would make the smaller buttons on small screens oval
+      min-height: 0;
       padding: 0;
 
       &:hover {
@@ -624,26 +662,49 @@ $rbb-breakpoint-xl: 1200px;
       }
     }
 
+    // Small screens, two rows:
+    // [<] [week] [>]
+    // [category] [resource]
     @media (max-width: ($rbb-breakpoint-sm - 1px)) {
-      .rbb-go-ahead-one-week {
-        order: 2;
-        justify-self: end;
+      grid-template-columns: 40px minmax(0, 1fr) minmax(0, 1fr) 40px;
+      gap: .625rem .5rem;
+
+      .rbb-filter-label {
+        margin-bottom: .25rem;
+        font-size: .75rem;
+      }
+
+      .rbb-form-control {
+        min-height: 40px;
+        padding-top: .375rem;
+        padding-bottom: .375rem;
+        font-size: .875rem;
+      }
+
+      .rbb-go-back-one-week .rbb-btn,
+      .rbb-go-ahead-one-week .rbb-btn {
+        width: 40px;
+        height: 40px;
       }
 
       .rbb-go-back-one-week {
-        order: 1;
-      }
-
-      .rbb-ressource-type-select {
-        order: 3;
-      }
-
-      .rbb-ressource-select {
-        order: 4;
+        grid-area: 1 / 1;
       }
 
       .rbb-week-select {
-        order: 5;
+        grid-area: 1 / 2 / 2 / 4;
+      }
+
+      .rbb-go-ahead-one-week {
+        grid-area: 1 / 4;
+      }
+
+      .rbb-ressource-type-select {
+        grid-area: 2 / 1 / 3 / 3;
+      }
+
+      .rbb-ressource-select {
+        grid-area: 2 / 3 / 3 / 5;
       }
     }
   }
@@ -851,6 +912,18 @@ $rbb-breakpoint-xl: 1200px;
       margin-bottom: .125rem;
     }
 
+    // Own booking: icon in addition to the color (not distinguishable by color alone)
+    .rbb-cell-booking-own-icon {
+      display: inline-flex;
+      align-self: center;
+      color: var(--rbb-primary);
+
+      .rbb-icon {
+        width: 1em;
+        height: 1em;
+      }
+    }
+
     // Wrap long words
     .rbb-layout-cell {
       min-width: 170px;
@@ -1048,6 +1121,106 @@ $rbb-breakpoint-xl: 1200px;
   }
 
   // ---------------------------------------------------------------------------
+  // Invalid form fields (see setFieldErrors() in app.js): thicker border, not only a color
+  // ---------------------------------------------------------------------------
+  .rbb-field-errors {
+    margin-top: var(--rbb-spacing);
+  }
+
+  .rbb-field-errors-list {
+    margin: 0;
+    padding-left: 1.125rem;
+  }
+
+  .rbb-form-control.rbb-is-invalid {
+    border-color: var(--rbb-danger);
+    box-shadow: inset 0 0 0 1px var(--rbb-danger);
+  }
+
+  .rbb-form-check-input.rbb-is-invalid {
+    outline: 2px solid var(--rbb-danger);
+    outline-offset: 2px;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Touch screens: at least 44 x 44 px hit area for the icon buttons in the cells
+  // (the visible button stays small, the hit area is enlarged with a pseudo element)
+  // ---------------------------------------------------------------------------
+  @media (pointer: coarse) {
+    .rbb-booking-table-main .rbb-btn-booking,
+    .rbb-booking-table-main .rbb-btn-cancel-booking {
+      &::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 44px;
+        height: 44px;
+        transform: translate(-50%, -50%);
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Reduced motion (operating system setting): no spinning icon, no transitions
+  // ---------------------------------------------------------------------------
+  @media (prefers-reduced-motion: reduce) {
+    .rbb-icon-spin {
+      animation: none;
+    }
+
+    *,
+    *::before,
+    *::after {
+      transition-duration: .01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Booking dialog (native <dialog>, opened with showModal())
+  // ---------------------------------------------------------------------------
+  .rbb-booking-dialog {
+    box-sizing: border-box;
+    width: min(48rem, calc(100vw - 2rem));
+    max-height: calc(100dvh - 2rem);
+    margin: auto;
+    padding: var(--rbb-card-padding);
+    overflow: auto;
+    font-family: var(--rbb-font-family);
+    color: var(--rbb-text-color);
+    background-color: var(--rbb-card-bg);
+    border: 0;
+    border-radius: var(--rbb-radius-card);
+    box-shadow: 0 24px 48px rgb(16 24 40 / .25);
+
+    // The browser focuses the dialog itself when it opens: no focus ring around the whole dialog
+    &:focus,
+    &:focus-visible {
+      outline: none;
+    }
+
+    &::backdrop {
+      background-color: rgb(15 23 42 / .5);
+    }
+
+    .rbb-booking-window {
+      margin-top: 0;
+    }
+
+    // Booking form: wide enough for the time slots of all 7 weekdays (and the form
+    // inputs next to them on very wide screens). Cancelling keeps the narrow dialog.
+    &.rbb-booking-dialog--wide {
+      width: min(80rem, calc(100vw - 2rem));
+    }
+
+    // The layout of the booking form depends on the width of the dialog, not of the screen
+    .rbb-booking-form {
+      container-type: inline-size;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // Booking window
   // ---------------------------------------------------------------------------
   .rbb-booking-window {
@@ -1100,7 +1273,7 @@ $rbb-breakpoint-xl: 1200px;
       border-radius: var(--rbb-radius);
 
       .rbb-layout-row + .rbb-layout-row {
-        border-top: 1px solid light-dark(#e3e7eb, #343b43);
+        border-top: 1px solid var(--rbb-divider-color);
       }
     }
 
@@ -1157,8 +1330,9 @@ $rbb-breakpoint-xl: 1200px;
       gap: 1.5rem;
       align-items: start;
 
-      @media (min-width: $rbb-breakpoint-xl) {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+      // Time slot table (all 7 weekdays) and form inputs side by side, if both fit
+      @container (min-width: 68rem) {
+        grid-template-columns: max-content minmax(0, 1fr);
       }
     }
 
@@ -1250,6 +1424,280 @@ $rbb-breakpoint-xl: 1200px;
   @media (max-width: ($rbb-breakpoint-sm - 1px)) {
     --rbb-card-padding: 1rem;
     --rbb-radius-card: 14px;
+    --rbb-section-spacing: 1.25rem;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Booking dialog on small screens: list of the time slots of one day instead of the
+  // checkbox table, info table stacked, buttons always visible
+  // ---------------------------------------------------------------------------
+  .rbb-booking-slot-picker {
+    display: none;
+  }
+
+  @media (max-width: ($rbb-breakpoint-sm - 1px)) {
+    .rbb-booking-table-booking-form {
+      display: none;
+    }
+
+    .rbb-booking-slot-picker {
+      display: block;
+    }
+
+    .rbb-booking-day-chips {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(2.5rem, 1fr));
+      gap: .25rem;
+    }
+
+    .rbb-booking-day-chip {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: .125rem;
+      padding: .375rem .125rem;
+      font-family: inherit;
+      font-size: .75rem;
+      line-height: 1.2;
+      color: var(--rbb-text-color);
+      background-color: var(--rbb-surface);
+      border: 1px solid transparent;
+      border-radius: calc(var(--rbb-radius-control) * .75);
+      cursor: pointer;
+
+      .rbb-booking-day-chip-name {
+        font-weight: 700;
+      }
+
+      .rbb-booking-day-chip-date {
+        color: var(--rbb-muted-color);
+        font-size: .6875rem;
+        font-variant-numeric: tabular-nums;
+      }
+
+      // Number of selected slots of this day
+      .rbb-booking-day-chip-count {
+        position: absolute;
+        top: -.375rem;
+        right: -.25rem;
+        min-width: 1.125rem;
+        height: 1.125rem;
+        padding: 0 .25rem;
+        box-sizing: border-box;
+        font-size: .6875rem;
+        font-weight: 700;
+        line-height: 1.125rem;
+        text-align: center;
+        color: var(--rbb-primary-contrast);
+        background-color: var(--rbb-primary);
+        border: 2px solid var(--rbb-card-bg);
+        border-radius: 999px;
+      }
+
+      &[aria-pressed="true"] {
+        color: var(--rbb-primary-contrast);
+        background-color: var(--rbb-primary);
+
+        .rbb-booking-day-chip-date {
+          color: inherit;
+        }
+
+        .rbb-booking-day-chip-count {
+          color: var(--rbb-primary);
+          background-color: var(--rbb-primary-contrast);
+        }
+      }
+
+      &:focus-visible {
+        outline: none;
+        box-shadow: var(--rbb-focus-ring);
+      }
+    }
+
+    .rbb-booking-slot-list {
+      margin: .75rem 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .rbb-booking-slot-list-item + .rbb-booking-slot-list-item {
+      margin-top: .375rem;
+    }
+
+    .rbb-booking-slot-list-label {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      min-height: 2.75rem;
+      padding: .5rem .875rem;
+      box-sizing: border-box;
+      font-size: .875rem;
+      background: var(--rbb-cell-not-bookable-bg);
+      color: var(--rbb-cell-not-bookable-color);
+      border-radius: var(--rbb-radius-control);
+    }
+
+    .rbb-booking-slot-list-item[data-isselectable="true"] .rbb-booking-slot-list-label {
+      color: var(--rbb-text-color);
+      background: var(--rbb-cell-bookable-bg);
+      outline: 1px dashed var(--rbb-cell-bookable-border);
+      outline-offset: -1px;
+      cursor: pointer;
+
+      &:has(input:checked) {
+        outline: 2px solid var(--rbb-primary);
+      }
+    }
+
+    .rbb-booking-slot-list-time {
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .rbb-booking-slot-list-status {
+      margin-left: auto;
+      font-size: .8125rem;
+      text-align: right;
+    }
+
+    // Info table: label above the value
+    .rbb-booking-window .rbb-info-table {
+      .rbb-layout-row {
+        flex-direction: column;
+      }
+
+      .rbb-layout-cell {
+        padding: .125rem 0;
+
+        &.rbb-column-first {
+          width: auto;
+          padding-top: .5rem;
+          font-size: .75rem;
+        }
+
+        &.rbb-column-last {
+          padding-bottom: .5rem;
+        }
+      }
+    }
+
+    // The buttons stay visible at the bottom of the dialog
+    .rbb-booking-dialog .rbb-booking-window-footer {
+      position: sticky;
+      bottom: calc(var(--rbb-card-padding) * -1);
+      z-index: 30;
+      display: flex;
+      flex-wrap: wrap;
+      gap: .5rem;
+      margin-left: calc(var(--rbb-card-padding) * -1);
+      margin-right: calc(var(--rbb-card-padding) * -1);
+      margin-bottom: calc(var(--rbb-card-padding) * -1);
+      padding: .75rem var(--rbb-card-padding);
+      background-color: var(--rbb-card-bg);
+      border-top: 1px solid var(--rbb-divider-color);
+
+      .rbb-btn {
+        flex: 1 1 auto;
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Small screens: day view (one day at a time, day tabs above the table, swipe)
+  // ---------------------------------------------------------------------------
+  .rbb-day-tabs {
+    display: none;
+  }
+
+  @media (max-width: ($rbb-breakpoint-sm - 1px)) {
+    .rbb-day-tabs {
+      display: flex;
+      gap: .375rem;
+      margin-bottom: .75rem;
+      padding-bottom: .125rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .rbb-day-tab {
+      flex: 1 0 auto;
+      min-width: 3.25rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: .125rem;
+      padding: .5rem .375rem;
+      font-family: inherit;
+      font-size: .8125rem;
+      line-height: 1.2;
+      color: var(--rbb-text-color);
+      background-color: var(--rbb-surface);
+      border: 1px solid transparent;
+      border-radius: var(--rbb-radius-control);
+      cursor: pointer;
+
+      .rbb-day-tab-name {
+        font-weight: 700;
+      }
+
+      .rbb-day-tab-date {
+        color: var(--rbb-muted-color);
+        font-variant-numeric: tabular-nums;
+      }
+
+      &[aria-pressed="true"] {
+        color: var(--rbb-primary-contrast);
+        background-color: var(--rbb-primary);
+
+        .rbb-day-tab-date {
+          color: inherit;
+        }
+      }
+
+      &:focus-visible {
+        outline: none;
+        box-shadow: var(--rbb-focus-ring);
+      }
+    }
+
+    .rbb-booking-table-main {
+      overflow-x: visible;
+      // Vertical scrolling stays with the browser, horizontal swipes change the day
+      touch-action: pan-y;
+
+      // The day tabs replace the header row visually. It stays available for screen
+      // readers (column header of the displayed day).
+      .rbb-layout-box-inner > .rbb-layout-row-head {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      .rbb-layout-cell {
+        min-width: 0;
+        max-width: none;
+
+        &.rbb-time-slot-indicator {
+          flex: 0 0 5.5rem;
+          width: 5.5rem;
+          min-width: 5.5rem;
+          max-width: 5.5rem;
+        }
+      }
+
+      @for $i from 0 through 6 {
+        &[data-activedayindex="#{$i}"] .rbb-layout-cell[data-day-index]:not([data-day-index="#{$i}"]) {
+          display: none;
+        }
+      }
+    }
   }
 
   // ---------------------------------------------------------------------------

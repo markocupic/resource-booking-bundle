@@ -2,7 +2,7 @@
 
 {% block rbb_messages %}
     <template v-if="messages">
-        <div class="rbb-message-box">
+        <div class="rbb-message-box" role="status" aria-live="polite">
             <div class="rbb-alert rbb-alert--warning" v-if="messages.warning">
                 {{ rbb_icon('fa-exclamation-circle','rbb-icon-2x')|raw }}<span>[[ messages.warning ]]</span>
             </div>
@@ -17,7 +17,4 @@
             </div>
         </div>
     </template>
-    <p v-if="bookingWindow.response.cancelBookingProcessSucceeded || bookingWindow.response.bookingProcessSucceeded" class="rbb-input-help-text">
-        <small>{{ ('RBB.MSG.windowClosesAutomatically')|trans }}</small>
-    </p>
 {% endblock %}

@@ -101,12 +101,76 @@ class BookingRequestValidatorTest extends TestCase
     /**
      * @return array<string, mixed>
      */
+    public function testParsesTheSlotSelection(): void
+    {
+        $this->assertSame(
+            [
+                ['timeSlotId' => 12, 'startTime' => 1795420800, 'endTime' => 1795423500],
+                ['timeSlotId' => 3, 'startTime' => 1795507200, 'endTime' => 1795510800],
+            ],
+            BookingRequestValidator::parseSlotSelection(['12-1795420800-1795423500-1795046400', '3-1795507200-1795510800-1795046400']),
+        );
+
+        $this->assertSame([], BookingRequestValidator::parseSlotSelection(null));
+        $this->assertSame([], BookingRequestValidator::parseSlotSelection([]));
+    }
+
+    public static function invalidSlotSelectionProvider(): iterable
+    {
+        yield 'not an array' => ['12-1795420800-1795423500-1795046400'];
+        yield 'missing parts' => [['12-1795420800']];
+        yield 'no separators' => [['121795420800']];
+        yield 'letters' => [['12-abc-1795423500-1795046400']];
+        yield 'negative value' => [['12--1795420800-1795423500-1795046400']];
+        yield 'nested array' => [[['12-1795420800-1795423500-1795046400']]];
+        yield 'time slot id 0' => [['0-1795420800-1795423500-1795046400']];
+        yield 'end before start' => [['12-1795423500-1795420800-1795046400']];
+        yield 'too many slots' => [array_fill(0, BookingRequestValidator::MAX_SELECTED_SLOTS + 1, '12-1795420800-1795423500-1795046400')];
+    }
+
+    #[DataProvider('invalidSlotSelectionProvider')]
+    public function testRejectsAnInvalidSlotSelection(mixed $selection): void
+    {
+        try {
+            BookingRequestValidator::parseSlotSelection($selection);
+            $this->fail('An invalid slot selection must be rejected.');
+        } catch (InvalidBookingRequestException $e) {
+            $this->assertSame('bookingDateSelection', $e->getField());
+            $this->assertSame(InvalidBookingRequestException::INVALID_VALUE, $e->getTranslationKey());
+        }
+    }
+
+    public function testTheStateOfTheWeekCalendarIsAccepted(): void
+    {
+        $this->expectNotToPerformAssertions();
+
+        // Sent with every request (empty if nothing is selected)
+        (new BookingRequestValidator())->validate([...$this->validPost(), 'resType' => '', 'res' => '', 'date' => ''], self::PERMITTED);
+    }
+
+    public function testTheStateOfTheWeekCalendarMustBeAString(): void
+    {
+        $this->expectException(InvalidBookingRequestException::class);
+
+        (new BookingRequestValidator())->validate([...$this->validPost(), 'res' => ['3']], self::PERMITTED);
+    }
+
+    public function testValidateRejectsAnInvalidSlotSelection(): void
+    {
+        $this->expectException(InvalidBookingRequestException::class);
+
+        (new BookingRequestValidator())->validate([...$this->validPost(), 'bookingDateSelection' => ['12-1795420800']], self::PERMITTED);
+    }
+
     private function validPost(): array
     {
         return [
             'REQUEST_TOKEN' => 'abc',
             'action' => 'bookingRequest',
             'moduleKey' => '33_0',
+            'resType' => '2',
+            'res' => '3',
+            'date' => '1795046400',
             'resourceId' => '3',
             'bookingRepeatStopWeekTstamp' => '1795046400',
             'bookingDateSelection' => ['12-1795420800-1795423500-1795046400'],

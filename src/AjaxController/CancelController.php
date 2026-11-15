@@ -15,60 +15,41 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\AjaxController;
 
 use Contao\CoreBundle\Framework\Adapter;
+use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Date;
 use Contao\Model\Collection;
 use Contao\System;
 use Doctrine\DBAL\Connection;
+use Markocupic\ResourceBookingBundle\AppState\AppState;
 use Markocupic\ResourceBookingBundle\Event\PostCancellingEvent;
 use Markocupic\ResourceBookingBundle\Event\PreCancellingEvent;
 use Markocupic\ResourceBookingBundle\Exception\StopBookingCancellationException;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
+use Markocupic\ResourceBookingBundle\User\LoggedInFrontendUser;
+use Markocupic\ResourceBookingBundle\Util\Utils;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\User\UserInterface;
-use Symfony\Contracts\Service\Attribute\Required;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class CancelController extends AbstractController implements ControllerInterface
 {
     public const REQUEST_NAME = 'cancelRequest';
 
-    private Connection $connection;
-
-    private EventDispatcherInterface $eventDispatcher;
-
-    private TranslatorInterface $translator;
-
-    private LoggerInterface|null $contaoErrorLogger = null;
-
-    private LoggerInterface|null $contaoGeneralLogger = null;
-
-    #[Required]
-    public function setConnection(Connection $connection): void
-    {
-        $this->connection = $connection;
-    }
-
-    #[Required]
-    public function setEventDispatcher(EventDispatcherInterface $eventDispatcher): void
-    {
-        $this->eventDispatcher = $eventDispatcher;
-    }
-
-    #[Required]
-    public function setTranslator(TranslatorInterface $translator): void
-    {
-        $this->translator = $translator;
-    }
-
-    #[Required]
-    public function setLoggers(LoggerInterface|null $contaoErrorLogger = null, LoggerInterface|null $contaoGeneralLogger = null): void
-    {
-        $this->contaoErrorLogger = $contaoErrorLogger;
-        $this->contaoGeneralLogger = $contaoGeneralLogger;
+    public function __construct(
+        ContaoFramework $framework,
+        LoggedInFrontendUser $user,
+        Utils $utils,
+        private readonly Connection $connection,
+        private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly TranslatorInterface $translator,
+        private readonly LoggerInterface|null $contaoErrorLogger = null,
+        private readonly LoggerInterface|null $contaoGeneralLogger = null,
+    ) {
+        parent::__construct($framework, $user, $utils);
     }
 
     /**
@@ -83,6 +64,7 @@ final class CancelController extends AbstractController implements ControllerInt
         $this->connection->beginTransaction();
 
         try {
+            $appState = AppState::fromRequest($request);
             $user = $this->user->getLoggedInUser();
             $bookingId = (int) $request->request->get('id');
 
@@ -100,6 +82,12 @@ final class CancelController extends AbstractController implements ControllerInt
                 throw new StopBookingCancellationException($this->translator->trans('RBB.ERR.notAuthorized', [], 'contao_default'));
             }
 
+            // Bookings in the past cannot be canceled (the front end hides the button,
+            // but the server must not rely on that).
+            if (!self::isCancelableByTime($booking->row(), $this->getCurrentTime())) {
+                throw new StopBookingCancellationException($this->translator->trans('RBB.ERR.cancelingPastBookingNotPossible', [], 'contao_default'));
+            }
+
             $bookings = $this->getBookingsToBeDeleted($booking, $user, $deleteRepetitions);
 
             if (null !== $bookings) {
@@ -107,7 +95,7 @@ final class CancelController extends AbstractController implements ControllerInt
                 // !Important
                 // Throw a StopBookingCancellationException
                 // to interrupt the cancellation process
-                $this->eventDispatcher->dispatch(new PreCancellingEvent($request, $ajaxResponse, $this->sessionBag, $user, $bookings));
+                $this->eventDispatcher->dispatch(new PreCancellingEvent($request, $ajaxResponse, $appState, $user, $bookings));
 
                 $this->deleteBookings($bookings);
 
@@ -115,7 +103,7 @@ final class CancelController extends AbstractController implements ControllerInt
                 // !Important
                 // Throw a StopBookingCancellationException
                 // to revert the cancellation process
-                $this->eventDispatcher->dispatch(new PostCancellingEvent($request, $ajaxResponse, $this->sessionBag, $user, $bookings));
+                $this->eventDispatcher->dispatch(new PostCancellingEvent($request, $ajaxResponse, $appState, $user, $bookings));
             }
 
             if (!$ajaxResponse->hasConfirmationMessage()) {
@@ -140,6 +128,21 @@ final class CancelController extends AbstractController implements ControllerInt
         }
 
         return $ajaxResponse;
+    }
+
+    /**
+     * A booking can be canceled until its end (same rule as AbstractSlot::isWithinAllowedDateRange()).
+     *
+     * @param array<string, mixed> $booking
+     */
+    public static function isCancelableByTime(array $booking, int $currentTime): bool
+    {
+        return (int) ($booking['endTime'] ?? 0) >= $currentTime;
+    }
+
+    protected function getCurrentTime(): int
+    {
+        return time();
     }
 
     private function deleteBookings(Collection $bookings): void
@@ -186,12 +189,15 @@ final class CancelController extends AbstractController implements ControllerInt
                         'tl_resource_booking.timeSlotId=?',
                         'tl_resource_booking.id!=?',
                         'tl_resource_booking.member=?',
+                        // Past repetitions of the series are kept
+                        'tl_resource_booking.endTime>=?',
                     ],
                     [
                         $booking->bookingUuid,
                         $booking->timeSlotId,
                         $booking->id,
                         $user->id,
+                        $this->getCurrentTime(),
                     ],
                 )
             ;

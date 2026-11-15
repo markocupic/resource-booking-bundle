@@ -11,6 +11,7 @@ Mit Events lässt sich das Buchungstool erweitern, ohne den Code der Erweiterung
 | [`PreCancellingEvent`](#precancellingevent--postcancellingevent) | vor dem Löschen einer Buchung | `StopBookingCancellationException` |
 | [`PostCancellingEvent`](#precancellingevent--postcancellingevent) | nach dem Löschen, vor dem Abschluss | `StopBookingCancellationException` (macht die Stornierung rückgängig) |
 | [`AjaxRequestEvent`](#ajaxrequestevent) | bei jeder Ajax-Anfrage des Buchungstools | – |
+| [`PrepareNotificationEvent`](#preparenotificationevent) | vor dem Versand einer Benachrichtigung (Buchung, Stornierung) | `$event->cancel()` |
 
 > [!TIP]
 > Buchung und Stornierung laufen in einer Datenbank-Transaktion. Wird in einem Event eine der beiden Exceptions geworfen, wird alles zurückgerollt, und das Mitglied sieht die Meldung der Exception.
@@ -44,7 +45,7 @@ Beide Events stellen dieselben Methoden bereit:
 | `getUser()` | das eingeloggte Mitglied |
 | `getRequest()` | der aktuelle Request (z. B. für eigene Formularfelder) |
 | `getAjaxResponse()` | die Antwort an den Browser |
-| `getSessionBag()` | die Session-Daten des Buchungstools |
+| `getAppState()` | der Zustand des Wochenkalenders (`AppState`: Modul, Seite, gewählte Ressource, Woche, `language` …) |
 
 **Beispiel:** Buchung nur für Mitglieder einer bestimmten Gruppe zulassen und nach der Buchung eine E-Mail verschicken.
 
@@ -106,6 +107,29 @@ final class BookingListener
 > [!NOTE]
 > Für den Versand von E-Mails in einem echten Projekt empfiehlt sich der Symfony Mailer oder das kostenpflichtige Benachrichtigungs-Bundle (siehe README).
 
+### Fehler bei einzelnen Formularfeldern
+
+Betrifft der Fehler ein Feld des Buchungsformulars, wirf eine `FieldValidationException` (eine
+`StopBookingProcessException`) mit dem Feldnamen, wie er im `name`-Attribut des Feldes steht. Das Buchungsfenster
+listet die Meldungen auf, markiert die Felder (`aria-invalid`, `aria-describedby`, roter Rahmen) und setzt den Fokus
+auf das erste fehlerhafte Feld. Mehrere Felder lassen sich auf einmal melden:
+
+```php
+use Markocupic\ResourceBookingBundle\Exception\FieldValidationException;
+
+// Ein Feld
+throw FieldValidationException::forField('postal', 'Bitte geben Sie eine gültige Postleitzahl ein.');
+
+// Mehrere Felder auf einmal
+throw new FieldValidationException([
+    'email' => 'Bitte geben Sie eine gültige E-Mail-Adresse ein.',
+    'phone' => 'Bitte geben Sie eine gültige Telefonnummer ein.',
+]);
+```
+
+Das funktioniert auch mit mehreren Modulen auf derselben Seite: Die Felder werden nur im Formular des Moduls
+markiert, das die Anfrage gesendet hat.
+
 ## PreCancellingEvent / PostCancellingEvent
 
 Diese Events funktionieren genau wie die Buchungs-Events und bieten dieselben Methoden. `getBookingCollection()` liefert die Buchungen, die storniert werden (bei Serienbuchungen ggf. mehrere).
@@ -118,6 +142,49 @@ public function onPreCancelling(PreCancellingEvent $event): void
         if ($booking->startTime < strtotime('+1 day')) {
             throw new StopBookingCancellationException('Buchungen können nur bis 24 Stunden vorher storniert werden.');
         }
+    }
+}
+```
+
+## PrepareNotificationEvent
+
+Wird vor dem Versand einer Benachrichtigung ausgelöst (`Notification\NotificationSender`), im Wochenkalender nach einer Buchung bzw. Stornierung und bei Erweiterungen, die den Sender selbst aufrufen.
+
+| Methode | Rückgabe |
+|---|---|
+| `getNotificationType()` | `BookingNotificationType::NAME` oder `CancellationNotificationType::NAME` |
+| `getContext()` | `NotificationSender::CONTEXT_WEEK_CALENDAR` (`week_calendar`) oder der Kontext einer Erweiterung; ohne Angabe die Herkunft der Buchung (`tl_resource_booking.bookingSource`) |
+| `getNotificationId()` / `setNotificationId()` | die in der Ressource gewählte Benachrichtigung (0 = keine) |
+| `getTokens()` / `setTokens()` / `setToken()` | die Tokens |
+| `getLocale()` / `setLocale()` | die Sprache der Benachrichtigung |
+| `getBookings()`, `getResource()`, `getResourceType()`, `getMember()` | die Datensätze als Arrays (`getMember()` ist ohne Mitglied leer) |
+| `cancel()` | die Benachrichtigung wird nicht versandt |
+
+**Beispiel:** Bei Buchungen von Mitgliedern im Wochenkalender keine Benachrichtigung versenden und sonst ein Token ergänzen.
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\EventListener;
+
+use Markocupic\ResourceBookingBundle\Event\PrepareNotificationEvent;
+use Markocupic\ResourceBookingBundle\Notification\NotificationSender;
+use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
+
+#[AsEventListener]
+final class PrepareNotificationListener
+{
+    public function __invoke(PrepareNotificationEvent $event): void
+    {
+        if (NotificationSender::CONTEXT_WEEK_CALENDAR === $event->getContext()) {
+            $event->cancel();
+
+            return;
+        }
+
+        $event->setToken('booking_hotline', '041 123 45 67');
     }
 }
 ```

@@ -33,11 +33,25 @@ class AjaxResponseTest extends TestCase
                     'confirm' => null,
                     'info' => null,
                 ],
+                'fieldErrors' => [],
                 'data' => [],
                 'action' => 'showBookingForm',
             ],
             $response->getAll(),
         );
+    }
+
+    public function testFieldErrors(): void
+    {
+        $response = new AjaxResponse('bookingRequest');
+        $this->assertFalse($response->hasFieldErrors());
+
+        $response->setFieldError('postal', 'Bitte geben Sie eine gültige Postleitzahl ein.');
+        $response->setFieldError('email', 'Bitte geben Sie eine gültige E-Mail-Adresse ein.');
+
+        $this->assertTrue($response->hasFieldErrors());
+        $this->assertSame(['postal', 'email'], array_keys($response->getFieldErrors()));
+        $this->assertSame($response->getFieldErrors(), $response->getAll()['fieldErrors']);
     }
 
     public function testActionRoundTrip(): void

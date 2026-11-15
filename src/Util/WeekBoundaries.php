@@ -15,9 +15,7 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\Util;
 
 use Contao\CoreBundle\Framework\ContaoFramework;
-use Contao\Date;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
-use Symfony\Component\HttpFoundation\Session\SessionBagInterface;
 
 /**
  * Computes the first and the last week the user may navigate to. Both depend
@@ -69,24 +67,5 @@ class WeekBoundaries
         }
 
         return $intTstampLastPermittedWeek;
-    }
-
-    /**
-     * Computes the first and the last permitted week and stores them
-     * (plus their formatted dates) in the session.
-     *
-     * @throws \Exception
-     */
-    public function storePermittedWeeks(SessionBagInterface $sessionBag, array $arrAppConfig, ResourceBookingResourceModel|null $resource, int $currentTime): void
-    {
-        $dateAdapter = $this->framework->getAdapter(Date::class);
-
-        $intTstampFirstPermittedWeek = $this->getFirstPermittedWeek($arrAppConfig, $resource);
-        $sessionBag->set('tstampFirstPermittedWeek', $intTstampFirstPermittedWeek);
-        $sessionBag->set('tstampFirstPermittedDate', $dateAdapter->parse('Y-m-d', $intTstampFirstPermittedWeek));
-
-        $intTstampLastPermittedWeek = $this->getLastPermittedWeek($arrAppConfig, $resource, $currentTime);
-        $sessionBag->set('tstampLastPermittedWeek', $intTstampLastPermittedWeek);
-        $sessionBag->set('tstampLastPermittedWeekDate', $dateAdapter->parse('Y-m-d', $intTstampLastPermittedWeek));
     }
 }

@@ -20,7 +20,6 @@ use Markocupic\ResourceBookingBundle\EventSubscriber\AjaxRequestEventSubscriber;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\RequestStack;
 
 class AjaxRequestEventSubscriberTest extends TestCase
 {
@@ -40,7 +39,7 @@ class AjaxRequestEventSubscriberTest extends TestCase
     {
         $controller = $this->createMock(ControllerInterface::class);
 
-        $subscriber = new AjaxRequestEventSubscriber(new RequestStack());
+        $subscriber = new AjaxRequestEventSubscriber();
         $subscriber->add($controller, 'showBookingForm');
 
         $this->assertSame($controller, $subscriber->get('showBookingForm'));
@@ -48,7 +47,7 @@ class AjaxRequestEventSubscriberTest extends TestCase
 
     public function testGetThrowsWhenNoControllerIsRegisteredForTheAlias(): void
     {
-        $subscriber = new AjaxRequestEventSubscriber(new RequestStack());
+        $subscriber = new AjaxRequestEventSubscriber();
 
         $this->expectException(\Exception::class);
         $this->expectExceptionMessage('Could not find Controller for action "unknown".');
@@ -71,7 +70,7 @@ class AjaxRequestEventSubscriberTest extends TestCase
         ;
 
         // The "Request" suffix of the action is stripped to build the alias.
-        $subscriber = new AjaxRequestEventSubscriber($this->createRequestStack($request));
+        $subscriber = new AjaxRequestEventSubscriber();
         $subscriber->add($controller, 'showBookingForm');
 
         $event = new AjaxRequestEvent($request, $incomingResponse);
@@ -91,7 +90,7 @@ class AjaxRequestEventSubscriberTest extends TestCase
             ->method('generateResponse')
         ;
 
-        $subscriber = new AjaxRequestEventSubscriber($this->createRequestStack($request));
+        $subscriber = new AjaxRequestEventSubscriber();
         $subscriber->add($controller, 'showBookingForm');
 
         $event = new AjaxRequestEvent($request, $incomingResponse);
@@ -101,34 +100,11 @@ class AjaxRequestEventSubscriberTest extends TestCase
         $this->assertSame($incomingResponse, $event->getAjaxResponse());
     }
 
-    public function testOnXmlHttpRequestDoesNothingWhenThereIsNoCurrentRequest(): void
-    {
-        $incomingResponse = new AjaxResponse('showBookingFormRequest');
-
-        $controller = $this->createMock(ControllerInterface::class);
-        $controller
-            ->expects($this->never())
-            ->method('generateResponse')
-        ;
-
-        // Empty request stack -> getCurrentRequest() returns null.
-        $subscriber = new AjaxRequestEventSubscriber(new RequestStack());
-        $subscriber->add($controller, 'showBookingForm');
-
-        $event = new AjaxRequestEvent(
-            Request::create('https://example.com/calendar'),
-            $incomingResponse,
-        );
-        $subscriber->onXmlHttpRequest($event);
-
-        $this->assertSame($incomingResponse, $event->getAjaxResponse());
-    }
-
     public function testOnXmlHttpRequestThrowsForAnUnknownAction(): void
     {
         $request = $this->createXmlHttpRequest('somethingWeirdRequest');
 
-        $subscriber = new AjaxRequestEventSubscriber($this->createRequestStack($request));
+        $subscriber = new AjaxRequestEventSubscriber();
 
         $event = new AjaxRequestEvent($request, new AjaxResponse('somethingWeirdRequest'));
 
@@ -148,13 +124,5 @@ class AjaxRequestEventSubscriberTest extends TestCase
             [],
             ['HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest'],
         );
-    }
-
-    private function createRequestStack(Request $request): RequestStack
-    {
-        $requestStack = new RequestStack();
-        $requestStack->push($request);
-
-        return $requestStack;
     }
 }

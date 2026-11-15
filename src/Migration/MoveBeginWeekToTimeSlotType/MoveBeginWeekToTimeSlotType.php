@@ -116,7 +116,7 @@ class MoveBeginWeekToTimeSlotType extends AbstractMigration
             arsort($counts);
             $beginWeek = (string) array_key_first($counts);
 
-            if ($beginWeek !== RbbConfig::RBB_DEFAULT_BEGIN_WEEK) {
+            if (RbbConfig::RBB_DEFAULT_BEGIN_WEEK !== $beginWeek) {
                 $this->connection->update('tl_resource_booking_time_slot_type', ['beginWeek' => $beginWeek], ['id' => $timeSlotTypeId]);
                 $updated[] = $timeSlotTypeId.' ('.$beginWeek.')';
             }

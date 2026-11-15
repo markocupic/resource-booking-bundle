@@ -4,10 +4,10 @@
     {# Start header #}
     {% block rbb_booking_window__cancel_booking_form__header %}
         <div class="rbb-booking-window-header">
-            <h3 class="rbb-booking-window-header-title">
+            <h3 class="rbb-booking-window-header-title" id="rbbBookingWindowTitle_{{ moduleKey }}">
                 {{ ('RBB.cancel')|trans }}: [[ activeResource.title ]]
             </h3>
-            <button type="button" @click="hideBookingWindow" class="rbb-close-window" aria-label="Close" title="{{ ('RBB.close')|trans }}">
+            <button type="button" @click="hideBookingWindow" class="rbb-close-window" aria-label="{{ ('RBB.close')|trans }}" title="{{ ('RBB.close')|trans }}">
                 <span aria-hidden="true">&times;</span>
             </button>
         </div>
@@ -35,7 +35,7 @@
             <button type="button" class="rbb-btn rbb-btn--danger" v-if="bookingWindow.showCancelBookingButton" @click="cancelBookingRequest">
                 {{ ('RBB.cancelResource')|trans }}
             </button>
-            <button type="button" class="rbb-btn rbb-btn--secondary" @click="hideBookingWindow">
+            <button type="button" class="rbb-btn rbb-btn--secondary rbb-js-close-booking-window" @click="hideBookingWindow">
                 {{ ('RBB.close')|trans }}
             </button>
         </div>

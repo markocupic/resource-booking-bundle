@@ -37,9 +37,9 @@
             {% block rbb_application_container %}
                 <div class="rbb-vue-application">
 
-                    {# Start main window / mode === 'week-calendar' #}
+                    {# Start main window (stays visible behind the booking dialog) #}
                     {% block rbb_week_calendar_window %}
-                        <div class="rbb-week-calendar" v-if="mode === 'week-calendar'">
+                        <div class="rbb-week-calendar">
                             {{ block('rbb_week_calendar_window__filter_board') }}
                             {{ block('rbb_week_calendar_window__active_resource_description') }}
                             {% with {time_slot_cell: block('rbb_week_calendar_window__time_slot_cell')} %}
@@ -48,10 +48,11 @@
                             {{ block('rbb_week_calendar_window__legend') }}
                         </div>
                     {% endblock %}
-                    {# End main window / mode === 'week-calendar' #}
+                    {# End main window #}
 
-                    {# Start booking window mode === 'booking-window' #}
+                    {# Start booking window mode === 'booking-window' (modal dialog: focus stays in the dialog, Esc closes it) #}
                     {% block rbb_booking_window %}
+                        <dialog class="rbb-booking-dialog" :class="{'rbb-booking-dialog--wide': bookingWindow.action === 'showBookingForm'}" ref="bookingDialog" aria-labelledby="rbbBookingWindowTitle_{{ moduleKey }}" @cancel.prevent="hideBookingWindow">
                         <div class="rbb-booking-window" v-if="mode === 'booking-window' && hasLoggedInUser">
                             {# Start booking window #}
                             <template v-if="bookingWindow.action === 'showBookingForm'">
@@ -76,6 +77,7 @@
                             </template>
                             {# End cancel booking window #}
                         </div>
+                        </dialog>
                     {% endblock %}
                     {# End booking window mode === 'booking-window' #}
                 </div>
@@ -90,11 +92,9 @@
                 new ResourceBookingApp('#resourceBookingApp_{{ moduleKey }}', {
                     'requestToken': '{{ csrfToken }}',
                     'moduleKey': '{{ moduleKey }}',
-                    'audio': {
-                        'notifyOnNewBookingsAudio': '{{ asset('audio/booking-alert.mp3', 'markocupic_resource_booking') }}'
+                    'texts': {
+                        'networkError': '{{ ('RBB.ERR.networkError')|trans|e('js') }}',
                     },
-                    'autocloseWindowsAfter': 5000,
-                    'enableAudio': true,
                 });
             });
             {#

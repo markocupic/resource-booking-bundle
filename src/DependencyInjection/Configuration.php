@@ -27,7 +27,9 @@ class Configuration implements ConfigurationInterface
 
         $treeBuilder->getRootNode()
             ->children()
+                // Unused since version 6: the week calendar does not store anything in the session anymore
                 ->arrayNode('session')
+                    ->setDeprecated('markocupic/resource-booking-bundle', '6.0', 'The "%node%" option at "%path%" is not used anymore and will be removed in version 7.')
                     ->addDefaultsIfNotSet()
                     ->children()
                         ->scalarNode('attribute_bag_name')
@@ -113,7 +115,7 @@ class Configuration implements ConfigurationInterface
                             }
 
                             return $app;
-                        }
+                        },
                     )
                 ->end()
                 ->children()

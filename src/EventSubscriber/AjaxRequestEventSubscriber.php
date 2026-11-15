@@ -17,7 +17,6 @@ namespace Markocupic\ResourceBookingBundle\EventSubscriber;
 use Markocupic\ResourceBookingBundle\AjaxController\ControllerInterface;
 use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\HttpFoundation\RequestStack;
 
 final class AjaxRequestEventSubscriber implements EventSubscriberInterface
 {
@@ -27,10 +26,6 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
      * @var array<string, ControllerInterface>
      */
     private array $controllers = [];
-
-    public function __construct(private readonly RequestStack $requestStack)
-    {
-    }
 
     public static function getSubscribedEvents(): array
     {
@@ -49,9 +44,10 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
      */
     public function onXmlHttpRequest(AjaxRequestEvent $event): void
     {
-        $request = $this->requestStack->getCurrentRequest();
+        // The request of the event carries the AppState of the week calendar (see ResourceBookingWeekcalendarController)
+        $request = $event->getRequest();
 
-        if (null === $request || !$request->isXmlHttpRequest()) {
+        if (!$request->isXmlHttpRequest()) {
             return;
         }
 

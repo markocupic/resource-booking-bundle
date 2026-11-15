@@ -1,0 +1,75 @@
+{% trans_default_domain 'contao_default' %}
+
+{#
+    Search for bookings by booking uuid on the back end start page,
+    see AddBookingSearchToWelcomeScreenListener.
+#}
+<div id="tl_rbb_booking_search" class="rbb-booking-search">
+    <h2>{{ 'MSC.rbbBookingSearch.headline'|trans }}</h2>
+    <p>{{ 'MSC.rbbBookingSearch.description'|trans }}</p>
+
+    <form action="{{ action }}" method="get" class="rbb-booking-search__form" role="search">
+        <label for="rbb_booking_search_term" class="invisible">{{ 'MSC.rbbBookingSearch.label'|trans }}</label>
+        <input type="search"
+               id="rbb_booking_search_term"
+               name="{{ parameter }}"
+               class="tl_text"
+               value="{{ term }}"
+               placeholder="{{ 'MSC.rbbBookingSearch.placeholder'|trans }}"
+               minlength="{{ min_length }}"
+               maxlength="64"
+               autocomplete="off"
+               spellcheck="false"
+               {% if searched and not valid %}aria-invalid="true" aria-describedby="rbb_booking_search_status"{% endif %}
+        >
+        <button type="submit" class="tl_submit">{{ 'MSC.rbbBookingSearch.submit'|trans }}</button>
+    </form>
+
+    {% if searched %}
+        <div id="rbb_booking_search_status" class="rbb-booking-search__result" role="status">
+            {% if not valid %}
+                <p class="tl_error">{{ 'MSC.rbbBookingSearch.invalid'|trans([min_length]) }}</p>
+            {% elseif result.total == 0 %}
+                <p class="tl_info">{{ 'MSC.rbbBookingSearch.noResults'|trans }}</p>
+            {% else %}
+                <p>{{ 'MSC.rbbBookingSearch.results'|trans([result.total]) }}{% if result.total > result.bookings|length %} {{ 'MSC.rbbBookingSearch.limited'|trans([result.bookings|length]) }}{% endif %}</p>
+
+                <table class="tl_listing with-border with-padding">
+                    <thead>
+                    <tr>
+                        <th>{{ 'MSC.rbbBookingSearch.date'|trans }}</th>
+                        <th>{{ 'MSC.rbbBookingSearch.resource'|trans }}</th>
+                        <th>{{ 'MSC.rbbBookingSearch.member'|trans }}</th>
+                        <th>{{ 'MSC.rbbBookingSearch.status'|trans }}</th>
+                        <th>{{ 'MSC.rbbBookingSearch.uuid'|trans }}</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for booking in result.bookings %}
+                        <tr class="hover-row">
+                            <td><a href="{{ booking.editUrl }}">{{ booking.date }}</a></td>
+                            <td>{{ booking.resourceTitle|default('-') }}{% if booking.resourceTypeTitle %} <span class="tl_gray">({{ booking.resourceTypeTitle }})</span>{% endif %}</td>
+                            <td>{{ booking.memberName ?? '-' }}</td>
+                            <td>
+                                {% if booking.isBlocked %}
+                                    {{ 'MSC.rbbBookingSearch.blocked'|trans }}
+                                {% elseif booking.confirmed %}
+                                    {{ 'MSC.rbbBookingSearch.confirmed'|trans }}
+                                {% else %}
+                                    <strong>{{ 'MSC.rbbBookingSearch.unconfirmed'|trans }}</strong>
+                                {% endif %}
+                            </td>
+                            <td class="rbb-booking-search__uuid">{{ booking.bookingUuid }}</td>
+                            <td class="tl_right_nowrap">
+                                <a href="{{ booking.editUrl }}" title="{{ 'MSC.rbbBookingSearch.edit'|trans }}"><img src="{{ result.editIcon }}" width="16" height="16" alt="{{ 'MSC.rbbBookingSearch.edit'|trans }}"></a>
+                                <a href="{{ booking.listUrl }}" title="{{ 'MSC.rbbBookingSearch.list'|trans }}"><img src="{{ result.listIcon }}" width="16" height="16" alt="{{ 'MSC.rbbBookingSearch.list'|trans }}"></a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>

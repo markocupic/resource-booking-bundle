@@ -17,22 +17,20 @@ namespace Markocupic\ResourceBookingBundle\Tests\Controller\FrontendModule;
 use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController;
 use Contao\CoreBundle\Csrf\ContaoCsrfTokenManager;
 use Contao\CoreBundle\Exception\ResponseException;
-use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Routing\ScopeMatcher;
 use Contao\ModuleModel;
 use Contao\PageModel;
 use Contao\Template;
 use Contao\TestCase\ContaoTestCase;
-use Markocupic\ResourceBookingBundle\AppInitialization\Helper\ModuleIndex;
-use Markocupic\ResourceBookingBundle\AppInitialization\Helper\ModuleKey;
-use Markocupic\ResourceBookingBundle\AppInitialization\Helper\TokenManager;
-use Markocupic\ResourceBookingBundle\AppInitialization\Initialize;
+use Markocupic\ResourceBookingBundle\AppState\AppState;
+use Markocupic\ResourceBookingBundle\AppState\AppStateFactory;
+use Markocupic\ResourceBookingBundle\AppState\ModuleKeyGenerator;
 use Markocupic\ResourceBookingBundle\Controller\FrontendModule\ResourceBookingWeekcalendarController;
+use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponseFactory;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
@@ -43,7 +41,7 @@ class ResourceBookingWeekcalendarControllerTest extends ContaoTestCase
 
     private const PAGE_ID = 5;
 
-    // With a module index of 0 the controller builds "<moduleId>_<moduleIndex>".
+    // First week calendar on the page: "<moduleId>_<index>"
     private const MODULE_KEY = '33_0';
 
     public function testIsAFrontendModuleController(): void
@@ -55,122 +53,41 @@ class ResourceBookingWeekcalendarControllerTest extends ContaoTestCase
     }
 
     /**
-     * An XHR request without the "token_<moduleKey>" query parameter must be
-     * answered with an empty "204 No Content" response and must NOT initialize
-     * the application.
-     */
-    public function testXmlHttpRequestWithoutTokenReturnsNoContent(): void
-    {
-        $request = Request::create(
-            'https://example.com/calendar',
-            'GET',
-            [],
-            [],
-            [],
-            ['HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest'],
-        );
-
-        $requestStack = new RequestStack();
-        $requestStack->push($request);
-
-        $appInitializer = $this->createMock(Initialize::class);
-
-        // The application must not be initialized on this early-return path.
-        $appInitializer
-            ->expects($this->never())
-            ->method('initialize')
-        ;
-
-        $controller = $this->getController(
-            framework: $this->mockFrameworkWithHelperAdapters(),
-            requestStack: $requestStack,
-            appInitializer: $appInitializer,
-        );
-
-        $response = $controller(
-            $request,
-            $this->mockModuleModel(),
-            'main',
-            null,
-            $this->mockPageModel(),
-        );
-
-        $this->assertSame(Response::HTTP_NO_CONTENT, $response->getStatusCode());
-        $this->assertSame('', $response->getContent());
-    }
-
-    /**
-     * A non-XHR request without a token must generate a token, append it to the
-     * URL as "token_<moduleKey>" and issue a redirect to the same URL.
-     */
-    public function testNonXmlHttpRequestWithoutTokenRedirectsWithGeneratedToken(): void
-    {
-        $token = 'a1b2c3d4-token';
-
-        $request = Request::create('https://example.com/calendar', 'GET');
-
-        $requestStack = new RequestStack();
-        $requestStack->push($request);
-
-        $controller = $this->getController(
-            framework: $this->mockFrameworkWithHelperAdapters($token),
-            requestStack: $requestStack,
-        );
-
-        $response = $controller(
-            $request,
-            $this->mockModuleModel(),
-            'main',
-            null,
-            $this->mockPageModel(),
-        );
-
-        $this->assertInstanceOf(RedirectResponse::class, $response);
-        $this->assertStringContainsString('token_'.self::MODULE_KEY.'='.$token, $response->getTargetUrl());
-    }
-
-    /**
-     * An XHR request that carries a valid token, an "action" and a matching
-     * "moduleKey" must be answered by throwing a ResponseException that wraps a
-     * JSON response with the correct (non-cacheable) headers.
+     * An XHR request with an "action" and the module key of this module is answered
+     * with a ResponseException that wraps a non-cacheable JSON response. The selection
+     * sent by the front end is validated by the AppStateFactory and attached to the request.
      */
     public function testXmlHttpActionRequestThrowsResponseExceptionWithJsonResponse(): void
     {
-        $request = Request::create(
-            'https://example.com/calendar?token_'.self::MODULE_KEY.'=valid-token',
-            'POST',
-            ['action' => 'showBookingForm', 'moduleKey' => self::MODULE_KEY],
-            [],
-            [],
-            ['HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest'],
-        );
+        $request = $this->createXmlHttpRequest(['action' => 'refreshDataRequest', 'moduleKey' => self::MODULE_KEY, 'resType' => '3', 'res' => '7', 'date' => '1795046400']);
+        $appState = $this->createAppState();
 
-        $requestStack = new RequestStack();
-        $requestStack->push($request);
-
-        $appInitializer = $this->createMock(Initialize::class);
-        $appInitializer
+        $appStateFactory = $this->createMock(AppStateFactory::class);
+        $appStateFactory
             ->expects($this->once())
-            ->method('initialize')
-            ->with(self::MODULE_ID, self::PAGE_ID)
+            ->method('create')
+            ->with(self::MODULE_KEY, $this->anything(), $this->anything(), ['resType' => '3', 'res' => '7', 'date' => '1795046400'], false)
+            ->willReturn($appState)
         ;
 
+        $eventDispatcher = new EventDispatcher();
+        $stateOfEvent = null;
+        $eventDispatcher->addListener(
+            AjaxRequestEvent::class,
+            static function (AjaxRequestEvent $event) use (&$stateOfEvent): void {
+                $stateOfEvent = AppState::fromRequest($event->getRequest());
+            },
+        );
+
         $controller = $this->getController(
-            framework: $this->mockFrameworkWithHelperAdapters(),
-            requestStack: $requestStack,
-            appInitializer: $appInitializer,
+            appStateFactory: $appStateFactory,
+            requestStack: $this->createRequestStack($request),
             ajaxResponseFactory: new AjaxResponseFactory(),
-            eventDispatcher: new EventDispatcher(),
+            eventDispatcher: $eventDispatcher,
         );
 
         try {
-            $controller(
-                $request,
-                $this->mockModuleModel(),
-                'main',
-                null,
-                $this->mockPageModel(),
-            );
+            $controller($request, $this->mockModuleModel(), 'main', null, $this->mockPageModel());
 
             $this->fail('Expected a ResponseException to be thrown.');
         } catch (ResponseException $e) {
@@ -186,11 +103,64 @@ class ResourceBookingWeekcalendarControllerTest extends ContaoTestCase
             $this->assertTrue($response->headers->hasCacheControlDirective('private'));
             $this->assertFalse($response->headers->hasCacheControlDirective('public'));
         }
+
+        $this->assertSame($appState, $stateOfEvent);
+    }
+
+    public function testTheFirstRequestOfThePageSelectsAResourceAutomatically(): void
+    {
+        $request = $this->createXmlHttpRequest(['action' => 'refreshDataRequest', 'moduleKey' => self::MODULE_KEY, 'initial' => '1']);
+
+        $appStateFactory = $this->createMock(AppStateFactory::class);
+        $appStateFactory
+            ->expects($this->once())
+            ->method('create')
+            ->with(self::MODULE_KEY, $this->anything(), $this->anything(), $this->anything(), true)
+            ->willReturn($this->createAppState())
+        ;
+
+        $controller = $this->getController(
+            appStateFactory: $appStateFactory,
+            requestStack: $this->createRequestStack($request),
+            ajaxResponseFactory: new AjaxResponseFactory(),
+            eventDispatcher: new EventDispatcher(),
+        );
+
+        $this->expectException(ResponseException::class);
+
+        $controller($request, $this->mockModuleModel(), 'main', null, $this->mockPageModel());
     }
 
     /**
-     * getResponse() must expose the module key and the CSRF token to the
-     * template and return the template's response.
+     * Requests for another week calendar on the same page (other module key) are not
+     * answered by this module.
+     */
+    public function testRequestsOfAnotherModuleAreIgnored(): void
+    {
+        $request = $this->createXmlHttpRequest(['action' => 'refreshDataRequest', 'moduleKey' => '33_1']);
+
+        $appStateFactory = $this->createMock(AppStateFactory::class);
+        $appStateFactory
+            ->expects($this->never())
+            ->method('create')
+        ;
+
+        $controller = $this->getController(appStateFactory: $appStateFactory, requestStack: $this->createRequestStack($request));
+
+        // The module renders its template instead (not available in this test)
+        try {
+            $controller($request, $this->mockModuleModel(), 'main', null, $this->mockPageModel());
+        } catch (ResponseException) {
+            $this->fail('The module must not answer requests of another module.');
+        } catch (\Throwable) {
+            // Rendering the template needs a complete Contao environment
+        }
+
+        $this->assertSame(self::MODULE_KEY, $request->attributes->get('_rbb_module_key'));
+    }
+
+    /**
+     * getResponse() exposes the module key and the CSRF token to the template.
      */
     public function testGetResponseAssignsModuleKeyAndCsrfTokenToTemplate(): void
     {
@@ -200,15 +170,6 @@ class ResourceBookingWeekcalendarControllerTest extends ContaoTestCase
         $csrfTokenManager
             ->method('getDefaultTokenValue')
             ->willReturn('csrf-token-value')
-        ;
-
-        $framework = $this->createContaoFrameworkMock([
-            ModuleKey::class => $this->createAdapterMock(['getModuleKey']),
-        ]);
-
-        $framework->getAdapter(ModuleKey::class)
-            ->method('getModuleKey')
-            ->willReturn(self::MODULE_KEY)
         ;
 
         // PHPUnit 12 removed withConsecutive(); record the __set() calls and
@@ -229,32 +190,22 @@ class ResourceBookingWeekcalendarControllerTest extends ContaoTestCase
             ->willReturn($expectedResponse)
         ;
 
-        $controller = $this->getController(
-            framework: $framework,
-            contaoCsrfTokenManager: $csrfTokenManager,
-        );
+        $request = Request::create('https://example.com/calendar');
+        $request->attributes->set('_rbb_module_key', '33_1');
 
-        $response = $this->invokeProtected(
-            $controller,
-            'getResponse',
-            [$template, $this->mockModuleModel(), Request::create('https://example.com/calendar')],
-        );
+        $controller = $this->getController(contaoCsrfTokenManager: $csrfTokenManager);
+
+        $response = $this->invokeProtected($controller, 'getResponse', [$template, $this->mockModuleModel(), $request]);
 
         $this->assertSame($expectedResponse, $response);
-        $this->assertSame(
-            [
-                'moduleKey' => self::MODULE_KEY,
-                'csrfToken' => 'csrf-token-value',
-            ],
-            $assignedTemplateVars,
-        );
+        $this->assertSame(['moduleKey' => '33_1', 'csrfToken' => 'csrf-token-value'], $assignedTemplateVars);
     }
 
     /**
      * Builds the controller with sensible mock defaults; every collaborator can
      * be overridden per test.
      */
-    private function getController(ContaoFramework|null $framework = null, ContaoCsrfTokenManager|null $contaoCsrfTokenManager = null, AjaxResponseFactory|null $ajaxResponseFactory = null, EventDispatcherInterface|null $eventDispatcher = null, Initialize|null $appInitializer = null, RequestStack|null $requestStack = null, ScopeMatcher|null $scopeMatcher = null): ResourceBookingWeekcalendarController
+    private function getController(AppStateFactory|null $appStateFactory = null, ContaoCsrfTokenManager|null $contaoCsrfTokenManager = null, AjaxResponseFactory|null $ajaxResponseFactory = null, EventDispatcherInterface|null $eventDispatcher = null, RequestStack|null $requestStack = null, ScopeMatcher|null $scopeMatcher = null): ResourceBookingWeekcalendarController
     {
         if (null === $scopeMatcher) {
             $scopeMatcher = $this->createMock(ScopeMatcher::class);
@@ -266,54 +217,55 @@ class ResourceBookingWeekcalendarControllerTest extends ContaoTestCase
 
         return new ResourceBookingWeekcalendarController(
             $ajaxResponseFactory ?? $this->createMock(AjaxResponseFactory::class),
+            $appStateFactory ?? $this->createMock(AppStateFactory::class),
             $contaoCsrfTokenManager ?? $this->createMock(ContaoCsrfTokenManager::class),
-            $framework ?? $this->createContaoFrameworkMock(),
             $eventDispatcher ?? $this->createMock(EventDispatcherInterface::class),
-            $appInitializer ?? $this->createMock(Initialize::class),
+            new ModuleKeyGenerator(),
             $requestStack ?? new RequestStack(),
             $scopeMatcher,
         );
     }
 
     /**
-     * Mocks the Contao framework with the three static helper adapters the
-     * controller resolves in __invoke().
+     * @param array<string, string> $post
      */
-    private function mockFrameworkWithHelperAdapters(string $token = 'generated-token'): ContaoFramework
+    private function createXmlHttpRequest(array $post): Request
     {
-        $moduleIndexAdapter = $this->createAdapterMock(['generateModuleIndex', 'getModuleIndex']);
-        $moduleIndexAdapter
-            ->method('getModuleIndex')
-            ->willReturn(0)
-        ;
+        return Request::create('https://example.com/calendar', 'POST', $post, [], [], ['HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest']);
+    }
 
-        $moduleKeyAdapter = $this->createAdapterMock(['setModuleKey', 'getModuleKey']);
-        $moduleKeyAdapter
-            ->method('getModuleKey')
-            ->willReturn(self::MODULE_KEY)
-        ;
+    private function createRequestStack(Request $request): RequestStack
+    {
+        $requestStack = new RequestStack();
+        $requestStack->push($request);
 
-        $tokenManagerAdapter = $this->createAdapterMock(['generateToken', 'getToken']);
-        $tokenManagerAdapter
-            ->method('getToken')
-            ->willReturn($token)
-        ;
+        return $requestStack;
+    }
 
-        return $this->createContaoFrameworkMock([
-            ModuleIndex::class => $moduleIndexAdapter,
-            ModuleKey::class => $moduleKeyAdapter,
-            TokenManager::class => $tokenManagerAdapter,
-        ]);
+    private function createAppState(): AppState
+    {
+        return new AppState(
+            self::MODULE_KEY,
+            $this->mockModuleModel(),
+            $this->mockPageModel(),
+            null,
+            null,
+            ['beginWeek' => 'monday', 'autoSelectFirstResource' => true, 'permittedFormFields' => []],
+            0,
+            0,
+            0,
+            'de',
+        );
     }
 
     private function mockModuleModel(): ModuleModel
     {
-        return $this->createClassWithPropertiesMock(ModuleModel::class, ['id' => self::MODULE_ID]);
+        return $this->createClassWithPropertiesStub(ModuleModel::class, ['id' => self::MODULE_ID]);
     }
 
     private function mockPageModel(): PageModel
     {
-        return $this->createClassWithPropertiesMock(PageModel::class, ['id' => self::PAGE_ID]);
+        return $this->createClassWithPropertiesStub(PageModel::class, ['id' => self::PAGE_ID]);
     }
 
     /**
@@ -322,7 +274,6 @@ class ResourceBookingWeekcalendarControllerTest extends ContaoTestCase
     private function invokeProtected(object $object, string $method, array $args = []): mixed
     {
         $ref = new \ReflectionMethod($object, $method);
-        $ref->setAccessible(true);
 
         return $ref->invokeArgs($object, $args);
     }

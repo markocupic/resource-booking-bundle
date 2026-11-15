@@ -46,7 +46,6 @@ class MoveBeginWeekToTimeSlotTypeTest extends TestCase
     public function testCopiesTheFirstDayOfTheWeekToTheTimetables(): void
     {
         $connection = $this->connection();
-
         $connection
             ->expects($this->once())
             ->method('executeStatement')
@@ -67,20 +66,22 @@ class MoveBeginWeekToTimeSlotTypeTest extends TestCase
 
         $connection
             ->method('fetchFirstColumn')
-            ->willReturnCallback(static function (string $sql, array $params): array {
-                if (str_contains($sql, 'SELECT id FROM tl_resource_booking_resource')) {
-                    return [match ($params[0]) {
-                        [1] => 10,
-                        [2] => 20,
-                        default => 30,
-                    }];
-                }
+            ->willReturnCallback(
+                static function (string $sql, array $params): array {
+                    if (str_contains($sql, 'SELECT id FROM tl_resource_booking_resource')) {
+                        return [match ($params[0]) {
+                            [1] => 10,
+                            [2] => 20,
+                            default => 30,
+                        }];
+                    }
 
-                return [match ($params[0]) {
-                    [20] => 5,
-                    default => 4,
-                }];
-            })
+                    return [match ($params[0]) {
+                        [20] => 5,
+                        default => 4,
+                    }];
+                },
+            )
         ;
 
         $connection
@@ -107,7 +108,6 @@ class MoveBeginWeekToTimeSlotTypeTest extends TestCase
     public function testReportsTimetablesUsedWithDifferentValues(): void
     {
         $connection = $this->connection();
-
         $connection
             ->method('fetchAllAssociative')
             ->willReturn([

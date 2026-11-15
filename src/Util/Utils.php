@@ -22,18 +22,11 @@ use Markocupic\ResourceBookingBundle\Config\RbbConfig;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotTypeModel;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\HttpFoundation\Session\SessionBagInterface;
 
 class Utils
 {
-    private SessionBagInterface|null $session = null;
-
     public function __construct(
         private readonly ContaoFramework $framework,
-        RequestStack $requestStack,
-        #[Autowire('%markocupic_resource_booking.session.attribute_bag_name%')]
-        private readonly string $bagName,
         #[Autowire('%markocupic_resource_booking.apps%')]
         private readonly array $appConfigs = [],
         #[Autowire('%markocupic_resource_booking.displayable_member_fields%')]
@@ -41,21 +34,6 @@ class Utils
         #[Autowire('%markocupic_resource_booking.displayable_booking_fields%')]
         private readonly array $displayableBookingFields = RbbConfig::RBB_DEFAULT_DISPLAYABLE_BOOKING_FIELDS,
     ) {
-        // Get session from request
-        if (null !== ($request = $requestStack->getCurrentRequest())) {
-            $this->session = $request->getSession()->getBag($bagName);
-        }
-    }
-
-    /**
-     * @throws \Exception
-     */
-    public function getModuleModel(): ModuleModel|null
-    {
-        return $this->framework
-            ->getAdapter(ModuleModel::class)
-            ->findById($this->session->get('moduleModelId'))
-        ;
     }
 
     /**
@@ -94,17 +72,13 @@ class Utils
      *
      * @throws \Exception
      */
-    public function getAppConfig(): array
+    public function getAppConfig(ModuleModel|null $module, ResourceBookingResourceModel|null $resource): array
     {
-        $appConfigName = null;
-
-        if (null !== $this->session && $this->session->has('moduleModelId')) {
-            $appConfigName = $this->getModuleModel()?->resourceBooking_appConfig;
-        }
+        $appConfigName = $module?->resourceBooking_appConfig;
 
         return [
-            'beginWeek' => $this->getBeginWeek(),
-            ...$this->getAppConfigByName(\is_string($appConfigName) ? $appConfigName : null),
+            'beginWeek' => $this->getBeginWeek($resource),
+            ...$this->getAppConfigByName(\is_string($appConfigName) && '' !== $appConfigName ? $appConfigName : null),
         ];
     }
 
@@ -151,10 +125,8 @@ class Utils
      * Without a resource, the active resource from the session is used. If
      * there is none, the week starts on monday.
      */
-    public function getBeginWeek(ResourceBookingResourceModel|null $resource = null): string
+    public function getBeginWeek(ResourceBookingResourceModel|null $resource): string
     {
-        $resource ??= $this->getActiveResource();
-
         if (null === $resource || (int) $resource->timeSlotType <= 0) {
             return RbbConfig::RBB_DEFAULT_BEGIN_WEEK;
         }
@@ -182,19 +154,5 @@ class Utils
             'autoSelectFirstResource' => (bool) ($appConfig['auto_select_first_resource'] ?? true),
             'permittedFormFields' => array_values(array_unique([...RbbConfig::RBB_BASE_PERMITTED_FORM_FIELDS, ...($appConfig['permitted_form_fields'] ?? [])])),
         ];
-    }
-
-    private function getActiveResource(): ResourceBookingResourceModel|null
-    {
-        $resourceId = (int) ($this->session?->get('res', 0) ?? 0);
-
-        if ($resourceId <= 0) {
-            return null;
-        }
-
-        return $this->framework
-            ->getAdapter(ResourceBookingResourceModel::class)
-            ->findById($resourceId)
-        ;
     }
 }

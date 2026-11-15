@@ -21,7 +21,6 @@ use Markocupic\ResourceBookingBundle\Config\RbbConfig;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Util\DateHelper;
 use Markocupic\ResourceBookingBundle\Util\WeekBoundaries;
-use Symfony\Component\HttpFoundation\Session\Attribute\AttributeBag;
 
 class WeekBoundariesTest extends ContaoTestCase
 {
@@ -79,19 +78,6 @@ class WeekBoundariesTest extends ContaoTestCase
         $resource = $this->mockResource(true, '350');
 
         $this->assertSame(self::CURRENT_WEEK, $weekBoundaries->getLastPermittedWeek(self::APP_CONFIG, $resource, 1100));
-    }
-
-    public function testStorePermittedWeeksWritesTheSession(): void
-    {
-        $bag = new AttributeBag();
-        $weekBoundaries = new WeekBoundaries($this->getFramework(1500));
-
-        $weekBoundaries->storePermittedWeeks($bag, self::APP_CONFIG, $this->mockResource(true, '1550'), 1100);
-
-        $this->assertSame(self::FIRST_WEEK_OF_RESOURCE, $bag->get('tstampFirstPermittedWeek'));
-        $this->assertSame('d500', $bag->get('tstampFirstPermittedDate'));
-        $this->assertSame(1500, $bag->get('tstampLastPermittedWeek'));
-        $this->assertSame('d1500', $bag->get('tstampLastPermittedWeekDate'));
     }
 
     private function getFramework(int $firstDayOfBookableUntilWeek): ContaoFramework

@@ -12,7 +12,7 @@ Projektsprache: Deutsch (Schweizer Rechtschreibung, «ss» statt «ß»). Code, 
   in Zeitfenstern, Frontend als Wochenkalender (Vue 3), Buchen nur für eingeloggte Mitglieder.
 - Unterstützt: **Contao 5.7 und 6**, PHP ≥ 8.3, Symfony 7.4/8. Ältere Versionen nicht mehr berücksichtigen.
 - Entwickelt in `C:\phpstorm\contao5\vendor\markocupic\resource-booking-bundle` (Testinstallation contao5;
-  das Plugin `hochfelden/resource-booking-custom` liegt in `C:\phpstorm\contao5\vendor\hochfelden`).
+  das Plugin `markocupic/resource-booking-hochfelden` liegt in `C:\phpstorm\contao5\vendor\markocupic\resource-booking-hochfelden`).
 - Zusatz-Bundle `markocupic/resource-booking-notification-bundle` (Notification Center, kostenpflichtig) bleibt auf
   Contao ^5.7, weil terminal42/notification_center Contao 6 noch nicht unterstützt.
 - Doku: `README.md` (Anwender, kurz und gestylt), `docs/EVENTS.md` (Events für Entwickler), `UPGRADE.md` (alle
@@ -30,8 +30,8 @@ Projektsprache: Deutsch (Schweizer Rechtschreibung, «ss» statt «ß»). Code, 
 | `tl_resource_booking` | Buchung. `confirmed`, `isBlocked` (vom Admin gesperrt), `bookingUuid` (Serienbuchung), `itemsBooked`. |
 
 App-Konfiguration (`config/config.yaml`, `markocupic_resource_booking.apps.<name>`) enthält nur noch
-`permitted_form_fields` und `auto_select_first_resource` (Standard true: bei leerer Session zeigt der erste
-Seitenaufruf die erste verfügbare Ressource, serverseitig in `Initialize::autoSelectFirstResource()`). Alles andere ist pro Ressource bzw. Zeitplan einstellbar. Veraltete Schlüssel
+`permitted_form_fields` und `auto_select_first_resource` (Standard true: ohne Auswahl zeigt der erste
+Seitenaufruf die erste verfügbare Ressource, serverseitig in `AppStateFactory::resolveSelection()`). Alles andere ist pro Ressource bzw. Zeitplan einstellbar. Veraltete Schlüssel
 (`beginnWeek`, `begin_week`, `intBackWeeks`, `intAheadWeeks`, `autoConfirm`, `permittedUploadFields`) werden nur
 noch von Migrationen gelesen.
 
@@ -41,7 +41,7 @@ noch von Migrationen gelesen.
 
 - **Nur der Zeitplan entscheidet**, welche Wochentage (Spalten) und Zeitfenster (Zeilen) erscheinen:
   Spalte nur, wenn an diesem Wochentag mindestens ein Zeitfenster gilt; Zeile nur, wenn das Zeitfenster an
-  mindestens einem angezeigten Wochentag gilt (`RefreshDataTrait::getVisibleWeekdays()`).
+  mindestens einem angezeigten Wochentag gilt (`WeekCalendar\WeekTableBuilder::getVisibleWeekdays()` / `isTimeSlotDisplayed()`).
 - Sperrzeiten blenden **nichts** aus: Ihre Zellen bleiben sichtbar, schraffiert, mit `description` als Text
   (leer = kein Text; in der Buchungsvorschau dann «Gesperrt», `RBB.blocked`).
 - Zelle an einem Wochentag, an dem das Zeitfenster nicht gilt: schraffiert, «nicht verfügbar».
@@ -76,6 +76,13 @@ member, isBlocked, confirmed, startTime, endTime, bookingUuid, …) werden nie a
 `BookingTrait`: invalidTimeSlot → invalidItemsBooked → outsideBookingPeriod → invalidStartOrEndTime →
 timeSlotNotAvailableOnWeekday → slotInBlockedPeriod → ausgebucht.
 
+Missbrauchsschutz beim Buchen: Ressource wird im `BookingController` per `SELECT … FOR UPDATE` gesperrt (zuerst
+Transaktion + Sperre, erst danach lesen – sonst alter Snapshot); Ressource muss zu den
+Ressourcen-Typen des Moduls gehören (`AbstractController::isResourceOfModule()`); `bookingDateSelection` max. 100
+Einträge im Format `id-start-ende-woche` (`BookingRequestValidator::parseSlotSelection()`); Wiederholungen bis
+höchstens zur letzten buchbaren Woche (`BookingTrait::limitBookingRepeatStopWeek()`, max. 520). Stornieren nur bis
+zum Ende der Buchung (`CancelController::isCancelableByTime()`), vergangene Serientermine bleiben.
+
 Neue Buchungen: `confirmed` = `autoConfirm` der Ressource. Unbestätigte Buchungen: Zelle orange,
 «wartet auf Bestätigung».
 
@@ -108,15 +115,36 @@ Neue Buchungen: `confirmed` = `autoConfirm` der Ressource. Unbestätigte Buchung
 - Ajax: Frontend sendet `action` (`refreshDataRequest`, `applyFilterRequest`, `bookingFormValidationRequest`,
   `bookingRequest`, `cancelBookingRequest`) → `AjaxRequestEvent` → `EventSubscriber\AjaxRequestEventSubscriber`
   (Priorität 1000) → Controller in `src/AjaxController` (Tag `markocupic_resource_booking.ajax_controller`).
-- Daten für den Kalender: `AjaxController\Traits\RefreshDataTrait::getRefreshedData()`. `activeResource` und
+- Daten für den Kalender: `WeekCalendar\CalendarDataBuilder::build()` (Filter, Woche, Kopfzeile).
+  Die Tabelle baut `WeekCalendar\WeekTableBuilder` (`buildRows()`, `buildTimeSlots()`, Markup-IDs als statische
+  Methoden); jede Buchung geht durch `WeekCalendar\BookingPresenter::present()` – nur dort wird entschieden, welche
+  Felder einer Buchung ins Frontend gehen. Neue Felder nur dort ergänzen. `activeResource` und
   `activeResourceType` werden immer mitgeschickt (leer, wenn nichts gewählt), `activeWeek.calWeek`/`daySpan` für
   die Kopfzeile. `booking.confirmed` ist immer Boolean. `booking.bookedByAnonymous` ist true, wenn der Name
   des Buchenden nicht angezeigt werden darf (dann `bookedByFullname` = «Anonym», `RBB.anonymous`); der eigene Name
   ist immer sichtbar.
-- Session-Bag: aktive Ressource (`res`), Typ (`resType`), `activeWeekTstamp`, erlaubte Wochen
-  (`tstampFirstPermittedWeek`/`tstampLastPermittedWeek`, berechnet von `Util\WeekBoundaries`).
+- Zustandslos: kein Session-Bag, kein Token in der URL. Jeder Ajax-Request schickt `moduleKey`, `resType`, `res`
+  und `date` (Erst-Request zusätzlich `initial=1`); der Modul-Controller baut mit `AppState\AppStateFactory` den
+  `AppState` (Auswahl geprüft, Wochen begrenzt mit `Util\WeekBoundaries`) und hängt ihn an den Request
+  (`AppState::fromRequest()`). Events liefern ihn per `getAppState()`. Das Frontend merkt sich die Auswahl pro Tab in
+  `sessionStorage` (`rbb:<Pfad+Query>:<moduleKey>`), Direktlinks per `?resType=`, `?res=`, `?date=`. Modul-Schlüssel
+  `<id>_<index>` (`AppState\ModuleKeyGenerator`, Zähler am Main-Request) – mehrere Module pro Seite. Nie wieder
+  Zustand in Services oder der Session ablegen; Abhängigkeiten per Konstruktor.
+- `tl_resource_booking.bookingSource` (`Booking\BookingSource`): `week_calendar` (setzt `BookingTrait`, geschützt in
+  `BookingRequestValidator::PROTECTED_BOOKING_FIELDS`), `backend` (DCA-Default), Erweiterungen eigener Wert + Label in
+  `TL_LANG.tl_resource_booking.bookingSources`. Nicht in der Palette (nur Filter/Show).
+- Benachrichtigungen (terminal42/notification_center, ehemals resource-booking-notification-bundle): Typen
+  `NotificationType\{Booking,Cancellation}NotificationType`, Auswahl pro Ressource (`bookingNotification`,
+  `cancellationNotification`), Versand nur über `Notification\NotificationSender::send()` (Kontext `week_calendar` aus
+  `SendNotificationListener`, Erweiterungen eigener Kontext) → `PrepareNotificationEvent` (cancel/Tokens/ID/Sprache).
+- Backend-Startseite: Suche nach `bookingUuid` (Präfix ab 8 Zeichen) per Hook `parseBackendTemplate`
+  (`AddBookingSearchToWelcomeScreenListener`, Template `@Contao/backend/rbb_booking_search.html.twig`, Abfrage in
+  `Backend\BookingSearch`); Zugriff: Admin oder Modul `resource`. Kein Override von `be_welcome`.
 - Slots: `Slot\AbstractSlot::create()` sammelt alle Prüfergebnisse in `arrData`; `SlotMain` (Kalender) und
   `SlotBooking` (Buchung).
+- Datenzugriff der Slots über `Slot\SlotDataProvider` (pro Request gecacht, `ResetInterface`): Mitglied, Zeitfenster,
+  Zeitplan; `WeekTableBuilder` lädt die Buchungen der Woche vorab (`SlotFactory::preloadBookings()`, eine Abfrage).
+  Keine Abfragen pro Zelle einführen.
 - Zentrale Regeln (statisch, testbar): `Util\ResourceBookingRestriction` (`getBeginWeek`, `isValidTimeSlot`,
   `isTimeSlotAvailableOnWeekday`, `isInBlockedPeriod`, `getWeeksBack/Ahead`, `getBookableUntil`,
   `isAutoConfirmEnabled`, `timeToSeconds`).
@@ -148,6 +176,30 @@ Alte Spalten erst nach erfolgreicher Migration löschen. Jede Verhaltensänderun
   **`data-*`-Attribute immer komplett kleinschreiben:** Das Vue-Template steckt im HTML der Seite, der Browser
   wandelt Attributnamen ohnehin in Kleinbuchstaben um (CSS-Selektoren und `dataset` müssen dazu passen).
 - Buchungsbutton: runder Plus-Kreis (`rbb_icon('fa-plus')`), Label nur für Screenreader.
+- Buchungs-/Stornierungsfenster: modaler `<dialog class="rbb-booking-dialog" ref="bookingDialog">` über dem Kalender
+  (`showModal()` in `openBookingWindow()`, `close()` in `hideBookingWindow()`, Esc über das `cancel`-Event).
+- Mobile (< 576 px, `$rbb-breakpoint-sm`): Tagesansicht. Tages-Buttons `.rbb-day-tabs` (`aria-pressed`), Vue-Daten
+  `activeDayIndex` (bleibt beim Aktualisieren erhalten, sonst heute bzw. erster Tag), Wischen (`onTableTouchEnd`,
+  ≥ 50 px horizontal) und Pfeiltasten (`selectAdjacentDay()`); CSS blendet per `data-activedayindex` /
+  `data-day-index` die übrigen Spalten und die Kopfzeile aus. Desktop unverändert.
+  Filter mobil zweizeilig per `grid-area` ([<] Woche [>] / Kategorie | Ressource), `--rbb-section-spacing` 1.25rem,
+  Buchungsdialog mobil: Liste statt Checkbox-Tabelle (`.rbb-booking-slot-picker`, Tages-Buttons mit Zähler
+  `countSelectedSlotsOfDay()`, Vue-Daten `bookingWindowDayIndex` = Tag des angeklickten Slots), Checkbox-IDs mit
+  Präfix `list_` (die Tabelle bleibt im DOM), gleiches `v-model`. Footer `position: sticky`.
+- Barrierefreiheit (Ziel WCAG 2.2 AA): Wochenkalender mit ARIA-Tabellenrollen (`table`/`row`/`columnheader`/
+  `rowheader`/`cell`), Kopfzeile mobil nur visuell ausblenden (nie `display: none`). Kontraste: Feldrahmen ≥ 3:1,
+  Text ≥ 4.5:1 (vor neuen Farben nachrechnen). Dialog schliesst nie automatisch; nach Erfolg Fokus auf
+  `.rbb-js-close-booking-window`.
+  `aria-busy` an Tabelle/Formular während `isBusy`, Live-Bereich für Filter-Hinweise, `prefers-reduced-motion`
+  respektieren, Touch-Klickflächen ≥ 44 px (`@media (pointer: coarse)`, `::after`).
+- Feldfehler: `FieldValidationException` (Feld => Meldung) → `AjaxResponse::fieldErrors` → `setFieldErrors()` in
+  `app.js` markiert Felder per `name` **nur innerhalb von `this.$el`** (mehrere Module pro Seite), IDs der Meldungen
+  `rbbFieldError_<moduleKey>_<feld>`. Keine zusätzliche allgemeine Meldung.
+- Polling alle 15 s nur bei sichtbarem Tab (`visibilitychange`, `online` → sofort neu laden). Netzwerkfehler über
+  `handleRequestError()`: `connectionLost`-Hinweis, Daten bleiben sichtbar; HTTP-Fehler wie bisher Statusmeldung.
+  Kein `alert()`.
+- Barrierefreiheit: Icon-Buttons mit `aria-label` (Text mit `|e('js')` in Vue-Ausdrücke einsetzen), Zustände nie nur
+  über Farbe (eigene Buchung: Häkchen, `booking.isOwn`). Kein Ton/Audio.
 
 ### Stylesheet
 

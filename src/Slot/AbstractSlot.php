@@ -26,11 +26,11 @@ use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotTypeModel;
-use Markocupic\ResourceBookingBundle\Validator\BookingRequestValidator;
 use Markocupic\ResourceBookingBundle\Util\DateHelper;
 use Markocupic\ResourceBookingBundle\Util\ResourceBookingRestriction;
 use Markocupic\ResourceBookingBundle\Util\UtcTimeHelper;
 use Markocupic\ResourceBookingBundle\Util\Utils;
+use Markocupic\ResourceBookingBundle\Validator\BookingRequestValidator;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 /**
@@ -91,6 +91,7 @@ abstract class AbstractSlot implements SlotInterface
         protected readonly ContaoFramework $framework,
         protected readonly TokenStorageInterface $tokenStorage,
         protected readonly Utils $utils,
+        protected readonly SlotDataProvider|null $dataProvider = null,
     ) {
     }
 
@@ -119,13 +120,13 @@ abstract class AbstractSlot implements SlotInterface
         $startTimeString = UtcTimeHelper::parseStartTime($startTime);
         $endTimeString = UtcTimeHelper::parseEndTime($endTime);
         $dateString = $dateAdapter->parse($configAdapter->get('dateFormat'), $startTime);
-        $timeSlot = $this->framework->getAdapter(ResourceBookingTimeSlotModel::class)->findById($timeSlotId);
-        $timeSlotType = null === $timeSlot ? null : $this->framework->getAdapter(ResourceBookingTimeSlotTypeModel::class)->findById((int) $timeSlot->pid);
+        $timeSlot = $this->findTimeSlot($timeSlotId);
+        $timeSlotType = null === $timeSlot ? null : $this->findTimeSlotType((int) $timeSlot->pid);
 
         // The first day of the week is set in the timetable of the resource.
         $resourceTimeSlotType = null !== $timeSlotType && (int) $timeSlotType->id === (int) $resource->timeSlotType
             ? $timeSlotType
-            : $this->framework->getAdapter(ResourceBookingTimeSlotTypeModel::class)->findById((int) $resource->timeSlotType);
+            : $this->findTimeSlotType((int) $resource->timeSlotType);
         $appConfig = ['beginWeek' => ResourceBookingRestriction::getBeginWeek($resourceTimeSlotType)];
         $firstDayOfWeek = $dateHelperAdapter->getFirstDayOfCurrentWeek($appConfig, $startTime);
         $blockedPeriod = $this->findBlockedPeriod($resource->row(), $startTime, $endTime);
@@ -277,6 +278,16 @@ abstract class AbstractSlot implements SlotInterface
             return $this->arrData['bookings'];
         }
 
+        if (null !== $this->dataProvider) {
+            $this->arrData['bookings'] = $this->dataProvider->getBookings(
+                (int) $this->arrData['resource']['id'],
+                (int) $this->arrData['startTime'],
+                (int) $this->arrData['endTime'],
+            );
+
+            return $this->arrData['bookings'];
+        }
+
         $bookings = $this->framework
             ->getAdapter(ResourceBookingModel::class)
             ->findByResourceStartTimeAndEndTime(
@@ -397,12 +408,10 @@ abstract class AbstractSlot implements SlotInterface
 
     private function getUserBooking(): array|null
     {
+        // The booking rows are complete records of tl_resource_booking: no need to load them again.
         foreach ($this->getBookings() as $booking) {
             if ($this->isOwnedByLoggedUser($booking)) {
-                return $this->framework
-                    ->getAdapter(ResourceBookingModel::class)
-                    ->findById($booking['id'])?->row()
-                ;
+                return $booking;
             }
         }
 
@@ -432,8 +441,28 @@ abstract class AbstractSlot implements SlotInterface
         return null;
     }
 
+    private function findTimeSlot(int $id): ResourceBookingTimeSlotModel|null
+    {
+        return null !== $this->dataProvider
+            ? $this->dataProvider->getTimeSlot($id)
+            : $this->framework->getAdapter(ResourceBookingTimeSlotModel::class)->findById($id);
+    }
+
+    private function findTimeSlotType(int $id): ResourceBookingTimeSlotTypeModel|null
+    {
+        return null !== $this->dataProvider
+            ? $this->dataProvider->getTimeSlotType($id)
+            : $this->framework->getAdapter(ResourceBookingTimeSlotTypeModel::class)->findById($id);
+    }
+
     private function initializeUser(): void
     {
+        if (null !== $this->dataProvider) {
+            $this->user = $this->dataProvider->getLoggedInMember();
+
+            return;
+        }
+
         if (null === ($token = $this->tokenStorage->getToken())) {
             return;
         }

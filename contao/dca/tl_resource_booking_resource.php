@@ -55,7 +55,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = [
     ],
     'palettes'    => [
         '__selector__' => ['addBookableUntil'],
-        'default'      => '{title_legend},title,description,itemsAvailable,timeSlotType;{booking_restriction_legend},weeksBack,weeksAhead,addBookableUntil,autoConfirm',
+        'default'      => '{title_legend},title,description,itemsAvailable,timeSlotType;{booking_restriction_legend},weeksBack,weeksAhead,addBookableUntil,autoConfirm;{notification_legend},bookingNotification,cancellationNotification',
     ],
     'subpalettes' => [
         'addBookableUntil' => 'bookableUntil',
@@ -141,6 +141,21 @@ $GLOBALS['TL_DCA']['tl_resource_booking_resource'] = [
             'inputType' => 'checkbox',
             'eval'      => ['tl_class' => 'clr'],
             'sql'       => ['type' => 'boolean', 'default' => true],
+        ],
+        // Notifications (terminal42/notification_center), options: ResourceNotificationOptionsListener
+        'bookingNotification'      => [
+            'exclude'   => true,
+            'filter'    => true,
+            'inputType' => 'select',
+            'eval'      => ['includeBlankOption' => true, 'chosen' => true, 'tl_class' => 'w50'],
+            'sql'       => ['type' => 'integer', 'unsigned' => true, 'notnull' => true, 'default' => 0],
+        ],
+        'cancellationNotification' => [
+            'exclude'   => true,
+            'filter'    => true,
+            'inputType' => 'select',
+            'eval'      => ['includeBlankOption' => true, 'chosen' => true, 'tl_class' => 'w50'],
+            'sql'       => ['type' => 'integer', 'unsigned' => true, 'notnull' => true, 'default' => 0],
         ],
     ],
 ];

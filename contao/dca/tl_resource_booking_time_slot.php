@@ -36,7 +36,6 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = [
             'panelLayout'  => 'filter;search,limit',
             'headerFields' => ['title'],
         ],
-        'operations'        => 'all',
     ],
     'palettes' => [
         'default' => '

@@ -5,7 +5,7 @@
         <div v-if="filterBoard" class="rbb-filter-board">
             {% block rbb_filter_board__button_prev %}
                 <div class="rbb-go-back-one-week">
-                    <button @click="jumpWeekRequest(filterBoard.jumpPrevWeek.tstamp,$event)" :data-tstamp="filterBoard.jumpPrevWeek.tstamp" type="button" class="rbb-btn rbb-btn--primary rbb-btn--block" title="{{ ('RBB.1WeekBack')|trans }}" :class="filterBoard.jumpPrevWeek.disabled ? 'disabled' : ''" :aria-disabled="filterBoard.jumpPrevWeek.disabled ? 'true' : 'false'" :disabled="filterBoard.jumpPrevWeek.disabled">
+                    <button @click="jumpWeekRequest(filterBoard.jumpPrevWeek.tstamp,$event)" :data-tstamp="filterBoard.jumpPrevWeek.tstamp" type="button" class="rbb-btn rbb-btn--primary rbb-btn--block" title="{{ ('RBB.1WeekBack')|trans }}" aria-label="{{ ('RBB.1WeekBack')|trans }}" :class="filterBoard.jumpPrevWeek.disabled ? 'disabled' : ''" :aria-disabled="filterBoard.jumpPrevWeek.disabled ? 'true' : 'false'" :disabled="filterBoard.jumpPrevWeek.disabled">
                         {{ rbb_icon('fa-chevron-left')|raw }}
                     </button>
                 </div>
@@ -42,18 +42,22 @@
 
             {% block rbb_filter_board__button_next %}
                 <div class="rbb-go-ahead-one-week">
-                    <button @click="jumpWeekRequest(filterBoard.jumpNextWeek.tstamp,$event)" :data-tstamp="filterBoard.jumpNextWeek.tstamp" type="button" class="rbb-btn rbb-btn--primary rbb-btn--block" title="{{ ('RBB.1WeekAhead')|trans }}" :class="filterBoard.jumpNextWeek.disabled ? 'disabled' : ''" :aria-disabled="filterBoard.jumpNextWeek.disabled ? 'true' : 'false'" :disabled="filterBoard.jumpNextWeek.disabled">
+                    <button @click="jumpWeekRequest(filterBoard.jumpNextWeek.tstamp,$event)" :data-tstamp="filterBoard.jumpNextWeek.tstamp" type="button" class="rbb-btn rbb-btn--primary rbb-btn--block" title="{{ ('RBB.1WeekAhead')|trans }}" aria-label="{{ ('RBB.1WeekAhead')|trans }}" :class="filterBoard.jumpNextWeek.disabled ? 'disabled' : ''" :aria-disabled="filterBoard.jumpNextWeek.disabled ? 'true' : 'false'" :disabled="filterBoard.jumpNextWeek.disabled">
                         {{ rbb_icon('fa-chevron-right')|raw }}
                     </button>
                 </div>
             {% endblock %}
         </div>
         {% block rbb_filter_board__messages %}
-            <div class="rbb-filter-form-messages" v-if="messages">
-                <div v-if="messages.info" class="rbb-alert rbb-alert--info">[[ messages.info ]]</div>
-                <div v-if="messages.error" class="rbb-alert rbb-alert--danger">[[ messages.error ]]</div>
-                <div v-if="messages.confirm" class="rbb-alert rbb-alert--success">[[ messages.confirm ]]</div>
-                <div v-if="messages.warning" class="rbb-alert rbb-alert--warning">[[ messages.warning ]]</div>
+            {# The live region always exists; the messages are only displayed here while the booking dialog is closed,
+               otherwise they belong to the dialog (see _messages.html.twig) #}
+            <div class="rbb-filter-form-messages" v-if="messages" role="status" aria-live="polite">
+                <template v-if="mode === 'week-calendar'">
+                    <div v-if="messages.info" class="rbb-alert rbb-alert--info">[[ messages.info ]]</div>
+                    <div v-if="messages.error" class="rbb-alert rbb-alert--danger">[[ messages.error ]]</div>
+                    <div v-if="messages.confirm" class="rbb-alert rbb-alert--success">[[ messages.confirm ]]</div>
+                    <div v-if="messages.warning" class="rbb-alert rbb-alert--warning">[[ messages.warning ]]</div>
+                </template>
             </div>
         {% endblock %}
     </form>

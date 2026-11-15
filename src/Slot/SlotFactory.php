@@ -25,7 +25,17 @@ class SlotFactory
         private readonly ContaoFramework $framework,
         private readonly TokenStorageInterface $tokenStorage,
         private readonly Utils $utils,
+        private readonly SlotDataProvider|null $dataProvider = null,
     ) {
+    }
+
+    /**
+     * Fetches the bookings of the resource in the time range [from, to) with one query,
+     * before the slots of e.g. a whole week are created.
+     */
+    public function preloadBookings(int $resourceId, int $from, int $to): void
+    {
+        $this->dataProvider?->preloadBookings($resourceId, $from, $to);
     }
 
     /**
@@ -34,13 +44,13 @@ class SlotFactory
     public function get(int $timeSlotId, string $mode, ResourceBookingResourceModel $resource, int $startTime, int $endTime, int $requestedItems = 1, int|null $bookingRepeatStopWeekTstamp = null): SlotInterface
     {
         if (SlotMain::MODE === $mode) {
-            $slotEntity = new SlotMain($this->framework, $this->tokenStorage, $this->utils);
+            $slotEntity = new SlotMain($this->framework, $this->tokenStorage, $this->utils, $this->dataProvider);
 
             return $slotEntity->create($timeSlotId, $resource, $startTime, $endTime, $requestedItems, $bookingRepeatStopWeekTstamp);
         }
 
         if (SlotBooking::MODE === $mode) {
-            $slotEntity = new SlotBooking($this->framework, $this->tokenStorage, $this->utils);
+            $slotEntity = new SlotBooking($this->framework, $this->tokenStorage, $this->utils, $this->dataProvider);
 
             return $slotEntity->create($timeSlotId, $resource, $startTime, $endTime, $requestedItems, $bookingRepeatStopWeekTstamp);
         }

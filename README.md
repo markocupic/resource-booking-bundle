@@ -95,6 +95,12 @@ Mit **«Gesperrte Zeiten»** lässt sich die Sperre auf einzelne Wochentage oder
 
 Gesperrte Zeitfenster bleiben im Kalender sichtbar, sind aber schraffiert. Die Bezeichnung der Sperrzeit ist intern und erscheint nur im Backend. Soll im Kalender ein Text stehen, z. B. «Herbstferien», tragen Sie ihn unter **«Hinweis im Wochenkalender»** ein.
 
+## 🔎 Buchung im Backend suchen
+
+Auf der Startseite des Backends steht die Suche **«Buchung suchen»**. Geben Sie die Buchungs-ID (`bookingUuid`) ein, z. B. aus einer Benachrichtigung. Der Anfang der ID genügt (mindestens 8 Zeichen). Gefunden werden alle Termine der Buchung, bei Serienbuchungen also alle Wochen. Ein Klick führt direkt zur Buchung bzw. zu allen Buchungen der Ressource.
+
+Die Suche sehen Administratoren und Benutzer mit Zugriff auf das Backend-Modul **Ressourcen**. Sie lässt sich auch direkt verlinken, z. B. in einer Benachrichtigung an die Verwaltung: `https://example.com/contao?rbb_booking_uuid=<ID>`. Erweiterungen erzeugen den Link mit `Backend\BookingSearchUrlGenerator::generate($bookingUuid)`.
+
 ## 🎨 Aussehen anpassen
 
 Das Modul bringt ein eigenes, schlankes Stylesheet mit – Bootstrap oder ein anderes CSS-Framework ist nicht nötig. Alle Klassen beginnen mit `rbb-`, Konflikte mit Ihrem Theme sind daher kaum möglich.
@@ -203,7 +209,24 @@ An mehreren Stellen lässt sich eigener Code einklinken – etwa um vor einer Bu
 
 ## 🔔 Benachrichtigungen
 
-E-Mail-Benachrichtigungen bei Buchung und Stornierung über das [Notification Center](https://github.com/terminal42/contao-notification_center) gibt es als kostenpflichtige Zusatzerweiterung. Bei Interesse melden Sie sich gerne beim [Autor](https://github.com/markocupic).
+Bei Buchungen und Stornierungen im Wochenkalender verschickt das Bundle E-Mails über das [Notification Center](https://github.com/terminal42/contao-notification_center) (wird mitinstalliert).
+
+1. Im Notification Center eine Benachrichtigung vom Typ **«Ressourcenbuchung: Benachrichtigung nach einer Buchung»** bzw. **«… nach einer Stornierung»** anlegen.
+2. In den Einstellungen der Ressource unter **«Benachrichtigungen»** auswählen.
+
+Kann eine Benachrichtigung nicht versandt werden, wird der Fehler im Contao-Systemlog protokolliert. Die Buchung bzw. Stornierung bleibt davon unberührt.
+
+**Tokens** (im Notification Center auch in der Auto-Vervollständigung):
+
+| Tokens | Inhalt |
+|---|---|
+| `##booking_details##`, `##booking_details_html##` | alle gebuchten bzw. stornierten Termine |
+| `##booking_description##`, `##booking_datim##`, `##booking_*##` | Kommentar, Zeitpunkt, alle Felder der (ersten) Buchung |
+| `##booking_person_firstname##`, `##booking_person_email##`, `##booking_person_*##` | buchendes Mitglied (`tl_member`) |
+| `##booking_resource_title##`, `##booking_resource_*##` | Ressource |
+| `##booking_resource_type_title##`, `##booking_resource_type_*##` | Ressourcen-Typ |
+
+Erweiterungen mit eigenem Buchungsablauf (z. B. einem Formular für Gäste) verschicken dieselben Benachrichtigungen mit `Notification\NotificationSender::send()`. Mit dem [`PrepareNotificationEvent`](docs/EVENTS.md#preparenotificationevent) lassen sich Benachrichtigungen vor dem Versand unterdrücken oder anpassen.
 
 ---
 

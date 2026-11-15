@@ -18,20 +18,16 @@ use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController
 use Contao\CoreBundle\Csrf\ContaoCsrfTokenManager;
 use Contao\CoreBundle\DependencyInjection\Attribute\AsFrontendModule;
 use Contao\CoreBundle\Exception\ResponseException;
-use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Routing\ScopeMatcher;
 use Contao\ModuleModel;
 use Contao\PageModel;
 use Contao\Template;
-use Markocupic\ResourceBookingBundle\AppInitialization\Helper\ModuleIndex;
-use Markocupic\ResourceBookingBundle\AppInitialization\Helper\ModuleKey;
-use Markocupic\ResourceBookingBundle\AppInitialization\Helper\TokenManager;
-use Markocupic\ResourceBookingBundle\AppInitialization\Initialize;
+use Markocupic\ResourceBookingBundle\AppState\AppStateFactory;
+use Markocupic\ResourceBookingBundle\AppState\ModuleKeyGenerator;
 use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponseFactory;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
@@ -41,12 +37,14 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
 {
     public const TYPE = 'resourceBookingWeekcalendar';
 
+    private const MODULE_KEY_ATTRIBUTE = '_rbb_module_key';
+
     public function __construct(
         private readonly AjaxResponseFactory $ajaxResponseFactory,
+        private readonly AppStateFactory $appStateFactory,
         private readonly ContaoCsrfTokenManager $contaoCsrfTokenManager,
-        private readonly ContaoFramework $framework,
         private readonly EventDispatcherInterface $eventDispatcher,
-        private readonly Initialize $appInitializer,
+        private readonly ModuleKeyGenerator $moduleKeyGenerator,
         private readonly RequestStack $requestStack,
         private readonly ScopeMatcher $scopeMatcher,
     ) {
@@ -57,56 +55,21 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
      */
     public function __invoke(Request $request, ModuleModel $model, string $section, array|null $classes = null, PageModel|null $page = null): Response
     {
-        // Is frontend
         if ($this->scopeMatcher->isFrontendRequest($request) && null !== $page) {
-            /**
-             * The module key is necessary to run multiple rbb applications on the same page
-             * and is sent as a POST parameter on every xhr request.
-             *
-             * The session data of each rbb instance is stored under $_SESSION[_resource_booking_bundle_attributes][$sessionId.'_'.$userId.'_'.$moduleKey.'_'.$token]
-             *
-             * The module key (#moduleId_#moduleIndex f.ex. 33_0) contains the module id and the module index
-             * The module index is 0, if the current module is the first rbb module on the current page
-             * The module index is 1, if the current module is the first rbb module on the current page, etc.
-             *
-             * Do only run once ModuleIndex::generateModuleIndex() per module instance; */
-            $request = $this->requestStack->getCurrentRequest();
-
-            $moduleIndexAdapter = $this->framework->getAdapter(ModuleIndex::class);
-            $moduleKeyAdapter = $this->framework->getAdapter(ModuleKey::class);
-            $tokenManagerAdapter = $this->framework->getAdapter(TokenManager::class);
-
-            $moduleIndexAdapter->generateModuleIndex();
-            $moduleKeyAdapter->setModuleKey($model->id.'_'.$moduleIndexAdapter->getModuleIndex());
-            $moduleKey = $moduleKeyAdapter->getModuleKey();
-
-            // Send empty response on ajax requests if token is missing
-            if ($request->isXmlHttpRequest() && empty($request->query->get('token_'.$moduleKey))) {
-                return new Response('', Response::HTTP_NO_CONTENT);
-            }
-
-            // Generate token on non-ajax requests, if token is missing, then add it as a query parameter to the url and reload the page.
-            if (!$request->isXmlHttpRequest() && empty($request->query->get('token_'.$moduleKey))) {
-                $params = $request->query->all();
-                $tokenManagerAdapter->generateToken();
-                $params['token_'.$moduleKey] = $tokenManagerAdapter->getToken();
-
-                $url = $request->getSchemeAndHttpHost()
-                    .$request->getBaseUrl()
-                    .$request->getPathInfo()
-                    .'?'.http_build_query($params);
-
-                return new RedirectResponse($url);
-            }
-
-            $tokenManagerAdapter->setToken($request->query->get('token_'.$moduleKey));
-
-            // Initialize application
-            $this->appInitializer->initialize($model->id, $page->id);
+            /*
+             * The module key ("<module id>_<index>", e.g. "33_0") identifies the week calendar
+             * on the page, several week calendars may be placed on the same page. It is sent
+             * with every Ajax request, only the module with this key answers. Nothing is
+             * stored in the session: the front end sends the selection (resource type,
+             * resource and week) with every request.
+             */
+            $mainRequest = $this->requestStack->getMainRequest() ?? $request;
+            $moduleKey = $this->moduleKeyGenerator->generate($mainRequest, (int) $model->id);
+            $request->attributes->set(self::MODULE_KEY_ATTRIBUTE, $moduleKey);
 
             if ($request->isXmlHttpRequest() && $request->request->has('action') && $request->request->get('moduleKey') === $moduleKey) {
                 // Send JSON response on xhr requests
-                throw new ResponseException($this->getAjaxResponse($request));
+                throw new ResponseException($this->getAjaxResponse($request, $moduleKey, $model, $page));
             }
         }
 
@@ -114,11 +77,30 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
         return parent::__invoke($request, $model, $section, $classes);
     }
 
-    protected function getAjaxResponse(Request $request): JsonResponse
+    /**
+     * @throws \Exception
+     */
+    protected function getAjaxResponse(Request $request, string $moduleKey, ModuleModel $model, PageModel $page): JsonResponse
     {
+        // Validated selection of the front end, attached to the request for the Ajax controllers
+        $appState = $this->appStateFactory->create(
+            $moduleKey,
+            $model,
+            $page,
+            [
+                'resType' => $request->request->get('resType'),
+                'res' => $request->request->get('res'),
+                'date' => $request->request->get('date'),
+            ],
+            // First request of the page: select a resource automatically if nothing is selected
+            '1' === $request->request->get('initial'),
+            $request->getLocale(),
+        );
+
+        $appState->attachTo($request);
+
         $ajaxResponse = $this->ajaxResponseFactory->create($request->request->get('action'));
 
-        // Dispatch "rbb.event.xml_http_request" event
         $event = new AjaxRequestEvent($request, $ajaxResponse);
         $this->eventDispatcher->dispatch($event);
 
@@ -140,13 +122,10 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
         return $response;
     }
 
-    /**
-     * @throws \Exception
-     */
     protected function getResponse(Template $template, ModuleModel $model, Request $request): Response
     {
         // Used, if multiple rbb modules are used on the same page
-        $template->moduleKey = $this->framework->getAdapter(ModuleKey::class)->getModuleKey();
+        $template->moduleKey = $request->attributes->get(self::MODULE_KEY_ATTRIBUTE, $model->id.'_0');
         $template->csrfToken = $this->contaoCsrfTokenManager->getDefaultTokenValue();
 
         // Let vue.js take care of the rest ;-)

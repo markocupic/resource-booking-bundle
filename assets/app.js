@@ -23,12 +23,10 @@ if (typeof ResourceBookingApp !== 'function') {
                         options: {
                             requestToken: '',
                             moduleKey: '',
-                            // The settings below are optional
-                            audio: {
-                                notifyOnNewBookingsAudio: 'bundles/markocupicresourcebooking/audio/booking-alert.mp3'
+                            // Texts for errors detected in the browser (translated in the module template)
+                            texts: {
+                                networkError: 'The request could not be sent. Please check your internet connection and try again.',
                             },
-                            enableAudio: true,
-                            autocloseWindowsAfter: 2500,
                         },
                         // indicates if application is initialized, switches to true, when refreshData request was fired first time
                         // and the request status is 200
@@ -73,7 +71,6 @@ if (typeof ResourceBookingApp !== 'function') {
                             showCancelBookingButton: false,
                         },
                         intervals: [],
-                        autoCloseBookingWindowTimeout: null,
                         messages: ['confirm'],
                         // Indicates if user is idle
                         isIdle: false,
@@ -81,32 +78,46 @@ if (typeof ResourceBookingApp !== 'function') {
                         requestQueue: [],
                         // true if there is a pending request
                         isBusy: false,
+                        // true if the server could not be reached (network error), see handleRequestError()
+                        connectionLost: false,
+                        // Day displayed on small screens (index of the weekday, see weekdays[].index)
+                        activeDayIndex: null,
+                        // Day displayed in the slot list of the booking window on small screens
+                        bookingWindowDayIndex: null,
+                        // Messages per form field of the booking form (field name => message)
+                        fieldErrors: {},
+                        // Start position of a swipe gesture on the week table
+                        touchStart: null,
                     }
                 },
 
                 created() {
 
-                    // Detect unsupported browsers
-                    let ua = window.navigator.userAgent;
-                    let msie = ua.indexOf('MSIE ');
-                    if (msie > 0) {
-                        alert('This plugin is not compatible with your browser. Please use a current browser (like Opera, Firefox, Safari or Google Chrome), that is not out of date.')
-                    }
-
                     // Override defaults
-                    this.options = {...this.options, ...opt}
+                    this.options = {...this.options, ...opt, texts: {...this.options.texts, ...(opt.texts || {})}}
 
                     // Show the loading spinner for 2s
                     window.setTimeout(() => {
                         this.refreshDataRequest(true);
                     }, 500);
 
-                    // Fetch data from server each 15s
+                    // Fetch data from server each 15s, but not while the tab is hidden or the user is idle
                     this.intervals.refreshDataRequest = window.setInterval(() => {
-                        if (!this.isIdle) {
+                        if (!this.isIdle && document.visibilityState !== 'hidden') {
                             this.refreshDataRequest();
                         }
                     }, 15000);
+
+                    // Back in the tab or online again: show the current data right away
+                    document.addEventListener('visibilitychange', () => {
+                        if (document.visibilityState === 'visible') {
+                            this.refreshDataRequest();
+                        }
+                    });
+
+                    window.addEventListener('online', () => {
+                        this.refreshDataRequest();
+                    });
 
                     // Use a queue/stack to store the requests.
                     // The last item (request) in the stack will be fired and
@@ -142,11 +153,6 @@ if (typeof ResourceBookingApp !== 'function') {
                         this.initializeIdleDetector(document, idleAfter);
                     }, 10000);
 
-                    document.addEventListener('keyup', evt => {
-                        if (evt.code === 'Escape' && this.mode === 'booking-window') {
-                            this.hideBookingWindow();
-                        }
-                    });
 
                 },
 
@@ -168,35 +174,16 @@ if (typeof ResourceBookingApp !== 'function') {
                         this.requestQueue.push([this.activeResourceTypeId, this.activeResourceId, newVal]);
                         //this.applyFilterRequest(this.activeResourceTypeId, this.activeResourceId, newVal);
                     },
-                    rows: async function (newVal, oldVal) {
-
-                        if (newVal.length === 0 || oldVal.length === 0) {
+                    weekdays: function weekdays(newVal, oldVal) {
+                        // Keep the selected day while the data is refreshed, otherwise show today (or the first day)
+                        if (newVal.some(weekday => weekday.index === this.activeDayIndex)) {
                             return;
                         }
 
-                        let hasNewBooking = false;
+                        const today = new Date().toDateString();
+                        const weekdayToday = newVal.find(weekday => weekday.tstamp && new Date(weekday.tstamp * 1000).toDateString() === today);
 
-                        await (async function () {
-                            for await (const rowIndex of Object.keys(newVal)) {
-
-                                for (const colIndex of Object.keys(newVal[rowIndex]['cellData'])) {
-
-                                    if (parseInt(newVal[rowIndex]['cellData'][colIndex]['bookingCount']) > parseInt(oldVal[rowIndex]['cellData'][colIndex]['bookingCount'])) {
-                                        if (newVal[rowIndex]['cellData'][colIndex]['beginWeekTimestampSelectedWeek'] === oldVal[rowIndex]['cellData'][colIndex]['beginWeekTimestampSelectedWeek']) {
-                                            if (newVal[rowIndex]['cellData'][colIndex]['pid'] === oldVal[rowIndex]['cellData'][colIndex]['pid']) {
-                                                hasNewBooking = true;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        })();
-
-                        if (hasNewBooking === true) {
-                            if (this.options.enableAudio) {
-                                this.playAudio(this.options.audio.notifyOnNewBookingsAudio);
-                            }
-                        }
+                        this.activeDayIndex = weekdayToday ? weekdayToday.index : (newVal.length ? newVal[0].index : null);
                     }
                 },
 
@@ -212,7 +199,16 @@ if (typeof ResourceBookingApp !== 'function') {
                         const formData = new FormData();
                         formData.append('REQUEST_TOKEN', this.options.requestToken);
                         formData.append('action', action);
-                        formData.append('moduleKey', this.options.moduleKey);
+
+                        if (blnInitial) {
+                            // First request of the page: restore the selection of this tab or use the
+                            // selection of a direct link. The server validates it and selects a resource
+                            // automatically if nothing is selected.
+                            formData.append('initial', '1');
+                            this.appendAppState(formData, this.getInitialAppState());
+                        } else {
+                            this.appendAppState(formData);
+                        }
 
                         try {
                             const response = await fetch(window.location.href, {
@@ -223,6 +219,8 @@ if (typeof ResourceBookingApp !== 'function') {
                                 },
                             });
                             this.lastResponseCode = response.status;
+                            // The server answered: the connection is back
+                            this.connectionLost = false;
 
                             if (!response.ok) {
                                 // Custom message for failed HTTP codes
@@ -255,14 +253,17 @@ if (typeof ResourceBookingApp !== 'function') {
 
                                     this[key] = json['data'][key];
                                 }
+
+                                if (blnInitial) {
+                                    this.storeAppState();
+                                }
                             }
 
                             this.isReady = true;
 
                             return response;
                         } catch (error) {
-                            this.isReady = false;
-                            console.error('Fetch', error);
+                            this.handleRequestError(error, true);
                         }
                     },
 
@@ -279,10 +280,7 @@ if (typeof ResourceBookingApp !== 'function') {
                         const formData = new FormData();
                         formData.append('REQUEST_TOKEN', this.options.requestToken);
                         formData.append('action', action);
-                        formData.append('resType', activeResourceTypeId);
-                        formData.append('res', activeResourceId);
-                        formData.append('date', activeWeekTstamp);
-                        formData.append('moduleKey', this.options.moduleKey);
+                        this.appendAppState(formData, {resType: activeResourceTypeId, res: activeResourceId, date: activeWeekTstamp});
 
                         try {
                             const response = await fetch(window.location.href, {
@@ -293,6 +291,8 @@ if (typeof ResourceBookingApp !== 'function') {
                                 },
                             });
                             this.lastResponseCode = response.status;
+                            // The server answered: the connection is back
+                            this.connectionLost = false;
 
                             if (!response.ok) {
                                 // Custom message for failed HTTP codes
@@ -323,9 +323,11 @@ if (typeof ResourceBookingApp !== 'function') {
                                 for (const key of Object.keys(json.data)) {
                                     this[key] = json.data[key];
                                 }
+
+                                this.storeAppState();
                             }
                         } catch (error) {
-                            console.error('Fetch', error);
+                            this.handleRequestError(error);
                         }
                         this.isBusy = false;
                     },
@@ -335,6 +337,7 @@ if (typeof ResourceBookingApp !== 'function') {
                      */
                     bookingRequest: async function () {
                         this.deleteMessages();
+                        this.clearFieldErrors();
                         let action = 'bookingRequest';
                         this.isBusy = true;
 
@@ -348,7 +351,7 @@ if (typeof ResourceBookingApp !== 'function') {
                         formData.append('REQUEST_TOKEN', this.options.requestToken);
                         formData.append('action', action);
                         formData.append('resourceId', this.bookingWindow.activeTimeSlot.pid);
-                        formData.append('moduleKey', this.options.moduleKey);
+                        this.appendAppState(formData);
 
                         for (const selectedTimeSlot of this.bookingWindow.selectedTimeSlots) {
                             formData.append('bookingDateSelection[]', selectedTimeSlot);
@@ -377,6 +380,8 @@ if (typeof ResourceBookingApp !== 'function') {
                                         },
                                     });
                                 this.lastResponseCode = response.status;
+                                // The server answered: the connection is back
+                                this.connectionLost = false;
 
                                 if (!response.ok) {
                                     // Custom message for failed HTTP codes
@@ -398,11 +403,12 @@ if (typeof ResourceBookingApp !== 'function') {
 
                                 this.bookingWindow.response = json.data;
                                 this.messages = json.messages ? json.messages : [];
+                                this.setFieldErrors(json.fieldErrors);
 
                                 if (json.status === 'success') {
-                                    this.autoCloseBookingWindowTimeout = window.setTimeout(() => {
-                                        this.hideBookingWindow();
-                                    }, this.options.autocloseWindowsAfter);
+                                    // The dialog stays open (no time limit for reading the message):
+                                    // the "book" button disappears, so move the focus to the close button.
+                                    this.focusCloseButton();
 
                                     const event = new CustomEvent('rbb_after_booking_request', {
                                         detail: {
@@ -419,8 +425,7 @@ if (typeof ResourceBookingApp !== 'function') {
                                     })();
                                 }
                             } catch (error) {
-                                this.isReady = false;
-                                console.error('Fetch', error);
+                                this.handleRequestError(error);
 
                                 // Always
                                 await this.refreshDataRequest();
@@ -442,7 +447,7 @@ if (typeof ResourceBookingApp !== 'function') {
                         formData.append('action', action);
                         formData.append('resourceId', this.bookingWindow.activeTimeSlot.pid);
                         formData.append('bookingRepeatStopWeekTstamp', this.$el.querySelector('.rbb-js-booking-repeat-stop-week-tstamp').value);
-                        formData.append('moduleKey', this.options.moduleKey);
+                        this.appendAppState(formData);
                         formData.append('itemsBooked', this.$el.querySelector('[name="itemsBooked"]') ? this.$el.querySelector('[name="itemsBooked"]').value : '1');
 
                         for (const selectedTimeSlot of this.bookingWindow.selectedTimeSlots) {
@@ -460,6 +465,8 @@ if (typeof ResourceBookingApp !== 'function') {
                                 });
 
                             this.lastResponseCode = response.status;
+                            // The server answered: the connection is back
+                            this.connectionLost = false;
 
                             if (!response.ok) {
                                 // Custom message for failed HTTP codes
@@ -488,8 +495,7 @@ if (typeof ResourceBookingApp !== 'function') {
                                 this.isReady = true;
                             }
                         } catch (error) {
-                            this.isReady = false;
-                            console.error('Fetch', error);
+                            this.handleRequestError(error);
                         }
                         this.isBusy = false;
                     },
@@ -509,7 +515,7 @@ if (typeof ResourceBookingApp !== 'function') {
                         formData.append('action', action);
                         formData.append('id', this.bookingWindow.booking.id);
                         formData.append('deleteRepetitions', this.bookingWindow.deleteRepetitions);
-                        formData.append('moduleKey', this.options.moduleKey);
+                        this.appendAppState(formData);
 
                         try {
                             const response = await fetch(window.location.href, {
@@ -521,6 +527,8 @@ if (typeof ResourceBookingApp !== 'function') {
                             });
 
                             this.lastResponseCode = response.status;
+                            // The server answered: the connection is back
+                            this.connectionLost = false;
 
                             if (!response.ok) {
                                 // Custom message for failed HTTP codes
@@ -543,9 +551,8 @@ if (typeof ResourceBookingApp !== 'function') {
                             this.bookingWindow.response = json.data;
 
                             if (json.status === 'success') {
-                                this.autoCloseBookingWindowTimeout = window.setTimeout(() => {
-                                    this.hideBookingWindow();
-                                }, this.options.autocloseWindowsAfter);
+                                // The dialog stays open, the "cancel" button disappears
+                                this.focusCloseButton();
                             }
 
                             // Always
@@ -554,8 +561,7 @@ if (typeof ResourceBookingApp !== 'function') {
                             await this.refreshDataRequest();
 
                         } catch (error) {
-                            this.isReady = false;
-                            console.error("There was en error: " + error);
+                            this.handleRequestError(error);
 
                             // Always
                             this.refreshDataRequest();
@@ -591,8 +597,20 @@ if (typeof ResourceBookingApp !== 'function') {
                      */
                     openBookingWindow: async function (slot, action, booking = null) {
                         this.deleteMessages();
+                        this.clearFieldErrors();
                         this.mode = 'booking-window';
                         this.isBusy = true;
+                        // Small screens: the slot list shows the day of the clicked slot
+                        this.bookingWindowDayIndex = slot.index;
+
+                        // Open the booking window as modal dialog: the focus stays in the dialog,
+                        // Esc closes it and the browser returns the focus to the button afterwards.
+                        await this.$nextTick();
+                        const dialog = this.$refs.bookingDialog;
+
+                        if (dialog && !dialog.open && typeof dialog.showModal === 'function') {
+                            dialog.showModal();
+                        }
 
                         // Reset
                         await (() => {
@@ -640,12 +658,282 @@ if (typeof ResourceBookingApp !== 'function') {
                     },
 
                     /**
+                     * Small screens: select the previous (step = -1) or next (step = 1) day.
+                     * @param step
+                     * @param focusTab
+                     */
+                    selectAdjacentDay: function (step, focusTab = false) {
+                        const position = this.weekdays.findIndex(weekday => weekday.index === this.activeDayIndex);
+                        const next = this.weekdays[position + step];
+
+                        if (!next) {
+                            return;
+                        }
+
+                        this.activeDayIndex = next.index;
+
+                        if (focusTab) {
+                            this.$nextTick(() => {
+                                const tab = this.$el.querySelector(`.rbb-day-tab[data-day-index="${next.index}"]`);
+
+                                if (tab) {
+                                    tab.focus();
+                                }
+                            });
+                        }
+                    },
+
+                    /**
+                     * Links the messages per form field to their fields (only within this module):
+                     * aria-invalid, aria-describedby (id of the message in the list above the form)
+                     * and the CSS class rbb-is-invalid. The focus moves to the first invalid field.
+                     * @param fieldErrors object field name => message
+                     */
+                    setFieldErrors: function (fieldErrors) {
+                        this.clearFieldErrors();
+
+                        if (!fieldErrors || typeof fieldErrors !== 'object' || Array.isArray(fieldErrors) || !Object.keys(fieldErrors).length) {
+                            return;
+                        }
+
+                        this.fieldErrors = {...fieldErrors};
+
+                        this.$nextTick(() => {
+                            let firstInvalidField = null;
+
+                            for (const field of Object.keys(this.fieldErrors)) {
+                                for (const input of this.getFormFields(field)) {
+                                    const describedBy = input.getAttribute('aria-describedby') || '';
+                                    input.dataset.rbbDescribedby = describedBy;
+                                    input.setAttribute('aria-describedby', (describedBy + ' ' + this.getFieldErrorId(field)).trim());
+                                    input.setAttribute('aria-invalid', 'true');
+                                    input.classList.add('rbb-is-invalid');
+
+                                    // The mark disappears as soon as the field is changed
+                                    input.addEventListener('input', () => this.clearFieldError(field), {once: true});
+                                    input.addEventListener('change', () => this.clearFieldError(field), {once: true});
+
+                                    firstInvalidField = firstInvalidField || input;
+                                }
+                            }
+
+                            if (firstInvalidField) {
+                                firstInvalidField.focus();
+                            }
+                        });
+                    },
+
+                    clearFieldError: function (field) {
+                        if (!(field in this.fieldErrors)) {
+                            return;
+                        }
+
+                        for (const input of this.getFormFields(field)) {
+                            this.resetFormField(input);
+                        }
+
+                        const fieldErrors = {...this.fieldErrors};
+                        delete fieldErrors[field];
+                        this.fieldErrors = fieldErrors;
+                    },
+
+                    clearFieldErrors: function () {
+                        for (const input of this.$el.querySelectorAll('.rbb-is-invalid')) {
+                            this.resetFormField(input);
+                        }
+
+                        this.fieldErrors = {};
+                    },
+
+                    resetFormField: function (input) {
+                        const describedBy = input.dataset.rbbDescribedby || '';
+                        describedBy ? input.setAttribute('aria-describedby', describedBy) : input.removeAttribute('aria-describedby');
+                        delete input.dataset.rbbDescribedby;
+                        input.removeAttribute('aria-invalid');
+                        input.classList.remove('rbb-is-invalid');
+                    },
+
+                    /**
+                     * Form fields with the given name in the booking form of this module
+                     * (never in other modules on the same page).
+                     * @param field
+                     */
+                    getFormFields: function (field) {
+                        const form = this.$el.querySelector('.rbb-booking-window .rbb-js-booking-form');
+
+                        if (!form) {
+                            return [];
+                        }
+
+                        const name = CSS.escape(field);
+
+                        return Array.from(form.querySelectorAll(`[name="${name}"], [name="${name}[]"]`));
+                    },
+
+                    /**
+                     * The server does not store anything between the requests: every request
+                     * carries the module key and the selection (resource type, resource, week).
+                     */
+                    appendAppState: function (formData, state = null) {
+                        state = state || {
+                            resType: this.activeResourceTypeId,
+                            res: this.activeResourceId,
+                            date: this.activeWeekTstamp,
+                        };
+
+                        formData.append('moduleKey', this.options.moduleKey);
+
+                        for (const key of ['resType', 'res', 'date']) {
+                            // A direct link may contain the date as "2026-11-20"
+                            if (key === 'date' && /^\d{4}-\d{2}-\d{2}$/.test(String(state[key]))) {
+                                formData.append(key, String(state[key]));
+                                continue;
+                            }
+
+                            const value = parseInt(state[key], 10);
+                            formData.append(key, value > 0 ? String(value) : '');
+                        }
+                    },
+
+                    /**
+                     * The selection is kept per browser tab (sessionStorage), per page (incl. query string)
+                     * and per module, so several week calendars on one page do not interfere.
+                     */
+                    getAppStateStorageKey: function () {
+                        return 'rbb:' + window.location.pathname + window.location.search + ':' + this.options.moduleKey;
+                    },
+
+                    storeAppState: function () {
+                        try {
+                            window.sessionStorage.setItem(this.getAppStateStorageKey(), JSON.stringify({
+                                resType: this.activeResourceTypeId,
+                                res: this.activeResourceId,
+                                date: this.activeWeekTstamp,
+                            }));
+                        } catch (e) {
+                            // Storage not available (e.g. private mode): the selection is not kept on reload
+                        }
+                    },
+
+                    /**
+                     * Selection on page load: the last selection in this tab, otherwise the
+                     * query parameters of a direct link (?resType=…&res=…&date=…).
+                     */
+                    getInitialAppState: function () {
+                        try {
+                            const stored = JSON.parse(window.sessionStorage.getItem(this.getAppStateStorageKey()) || 'null');
+
+                            if (stored && typeof stored === 'object') {
+                                return stored;
+                            }
+                        } catch (e) {
+                            // Storage not available or invalid content
+                        }
+
+                        const params = new URLSearchParams(window.location.search);
+
+                        return {
+                            resType: params.get('resType'),
+                            res: params.get('res'),
+                            date: params.get('date'),
+                        };
+                    },
+
+                    /**
+                     * Id of the message of a field, unique on the page (contains the module key).
+                     * @param field
+                     */
+                    getFieldErrorId: function (field) {
+                        return 'rbbFieldError_' + this.options.moduleKey + '_' + String(field).replace(/[^A-Za-z0-9_-]/g, '_');
+                    },
+
+                    /**
+                     * Moves the focus to the close button of the booking window, e.g. after a
+                     * successful booking (the button that had the focus is no longer displayed).
+                     */
+                    focusCloseButton: function () {
+                        this.$nextTick(() => {
+                            const button = this.$el.querySelector('.rbb-booking-window .rbb-js-close-booking-window');
+
+                            if (button) {
+                                button.focus();
+                            }
+                        });
+                    },
+
+                    /**
+                     * Number of selected time slots of a day in the booking window.
+                     * @param dayIndex
+                     */
+                    countSelectedSlotsOfDay: function (dayIndex) {
+                        let count = 0;
+
+                        for (const row of this.rows) {
+                            for (const slot of row.cellData) {
+                                if (slot.index === dayIndex && this.bookingWindow.selectedTimeSlots.includes(slot.bookingCheckboxValue)) {
+                                    count++;
+                                }
+                            }
+                        }
+
+                        return count;
+                    },
+
+                    onTableTouchStart: function (evt) {
+                        const touch = evt.changedTouches[0];
+                        this.touchStart = {x: touch.clientX, y: touch.clientY};
+                    },
+
+                    /**
+                     * Small screens: swipe left/right to show the next/previous day.
+                     */
+                    onTableTouchEnd: function (evt) {
+                        if (!this.touchStart) {
+                            return;
+                        }
+
+                        const touch = evt.changedTouches[0];
+                        const dx = touch.clientX - this.touchStart.x;
+                        const dy = touch.clientY - this.touchStart.y;
+                        this.touchStart = null;
+
+                        // Horizontal swipe of at least 50px
+                        if (Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) {
+                            return;
+                        }
+
+                        this.selectAdjacentDay(dx < 0 ? 1 : -1);
+                    },
+
+                    getShortWeekday: function (weekday) {
+                        if (weekday.tstamp) {
+                            return new Date(weekday.tstamp * 1000).toLocaleDateString(document.documentElement.lang || undefined, {weekday: 'short'});
+                        }
+
+                        return String(weekday.title).substring(0, 2);
+                    },
+
+                    getShortDate: function (weekday) {
+                        if (weekday.tstamp) {
+                            return new Date(weekday.tstamp * 1000).toLocaleDateString(document.documentElement.lang || undefined, {day: 'numeric', month: 'numeric'});
+                        }
+
+                        return weekday.date;
+                    },
+
+                    /**
                      * Hide booking window
                      */
                     hideBookingWindow: function () {
                         this.deleteMessages();
+                        this.clearFieldErrors();
                         this.mode = 'week-calendar';
-                        clearTimeout(this.autoCloseBookingWindowTimeout);
+
+                        const dialog = this.$refs.bookingDialog;
+
+                        if (dialog && dialog.open) {
+                            dialog.close();
+                        }
                     },
 
                     /**
@@ -655,6 +943,31 @@ if (typeof ResourceBookingApp !== 'function') {
                     checkResponse: function (response) {
                         this.lastResponseCode = response.status;
                         this.isReady = response.status === 200;
+                        // The server answered: the connection is back
+                        this.connectionLost = false;
+                    },
+
+                    /**
+                     * Network errors (the server could not be reached): the displayed data is kept,
+                     * a note is displayed and the data is fetched again automatically. Other errors
+                     * (e.g. HTTP 401 or 500) display the status message as before.
+                     * @param error
+                     * @param isRefresh true for the periodic refresh of the week calendar
+                     */
+                    handleRequestError: function (error, isRefresh = false) {
+                        console.error('Fetch', error);
+
+                        if (error instanceof TypeError) {
+                            this.connectionLost = true;
+
+                            if (!isRefresh) {
+                                this.setMessage('error', this.options.texts.networkError);
+                            }
+
+                            return;
+                        }
+
+                        this.isReady = false;
                     },
 
                     /**
@@ -693,14 +1006,6 @@ if (typeof ResourceBookingApp !== 'function') {
                     },
 
                     /**
-                     * Play audio file
-                     * @param src
-                     */
-                    playAudio: function (src) {
-                        (new Audio(src)).play();
-                    },
-
-                    /**
                      * @param type (can be 'error', 'confirm', 'warning', 'info')
                      */
                     getMessage: function (type) {
@@ -715,7 +1020,8 @@ if (typeof ResourceBookingApp !== 'function') {
                         const accepted = ['error', 'confirm', 'warning', 'info'];
 
                         if (-1 === accepted.indexOf(type)) {
-                            alert(`Invalid message type "${type}" detected!`);
+                            console.error(`Invalid message type "${type}" detected!`);
+                            return;
                         }
 
                         this.messages[type] = message;
@@ -725,7 +1031,8 @@ if (typeof ResourceBookingApp !== 'function') {
                         const accepted = ['error', 'confirm', 'warning', 'info'];
 
                         if (-1 === accepted.indexOf(type)) {
-                            alert(`Invalid message type "${type}" detected!`);
+                            console.error(`Invalid message type "${type}" detected!`);
+                            return;
                         }
 
                         this.messages[type] = null;

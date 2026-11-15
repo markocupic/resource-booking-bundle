@@ -42,6 +42,8 @@ class AjaxResponse
                 static::MESSAGE_CONFIRM => null,
                 static::MESSAGE_INFO => null,
             ],
+            // Messages per form field (field name => message), see FieldValidationException
+            'fieldErrors' => [],
             'data' => [],
         ];
 
@@ -168,6 +170,28 @@ class AjaxResponse
     public function setWarningMessage(string $strMessage): void
     {
         $this->arrData['messages'][static::MESSAGE_WARNING] = $strMessage;
+    }
+
+    /**
+     * Message for a form field of the booking form. The front end links it to the
+     * field with the same name (aria-invalid, aria-describedby).
+     */
+    public function setFieldError(string $field, string $message): void
+    {
+        $this->arrData['fieldErrors'][$field] = $message;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function getFieldErrors(): array
+    {
+        return $this->arrData['fieldErrors'];
+    }
+
+    public function hasFieldErrors(): bool
+    {
+        return [] !== $this->arrData['fieldErrors'];
     }
 
     public function setData(string $key, mixed $value): void

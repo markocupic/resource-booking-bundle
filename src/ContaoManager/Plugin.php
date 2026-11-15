@@ -25,6 +25,7 @@ use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\Config\Loader\LoaderResolverInterface;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Routing\RouteCollection;
+use Terminal42\NotificationCenterBundle\Terminal42NotificationCenterBundle;
 
 class Plugin implements ConfigPluginInterface, BundlePluginInterface, RoutingPluginInterface
 {
@@ -32,7 +33,7 @@ class Plugin implements ConfigPluginInterface, BundlePluginInterface, RoutingPlu
     {
         return [
             BundleConfig::create(MarkocupicResourceBookingBundle::class)
-                ->setLoadAfter([ContaoCoreBundle::class]),
+                ->setLoadAfter([ContaoCoreBundle::class, Terminal42NotificationCenterBundle::class]),
         ];
     }
 

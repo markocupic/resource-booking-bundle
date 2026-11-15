@@ -12,6 +12,8 @@ declare(strict_types=1);
  * @link https://github.com/markocupic/resource-booking-bundle
  */
 
+use Markocupic\ResourceBookingBundle\Booking\BookingSource;
+
 // Legends
 $GLOBALS['TL_LANG']['tl_resource_booking']['booking_legend'] = 'Booking settings';
 $GLOBALS['TL_LANG']['tl_resource_booking']['module_legend'] = 'Module settings';
@@ -31,6 +33,9 @@ $GLOBALS['TL_LANG']['tl_resource_booking']['description'] = ['Description', 'A s
 $GLOBALS['TL_LANG']['tl_resource_booking']['startTime'] = ['Start time', 'Start of the booked time slot. The value is taken from the time slot.'];
 $GLOBALS['TL_LANG']['tl_resource_booking']['endTime'] = ['End time', 'End of the booked time slot. The value is taken from the time slot.'];
 $GLOBALS['TL_LANG']['tl_resource_booking']['bookingUuid'] = ['Booking Id', 'The unique identifier of the booking. Repetitions of a booking share the same identifier.'];
+$GLOBALS['TL_LANG']['tl_resource_booking']['bookingSource'] = ['Entered via', 'Where the booking has been entered.'];
+$GLOBALS['TL_LANG']['tl_resource_booking']['bookingSources'][BookingSource::WEEK_CALENDAR] = 'Week calendar';
+$GLOBALS['TL_LANG']['tl_resource_booking']['bookingSources'][BookingSource::BACKEND] = 'Back end';
 $GLOBALS['TL_LANG']['tl_resource_booking']['itemsBooked'] = ['Booked units', 'The number of booked units if several items of the resource are available.'];
 $GLOBALS['TL_LANG']['tl_resource_booking']['moduleId'] = ['Frontend module', 'The frontend module through which the booking was made.'];
 $GLOBALS['TL_LANG']['tl_resource_booking']['confirmed'] = ['Confirmed', 'The booking is confirmed. If automatic confirmation is disabled for the resource, the booking has to be confirmed here.'];

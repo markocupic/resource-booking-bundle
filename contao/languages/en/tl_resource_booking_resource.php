@@ -33,3 +33,8 @@ $GLOBALS['TL_LANG']['tl_resource_booking_resource']['weeksAhead'] = ['Weeks ahea
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['addBookableUntil'] = ['Allow bookings only up to a certain date', 'Specify whether the resource can only be booked up to a certain date.'];
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['autoConfirm'] = ['Confirm bookings automatically', 'New bookings of this resource are confirmed automatically. If disabled, bookings have to be confirmed in the back end.'];
 $GLOBALS['TL_LANG']['tl_resource_booking_resource']['bookableUntil'] = ['Bookable until', 'Select the date up to which the resource can be booked (inclusive).'];
+
+// Notifications
+$GLOBALS['TL_LANG']['tl_resource_booking_resource']['notification_legend'] = 'Notifications';
+$GLOBALS['TL_LANG']['tl_resource_booking_resource']['bookingNotification'] = ['Booking notification', 'Select the notification that is sent after this resource has been booked.'];
+$GLOBALS['TL_LANG']['tl_resource_booking_resource']['cancellationNotification'] = ['Cancellation notification', 'Select the notification that is sent after a booking of this resource has been cancelled.'];

@@ -39,9 +39,9 @@ class ResourceBookingBlockedPeriod
     /**
      * Resources grouped by resource type.
      *
-     * @throws Exception
-     *
      * @return array<string, array<int, string>>
+     *
+     * @throws Exception
      */
     #[AsCallback(table: 'tl_resource_booking_blocked_period', target: 'fields.resources.options')]
     public function getResourceOptions(): array

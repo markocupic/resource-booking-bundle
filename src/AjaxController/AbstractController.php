@@ -16,102 +16,82 @@ namespace Markocupic\ResourceBookingBundle\AjaxController;
 
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\ModuleModel;
+use Contao\StringUtil;
+use Markocupic\ResourceBookingBundle\AppState\AppState;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\User\LoggedInFrontendUser;
 use Markocupic\ResourceBookingBundle\Util\Utils;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\HttpFoundation\Session\SessionBagInterface;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Security\Core\User\UserInterface;
 
+/**
+ * Base class of the Ajax controllers.
+ *
+ * The controllers are shared services: they must not keep any state between
+ * requests (also not in worker mode). Everything a request needs is read from the
+ * request and its AppState (AppState::fromRequest()) and passed on as arguments.
+ */
 abstract class AbstractController
 {
-    protected ModuleModel|null $moduleModel = null;
-
-    protected ResourceBookingResourceModel|null $activeResource = null;
-
-    protected SessionBagInterface|null $sessionBag = null;
-
-    protected string|null $errorMsg = null;
-
-    protected int $bookingRepeatStopWeekTstamp = 0;
-
     public function __construct(
-        protected ContaoFramework $framework,
-        protected LoggedInFrontendUser $user,
-        protected RequestStack $requestStack,
-        protected Utils $utils,
-        #[Autowire('%markocupic_resource_booking.session.attribute_bag_name%')]
-        private readonly string $bagName,
+        protected readonly ContaoFramework $framework,
+        protected readonly LoggedInFrontendUser $user,
+        protected readonly Utils $utils,
     ) {
-        // Get session from request
-        if (null !== ($request = $requestStack->getCurrentRequest())) {
-            $this->sessionBag = $request->getSession()->getBag($bagName);
-        }
+    }
+
+    /**
+     * Returns true if the resource belongs to one of the resource types selected
+     * in the module (tl_module.resourceBooking_resourceTypes).
+     */
+    public static function isResourceOfModule(ResourceBookingResourceModel $resource, ModuleModel $moduleModel): bool
+    {
+        $resourceTypeIds = array_map('intval', StringUtil::deserialize($moduleModel->resourceBooking_resourceTypes, true));
+
+        return \in_array((int) $resource->pid, $resourceTypeIds, true);
     }
 
     /**
      * @throws \Exception
      */
-    protected function initialize(): void
+    protected function getLoggedInUserOrThrow(): UserInterface
     {
-        /** @var ModuleModel $moduleModelAdapter */
-        $moduleModelAdapter = $this->framework->getAdapter(ModuleModel::class);
+        return $this->user->getLoggedInUser() ?? throw new \Exception('No logged in user found.');
+    }
 
-        if (null === $this->user->getLoggedInUser()) {
-            throw new \Exception('No logged in user found.');
-        }
+    /**
+     * The resource of a booking request (POST resourceId): it must be published and
+     * belong to a resource type of the module (protection against manipulated requests).
+     *
+     * @throws \Exception
+     */
+    protected function getRequestedResource(Request $request, AppState $appState): ResourceBookingResourceModel
+    {
+        $resource = $this->framework
+            ->getAdapter(ResourceBookingResourceModel::class)
+            ->findPublishedByPk((int) $request->request->get('resourceId'))
+        ;
 
-        // Set module model
-        $this->moduleModel = $moduleModelAdapter->findById($this->sessionBag->get('moduleModelId'));
-
-        if (null === $this->moduleModel) {
-            throw new \Exception('Module model not found.');
-        }
-
-        // Get resource
-        $request = $this->requestStack->getCurrentRequest();
-
-        if (null === $this->getActiveResource()) {
+        if (null === $resource) {
             throw new \Exception(\sprintf('Resource with Id %s not found.', $request->request->get('resourceId')));
         }
 
+        if (!self::isResourceOfModule($resource, $appState->module)) {
+            throw new \Exception(\sprintf('Resource with Id %s is not available in module with Id %s.', $resource->id, $appState->getModuleId()));
+        }
+
+        return $resource;
+    }
+
+    /**
+     * @throws \Exception
+     */
+    protected static function getBookingRepeatStopWeekTstamp(Request $request): int
+    {
         if (!$request->request->has('bookingRepeatStopWeekTstamp')) {
             throw new \Exception('No booking repeat stop week timestamp found.');
         }
 
-        // Get booking repeat stop week timestamp
-        $this->bookingRepeatStopWeekTstamp = (int) $request->request->get('bookingRepeatStopWeekTstamp');
-    }
-
-    /**
-     * @throws \Exception
-     */
-    protected function getActiveResource(): ResourceBookingResourceModel|null
-    {
-        if (!$this->activeResource) {
-            /** @var ResourceBookingResourceModel $resourceBookingResourceModelAdapter */
-            $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
-
-            $request = $this->requestStack->getCurrentRequest();
-
-            $this->activeResource = $resourceBookingResourceModelAdapter->findPublishedByPk((int) $request->request->get('resourceId'));
-        }
-
-        return $this->activeResource;
-    }
-
-    protected function hasErrorMessage(): bool
-    {
-        return (bool) $this->errorMsg;
-    }
-
-    protected function getErrorMessage(): string|null
-    {
-        return $this->errorMsg;
-    }
-
-    protected function setErrorMessage(string $error): void
-    {
-        $this->errorMsg = $error;
+        return (int) $request->request->get('bookingRepeatStopWeekTstamp');
     }
 }

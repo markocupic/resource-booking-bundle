@@ -14,12 +14,18 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\AjaxController;
 
+use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\System;
 use Markocupic\ResourceBookingBundle\AjaxController\Traits\BookingTrait;
+use Markocupic\ResourceBookingBundle\AppState\AppState;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
-use Markocupic\ResourceBookingBundle\Slot\SlotCollection;
+use Markocupic\ResourceBookingBundle\Slot\SlotFactory;
+use Markocupic\ResourceBookingBundle\User\LoggedInFrontendUser;
+use Markocupic\ResourceBookingBundle\Util\Utils;
+use Markocupic\ResourceBookingBundle\Util\WeekBoundaries;
+use Markocupic\ResourceBookingBundle\Validator\InvalidBookingRequestException;
+use Ramsey\Uuid\Uuid;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Contracts\Service\Attribute\Required;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 final class BookingFormValidationController extends AbstractController implements ControllerInterface
@@ -28,14 +34,15 @@ final class BookingFormValidationController extends AbstractController implement
 
     public const REQUEST_NAME = 'bookingFormValidationRequest';
 
-    private TranslatorInterface $translator;
-
-    private string|null $bookingUuid = null;
-
-    #[Required]
-    public function setTranslator(TranslatorInterface $translator): void
-    {
-        $this->translator = $translator;
+    public function __construct(
+        ContaoFramework $framework,
+        LoggedInFrontendUser $user,
+        Utils $utils,
+        private readonly TranslatorInterface $translator,
+        private readonly SlotFactory $slotFactory,
+        private readonly WeekBoundaries $weekBoundaries,
+    ) {
+        parent::__construct($framework, $user, $utils);
     }
 
     /**
@@ -48,21 +55,28 @@ final class BookingFormValidationController extends AbstractController implement
             ->loadLanguageFile('default', $this->translator->getLocale())
         ;
 
-        $this->initialize();
-
         $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
         $ajaxResponse->setData('noDatesSelected', false);
         $ajaxResponse->setData('resourceIsAlreadyFullyBooked', false);
         $ajaxResponse->setData('bookingValidationProcessSucceeded', true);
         $ajaxResponse->setData('noBookingRepeatStopWeekTstampSelected', false);
 
-        $slots = $this->getSlotCollectionFromRequest($request, $this->bookingRepeatStopWeekTstamp);
+        try {
+            $appState = AppState::fromRequest($request);
+            $this->getLoggedInUserOrThrow();
+            $resource = $this->getRequestedResource($request, $appState);
+            $slots = $this->getSlotCollectionFromRequest($request, $resource, $appState, self::getBookingRepeatStopWeekTstamp($request), Uuid::uuid4()->toString());
+        } catch (InvalidBookingRequestException $e) {
+            return $this->setFailedResponse($ajaxResponse, $this->translator->trans($e->getTranslationKey(), [$e->getField()], 'contao_default'));
+        } catch (\Exception) {
+            return $this->setFailedResponse($ajaxResponse, $this->translator->trans('RBB.ERR.somethingWentWrong', [], 'contao_default'));
+        }
 
-        if ($this->isBookingPossible($slots)) {
+        if (null === ($errorKey = $this->getBookingErrorKey($slots))) {
             $ajaxResponse->setConfirmationMessage($this->translator->trans('RBB.MSG.resourceAvailable', [], 'contao_default'));
         } else {
             $ajaxResponse->setData('bookingValidationProcessSucceeded', false);
-            $this->setSlotErrorMessage($ajaxResponse, $slots);
+            $ajaxResponse->setErrorMessage($this->translator->trans($errorKey, [], 'contao_default'));
         }
 
         // The booking preview does not need the bookings of other members:
@@ -79,45 +93,13 @@ final class BookingFormValidationController extends AbstractController implement
         return $ajaxResponse;
     }
 
-    private function setSlotErrorMessage(AjaxResponse $ajaxResponse, SlotCollection|null $slots): void
+    private function setFailedResponse(AjaxResponse $ajaxResponse, string $errorMessage): AjaxResponse
     {
-        if ($this->hasErrorMessage()) {
-            $ajaxResponse->setErrorMessage($this->translator->trans($this->getErrorMessage(), [], 'contao_default'));
+        $ajaxResponse->setStatus(AjaxResponse::STATUS_ERROR);
+        $ajaxResponse->setData('bookingValidationProcessSucceeded', false);
+        $ajaxResponse->setData('slotSelection', []);
+        $ajaxResponse->setErrorMessage($errorMessage);
 
-            return;
-        }
-
-        if (empty($slots)) {
-            $ajaxResponse->setErrorMessage($this->translator->trans('RBB.ERR.selectBookingDatesPlease', [], 'contao_default'));
-
-            return;
-        }
-
-        $slots->reset();
-
-        while ($slots->next()) {
-            $slot = $slots->current();
-
-            if (true === $slot->invalidDate) {
-                $ajaxResponse->setErrorMessage($this->translator->trans('RBB.ERR.selectBookingDatesPlease', [], 'contao_default'));
-
-                return;
-            }
-
-            if (!$slot->isBookable) {
-                $key = match (true) {
-                    true !== $slot->isValidTimeSlot => 'RBB.ERR.invalidTimeSlot',
-                    true !== $slot->hasValidItemCount => 'RBB.ERR.invalidItemsBooked',
-                    false === $slot->isTimeSlotAvailable => 'RBB.ERR.timeSlotNotAvailableOnWeekday',
-                    true === $slot->isInBlockedPeriod => 'RBB.ERR.slotInBlockedPeriod',
-                    $slot->isFullyBooked => 'RBB.ERR.resourceIsAlreadyFullyBooked',
-                    $slot->isBlocked => 'RBB.ERR.slotIsBlocked',
-                    default => 'RBB.ERR.notEnoughItemsAvailable',
-                };
-                $ajaxResponse->setErrorMessage($this->translator->trans($key, [], 'contao_default'));
-
-                return;
-            }
-        }
+        return $ajaxResponse;
     }
 }

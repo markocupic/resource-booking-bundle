@@ -26,10 +26,16 @@ namespace Markocupic\ResourceBookingBundle\Validator;
 final class BookingRequestValidator
 {
     /**
+     * Maximum number of time slots that can be selected in one booking request.
+     */
+    public const MAX_SELECTED_SLOTS = 100;
+
+    /**
      * System fields of the booking request and their expected type.
      */
     public const FIELD_TYPES = [
-        'string' => ['REQUEST_TOKEN', 'action', 'moduleKey', 'bookingDescription'],
+        // resType, res and date: state of the week calendar, validated by the AppStateFactory
+        'string' => ['REQUEST_TOKEN', 'action', 'moduleKey', 'resType', 'res', 'date', 'bookingDescription'],
         'array' => ['bookingDateSelection'],
         'integer' => ['resourceId', 'bookingRepeatStopWeekTstamp'],
     ];
@@ -52,6 +58,7 @@ final class BookingRequestValidator
         'bookingUuid',
         'moduleId',
         'title',
+        'bookingSource',
     ];
 
     /**
@@ -76,6 +83,10 @@ final class BookingRequestValidator
             } elseif (\in_array($key, self::FIELD_TYPES['array'], true)) {
                 if (!\is_array($value)) {
                     throw InvalidBookingRequestException::invalidValue($key);
+                }
+
+                if ('bookingDateSelection' === $key) {
+                    self::parseSlotSelection($value);
                 }
             } elseif (\in_array($key, self::FIELD_TYPES['integer'], true)) {
                 if (!\is_string($value) || !preg_match('/^-?\d+$/', $value) || 0 === (int) $value) {
@@ -115,5 +126,42 @@ final class BookingRequestValidator
         }
 
         return \is_string($itemsBooked) && preg_match('/^\d+$/', $itemsBooked) ? (int) $itemsBooked : 0;
+    }
+
+    /**
+     * Parses the selected time slots of a booking request. Every entry has the format
+     * "timeSlotId-startTime-endTime-beginWeekTimestamp" (see WeekTableBuilder::getBookingCheckboxValue()).
+     *
+     * @return list<array{timeSlotId: int, startTime: int, endTime: int}>
+     *
+     * @throws InvalidBookingRequestException if the value is not a list of valid entries or contains too many entries
+     */
+    public static function parseSlotSelection(mixed $selection): array
+    {
+        if (null === $selection || '' === $selection || [] === $selection) {
+            return [];
+        }
+
+        if (!\is_array($selection) || \count($selection) > self::MAX_SELECTED_SLOTS) {
+            throw InvalidBookingRequestException::invalidValue('bookingDateSelection');
+        }
+
+        $slots = [];
+
+        foreach ($selection as $entry) {
+            if (!\is_string($entry) || !preg_match('/^(\d+)-(\d+)-(\d+)-\d+$/', $entry, $matches)) {
+                throw InvalidBookingRequestException::invalidValue('bookingDateSelection');
+            }
+
+            [, $timeSlotId, $startTime, $endTime] = array_map('intval', $matches);
+
+            if ($timeSlotId < 1 || $endTime <= $startTime) {
+                throw InvalidBookingRequestException::invalidValue('bookingDateSelection');
+            }
+
+            $slots[] = ['timeSlotId' => $timeSlotId, 'startTime' => $startTime, 'endTime' => $endTime];
+        }
+
+        return $slots;
     }
 }

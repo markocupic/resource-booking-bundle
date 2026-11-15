@@ -13,6 +13,7 @@ declare(strict_types=1);
  */
 
 use Contao\DC_Table;
+use Markocupic\ResourceBookingBundle\Booking\BookingSource;
 use Contao\DataContainer;
 
 $GLOBALS['TL_DCA']['tl_resource_booking'] = [
@@ -99,6 +100,17 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = [
             'filter'    => true,
             'inputType' => 'text',
             'eval'      => ['mandatory' => true, 'readonly' => true, 'doNotCopy' => true, 'tl_class' => 'w50'],
+            'sql'       => ['type' => 'string', 'length' => 64, 'notnull' => true, 'default' => ''],
+        ],
+        // Where the booking has been entered (BookingSource), not editable. Only shown in the
+        // list filter and the "show" view, extensions add labels to the reference.
+        'bookingSource' => [
+            'exclude'   => true,
+            'filter'    => true,
+            'sorting'   => true,
+            'default'   => BookingSource::BACKEND,
+            'reference' => &$GLOBALS['TL_LANG']['tl_resource_booking']['bookingSources'],
+            'eval'      => ['doNotCopy' => true],
             'sql'       => ['type' => 'string', 'length' => 64, 'notnull' => true, 'default' => ''],
         ],
         'member'      => [
