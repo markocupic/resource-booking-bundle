@@ -111,6 +111,7 @@ $GLOBALS['TL_LANG']['RBB']['ERR']['selectBookingDatesPlease'] = 'Bitte wählen S
 $GLOBALS['TL_LANG']['RBB']['ERR']['slotNotBookable'] = 'Einer oder mehrere der gewünschten Slots sind bereits ausgebucht.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['slotIsBlocked'] = 'Einer oder mehrere der gewünschten Slots wurden geblockt/können nicht gebucht werden.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['somethingWentWrong'] = 'Ups! Etwas ist schief gelaufen.';
+$GLOBALS['TL_LANG']['RBB']['ERR']['invalidAjaxAction'] = 'Die Anfrage konnte nicht verarbeitet werden. Bitte laden Sie die Seite neu.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['thisSlotHasNotEnoughItemsAvailable'] = 'Nicht genügend Einheiten verfügbar.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['invalidFormValueSubmitted'] = 'Ihre Buchungsanfrage konnte nicht verarbeitet werden. Grund: Für das Feld "%s" wurde ein ungültiger Wert übermittelt.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['invalidFormFieldSubmitted'] = 'Ihre Buchungsanfrage konnte nicht verarbeitet werden. Grund: "%s" ist nicht in der Liste der erlaubten Formularfelder.';

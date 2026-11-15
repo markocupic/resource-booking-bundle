@@ -512,6 +512,24 @@ API-Änderungen:
   `AjaxRequestEventSubscriber` liest den Request aus dem Event (kein `RequestStack` mehr).
 * Die Konfiguration `markocupic_resource_booking.session` ist veraltet und wird nicht mehr verwendet.
 
+### Ajax-Fehler als JSON
+
+Die Ajax-Requests des Wochenkalenders beantwortet neu der Service `WeekCalendar\AjaxRequestHandler`; der
+Modul-Controller ruft ihn nur noch auf. Fehler werden als JSON beantwortet statt mit einer HTML-Fehlerseite:
+
+* Unbekannte `action` (kein Controller und kein Listener hat geantwortet): HTTP 400, `status: error`, Meldung
+  `RBB.ERR.invalidAjaxAction`. `AjaxRequestEventSubscriber::get()` wirft dafür neu eine
+  `Exception\UnknownAjaxActionException` (bisher `\Exception`).
+* Andere Fehler: HTTP 500, `status: error`, Meldung `RBB.ERR.somethingWentWrong`; die Exception wird ins
+  Contao-Systemlog geschrieben. Contao-`ResponseException`s (z. B. Redirects) werden weiterhin durchgereicht.
+* Das Frontend zeigt die Meldung des Servers an (nicht beim automatischen Aktualisieren alle 15 Sekunden).
+* Ajax-Requests eines anderen Wochenkalenders auf derselben Seite beantwortet das Modul mit einer leeren Antwort,
+  statt sich vollständig zu rendern.
+* Cache-Header der JSON-Antworten: `private, no-store` (bisher zusätzlich `max-age=0, must-revalidate`).
+* Der Konstruktor von `ResourceBookingWeekcalendarController` erhält nur noch `AjaxRequestHandler`,
+  `ContaoCsrfTokenManager`, `ModuleKeyGenerator`, `RequestStack` und `ScopeMatcher`; `getAjaxResponse()` wurde
+  entfernt.
+
 ## Version 2.* to 3.0
 
 ### Templates

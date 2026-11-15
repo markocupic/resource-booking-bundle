@@ -223,17 +223,7 @@ if (typeof ResourceBookingApp !== 'function') {
                             this.connectionLost = false;
 
                             if (!response.ok) {
-                                // Custom message for failed HTTP codes
-                                if (response.status === 404) {
-                                    throw new Error('404, Not found');
-                                }
-
-                                if (response.status === 500) {
-                                    throw new Error('500, internal server error');
-                                }
-
-                                // For any other server error
-                                throw new Error(response.statusText);
+                                await this.throwResponseError(response);
                             }
 
                             this.checkResponse(response);
@@ -295,17 +285,7 @@ if (typeof ResourceBookingApp !== 'function') {
                             this.connectionLost = false;
 
                             if (!response.ok) {
-                                // Custom message for failed HTTP codes
-                                if (response.status === 404) {
-                                    throw new Error('404, Not found');
-                                }
-
-                                if (response.status === 500) {
-                                    throw new Error('500, internal server error');
-                                }
-
-                                // For any other server error
-                                throw new Error(response.statusText);
+                                await this.throwResponseError(response);
                             }
 
                             this.checkResponse(response);
@@ -384,17 +364,7 @@ if (typeof ResourceBookingApp !== 'function') {
                                 this.connectionLost = false;
 
                                 if (!response.ok) {
-                                    // Custom message for failed HTTP codes
-                                    if (response.status === 404) {
-                                        throw new Error('404, Not found');
-                                    }
-
-                                    if (response.status === 500) {
-                                        throw new Error('500, internal server error');
-                                    }
-
-                                    // For any other server error
-                                    throw new Error(response.statusText);
+                                    await this.throwResponseError(response);
                                 }
 
                                 this.checkResponse(response);
@@ -469,17 +439,7 @@ if (typeof ResourceBookingApp !== 'function') {
                             this.connectionLost = false;
 
                             if (!response.ok) {
-                                // Custom message for failed HTTP codes
-                                if (response.status === 404) {
-                                    throw new Error('404, Not found');
-                                }
-
-                                if (response.status === 500) {
-                                    throw new Error('500, internal server error');
-                                }
-
-                                // For any other server error
-                                throw new Error(response.statusText);
+                                await this.throwResponseError(response);
                             }
 
                             await this.checkResponse(response);
@@ -531,17 +491,7 @@ if (typeof ResourceBookingApp !== 'function') {
                             this.connectionLost = false;
 
                             if (!response.ok) {
-                                // Custom message for failed HTTP codes
-                                if (response.status === 404) {
-                                    throw new Error('404, Not found');
-                                }
-
-                                if (response.status === 500) {
-                                    throw new Error('500, internal server error');
-                                }
-
-                                // For any other server error
-                                throw new Error(response.statusText);
+                                await this.throwResponseError(response);
                             }
 
                             this.checkResponse(response);
@@ -948,9 +898,30 @@ if (typeof ResourceBookingApp !== 'function') {
                     },
 
                     /**
+                     * Throw an error for a failed HTTP request. The server answers errors of the
+                     * week calendar with JSON (status "error"), its message is displayed.
+                     * @param response
+                     */
+                    throwResponseError: async function (response) {
+                        let message = null;
+
+                        try {
+                            const json = await response.json();
+                            message = json && json.messages ? json.messages.error : null;
+                        } catch (e) {
+                            // No JSON (e.g. an error page of the web server)
+                        }
+
+                        const error = new Error(message || (response.status + ', ' + response.statusText));
+                        error.serverMessage = message;
+
+                        throw error;
+                    },
+
+                    /**
                      * Network errors (the server could not be reached): the displayed data is kept,
-                     * a note is displayed and the data is fetched again automatically. Other errors
-                     * (e.g. HTTP 401 or 500) display the status message as before.
+                     * a note is displayed and the data is fetched again automatically. For other errors
+                     * (e.g. HTTP 400 or 500) the message of the server is displayed, if there is one.
                      * @param error
                      * @param isRefresh true for the periodic refresh of the week calendar
                      */
@@ -965,6 +936,11 @@ if (typeof ResourceBookingApp !== 'function') {
                             }
 
                             return;
+                        }
+
+                        // Error message of the server (JSON response), not repeated on every refresh
+                        if (error.serverMessage && !isRefresh) {
+                            this.setMessage('error', error.serverMessage);
                         }
 
                         this.isReady = false;

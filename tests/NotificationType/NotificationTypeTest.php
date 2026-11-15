@@ -50,7 +50,7 @@ class NotificationTypeTest extends ContaoTestCase
                     $created[$tokenName] = [$definitionClass, $translationKey];
 
                     return $this->createStub(TokenDefinitionInterface::class);
-                }
+                },
             )
         ;
 

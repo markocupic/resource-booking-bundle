@@ -111,7 +111,7 @@ class NotificationSenderTest extends ContaoTestCase
                 if (NotificationSender::CONTEXT_WEEK_CALENDAR === $event->getContext()) {
                     $event->cancel();
                 }
-            }
+            },
         );
 
         $this->assertFalse($this->getSender($notificationCenter, eventDispatcher: $eventDispatcher)->send(BookingNotificationType::NAME, [self::BOOKING], ['firstname' => 'Max']));
@@ -142,7 +142,7 @@ class NotificationSenderTest extends ContaoTestCase
                 TestCase::assertSame([], $event->getMember());
 
                 $event->setNotificationId(21)->setToken('custom', 'yes')->setLocale('en');
-            }
+            },
         );
 
         $this->assertTrue($this->getSender($notificationCenter, eventDispatcher: $eventDispatcher)->send(BookingNotificationType::NAME, [self::BOOKING], [], null, [], 'guest_form'));
@@ -157,7 +157,7 @@ class NotificationSenderTest extends ContaoTestCase
             PrepareNotificationEvent::class,
             static function (PrepareNotificationEvent $event) use (&$contexts): void {
                 $contexts[] = $event->getContext();
-            }
+            },
         );
 
         $sender = $this->getSender($this->getNotificationCenter(), eventDispatcher: $eventDispatcher);

@@ -209,7 +209,7 @@ Je nach Priorität Ihres Listeners können Sie:
 - **Antwort ersetzen oder eigene Aktionen anbieten** (Priorität > 1000): Ihr Listener läuft *vor* der Erweiterung. Mit `stopPropagation()` wird die Standardverarbeitung übersprungen.
 
 > [!IMPORTANT]
-> Eigene Aktionen (z. B. `myCustomRequest`) **müssen** mit Priorität > 1000 und `stopPropagation()` beantwortet werden. Sonst sucht die Erweiterung einen passenden Controller, findet keinen und wirft einen Fehler.
+> Eigene Aktionen (z. B. `myCustomRequest`) **müssen** mit Priorität > 1000 und `stopPropagation()` beantwortet werden. Sonst sucht die Erweiterung einen passenden Controller, findet keinen und antwortet mit HTTP 400 (`RBB.ERR.invalidAjaxAction`).
 
 ```php
 <?php

@@ -17,6 +17,7 @@ namespace Markocupic\ResourceBookingBundle\Tests\EventSubscriber;
 use Markocupic\ResourceBookingBundle\AjaxController\ControllerInterface;
 use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
 use Markocupic\ResourceBookingBundle\EventSubscriber\AjaxRequestEventSubscriber;
+use Markocupic\ResourceBookingBundle\Exception\UnknownAjaxActionException;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpFoundation\Request;
@@ -49,7 +50,7 @@ class AjaxRequestEventSubscriberTest extends TestCase
     {
         $subscriber = new AjaxRequestEventSubscriber();
 
-        $this->expectException(\Exception::class);
+        $this->expectException(UnknownAjaxActionException::class);
         $this->expectExceptionMessage('Could not find Controller for action "unknown".');
 
         $subscriber->get('unknown');
@@ -108,7 +109,7 @@ class AjaxRequestEventSubscriberTest extends TestCase
 
         $event = new AjaxRequestEvent($request, new AjaxResponse('somethingWeirdRequest'));
 
-        $this->expectException(\Exception::class);
+        $this->expectException(UnknownAjaxActionException::class);
         $this->expectExceptionMessage('Could not find Controller for action "somethingWeird".');
 
         $subscriber->onXmlHttpRequest($event);

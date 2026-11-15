@@ -111,6 +111,7 @@ $GLOBALS['TL_LANG']['RBB']['ERR']['selectBookingDatesPlease'] = 'Select one or m
 $GLOBALS['TL_LANG']['RBB']['ERR']['slotNotBookable'] = 'You\'ve selected a non bookable slot';
 $GLOBALS['TL_LANG']['RBB']['ERR']['slotIsBlocked'] = 'One or more of the requested slots have been blocked/can\'t be booked.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['somethingWentWrong'] = 'Ups! I\'m sorry! Something went wrong.';
+$GLOBALS['TL_LANG']['RBB']['ERR']['invalidAjaxAction'] = 'The request could not be processed. Please reload the page.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['thisSlotHasNotEnoughItemsAvailable'] = 'There aren\'t enough items available in this slot.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['invalidFormValueSubmitted'] = 'Your request could not be processed. Reason: An invalid value was submitted for the “%s” field.';
 $GLOBALS['TL_LANG']['RBB']['ERR']['invalidFormFieldSubmitted'] = 'Your request could not be processed. Reason: “%s” is not in the list of allowed form fields.';

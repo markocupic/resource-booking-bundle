@@ -16,6 +16,7 @@ namespace Markocupic\ResourceBookingBundle\EventSubscriber;
 
 use Markocupic\ResourceBookingBundle\AjaxController\ControllerInterface;
 use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
+use Markocupic\ResourceBookingBundle\Exception\UnknownAjaxActionException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 final class AjaxRequestEventSubscriber implements EventSubscriberInterface
@@ -40,7 +41,7 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
     }
 
     /**
-     * @throws \Exception
+     * @throws UnknownAjaxActionException
      */
     public function onXmlHttpRequest(AjaxRequestEvent $event): void
     {
@@ -58,9 +59,12 @@ final class AjaxRequestEventSubscriber implements EventSubscriberInterface
         $event->setAjaxResponse($ajaxResponse);
     }
 
+    /**
+     * @throws UnknownAjaxActionException
+     */
     public function get(string $alias): ControllerInterface
     {
         return $this->controllers[$alias]
-            ?? throw new \Exception(\sprintf('Could not find Controller for action "%s".', $alias));
+            ?? throw new UnknownAjaxActionException(\sprintf('Could not find Controller for action "%s".', $alias));
     }
 }

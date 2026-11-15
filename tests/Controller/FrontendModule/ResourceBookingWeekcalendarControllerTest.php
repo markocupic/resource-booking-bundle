@@ -23,14 +23,9 @@ use Contao\CoreBundle\Twig\FragmentTemplate;
 use Contao\ModuleModel;
 use Contao\PageModel;
 use Contao\TestCase\ContaoTestCase;
-use Markocupic\ResourceBookingBundle\AppState\AppState;
-use Markocupic\ResourceBookingBundle\AppState\AppStateFactory;
 use Markocupic\ResourceBookingBundle\AppState\ModuleKeyGenerator;
 use Markocupic\ResourceBookingBundle\Controller\FrontendModule\ResourceBookingWeekcalendarController;
-use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
-use Markocupic\ResourceBookingBundle\Response\AjaxResponseFactory;
-use Symfony\Component\EventDispatcher\EventDispatcher;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Markocupic\ResourceBookingBundle\WeekCalendar\AjaxRequestHandler;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -55,109 +50,78 @@ class ResourceBookingWeekcalendarControllerTest extends ContaoTestCase
 
     /**
      * An XHR request with an "action" and the module key of this module is answered
-     * with a ResponseException that wraps a non-cacheable JSON response. The selection
-     * sent by the front end is validated by the AppStateFactory and attached to the request.
+     * by the AjaxRequestHandler, the JSON response is wrapped in a ResponseException.
      */
     public function testXmlHttpActionRequestThrowsResponseExceptionWithJsonResponse(): void
     {
-        $request = $this->createXmlHttpRequest(['action' => 'refreshDataRequest', 'moduleKey' => self::MODULE_KEY, 'resType' => '3', 'res' => '7', 'date' => '1795046400']);
-        $appState = $this->createAppState();
+        $request = $this->createXmlHttpRequest(['action' => 'refreshDataRequest', 'moduleKey' => self::MODULE_KEY]);
+        $jsonResponse = new JsonResponse(['status' => 'success']);
 
-        $appStateFactory = $this->createMock(AppStateFactory::class);
-        $appStateFactory
+        $handler = $this->createMock(AjaxRequestHandler::class);
+        $handler
             ->expects($this->once())
-            ->method('create')
-            ->with(self::MODULE_KEY, $this->anything(), $this->anything(), ['resType' => '3', 'res' => '7', 'date' => '1795046400'], false)
-            ->willReturn($appState)
+            ->method('handle')
+            ->with($request, self::MODULE_KEY, $this->anything(), $this->anything())
+            ->willReturn($jsonResponse)
         ;
 
-        $eventDispatcher = new EventDispatcher();
-        $stateOfEvent = null;
-        $eventDispatcher->addListener(
-            AjaxRequestEvent::class,
-            static function (AjaxRequestEvent $event) use (&$stateOfEvent): void {
-                $stateOfEvent = AppState::fromRequest($event->getRequest());
-            },
-        );
-
-        $controller = $this->getController(
-            appStateFactory: $appStateFactory,
-            requestStack: $this->createRequestStack($request),
-            ajaxResponseFactory: new AjaxResponseFactory(),
-            eventDispatcher: $eventDispatcher,
-        );
+        $controller = $this->getController(ajaxRequestHandler: $handler, requestStack: $this->createRequestStack($request));
 
         try {
             $controller($request, $this->mockModuleModel(), 'main', null, $this->mockPageModel());
 
             $this->fail('Expected a ResponseException to be thrown.');
         } catch (ResponseException $e) {
-            $response = $e->getResponse();
-
-            $this->assertInstanceOf(JsonResponse::class, $response);
-            $this->assertSame(200, $response->getStatusCode());
-            $this->assertSame(0, $response->getMaxAge());
-            $this->assertTrue($response->headers->hasCacheControlDirective('no-store'));
-            $this->assertTrue($response->headers->hasCacheControlDirective('must-revalidate'));
-
-            // The response must be private and must not be publicly cacheable.
-            $this->assertTrue($response->headers->hasCacheControlDirective('private'));
-            $this->assertFalse($response->headers->hasCacheControlDirective('public'));
+            $this->assertSame($jsonResponse, $e->getResponse());
         }
-
-        $this->assertSame($appState, $stateOfEvent);
-    }
-
-    public function testTheFirstRequestOfThePageSelectsAResourceAutomatically(): void
-    {
-        $request = $this->createXmlHttpRequest(['action' => 'refreshDataRequest', 'moduleKey' => self::MODULE_KEY, 'initial' => '1']);
-
-        $appStateFactory = $this->createMock(AppStateFactory::class);
-        $appStateFactory
-            ->expects($this->once())
-            ->method('create')
-            ->with(self::MODULE_KEY, $this->anything(), $this->anything(), $this->anything(), true)
-            ->willReturn($this->createAppState())
-        ;
-
-        $controller = $this->getController(
-            appStateFactory: $appStateFactory,
-            requestStack: $this->createRequestStack($request),
-            ajaxResponseFactory: new AjaxResponseFactory(),
-            eventDispatcher: new EventDispatcher(),
-        );
-
-        $this->expectException(ResponseException::class);
-
-        $controller($request, $this->mockModuleModel(), 'main', null, $this->mockPageModel());
     }
 
     /**
      * Requests for another week calendar on the same page (other module key) are not
-     * answered by this module.
+     * answered by this module, and the module is not rendered either.
      */
-    public function testRequestsOfAnotherModuleAreIgnored(): void
+    public function testRequestsOfAnotherModuleReturnAnEmptyResponse(): void
     {
         $request = $this->createXmlHttpRequest(['action' => 'refreshDataRequest', 'moduleKey' => '33_1']);
 
-        $appStateFactory = $this->createMock(AppStateFactory::class);
-        $appStateFactory
+        $handler = $this->createMock(AjaxRequestHandler::class);
+        $handler
             ->expects($this->never())
-            ->method('create')
+            ->method('handle')
         ;
 
-        $controller = $this->getController(appStateFactory: $appStateFactory, requestStack: $this->createRequestStack($request));
+        $controller = $this->getController(ajaxRequestHandler: $handler, requestStack: $this->createRequestStack($request));
 
-        // The module renders its template instead (not available in this test)
+        $response = $controller($request, $this->mockModuleModel(), 'main', null, $this->mockPageModel());
+
+        $this->assertSame('', $response->getContent());
+        $this->assertSame(self::MODULE_KEY, $request->attributes->get('_rbb_module_key'));
+    }
+
+    /**
+     * XHR requests of other extensions (no module key) render the module as usual.
+     */
+    public function testOtherXmlHttpRequestsAreNotTouched(): void
+    {
+        $request = $this->createXmlHttpRequest(['action' => 'somethingElse']);
+
+        $handler = $this->createMock(AjaxRequestHandler::class);
+        $handler
+            ->expects($this->never())
+            ->method('handle')
+        ;
+
+        $controller = $this->getController(ajaxRequestHandler: $handler, requestStack: $this->createRequestStack($request));
+
+        // The module renders its template (not available in this test)
         try {
-            $controller($request, $this->mockModuleModel(), 'main', null, $this->mockPageModel());
+            $response = $controller($request, $this->mockModuleModel(), 'main', null, $this->mockPageModel());
+            $this->assertNotSame('', $response->getContent());
         } catch (ResponseException) {
-            $this->fail('The module must not answer requests of another module.');
+            $this->fail('The module must not answer foreign Ajax requests.');
         } catch (\Throwable) {
             // Rendering the template needs a complete Contao environment
         }
-
-        $this->assertSame(self::MODULE_KEY, $request->attributes->get('_rbb_module_key'));
     }
 
     /**
@@ -198,7 +162,7 @@ class ResourceBookingWeekcalendarControllerTest extends ContaoTestCase
      * Builds the controller with sensible mock defaults; every collaborator can
      * be overridden per test.
      */
-    private function getController(AppStateFactory|null $appStateFactory = null, ContaoCsrfTokenManager|null $contaoCsrfTokenManager = null, AjaxResponseFactory|null $ajaxResponseFactory = null, EventDispatcherInterface|null $eventDispatcher = null, RequestStack|null $requestStack = null, ScopeMatcher|null $scopeMatcher = null): ResourceBookingWeekcalendarController
+    private function getController(AjaxRequestHandler|null $ajaxRequestHandler = null, ContaoCsrfTokenManager|null $contaoCsrfTokenManager = null, RequestStack|null $requestStack = null, ScopeMatcher|null $scopeMatcher = null): ResourceBookingWeekcalendarController
     {
         if (null === $scopeMatcher) {
             $scopeMatcher = $this->createMock(ScopeMatcher::class);
@@ -209,10 +173,8 @@ class ResourceBookingWeekcalendarControllerTest extends ContaoTestCase
         }
 
         return new ResourceBookingWeekcalendarController(
-            $ajaxResponseFactory ?? $this->createMock(AjaxResponseFactory::class),
-            $appStateFactory ?? $this->createMock(AppStateFactory::class),
+            $ajaxRequestHandler ?? $this->createMock(AjaxRequestHandler::class),
             $contaoCsrfTokenManager ?? $this->createMock(ContaoCsrfTokenManager::class),
-            $eventDispatcher ?? $this->createMock(EventDispatcherInterface::class),
             new ModuleKeyGenerator(),
             $requestStack ?? new RequestStack(),
             $scopeMatcher,
@@ -233,22 +195,6 @@ class ResourceBookingWeekcalendarControllerTest extends ContaoTestCase
         $requestStack->push($request);
 
         return $requestStack;
-    }
-
-    private function createAppState(): AppState
-    {
-        return new AppState(
-            self::MODULE_KEY,
-            $this->mockModuleModel(),
-            $this->mockPageModel(),
-            null,
-            null,
-            ['beginWeek' => 'monday', 'autoSelectFirstResource' => true, 'permittedFormFields' => []],
-            0,
-            0,
-            0,
-            'de',
-        );
     }
 
     private function mockModuleModel(): ModuleModel

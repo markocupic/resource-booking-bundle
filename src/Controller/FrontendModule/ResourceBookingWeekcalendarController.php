@@ -22,12 +22,8 @@ use Contao\CoreBundle\Routing\ScopeMatcher;
 use Contao\CoreBundle\Twig\FragmentTemplate;
 use Contao\ModuleModel;
 use Contao\PageModel;
-use Markocupic\ResourceBookingBundle\AppState\AppStateFactory;
 use Markocupic\ResourceBookingBundle\AppState\ModuleKeyGenerator;
-use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
-use Markocupic\ResourceBookingBundle\Response\AjaxResponseFactory;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Markocupic\ResourceBookingBundle\WeekCalendar\AjaxRequestHandler;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
@@ -40,10 +36,8 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
     private const MODULE_KEY_ATTRIBUTE = '_rbb_module_key';
 
     public function __construct(
-        private readonly AjaxResponseFactory $ajaxResponseFactory,
-        private readonly AppStateFactory $appStateFactory,
+        private readonly AjaxRequestHandler $ajaxRequestHandler,
         private readonly ContaoCsrfTokenManager $contaoCsrfTokenManager,
-        private readonly EventDispatcherInterface $eventDispatcher,
         private readonly ModuleKeyGenerator $moduleKeyGenerator,
         private readonly RequestStack $requestStack,
         private readonly ScopeMatcher $scopeMatcher,
@@ -51,7 +45,8 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
     }
 
     /**
-     * @throws \Exception
+     * The page model is only needed for the Ajax requests (AppState), the parent
+     * method does not expect it: Contao passes it to __invoke() only.
      */
     public function __invoke(Request $request, ModuleModel $model, string $section, array|null $classes = null, PageModel|null $page = null): Response
     {
@@ -67,59 +62,20 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
             $moduleKey = $this->moduleKeyGenerator->generate($mainRequest, (int) $model->id);
             $request->attributes->set(self::MODULE_KEY_ATTRIBUTE, $moduleKey);
 
-            if ($request->isXmlHttpRequest() && $request->request->has('action') && $request->request->get('moduleKey') === $moduleKey) {
-                // Send JSON response on xhr requests
-                throw new ResponseException($this->getAjaxResponse($request, $moduleKey, $model, $page));
+            // Ajax request of a week calendar (other Ajax requests on the page are not touched)
+            if ($request->isXmlHttpRequest() && $request->request->has('action') && $request->request->has('moduleKey')) {
+                if ($request->request->get('moduleKey') !== $moduleKey) {
+                    // Ajax request of another week calendar on this page: rendering this
+                    // module would be wasted, its HTML is discarded anyway
+                    return new Response();
+                }
+
+                // Send the JSON response
+                throw new ResponseException($this->ajaxRequestHandler->handle($request, $moduleKey, $model, $page));
             }
         }
 
-        // Call the parent method
         return parent::__invoke($request, $model, $section, $classes);
-    }
-
-    /**
-     * @throws \Exception
-     */
-    protected function getAjaxResponse(Request $request, string $moduleKey, ModuleModel $model, PageModel $page): JsonResponse
-    {
-        // Validated selection of the front end, attached to the request for the Ajax controllers
-        $appState = $this->appStateFactory->create(
-            $moduleKey,
-            $model,
-            $page,
-            [
-                'resType' => $request->request->get('resType'),
-                'res' => $request->request->get('res'),
-                'date' => $request->request->get('date'),
-            ],
-            // First request of the page: select a resource automatically if nothing is selected
-            '1' === $request->request->get('initial'),
-            $request->getLocale(),
-        );
-
-        $appState->attachTo($request);
-
-        $ajaxResponse = $this->ajaxResponseFactory->create($request->request->get('action'));
-
-        $event = new AjaxRequestEvent($request, $ajaxResponse);
-        $this->eventDispatcher->dispatch($event);
-
-        $response = new JsonResponse(
-            $event->getAjaxResponse()
-                ->prepareBeforeSend(true)
-                ->getAll(),
-        );
-
-        $response->setStatusCode(200);
-        // Set the shared max age first: setSharedMaxAge() internally calls
-        // setPublic(), so it must run before setPrivate() to keep the response private.
-        $response->setSharedMaxAge(0);
-        $response->setPrivate();
-        $response->setMaxAge(0);
-        $response->headers->addCacheControlDirective('must-revalidate', true);
-        $response->headers->addCacheControlDirective('no-store', true);
-
-        return $response;
     }
 
     protected function getResponse(FragmentTemplate $template, ModuleModel $model, Request $request): Response
