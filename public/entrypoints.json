@@ -4,6 +4,11 @@
       "css": [
         "/bundles/markocupicresourcebooking/css/frontend.a5ca9d1c.css"
       ]
+    },
+    "css/backend": {
+      "css": [
+        "/bundles/markocupicresourcebooking/css/backend.7daf3674.css"
+      ]
     }
   }
 }

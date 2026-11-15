@@ -38,6 +38,7 @@ Encore
     .enableSassLoader()
     .enablePostCssLoader()
     .addStyleEntry('css/frontend', './assets/styles/frontend.scss')
+    .addStyleEntry('css/backend', './assets/styles/backend.scss')
 
     // enables @babel/preset-env polyfills
     .configureBabelPresetEnv((config) => {
