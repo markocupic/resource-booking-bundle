@@ -19,13 +19,16 @@ use Contao\CoreBundle\Exception\ResponseException;
 use Contao\ModuleModel;
 use Contao\PageModel;
 use Contao\TestCase\ContaoTestCase;
+use Markocupic\ResourceBookingBundle\AjaxController\AjaxControllerRegistry;
+use Markocupic\ResourceBookingBundle\AjaxController\ControllerInterface;
 use Markocupic\ResourceBookingBundle\AppState\AppState;
 use Markocupic\ResourceBookingBundle\AppState\AppStateFactory;
-use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
-use Markocupic\ResourceBookingBundle\Exception\UnknownAjaxActionException;
+use Markocupic\ResourceBookingBundle\Event\AjaxResponseEvent;
+use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponseFactory;
 use Markocupic\ResourceBookingBundle\WeekCalendar\AjaxRequestHandler;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\ServiceLocator;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -37,9 +40,10 @@ class AjaxRequestHandlerTest extends ContaoTestCase
 
     /**
      * The selection sent by the front end is validated by the AppStateFactory and
-     * attached to the request; the answer is a non-cacheable JSON response.
+     * attached to the request; the controller registered for the action answers
+     * with a non-cacheable JSON response.
      */
-    public function testDispatchesTheEventAndReturnsAPrivateJsonResponse(): void
+    public function testCallsTheControllerOfTheActionAndReturnsAPrivateJsonResponse(): void
     {
         $request = $this->createXmlHttpRequest(['action' => 'refreshDataRequest', 'resType' => '3', 'res' => '7', 'date' => '1795046400']);
         $appState = $this->createAppState();
@@ -52,25 +56,76 @@ class AjaxRequestHandlerTest extends ContaoTestCase
             ->willReturn($appState)
         ;
 
-        $stateOfEvent = null;
-        $eventDispatcher = new EventDispatcher();
-        $eventDispatcher->addListener(
-            AjaxRequestEvent::class,
-            static function (AjaxRequestEvent $event) use (&$stateOfEvent): void {
-                $stateOfEvent = AppState::fromRequest($event->getRequest());
-                $event->getAjaxResponse()->setStatus('success');
-            },
-        );
+        $stateOfController = null;
 
-        $response = $this->getHandler($appStateFactory, $eventDispatcher)->handle($request, self::MODULE_KEY, $this->mockModuleModel(), $this->mockPageModel());
+        $controllers = [
+            'refreshDataRequest' => $this->createController(
+                static function (Request $request, AjaxResponse $ajaxResponse) use (&$stateOfController): AjaxResponse {
+                    $stateOfController = AppState::fromRequest($request);
+                    $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
 
-        $this->assertSame($appState, $stateOfEvent);
+                    return $ajaxResponse;
+                },
+            ),
+        ];
+
+        $response = $this->getHandler($controllers, $appStateFactory)->handle($request, self::MODULE_KEY, $this->mockModuleModel(), $this->mockPageModel());
+
+        $this->assertSame($appState, $stateOfController);
         $this->assertSame(200, $response->getStatusCode());
         $this->assertSame('success', $this->decode($response)['status']);
         $this->assertSame('refreshDataRequest', $this->decode($response)['action']);
         $this->assertTrue($response->headers->hasCacheControlDirective('no-store'));
         $this->assertTrue($response->headers->hasCacheControlDirective('private'));
         $this->assertFalse($response->headers->hasCacheControlDirective('public'));
+    }
+
+    /**
+     * Other extensions can add data to the response of every action.
+     */
+    public function testListenersCanAddDataToTheResponse(): void
+    {
+        $eventDispatcher = new EventDispatcher();
+        $eventDispatcher->addListener(
+            AjaxResponseEvent::class,
+            static function (AjaxResponseEvent $event): void {
+                if ('refreshDataRequest' === $event->getAction() && '33_0' === $event->getAppState()->moduleKey) {
+                    $event->getAjaxResponse()->setData('notice', 'Bitte Zimmer nach Gebrauch lüften.');
+                }
+            },
+        );
+
+        $response = $this->getHandler(eventDispatcher: $eventDispatcher)
+            ->handle($this->createXmlHttpRequest(['action' => 'refreshDataRequest']), self::MODULE_KEY, $this->mockModuleModel(), $this->mockPageModel())
+        ;
+
+        $this->assertSame('Bitte Zimmer nach Gebrauch lüften.', $this->decode($response)['data']['notice']);
+    }
+
+    /**
+     * The event is only dispatched if the controller has answered successfully.
+     */
+    public function testTheEventIsNotDispatchedIfTheControllerFails(): void
+    {
+        $controllers = [
+            'bookingRequest' => $this->createController(static fn () => throw new \RuntimeException('Database is gone')),
+        ];
+
+        $dispatched = false;
+        $eventDispatcher = new EventDispatcher();
+        $eventDispatcher->addListener(
+            AjaxResponseEvent::class,
+            static function () use (&$dispatched): void {
+                $dispatched = true;
+            },
+        );
+
+        $response = $this->getHandler($controllers, eventDispatcher: $eventDispatcher)
+            ->handle($this->createXmlHttpRequest(['action' => 'bookingRequest']), self::MODULE_KEY, $this->mockModuleModel(), $this->mockPageModel())
+        ;
+
+        $this->assertSame(500, $response->getStatusCode());
+        $this->assertFalse($dispatched);
     }
 
     public function testTheFirstRequestOfThePageSelectsAResourceAutomatically(): void
@@ -85,18 +140,21 @@ class AjaxRequestHandlerTest extends ContaoTestCase
             ->willReturn($this->createAppState())
         ;
 
-        $response = $this->getHandler($appStateFactory)->handle($request, self::MODULE_KEY, $this->mockModuleModel(), $this->mockPageModel());
+        $response = $this->getHandler(appStateFactory: $appStateFactory)->handle($request, self::MODULE_KEY, $this->mockModuleModel(), $this->mockPageModel());
 
         $this->assertSame(200, $response->getStatusCode());
     }
 
+    /**
+     * An action without controller is rejected before the AppState is built.
+     */
     public function testAnUnknownActionIsAnsweredWithABadRequest(): void
     {
-        $eventDispatcher = new EventDispatcher();
-        $eventDispatcher->addListener(
-            AjaxRequestEvent::class,
-            static fn () => throw new UnknownAjaxActionException('Could not find Controller for action "foo".'),
-        );
+        $appStateFactory = $this->createMock(AppStateFactory::class);
+        $appStateFactory
+            ->expects($this->never())
+            ->method('create')
+        ;
 
         $logger = $this->createMock(LoggerInterface::class);
         $logger
@@ -104,23 +162,22 @@ class AjaxRequestHandlerTest extends ContaoTestCase
             ->method('error')
         ;
 
-        $response = $this->getHandler(eventDispatcher: $eventDispatcher, logger: $logger)
+        $response = $this->getHandler(appStateFactory: $appStateFactory, logger: $logger)
             ->handle($this->createXmlHttpRequest(['action' => 'fooRequest']), self::MODULE_KEY, $this->mockModuleModel(), $this->mockPageModel())
         ;
 
         $this->assertSame(400, $response->getStatusCode());
         $this->assertSame('error', $this->decode($response)['status']);
         $this->assertSame('RBB.ERR.invalidAjaxAction', $this->decode($response)['messages']['error']);
+        $this->assertSame('fooRequest', $this->decode($response)['action']);
         $this->assertTrue($response->headers->hasCacheControlDirective('no-store'));
     }
 
     public function testOtherErrorsAreLoggedAndAnsweredWithJson(): void
     {
-        $eventDispatcher = new EventDispatcher();
-        $eventDispatcher->addListener(
-            AjaxRequestEvent::class,
-            static fn () => throw new \RuntimeException('Database is gone'),
-        );
+        $controllers = [
+            'bookingRequest' => $this->createController(static fn () => throw new \RuntimeException('Database is gone')),
+        ];
 
         $logger = $this->createMock(LoggerInterface::class);
         $logger
@@ -129,7 +186,7 @@ class AjaxRequestHandlerTest extends ContaoTestCase
             ->with($this->stringContains('Database is gone'))
         ;
 
-        $response = $this->getHandler(eventDispatcher: $eventDispatcher, logger: $logger)
+        $response = $this->getHandler($controllers, logger: $logger)
             ->handle($this->createXmlHttpRequest(['action' => 'bookingRequest']), self::MODULE_KEY, $this->mockModuleModel(), $this->mockPageModel())
         ;
 
@@ -141,21 +198,32 @@ class AjaxRequestHandlerTest extends ContaoTestCase
 
     public function testContaoResponseExceptionsArePassedThrough(): void
     {
-        $eventDispatcher = new EventDispatcher();
-        $eventDispatcher->addListener(
-            AjaxRequestEvent::class,
-            static fn () => throw new RedirectResponseException('https://example.com/login'),
-        );
+        $controllers = [
+            'bookingRequest' => $this->createController(static fn () => throw new RedirectResponseException('https://example.com/login')),
+        ];
 
         $this->expectException(ResponseException::class);
 
-        $this->getHandler(eventDispatcher: $eventDispatcher)
+        $this->getHandler($controllers)
             ->handle($this->createXmlHttpRequest(['action' => 'bookingRequest']), self::MODULE_KEY, $this->mockModuleModel(), $this->mockPageModel())
         ;
     }
 
-    private function getHandler(AppStateFactory|null $appStateFactory = null, EventDispatcher|null $eventDispatcher = null, LoggerInterface|null $logger = null): AjaxRequestHandler
+    /**
+     * @param array<string, ControllerInterface>|null $controllers Default: a refreshDataRequest controller that answers with "success"
+     */
+    private function getHandler(array|null $controllers = null, AppStateFactory|null $appStateFactory = null, LoggerInterface|null $logger = null, EventDispatcher|null $eventDispatcher = null): AjaxRequestHandler
     {
+        $controllers ??= [
+            'refreshDataRequest' => $this->createController(
+                static function (Request $request, AjaxResponse $ajaxResponse): AjaxResponse {
+                    $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
+
+                    return $ajaxResponse;
+                },
+            ),
+        ];
+
         if (null === $appStateFactory) {
             $appStateFactory = $this->createMock(AppStateFactory::class);
             $appStateFactory
@@ -171,13 +239,33 @@ class AjaxRequestHandlerTest extends ContaoTestCase
             ->willReturnArgument(0)
         ;
 
+        $factories = array_map(static fn (ControllerInterface $controller): \Closure => static fn (): ControllerInterface => $controller, $controllers);
+
         return new AjaxRequestHandler(
+            new AjaxControllerRegistry(new ServiceLocator($factories)),
             new AjaxResponseFactory(),
             $appStateFactory,
             $eventDispatcher ?? new EventDispatcher(),
             $translator,
             $logger,
         );
+    }
+
+    /**
+     * @param \Closure(Request, AjaxResponse): AjaxResponse $generateResponse
+     */
+    private function createController(\Closure $generateResponse): ControllerInterface
+    {
+        return new class($generateResponse) implements ControllerInterface {
+            public function __construct(private readonly \Closure $generateResponse)
+            {
+            }
+
+            public function generateResponse(Request $request, AjaxResponse $ajaxResponse): AjaxResponse
+            {
+                return ($this->generateResponse)($request, $ajaxResponse);
+            }
+        };
     }
 
     /**

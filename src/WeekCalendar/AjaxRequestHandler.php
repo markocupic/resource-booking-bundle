@@ -17,9 +17,9 @@ namespace Markocupic\ResourceBookingBundle\WeekCalendar;
 use Contao\CoreBundle\Exception\ResponseException;
 use Contao\ModuleModel;
 use Contao\PageModel;
+use Markocupic\ResourceBookingBundle\AjaxController\AjaxControllerRegistry;
 use Markocupic\ResourceBookingBundle\AppState\AppStateFactory;
-use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
-use Markocupic\ResourceBookingBundle\Exception\UnknownAjaxActionException;
+use Markocupic\ResourceBookingBundle\Event\AjaxResponseEvent;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponseFactory;
 use Psr\Log\LoggerInterface;
@@ -30,7 +30,9 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
- * Answers the Ajax requests of the week calendar (see ResourceBookingWeekcalendarController).
+ * Answers the Ajax requests of the week calendar (see ResourceBookingWeekcalendarController):
+ * the controller registered for the action (AjaxControllerRegistry, #[AsAjaxController]) builds
+ * the response. Afterwards the AjaxResponseEvent lets other extensions add data.
  *
  * The response is always JSON, also in case of an error: the front end can display
  * the error message instead of a generic network error.
@@ -38,6 +40,7 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 class AjaxRequestHandler
 {
     public function __construct(
+        private readonly AjaxControllerRegistry $ajaxControllers,
         private readonly AjaxResponseFactory $ajaxResponseFactory,
         private readonly AppStateFactory $appStateFactory,
         private readonly EventDispatcherInterface $eventDispatcher,
@@ -49,6 +52,10 @@ class AjaxRequestHandler
     public function handle(Request $request, string $moduleKey, ModuleModel $model, PageModel $page): JsonResponse
     {
         $action = (string) $request->request->get('action', '');
+
+        if (!$this->ajaxControllers->has($action)) {
+            return $this->createErrorResponse($action, 'RBB.ERR.invalidAjaxAction', Response::HTTP_BAD_REQUEST);
+        }
 
         try {
             // Validated selection of the front end, attached to the request for the Ajax controllers
@@ -68,15 +75,18 @@ class AjaxRequestHandler
 
             $appState->attachTo($request);
 
-            $event = new AjaxRequestEvent($request, $this->ajaxResponseFactory->create($action));
-            $this->eventDispatcher->dispatch($event);
+            $ajaxResponse = $this->ajaxControllers
+                ->get($action)
+                ->generateResponse($request, $this->ajaxResponseFactory->create($action))
+            ;
 
-            return $this->createJsonResponse($event->getAjaxResponse()->prepareBeforeSend(true)->getAll());
+            // Other extensions can add data to the response
+            $this->eventDispatcher->dispatch(new AjaxResponseEvent($request, $ajaxResponse));
+
+            return $this->createJsonResponse($ajaxResponse->prepareBeforeSend(true)->getAll());
         } catch (ResponseException $e) {
             // Contao responses (e.g. redirects) are passed through
             throw $e;
-        } catch (UnknownAjaxActionException) {
-            return $this->createErrorResponse($action, 'RBB.ERR.invalidAjaxAction', Response::HTTP_BAD_REQUEST);
         } catch (\Throwable $e) {
             $this->contaoErrorLogger?->error(\sprintf('Resource booking: The Ajax request "%s" failed: %s', $action, $e->getMessage()), ['exception' => $e]);
 

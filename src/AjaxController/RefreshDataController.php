@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\AjaxController;
 
 use Markocupic\ResourceBookingBundle\AppState\AppState;
+use Markocupic\ResourceBookingBundle\DependencyInjection\Attribute\AsAjaxController;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Markocupic\ResourceBookingBundle\WeekCalendar\CalendarDataBuilder;
 use Symfony\Component\HttpFoundation\Request;
@@ -22,9 +23,10 @@ use Symfony\Component\HttpFoundation\Request;
 /**
  * Periodic refresh of the week calendar (every 15 seconds and after bookings).
  */
+#[AsAjaxController(self::ACTION)]
 final class RefreshDataController implements ControllerInterface
 {
-    public const REQUEST_NAME = 'refreshDataRequest';
+    public const ACTION = 'refreshDataRequest';
 
     public function __construct(private readonly CalendarDataBuilder $calendarDataBuilder)
     {

@@ -10,7 +10,7 @@ Mit Events lässt sich das Buchungstool erweitern, ohne den Code der Erweiterung
 | [`PostBookingEvent`](#prebookingevent--postbookingevent) | nach dem Speichern, vor dem Abschluss | `StopBookingProcessException` (macht die Buchung rückgängig) |
 | [`PreCancellingEvent`](#precancellingevent--postcancellingevent) | vor dem Löschen einer Buchung | `StopBookingCancellationException` |
 | [`PostCancellingEvent`](#precancellingevent--postcancellingevent) | nach dem Löschen, vor dem Abschluss | `StopBookingCancellationException` (macht die Stornierung rückgängig) |
-| [`AjaxRequestEvent`](#ajaxrequestevent) | bei jeder Ajax-Anfrage des Buchungstools | – |
+| [`AjaxResponseEvent`](#ajaxresponseevent) | nach jeder Ajax-Anfrage des Wochenkalenders, vor dem Senden der Antwort | – |
 | [`PrepareNotificationEvent`](#preparenotificationevent) | vor dem Versand einer Benachrichtigung (Buchung, Stornierung) | `$event->cancel()` |
 
 > [!TIP]
@@ -189,27 +189,26 @@ final class PrepareNotificationListener
 }
 ```
 
-## AjaxRequestEvent
+## AjaxResponseEvent
 
-Das Buchungstool kommuniziert fast ausschliesslich per Ajax. Bei jeder Anfrage wird das `AjaxRequestEvent` ausgelöst. Die Erweiterung beantwortet es selbst mit Priorität **1000**.
+Wird nach jeder Ajax-Anfrage des Wochenkalenders ausgelöst, sobald der Controller der Aktion erfolgreich geantwortet
+hat (siehe [Eigene Ajax-Aktionen](#eigene-ajax-aktionen)) und bevor die Antwort ans Frontend geht. Damit lassen sich
+der Antwort weitere Daten anhängen, z. B. für ein angepasstes Template.
 
-Der Request enthält im Feld `action` eine dieser Aktionen:
-
-| Aktion | Bedeutung |
+| Methode | Zweck |
 |---|---|
-| `refreshDataRequest` | Wochenansicht laden (auch beim Blättern) |
-| `applyFilterRequest` | Ressource oder Woche wechseln |
-| `bookingFormValidationRequest` | Buchungsformular vor dem Absenden prüfen |
-| `bookingRequest` | Buchung ausführen |
-| `cancelBookingRequest` | Buchung stornieren |
+| `getAction()` | Aktion der Anfrage, z. B. `refreshDataRequest` |
+| `getAjaxResponse()` | Antwort (`setData()`, `getAll()`, Meldungen, Status) |
+| `getAppState()` | Auswahl des Wochenkalenders (Modul, Seite, Ressource, Woche, Sprache) |
+| `getRequest()` | Ajax-Request |
 
-Je nach Priorität Ihres Listeners können Sie:
+Die Daten der Wochenansicht (`rows`, `timeSlots`, `activeResource`, `activeWeek`, …) liefern die Aktionen
+`refreshDataRequest` (Laden und Aktualisieren, auch nach einer Buchung oder Stornierung) und `applyFilterRequest`
+(Wechsel von Ressource oder Woche).
 
-- **Antwort ergänzen** (Priorität < 1000): Ihr Listener läuft *nach* der Erweiterung und kann der fertigen Antwort weitere Daten hinzufügen.
-- **Antwort ersetzen oder eigene Aktionen anbieten** (Priorität > 1000): Ihr Listener läuft *vor* der Erweiterung. Mit `stopPropagation()` wird die Standardverarbeitung übersprungen.
-
-> [!IMPORTANT]
-> Eigene Aktionen (z. B. `myCustomRequest`) **müssen** mit Priorität > 1000 und `stopPropagation()` beantwortet werden. Sonst sucht die Erweiterung einen passenden Controller, findet keinen und antwortet mit HTTP 400 (`RBB.ERR.invalidAjaxAction`).
+> [!WARNING]
+> Alles in der Antwort ist für jeden Besucher der Seite sichtbar (Entwicklertools). Keine Personendaten fremder
+> Mitglieder hinzufügen.
 
 ```php
 <?php
@@ -218,37 +217,65 @@ declare(strict_types=1);
 
 namespace App\EventListener;
 
-use Markocupic\ResourceBookingBundle\Event\AjaxRequestEvent;
-use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
+use Markocupic\ResourceBookingBundle\Event\AjaxResponseEvent;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 
-final class AjaxRequestListener
+#[AsEventListener]
+final class AddRoomNoticeListener
 {
-    // Läuft vor der Erweiterung (Priorität 1000)
-    #[AsEventListener(priority: 1010)]
-    public function onCustomRequest(AjaxRequestEvent $event): void
+    public function __invoke(AjaxResponseEvent $event): void
     {
-        if ('myCustomRequest' !== $event->getRequest()->request->get('action')) {
-            return;
-        }
-
-        // Standardverarbeitung überspringen
-        $event->stopPropagation();
-
-        $response = $event->getAjaxResponse();
-        $response->setData('foo', 'bar');
-        $response->setStatus(AjaxResponse::STATUS_SUCCESS);
-    }
-
-    // Läuft nach der Erweiterung und ergänzt die fertige Antwort
-    #[AsEventListener(priority: 10)]
-    public function onRefreshData(AjaxRequestEvent $event): void
-    {
-        if ('refreshDataRequest' !== $event->getRequest()->request->get('action')) {
+        if (!\in_array($event->getAction(), ['refreshDataRequest', 'applyFilterRequest'], true)) {
             return;
         }
 
         $event->getAjaxResponse()->setData('notice', 'Bitte Zimmer nach Gebrauch lüften.');
+    }
+}
+```
+
+## Eigene Ajax-Aktionen
+
+Das Buchungstool kommuniziert per Ajax. Jede Anfrage enthält im Feld `action` eine Aktion; beantwortet wird sie vom
+Ajax-Controller, der für diese Aktion registriert ist:
+
+| Aktion | Controller | Bedeutung |
+|---|---|---|
+| `refreshDataRequest` | `RefreshDataController` | Wochenansicht laden und aktualisieren |
+| `applyFilterRequest` | `ApplyFilterController` | Ressource oder Woche wechseln |
+| `bookingFormValidationRequest` | `BookingFormValidationController` | Buchungsformular vor dem Absenden prüfen |
+| `bookingRequest` | `BookingController` | Buchung ausführen |
+| `cancelBookingRequest` | `CancelController` | Buchung stornieren |
+
+Eine eigene Aktion ist ein eigener Controller: Klasse mit dem Attribut `#[AsAjaxController('…')]`, die
+`ControllerInterface` implementiert (Service mit `autoconfigure`). Die Auswahl des Wochenkalenders liefert
+`AppState::fromRequest($request)`. Jede Aktion kann nur von einem Controller beantwortet werden. Für eine Aktion ohne
+Controller antwortet die Erweiterung mit HTTP 400 (`RBB.ERR.invalidAjaxAction`).
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace App\AjaxController;
+
+use Markocupic\ResourceBookingBundle\AjaxController\ControllerInterface;
+use Markocupic\ResourceBookingBundle\AppState\AppState;
+use Markocupic\ResourceBookingBundle\DependencyInjection\Attribute\AsAjaxController;
+use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
+use Symfony\Component\HttpFoundation\Request;
+
+#[AsAjaxController('myCustomRequest')]
+final class MyCustomController implements ControllerInterface
+{
+    public function generateResponse(Request $request, AjaxResponse $ajaxResponse): AjaxResponse
+    {
+        $state = AppState::fromRequest($request);
+
+        $ajaxResponse->setData('resourceId', $state->resource?->id);
+        $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
+
+        return $ajaxResponse;
     }
 }
 ```

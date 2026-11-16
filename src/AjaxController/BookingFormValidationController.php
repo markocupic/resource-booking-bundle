@@ -18,6 +18,7 @@ use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\System;
 use Markocupic\ResourceBookingBundle\AjaxController\Traits\BookingTrait;
 use Markocupic\ResourceBookingBundle\AppState\AppState;
+use Markocupic\ResourceBookingBundle\DependencyInjection\Attribute\AsAjaxController;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Markocupic\ResourceBookingBundle\Slot\SlotFactory;
 use Markocupic\ResourceBookingBundle\User\LoggedInFrontendUser;
@@ -28,11 +29,12 @@ use Ramsey\Uuid\Uuid;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+#[AsAjaxController(self::ACTION)]
 final class BookingFormValidationController extends AbstractController implements ControllerInterface
 {
     use BookingTrait;
 
-    public const REQUEST_NAME = 'bookingFormValidationRequest';
+    public const ACTION = 'bookingFormValidationRequest';
 
     public function __construct(
         ContaoFramework $framework,

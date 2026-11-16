@@ -509,7 +509,6 @@ API-Änderungen:
   entfernt.
 * Die Ajax-Controller und `BookingTrait` erhalten ihre Abhängigkeiten per Konstruktor (keine Setter mehr);
   `BookingTrait::isBookingPossible()` ist durch `getBookingErrorKey(SlotCollection)` ersetzt.
-  `AjaxRequestEventSubscriber` liest den Request aus dem Event (kein `RequestStack` mehr).
 * Die Konfiguration `markocupic_resource_booking.session` ist veraltet und wird nicht mehr verwendet.
 
 ### Ajax-Fehler als JSON
@@ -517,9 +516,8 @@ API-Änderungen:
 Die Ajax-Requests des Wochenkalenders beantwortet neu der Service `WeekCalendar\AjaxRequestHandler`; der
 Modul-Controller ruft ihn nur noch auf. Fehler werden als JSON beantwortet statt mit einer HTML-Fehlerseite:
 
-* Unbekannte `action` (kein Controller und kein Listener hat geantwortet): HTTP 400, `status: error`, Meldung
-  `RBB.ERR.invalidAjaxAction`. `AjaxRequestEventSubscriber::get()` wirft dafür neu eine
-  `Exception\UnknownAjaxActionException` (bisher `\Exception`).
+* Unbekannte `action` (kein Ajax-Controller registriert): HTTP 400, `status: error`, Meldung
+  `RBB.ERR.invalidAjaxAction`.
 * Andere Fehler: HTTP 500, `status: error`, Meldung `RBB.ERR.somethingWentWrong`; die Exception wird ins
   Contao-Systemlog geschrieben. Contao-`ResponseException`s (z. B. Redirects) werden weiterhin durchgereicht.
 * Das Frontend zeigt die Meldung des Servers an (nicht beim automatischen Aktualisieren alle 15 Sekunden).
@@ -529,6 +527,24 @@ Modul-Controller ruft ihn nur noch auf. Fehler werden als JSON beantwortet statt
 * Der Konstruktor von `ResourceBookingWeekcalendarController` erhält nur noch `AjaxRequestHandler`,
   `ContaoCsrfTokenManager`, `ModuleKeyGenerator`, `RequestStack` und `ScopeMatcher`; `getAjaxResponse()` wurde
   entfernt.
+
+### Ajax-Controller statt AjaxRequestEvent
+
+Die Ajax-Requests laufen nicht mehr über ein Event. Der `AjaxRequestHandler` holt den Controller der Aktion direkt aus
+der neuen `AjaxController\AjaxControllerRegistry`. Die Controller registrieren sich mit dem Attribut
+`#[AsAjaxController('<action>')]` (Tag `markocupic_resource_booking.ajax_controller`, Attribut `action`).
+
+* **Entfernt:** `Event\AjaxRequestEvent`, `EventSubscriber\AjaxRequestEventSubscriber` und
+  `DependencyInjection\Compiler\AddAjaxControllerPass`. Die Tags mit `alias` in `services.yaml` entfallen.
+* **Eigene Aktionen:** statt eines Listeners mit Priorität > 1000 und `stopPropagation()` ein eigener Controller mit
+  `#[AsAjaxController('myCustomRequest')]`, der `ControllerInterface` implementiert (siehe `docs/EVENTS.md`).
+* **Antworten ergänzen:** statt eines Listeners auf `AjaxRequestEvent` mit Priorität < 1000 das neue
+  `Event\AjaxResponseEvent`. Es wird nach jedem erfolgreichen Controller ausgelöst (`getAction()`,
+  `getAjaxResponse()`, `getAppState()`, `getRequest()`); die Aktion prüft der Listener selbst.
+* Eine Aktion lässt sich ganz ersetzen, indem man den Service des Controllers dekoriert.
+* Die Konstante `REQUEST_NAME` der Ajax-Controller heisst neu `ACTION`. `CancelController::ACTION` ist
+  `cancelBookingRequest` (bisher `REQUEST_NAME = 'cancelRequest'`, was nicht der Aktion des Frontends entsprach).
+* `Exception\UnknownAjaxActionException` wirft neu `AjaxControllerRegistry::get()`.
 
 ## Version 2.* to 3.0
 

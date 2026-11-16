@@ -21,6 +21,7 @@ use Contao\Model\Collection;
 use Contao\System;
 use Doctrine\DBAL\Connection;
 use Markocupic\ResourceBookingBundle\AppState\AppState;
+use Markocupic\ResourceBookingBundle\DependencyInjection\Attribute\AsAjaxController;
 use Markocupic\ResourceBookingBundle\Event\PostCancellingEvent;
 use Markocupic\ResourceBookingBundle\Event\PreCancellingEvent;
 use Markocupic\ResourceBookingBundle\Exception\StopBookingCancellationException;
@@ -35,9 +36,10 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+#[AsAjaxController(self::ACTION)]
 final class CancelController extends AbstractController implements ControllerInterface
 {
-    public const REQUEST_NAME = 'cancelRequest';
+    public const ACTION = 'cancelBookingRequest';
 
     public function __construct(
         ContaoFramework $framework,

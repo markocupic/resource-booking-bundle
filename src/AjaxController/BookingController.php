@@ -20,6 +20,7 @@ use Contao\System;
 use Doctrine\DBAL\Connection;
 use Markocupic\ResourceBookingBundle\AjaxController\Traits\BookingTrait;
 use Markocupic\ResourceBookingBundle\AppState\AppState;
+use Markocupic\ResourceBookingBundle\DependencyInjection\Attribute\AsAjaxController;
 use Markocupic\ResourceBookingBundle\Event\PostBookingEvent;
 use Markocupic\ResourceBookingBundle\Event\PreBookingEvent;
 use Markocupic\ResourceBookingBundle\Exception\FieldValidationException;
@@ -42,11 +43,12 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
+#[AsAjaxController(self::ACTION)]
 final class BookingController extends AbstractController implements ControllerInterface
 {
     use BookingTrait;
 
-    public const REQUEST_NAME = 'bookingRequest';
+    public const ACTION = 'bookingRequest';
 
     public function __construct(
         ContaoFramework $framework,

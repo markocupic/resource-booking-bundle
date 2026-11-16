@@ -113,12 +113,15 @@ Neue Buchungen: `confirmed` = `autoConfirm` der Ressource. Unbestätigte Buchung
 ## Architektur
 
 - Ajax: Frontend sendet `action` (`refreshDataRequest`, `applyFilterRequest`, `bookingFormValidationRequest`,
-  `bookingRequest`, `cancelBookingRequest`) → `AjaxRequestEvent` → `EventSubscriber\AjaxRequestEventSubscriber`
-  (Priorität 1000) → Controller in `src/AjaxController` (Tag `markocupic_resource_booking.ajax_controller`).
-  Eingang: `ResourceBookingWeekcalendarController` (nur Modul-Schlüssel, Request eines anderen Moduls → leere
-  Response) → `WeekCalendar\AjaxRequestHandler` (AppState, Event, JSON). Fehler immer als JSON: unbekannte Aktion
-  (`UnknownAjaxActionException`) → 400, sonst geloggt → 500; JS `throwResponseError()` zeigt `messages.error` an.
-  Cache-Header `private, no-store`.
+  `bookingRequest`, `cancelBookingRequest`). Eingang: `ResourceBookingWeekcalendarController` (nur Modul-Schlüssel,
+  Request eines anderen Moduls → leere Response) → `WeekCalendar\AjaxRequestHandler` (AppState, JSON) →
+  `AjaxController\AjaxControllerRegistry` (ServiceLocator, Tag `markocupic_resource_booking.ajax_controller`, Index
+  `action`) → Controller in `src/AjaxController` mit `#[AsAjaxController(self::ACTION)]`. Kein Event für Ajax
+  (das `AjaxRequestEvent` wurde in 6.0 entfernt; Erweitern per `AjaxResponseEvent`). Fehler immer als JSON: unbekannte Aktion → 400 (vor dem AppState),
+  sonst geloggt → 500; JS `throwResponseError()` zeigt `messages.error` an. Cache-Header `private, no-store`.
+- Erweiterungspunkt: `Event\AjaxResponseEvent`, ausgelöst im `AjaxRequestHandler` nach jedem erfolgreichen
+  Controller (nicht bei Fehlern). Hochfelden hängt dort bei `refreshDataRequest`/`applyFilterRequest` die signierten
+  Formular-Links für Gäste an (`AddGuestBookingFormLinksListener`).
 - Daten für den Kalender: `WeekCalendar\CalendarDataBuilder::build()` (Filter, Woche, Kopfzeile).
   Die Tabelle baut `WeekCalendar\WeekTableBuilder` (`buildRows()`, `buildTimeSlots()`, Markup-IDs als statische
   Methoden); jede Buchung geht durch `WeekCalendar\BookingPresenter::present()` – nur dort wird entschieden, welche

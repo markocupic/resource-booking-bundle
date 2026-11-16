@@ -201,7 +201,9 @@ An mehreren Stellen lässt sich eigener Code einklinken – etwa um vor einer Bu
 | `PostBookingEvent` | nach dem Speichern einer Buchung | Bestätigung senden, Daten weitergeben |
 | `PreCancellingEvent` | vor dem Stornieren | Stornierung verhindern |
 | `PostCancellingEvent` | nach dem Stornieren | Benachrichtigung senden |
-| `AjaxRequestEvent` | bei jeder Anfrage aus dem Buchungstool | Antworten anpassen, eigene Aktionen |
+| `AjaxResponseEvent` | nach jeder Anfrage aus dem Buchungstool | Antworten ergänzen, z. B. für angepasste Templates |
+
+Eigene Ajax-Aktionen sind eigene Controller mit dem Attribut `#[AsAjaxController('…')]`.
 
 👉 Beispiele und Details: **[docs/EVENTS.md](docs/EVENTS.md)**
 

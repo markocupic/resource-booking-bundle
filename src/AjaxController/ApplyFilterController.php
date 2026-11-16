@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\AjaxController;
 
 use Markocupic\ResourceBookingBundle\AppState\AppState;
+use Markocupic\ResourceBookingBundle\DependencyInjection\Attribute\AsAjaxController;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Markocupic\ResourceBookingBundle\WeekCalendar\CalendarDataBuilder;
 use Symfony\Component\HttpFoundation\Request;
@@ -22,9 +23,10 @@ use Symfony\Component\HttpFoundation\Request;
 /**
  * The member changed the resource type, the resource or the week. The new selection has already been validated by the AppStateFactory (it is part of the request).
  */
+#[AsAjaxController(self::ACTION)]
 final class ApplyFilterController implements ControllerInterface
 {
-    public const REQUEST_NAME = 'applyFilterRequest';
+    public const ACTION = 'applyFilterRequest';
 
     public function __construct(private readonly CalendarDataBuilder $calendarDataBuilder)
     {

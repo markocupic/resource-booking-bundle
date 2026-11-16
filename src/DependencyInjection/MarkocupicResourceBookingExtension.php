@@ -14,7 +14,9 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\DependencyInjection;
 
+use Markocupic\ResourceBookingBundle\DependencyInjection\Attribute\AsAjaxController;
 use Symfony\Component\Config\FileLocator;
+use Symfony\Component\DependencyInjection\ChildDefinition;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
@@ -35,6 +37,14 @@ class MarkocupicResourceBookingExtension extends Extension
         );
 
         $loader->load('services.yaml');
+
+        // Ajax controllers of the week calendar: #[AsAjaxController('myCustomRequest')]
+        $container->registerAttributeForAutoconfiguration(
+            AsAjaxController::class,
+            static function (ChildDefinition $definition, AsAjaxController $attribute): void {
+                $definition->addTag(AsAjaxController::TAG, ['action' => $attribute->action]);
+            },
+        );
 
         $container->setParameter('markocupic_resource_booking.session.attribute_bag_name', $config['session']['attribute_bag_name']);
         $container->setParameter('markocupic_resource_booking.session.attribute_bag_key', $config['session']['attribute_bag_key']);

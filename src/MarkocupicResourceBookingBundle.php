@@ -14,8 +14,6 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle;
 
-use Markocupic\ResourceBookingBundle\DependencyInjection\Compiler\AddAjaxControllerPass;
-use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
 class MarkocupicResourceBookingBundle extends Bundle
@@ -23,11 +21,5 @@ class MarkocupicResourceBookingBundle extends Bundle
     public function getPath(): string
     {
         return \dirname(__DIR__);
-    }
-
-    public function build(ContainerBuilder $container): void
-    {
-        parent::build($container);
-        $container->addCompilerPass(new AddAjaxControllerPass());
     }
 }
