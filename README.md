@@ -79,8 +79,6 @@ Anschliessend die Datenbank aktualisieren (Contao Manager oder `contao:migrate`)
 > [!TIP]
 > Viele Zeitfenster auf einmal anlegen? Das erledigt ein [Konsolenbefehl](#zeitplaene-automatisch) für Sie.
 
-![Frontend-Moduleinstellungen](docs/screenshots/adjust-app-configuration.png)
-
 ## 🏖️ Sperrzeiten
 
 Unter **Sperrzeiten** erfassen Sie Zeiträume, in denen nicht gebucht werden kann. Eine Sperrzeit gilt wahlweise für alle Ressourcen, für bestimmte Ressourcen-Typen oder für einzelne Ressourcen.
