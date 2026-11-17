@@ -131,7 +131,7 @@ trait BookingTrait
         $keys = array_keys($request->request->all());
 
         foreach ($keys as $k) {
-            // Fields like isBlocked, confirmed or member are set by the server only
+            // Fields like confirmed or member are set by the server only
             if (\in_array($k, BookingRequestValidator::PROTECTED_BOOKING_FIELDS, true)) {
                 continue;
             }
@@ -201,7 +201,6 @@ trait BookingTrait
                 !$slot->isTimeSlotAvailable() => 'RBB.ERR.timeSlotNotAvailableOnWeekday',
                 $slot->isInBlockedPeriod() => 'RBB.ERR.slotInBlockedPeriod',
                 $slot->isFullyBooked() => 'RBB.ERR.resourceIsAlreadyFullyBooked',
-                $slot->isBlocked() => 'RBB.ERR.slotIsBlocked',
                 default => 'RBB.ERR.notEnoughItemsAvailable',
             };
         }

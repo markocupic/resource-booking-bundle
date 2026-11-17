@@ -19,6 +19,7 @@ use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceTypeModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotTypeModel;
+use Markocupic\ResourceBookingBundle\Widget\BlockedSlotsWidget;
 
 // Register back end modules
 $GLOBALS['BE_MOD']['resourceBookingTool'] = [
@@ -32,6 +33,9 @@ $GLOBALS['BE_MOD']['resourceBookingTool'] = [
         'tables' => ['tl_resource_booking_blocked_period'],
     ],
 ];
+
+// Back end widgets
+$GLOBALS['BE_FFL']['rbbBlockedSlots'] = BlockedSlotsWidget::class;
 
 // Register contao models
 $GLOBALS['TL_MODELS']['tl_resource_booking'] = ResourceBookingModel::class;

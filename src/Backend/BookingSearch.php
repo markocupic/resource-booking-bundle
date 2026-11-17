@@ -69,7 +69,7 @@ class BookingSearch
         }
 
         $bookings = $this->connection->fetchAllAssociative(
-            'SELECT b.id, b.pid, b.title, b.bookingUuid, b.startTime, b.endTime, b.itemsBooked, b.confirmed, b.isBlocked, b.member,
+            'SELECT b.id, b.pid, b.title, b.bookingUuid, b.startTime, b.endTime, b.itemsBooked, b.confirmed, b.member,
                     r.title AS resourceTitle, t.title AS resourceTypeTitle, m.firstname AS memberFirstname, m.lastname AS memberLastname
             FROM tl_resource_booking b
             LEFT JOIN tl_resource_booking_resource r ON r.id = b.pid

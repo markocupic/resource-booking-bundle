@@ -20,7 +20,7 @@ use Markocupic\ResourceBookingBundle\Controller\FrontendModule\ResourceBookingWe
 $GLOBALS['TL_DCA']['tl_module']['palettes'][ResourceBookingWeekcalendarController::TYPE] = '
 {title_legend},name,headline,type;
 {config_legend},resourceBooking_appConfig,resourceBooking_resourceTypes,resourceBooking_displayClientPersonalData,resourceBooking_displayBookingDetails;
-{template_legend:hide},customTpl;
+{template_legend:hide},customTpl,resourceBooking_colorScheme;
 {protected_legend:hide},protected;{expert_legend:hide},guests,cssID,space
 ';
 
@@ -78,4 +78,14 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_appConfig'] = [
     'inputType' => 'select',
     'eval'      => ['mandatory' => true, 'multiple' => false, 'tl_class' => 'clr'],
     'sql'       => ['type' => 'string', 'length' => 64, 'notnull' => true, 'default' => 'default'],
+];
+
+// Color scheme of the week calendar: '' = automatic (OS preference or data-bs-theme of the page), light or dark
+$GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_colorScheme'] = [
+    'exclude'   => true,
+    'inputType' => 'select',
+    'options'   => ['light', 'dark'],
+    'reference' => &$GLOBALS['TL_LANG']['tl_module']['resourceBooking_colorSchemeOptions'],
+    'eval'      => ['includeBlankOption' => true, 'blankOptionLabel' => &$GLOBALS['TL_LANG']['tl_module']['resourceBooking_colorSchemeOptions']['auto'], 'tl_class' => 'w50'],
+    'sql'       => ['type' => 'string', 'length' => 8, 'notnull' => true, 'default' => ''],
 ];

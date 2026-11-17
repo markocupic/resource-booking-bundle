@@ -2,12 +2,12 @@
   "entrypoints": {
     "css/frontend": {
       "css": [
-        "/bundles/markocupicresourcebooking/css/frontend.a5ca9d1c.css"
+        "/bundles/markocupicresourcebooking/css/frontend.2f945bb6.css"
       ]
     },
     "css/backend": {
       "css": [
-        "/bundles/markocupicresourcebooking/css/backend.7daf3674.css"
+        "/bundles/markocupicresourcebooking/css/backend.19e2e7d7.css"
       ]
     }
   }

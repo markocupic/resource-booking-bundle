@@ -19,6 +19,17 @@ use Contao\Model;
 class ResourceBookingBlockedPeriodModel extends Model
 {
     /**
+     * Blocked period: a date range, optionally restricted to weekdays and times,
+     * for all resources, resource types or selected resources.
+     */
+    public const MODE_PERIOD = 'period';
+
+    /**
+     * Single slots of one resource, selected in the calendar view of the back end.
+     */
+    public const MODE_SLOTS = 'slots';
+
+    /**
      * Table name.
      *
      * @var string

@@ -150,7 +150,7 @@ readonly class ResourceBookingTimeSlot
         } else {
             $strStartTime = $this->framework
                 ->getAdapter(UtcTimeHelper::class)
-                ->parseStartTime($dc->activeRecord->startTime)
+                ->parseStartTime((int) ($dc->getCurrentRecord()['startTime'] ?? 0))
             ;
         }
 

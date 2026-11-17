@@ -87,6 +87,10 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
         // The calendar changes with every booking: not indexed by the search
         $template->set('searchable', false);
 
+        // Forced color scheme ("light" or "dark"), empty: automatic (OS preference or data-bs-theme of the page)
+        $colorScheme = (string) $model->resourceBooking_colorScheme;
+        $template->set('colorScheme', \in_array($colorScheme, ['light', 'dark'], true) ? $colorScheme : '');
+
         // Let vue.js take care of the rest ;-)
         return $template->getResponse();
     }

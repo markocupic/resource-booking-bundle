@@ -48,7 +48,6 @@ final class BookingRequestValidator
         'pid',
         'tstamp',
         'member',
-        'isBlocked',
         'confirmed',
         'upcoming',
         'timeSlotId',

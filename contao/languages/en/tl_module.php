@@ -19,3 +19,7 @@ $GLOBALS['TL_LANG']['tl_module']['resourceBooking_clientPersonalData'] = ['Infor
 $GLOBALS['TL_LANG']['tl_module']['resourceBooking_displayBookingDetails'] = ['Display further information about the booking', 'Displays the information selected below for bookings, e.g. the description. Attention: this data is visible to all logged-in members.'];
 $GLOBALS['TL_LANG']['tl_module']['resourceBooking_bookingDetailFields'] = ['Information about the booking', 'Select the information all logged-in members may see. The fields available here are defined in the bundle configuration (displayable_booking_fields). The template displays the description by default; further fields have to be added to the template.'];
 $GLOBALS['TL_LANG']['tl_module']['resourceBooking_appConfig'] = ['Select app configuration', 'Create your custom app configurations in "config/config.yaml".'];
+$GLOBALS['TL_LANG']['tl_module']['resourceBooking_colorScheme'] = ['Color scheme', 'Automatic: the week calendar follows the setting of the operating system or browser or the color scheme of the page (attribute data-bs-theme). "Always light" and "Always dark" force the color scheme.'];
+$GLOBALS['TL_LANG']['tl_module']['resourceBooking_colorSchemeOptions']['auto'] = 'Automatic';
+$GLOBALS['TL_LANG']['tl_module']['resourceBooking_colorSchemeOptions']['light'] = 'Always light';
+$GLOBALS['TL_LANG']['tl_module']['resourceBooking_colorSchemeOptions']['dark'] = 'Always dark';

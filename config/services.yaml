@@ -7,8 +7,9 @@ services:
     Markocupic\ResourceBookingBundle\:
         resource: ../src/
         exclude:
-            - '../src/{DependencyInjection,Session,Config,Model,Event,Exception}'
+            - '../src/{DependencyInjection,Session,Config,Model,Event,Exception,Widget}'
             - '../src/Response/AjaxResponse.php'
             - '../src/AppState/AppState.php'
             - '../src/Booking/BookingSource.php'
+            - '../src/Util/BlockedSlots.php'
             - '../src/Validator/InvalidBookingRequestException.php'

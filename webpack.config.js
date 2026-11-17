@@ -15,7 +15,7 @@ Encore
     .copyFiles({
         from: './assets',
         to: 'js/[path][name].[hash:8].[ext]',
-        pattern: /(app\.js)$/,
+        pattern: /(app\.js|backend\.js)$/,
     })
     .copyFiles({
         from: './assets/styles',

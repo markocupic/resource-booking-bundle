@@ -67,6 +67,19 @@ $rbb-breakpoint-xl: 1200px;
     --rbb-select-caret: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 7'%3E%3Cpath fill='%23a7b1bc' d='M.7 0h10.6a.7.7 0 0 1 .5 1.2L6.5 6.6a.7.7 0 0 1-1 0L.2 1.2A.7.7 0 0 1 .7 0z'/%3E%3C/svg%3E");
   }
 
+  // Color scheme forced in the module settings (resourceBooking_colorScheme).
+  // Wins over the OS preference and the data-bs-theme rules above
+  // (higher specificity and placed after them).
+  :root &[data-rbb-color-scheme="light"] {
+    color-scheme: light;
+    --rbb-select-caret: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 7'%3E%3Cpath fill='%2352606d' d='M.7 0h10.6a.7.7 0 0 1 .5 1.2L6.5 6.6a.7.7 0 0 1-1 0L.2 1.2A.7.7 0 0 1 .7 0z'/%3E%3C/svg%3E");
+  }
+
+  :root &[data-rbb-color-scheme="dark"] {
+    color-scheme: dark;
+    --rbb-select-caret: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 7'%3E%3Cpath fill='%23a7b1bc' d='M.7 0h10.6a.7.7 0 0 1 .5 1.2L6.5 6.6a.7.7 0 0 1-1 0L.2 1.2A.7.7 0 0 1 .7 0z'/%3E%3C/svg%3E");
+  }
+
   // Brand / buttons
   --rbb-primary: light-dark(#0f766e, #2dd4bf);
   --rbb-primary-contrast: light-dark(#ffffff, #042f2e);
@@ -832,13 +845,6 @@ $rbb-breakpoint-xl: 1200px;
       &.rbb-time-slot-cell[data-hasunconfirmedbookings="true"]:not([data-isinvaliddate="true"]) {
         background: var(--rbb-cell-unconfirmed-bg);
         color: var(--rbb-cell-unconfirmed-color);
-      }
-
-      &.rbb-time-slot-cell[data-isblocked="true"] {
-        background: var(--rbb-cell-blocked-bg);
-        color: var(--rbb-cell-blocked-color);
-        box-shadow: none;
-        outline: 0;
       }
 
       // The time slot is not available on this weekday (tl_resource_booking_time_slot.weekdays)

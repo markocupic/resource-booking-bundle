@@ -117,6 +117,35 @@ class ResourceBookingRestrictionTest extends ContaoTestCase
         $this->assertFalse(ResourceBookingRestriction::isInBlockedPeriod($period, $resource, strtotime('2030-10-06 08:00'), strtotime('2030-10-06 09:00')));
     }
 
+    /**
+     * Mode "slots": only the blocked time slots of the selected resource are covered,
+     * on their day, whatever the times of the time slot are.
+     */
+    public function testBlockedSlotsOnlyBlockTheirTimeSlotsOfTheirResource(): void
+    {
+        $period = $this->blockedPeriod([
+            'mode' => 'slots',
+            'resource' => 3,
+            'scope' => 'all',
+            'blockedSlots' => serialize([['timeSlot' => 7, 'date' => '2030-10-08']]),
+        ]);
+
+        $resource = ['id' => 3, 'pid' => 4];
+
+        $this->assertTrue(ResourceBookingRestriction::isInBlockedPeriod($period, $resource, strtotime('2030-10-08 08:00'), strtotime('2030-10-08 09:00'), 7));
+        // The times of the time slot have been changed
+        $this->assertTrue(ResourceBookingRestriction::isInBlockedPeriod($period, $resource, strtotime('2030-10-08 10:00'), strtotime('2030-10-08 12:00'), 7));
+        // Other time slot, other day within dateFrom and dateTo
+        $this->assertFalse(ResourceBookingRestriction::isInBlockedPeriod($period, $resource, strtotime('2030-10-08 08:00'), strtotime('2030-10-08 09:00'), 8));
+        $this->assertFalse(ResourceBookingRestriction::isInBlockedPeriod($period, $resource, strtotime('2030-10-09 08:00'), strtotime('2030-10-09 09:00'), 7));
+        // Without time slot ID
+        $this->assertFalse(ResourceBookingRestriction::isInBlockedPeriod($period, $resource, strtotime('2030-10-08 08:00'), strtotime('2030-10-08 09:00')));
+        // Other resource, even with the scope "all"
+        $this->assertFalse(ResourceBookingRestriction::isInBlockedPeriod($period, ['id' => 5, 'pid' => 4], strtotime('2030-10-08 08:00'), strtotime('2030-10-08 09:00'), 7));
+        // Inactive
+        $this->assertFalse(ResourceBookingRestriction::isInBlockedPeriod(['published' => ''] + $period, $resource, strtotime('2030-10-08 08:00'), strtotime('2030-10-08 09:00'), 7));
+    }
+
     public function testInactiveBlockedPeriodBlocksNothing(): void
     {
         $period = $this->blockedPeriod(['published' => '']);

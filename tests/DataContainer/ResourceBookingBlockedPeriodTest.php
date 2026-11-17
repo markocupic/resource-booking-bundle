@@ -109,6 +109,37 @@ class ResourceBookingBlockedPeriodTest extends ContaoTestCase
         $this->assertSame(0, $dca->countFutureBookingsInBlockedPeriod(['published' => ''] + $period));
     }
 
+    public function testCountsFutureBookingsInBlockedSlots(): void
+    {
+        $day = strtotime('today +7 days');
+
+        $connection = $this->createStub(Connection::class);
+        $connection
+            ->method('fetchAllAssociative')
+            ->willReturn([
+                // Blocked time slot of resource 3
+                ['startTime' => $day + 8 * 3600, 'endTime' => $day + 9 * 3600, 'timeSlotId' => 7, 'id' => 3, 'pid' => 4],
+                // Other time slot of resource 3
+                ['startTime' => $day + 9 * 3600, 'endTime' => $day + 10 * 3600, 'timeSlotId' => 8, 'id' => 3, 'pid' => 4],
+                // Same time slot, other resource
+                ['startTime' => $day + 8 * 3600, 'endTime' => $day + 9 * 3600, 'timeSlotId' => 7, 'id' => 5, 'pid' => 4],
+            ])
+        ;
+
+        $period = [
+            'published' => '1',
+            'mode' => 'slots',
+            'resource' => 3,
+            'dateFrom' => $day,
+            'dateTo' => $day,
+            'blockedSlots' => serialize([['timeSlot' => 7, 'date' => date('Y-m-d', $day)]]),
+        ];
+
+        $dca = new ResourceBookingBlockedPeriod($this->createContaoFrameworkStub(), $connection, $this->translator());
+
+        $this->assertSame(1, $dca->countFutureBookingsInBlockedPeriod($period));
+    }
+
     private function translator(): TranslatorInterface
     {
         $translator = $this->createStub(TranslatorInterface::class);

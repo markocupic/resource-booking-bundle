@@ -14,13 +14,21 @@ declare(strict_types=1);
 
 use Contao\DataContainer;
 use Contao\DC_Table;
+use Markocupic\ResourceBookingBundle\Model\ResourceBookingBlockedPeriodModel;
 
 /*
  * Blocked periods (e.g. school holidays, weekends): no bookings are possible
- * during a blocked period. A blocked period applies to all resources, to selected
- * resource types or to selected resources. Without "blocked times" the whole
- * period is blocked. With blocked times only the listed weekdays (and times)
- * within the period are blocked. A period without end date is unlimited.
+ * during a blocked period.
+ *
+ * Mode "period": a blocked period applies to all resources, to selected resource
+ * types or to selected resources. Without "blocked times" the whole period is
+ * blocked. With blocked times only the listed weekdays (and times) within the
+ * period are blocked. A period without end date is unlimited.
+ *
+ * Mode "slots": single slots of one resource, selected in the calendar view
+ * (field blockedSlots, widget rbbBlockedSlots). A blocked slot is stored as
+ * time slot and date, the times are read from the time slot. dateFrom and
+ * dateTo are set automatically to the first and the last day of the slots.
  */
 $GLOBALS['TL_DCA']['tl_resource_booking_blocked_period'] = [
     'config'      => [
@@ -30,6 +38,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking_blocked_period'] = [
             'keys' => [
                 'id'               => 'primary',
                 'dateFrom,dateTo'  => 'index',
+                'resource'         => 'index',
             ],
         ],
     ],
@@ -49,11 +58,16 @@ $GLOBALS['TL_DCA']['tl_resource_booking_blocked_period'] = [
         ],
     ],
     'palettes'    => [
-        '__selector__' => ['scope'],
+        '__selector__' => ['mode', 'scope'],
         'default'      => '
-        {title_legend},title,description;
+        {title_legend},mode,title,description;
         {date_legend},dateFrom,dateTo,blockedTimes;
         {scope_legend},scope;
+        {publish_legend},published
+        ',
+        'slots'        => '
+        {title_legend},mode,title,description;
+        {slots_legend},resource,blockedSlots;
         {publish_legend},published
         ',
     ],
@@ -67,6 +81,16 @@ $GLOBALS['TL_DCA']['tl_resource_booking_blocked_period'] = [
         ],
         'tstamp'        => [
             'sql' => ['type' => 'integer', 'length' => 10, 'unsigned' => true, 'notnull' => true, 'default' => 0],
+        ],
+        'mode'          => [
+            'default'   => ResourceBookingBlockedPeriodModel::MODE_PERIOD,
+            'exclude'   => true,
+            'filter'    => true,
+            'inputType' => 'select',
+            'options'   => [ResourceBookingBlockedPeriodModel::MODE_PERIOD, ResourceBookingBlockedPeriodModel::MODE_SLOTS],
+            'reference' => &$GLOBALS['TL_LANG']['tl_resource_booking_blocked_period']['modeOptions'],
+            'eval'      => ['submitOnChange' => true, 'tl_class' => 'w50 clr'],
+            'sql'       => ['type' => 'string', 'length' => 16, 'notnull' => true, 'default' => ResourceBookingBlockedPeriodModel::MODE_PERIOD],
         ],
         'title'         => [
             'exclude'   => true,
@@ -146,6 +170,20 @@ $GLOBALS['TL_DCA']['tl_resource_booking_blocked_period'] = [
             'inputType' => 'checkbox',
             'eval'      => ['mandatory' => true, 'multiple' => true, 'tl_class' => 'clr'],
             'sql'       => 'blob NULL',
+        ],
+        'resource'      => [
+            'exclude'   => true,
+            'filter'    => true,
+            'inputType' => 'select',
+            'eval'      => ['mandatory' => true, 'includeBlankOption' => true, 'chosen' => true, 'submitOnChange' => true, 'tl_class' => 'w50'],
+            'sql'       => ['type' => 'integer', 'length' => 10, 'unsigned' => true, 'notnull' => true, 'default' => 0],
+        ],
+        'blockedSlots'  => [
+            'exclude'   => true,
+            'inputType' => 'rbbBlockedSlots',
+            // Not mandatory: a blocked period may be kept without slots and reused later
+            'eval'      => ['doNotCopy' => true, 'tl_class' => 'clr'],
+            'sql'       => 'mediumblob NULL',
         ],
         'published'     => [
             'default'   => true,

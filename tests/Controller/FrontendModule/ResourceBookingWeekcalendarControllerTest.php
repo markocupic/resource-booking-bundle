@@ -148,7 +148,24 @@ class ResourceBookingWeekcalendarControllerTest extends ContaoTestCase
         $response = $this->invokeProtected($controller, 'getResponse', [$template, $this->mockModuleModel(), $request]);
 
         $this->assertSame($expectedResponse, $response);
-        $this->assertSame(['moduleKey' => '33_1', 'csrfToken' => 'csrf-token-value', 'searchable' => false], $template->getData());
+        $this->assertSame(['moduleKey' => '33_1', 'csrfToken' => 'csrf-token-value', 'searchable' => false, 'colorScheme' => ''], $template->getData());
+    }
+
+    /**
+     * The color scheme of the module settings (resourceBooking_colorScheme): light, dark or automatic ('').
+     */
+    public function testGetResponseAssignsTheColorScheme(): void
+    {
+        $controller = $this->getController();
+
+        foreach (['dark' => 'dark', 'light' => 'light', '' => '', 'foo' => ''] as $value => $expected) {
+            $template = new FragmentTemplate('frontend_module/resource_booking_weekcalendar', static fn (): Response => new Response());
+            $model = $this->createClassWithPropertiesStub(ModuleModel::class, ['id' => self::MODULE_ID, 'resourceBooking_colorScheme' => $value]);
+
+            $this->invokeProtected($controller, 'getResponse', [$template, $model, Request::create('https://example.com/calendar')]);
+
+            $this->assertSame($expected, $template->getData()['colorScheme']);
+        }
     }
 
     public function testUsesTheModernTemplate(): void

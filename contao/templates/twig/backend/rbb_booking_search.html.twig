@@ -52,9 +52,7 @@
                             <td>{{ booking.resourceTitle|default('-') }}{% if booking.resourceTypeTitle %} <span class="tl_gray">({{ booking.resourceTypeTitle }})</span>{% endif %}</td>
                             <td>{{ booking.memberName ?? '-' }}</td>
                             <td>
-                                {% if booking.isBlocked %}
-                                    {{ 'MSC.rbbBookingSearch.blocked'|trans }}
-                                {% elseif booking.confirmed %}
+                                {% if booking.confirmed %}
                                     {{ 'MSC.rbbBookingSearch.confirmed'|trans }}
                                 {% else %}
                                     <strong>{{ 'MSC.rbbBookingSearch.unconfirmed'|trans }}</strong>

@@ -34,7 +34,7 @@
 {% use '@MarkocupicResourceBooking/booking_window/_booking_form_inputs.html.twig' %}
 
 {# The styles of the bundle are scoped to the class .mod_resourceBookingWeekcalendar #}
-{% block attributes %}{{ attributes.addClass('mod_resourceBookingWeekcalendar') }}{% endblock %}
+{% block attributes %}{{ attributes.addClass('mod_resourceBookingWeekcalendar').setIfExists('data-rbb-color-scheme', colorScheme|default(null)) }}{% endblock %}
 
 {% block content %}
     <div id="resourceBookingApp_{{ moduleKey }}" v-cloak>

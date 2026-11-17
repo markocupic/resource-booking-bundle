@@ -45,13 +45,13 @@ class BookingRequestValidatorTest extends TestCase
         (new BookingRequestValidator())->validate([...$this->validPost(), $field => '1'], [...self::PERMITTED, $field]);
     }
 
-    public function testRejectsIsBlocked(): void
+    public function testRejectsConfirmed(): void
     {
         try {
-            (new BookingRequestValidator())->validate([...$this->validPost(), 'isBlocked' => '1'], self::PERMITTED);
-            $this->fail('isBlocked must not be accepted from the front end.');
+            (new BookingRequestValidator())->validate([...$this->validPost(), 'confirmed' => '1'], self::PERMITTED);
+            $this->fail('confirmed must not be accepted from the front end.');
         } catch (InvalidBookingRequestException $e) {
-            $this->assertSame('isBlocked', $e->getField());
+            $this->assertSame('confirmed', $e->getField());
             $this->assertSame(InvalidBookingRequestException::FIELD_NOT_PERMITTED, $e->getTranslationKey());
         }
     }

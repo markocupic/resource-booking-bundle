@@ -24,6 +24,9 @@ use Contao\StringUtil;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Types\Types;
+use Markocupic\ResourceBookingBundle\Backend\BlockedSlotCleanup;
+use Markocupic\ResourceBookingBundle\Model\ResourceBookingBlockedPeriodModel;
+use Markocupic\ResourceBookingBundle\Util\BlockedSlots;
 use Markocupic\ResourceBookingBundle\Util\ResourceBookingRestriction;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -33,6 +36,7 @@ class ResourceBookingBlockedPeriod
         private readonly ContaoFramework $framework,
         private readonly Connection $connection,
         private readonly TranslatorInterface $translator,
+        private readonly BlockedSlotCleanup|null $blockedSlotCleanup = null,
     ) {
     }
 
@@ -44,6 +48,7 @@ class ResourceBookingBlockedPeriod
      * @throws Exception
      */
     #[AsCallback(table: 'tl_resource_booking_blocked_period', target: 'fields.resources.options')]
+    #[AsCallback(table: 'tl_resource_booking_blocked_period', target: 'fields.resource.options')]
     public function getResourceOptions(): array
     {
         $rows = $this->connection->fetchAllAssociative(
@@ -71,6 +76,21 @@ class ResourceBookingBlockedPeriod
         $columns[2] = empty($row['dateTo'])
             ? $this->translator->trans('tl_resource_booking_blocked_period.unlimited', [], 'contao_tl_resource_booking_blocked_period')
             : $dateAdapter->parse($dateFormat, (int) $row['dateTo']);
+
+        // Single blocked slots: resource and number of slots
+        if (ResourceBookingBlockedPeriodModel::MODE_SLOTS === ($row['mode'] ?? null)) {
+            $resourceTitle = $this->connection->fetchOne('SELECT title FROM tl_resource_booking_resource WHERE id = ?', [(int) $row['resource']], [Types::INTEGER]);
+            $count = \count(BlockedSlots::fromPeriod($row));
+
+            $columns[0] .= ' <span class="tl_gray">('.$this->translator->trans('tl_resource_booking_blocked_period.slotsSummary', [StringUtil::specialchars((string) ($resourceTitle ?: '-')), $count], 'contao_tl_resource_booking_blocked_period').')</span>';
+
+            // Orphaned: the resource has been deleted or none of the time slots belongs to its timetable anymore
+            if (null !== ($reason = $this->blockedSlotCleanup?->getOrphanReason($row))) {
+                $columns[0] .= ' <span class="tl_red">'.$this->translator->trans('tl_resource_booking_blocked_period.orphaned.'.$reason, [], 'contao_tl_resource_booking_blocked_period').'</span>';
+            }
+
+            return $columns;
+        }
 
         $summary = [];
 
@@ -135,8 +155,9 @@ class ResourceBookingBlockedPeriod
     }
 
     /**
-     * Swaps reversed dates and shows a warning if existing future bookings
-     * fall into the blocked period. These bookings are not deleted.
+     * Swaps reversed dates (mode "period") or sets the date range of the blocked slots
+     * (mode "slots") and shows a warning if existing future bookings fall into the
+     * blocked period. These bookings are not deleted.
      *
      * @throws Exception
      */
@@ -157,7 +178,16 @@ class ResourceBookingBlockedPeriod
             return;
         }
 
-        if (!empty($period['dateTo']) && (int) $period['dateTo'] < (int) $period['dateFrom']) {
+        // Single blocked slots: the date range is the first and the last day of the slots
+        if (ResourceBookingBlockedPeriodModel::MODE_SLOTS === $period['mode']) {
+            [$period['dateFrom'], $period['dateTo']] = BlockedSlots::getDateRange(BlockedSlots::fromPeriod($period)) ?? [(int) $period['dateFrom'], (int) $period['dateFrom']];
+
+            $this->connection->update(
+                'tl_resource_booking_blocked_period',
+                ['dateFrom' => $period['dateFrom'], 'dateTo' => $period['dateTo']],
+                ['id' => (int) $period['id']],
+            );
+        } elseif (!empty($period['dateTo']) && (int) $period['dateTo'] < (int) $period['dateFrom']) {
             [$period['dateFrom'], $period['dateTo']] = [$period['dateTo'], $period['dateFrom']];
 
             $this->connection->update(
@@ -178,7 +208,7 @@ class ResourceBookingBlockedPeriod
     }
 
     /**
-     * Returns the number of future bookings (not blocked slots) that fall into the blocked period.
+     * Returns the number of future bookings that fall into the blocked period.
      *
      * @param array<string, mixed> $period
      *
@@ -191,9 +221,9 @@ class ResourceBookingBlockedPeriod
         }
 
         $bookings = $this->connection->fetchAllAssociative(
-            'SELECT b.startTime, b.endTime, r.id, r.pid FROM tl_resource_booking b
+            'SELECT b.startTime, b.endTime, b.timeSlotId, r.id, r.pid FROM tl_resource_booking b
                 INNER JOIN tl_resource_booking_resource r ON r.id = b.pid
-                WHERE b.isBlocked = 0 AND b.endTime > ? AND b.startTime < ? AND b.endTime > ?',
+                WHERE b.endTime > ? AND b.startTime < ? AND b.endTime > ?',
             [time(), empty($period['dateTo']) ? PHP_INT_MAX : strtotime('+1 day', (int) $period['dateTo']), (int) $period['dateFrom']],
             [Types::INTEGER, Types::INTEGER, Types::INTEGER],
         );
@@ -203,7 +233,7 @@ class ResourceBookingBlockedPeriod
         foreach ($bookings as $booking) {
             $resource = ['id' => $booking['id'], 'pid' => $booking['pid']];
 
-            if (ResourceBookingRestriction::isInBlockedPeriod($period, $resource, (int) $booking['startTime'], (int) $booking['endTime'])) {
+            if (ResourceBookingRestriction::isInBlockedPeriod($period, $resource, (int) $booking['startTime'], (int) $booking['endTime'], (int) ($booking['timeSlotId'] ?? 0))) {
                 ++$count;
             }
         }

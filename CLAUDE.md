@@ -26,8 +26,8 @@ Projektsprache: Deutsch (Schweizer Rechtschreibung, «ss» statt «ß»). Code, 
 | `tl_resource_booking_time_slot` | Zeitfenster eines Zeitplans (`startTime`/`endTime`, `weekdays` = Wochentage, an denen es gilt). |
 | `tl_resource_booking_resource_type` | Ressourcen-Typ / Kategorie (z. B. «Räume»). |
 | `tl_resource_booking_resource` | Ressource. `timeSlotType` (Zeitplan), `itemsAvailable` (Stückzahl ≥ 1), `weeksBack`, `weeksAhead`, `addBookableUntil`/`bookableUntil`, `autoConfirm`, `description` (Hinweis im Frontend). |
-| `tl_resource_booking_blocked_period` | **Sperrzeit**. `title` = interne Bezeichnung (nur Backend!), `description` = Hinweis im Wochenkalender (optional), `dateFrom` (Pflicht, Standard heute), `dateTo` (0 = unbefristet), `blockedTimes` (Row Wizard), `scope` (`all`/`resourceTypes`/`resources`), `published`. |
-| `tl_resource_booking` | Buchung. `confirmed`, `isBlocked` (vom Admin gesperrt), `bookingUuid` (Serienbuchung), `itemsBooked`. |
+| `tl_resource_booking_blocked_period` | **Sperrzeit**. `title` = interne Bezeichnung (nur Backend!), `description` = Hinweis im Wochenkalender (optional), `mode` (`period`/`slots`), `dateFrom` (Pflicht, Standard heute), `dateTo` (0 = unbefristet), `blockedTimes` (Row Wizard), `scope` (`all`/`resourceTypes`/`resources`), `published`. Modus `slots`: `resource` + `blockedSlots` (Liste timeSlot + date `Y-m-d`, Uhrzeit immer aus dem Zeitfenster, `Util\BlockedSlots`), dateFrom/dateTo werden beim Speichern gesetzt. |
+| `tl_resource_booking` | Buchung. `confirmed`, `bookingUuid` (Serienbuchung), `itemsBooked`, `bookingSource`. Kein `isBlocked` mehr (seit 6.0 Sperrzeit Modus `slots`). |
 
 App-Konfiguration (`config/config.yaml`, `markocupic_resource_booking.apps.<name>`) enthält nur noch
 `permitted_form_fields` und `auto_select_first_resource` (Standard true: ohne Auswahl zeigt der erste
@@ -51,6 +51,12 @@ noch von Migrationen gelesen.
 
 ### Sperrzeiten
 
+- Modus `slots` (Einzelne Slots): eine Ressource, Slots im Backend-Kalender anklicken (Widget `Widget\BlockedSlotsWidget`
+  = inputType `rbbBlockedSlots`, Daten von `Backend\BlockedSlotCalendar` über Route `Controller\Backend\BlockedSlotsController`,
+  JS `assets/backend.js`). Slots mit Buchungen sind sperrbar (Warnung), vergangene und anderweitig gesperrte nicht.
+- Aufräumen (`Backend\BlockedSlotCleanup`, ondelete-Callbacks in `BlockedSlotCleanupListener`, Priorität -10 nach den
+  Lösch-Sperren): Ressource/Ressourcen-Typ gelöscht → Sperrzeiten «slots» löschen; Zeitfenster/Zeitplan gelöscht →
+  Einträge entfernen (leere Sperrzeit bleibt; `blockedSlots` ist keine Pflicht). Liste markiert verwaiste Sperrzeiten (`getOrphanReason()`).
 - Gilt von `dateFrom` bis `dateTo` (inklusive, tageweise); `dateTo = 0` → unbefristet.
 - `blockedTimes`: Liste von Zeilen `{weekday: daily|monday…sunday, timeFrom: "hh:mm"|"", timeTo: "hh:mm"|""}`.
   Leere Uhrzeiten = ganzer Tag. Keine Zeilen = der ganze Zeitraum ist gesperrt. Ungültige Zeilen werden ignoriert.
@@ -71,8 +77,8 @@ Ein Slot ist buchbar (`SlotMain::isBookable()` / `SlotBooking::isBookable()`), w
    Vergangenheit), Zeitfenster am Wochentag verfügbar, nicht in einer Sperrzeit, genug Stück frei.
 
 Request-Validierung: `Validator\BookingRequestValidator`. Systemfelder (`PROTECTED_BOOKING_FIELDS`: id, pid,
-member, isBlocked, confirmed, startTime, endTime, bookingUuid, …) werden nie aus dem Request übernommen, auch nicht
-über `permitted_form_fields`. `isBlocked` kann nur im Backend gesetzt werden. Fehlerreihenfolge in
+member, confirmed, startTime, endTime, bookingUuid, …) werden nie aus dem Request übernommen, auch nicht
+über `permitted_form_fields`. Fehlerreihenfolge in
 `BookingTrait`: invalidTimeSlot → invalidItemsBooked → outsideBookingPeriod → invalidStartOrEndTime →
 timeSlotNotAvailableOnWeekday → slotInBlockedPeriod → ausgebucht.
 

@@ -27,7 +27,6 @@ $GLOBALS['TL_LANG']['tl_resource_booking']['pid'] = ['Resource', 'The booked res
 $GLOBALS['TL_LANG']['tl_resource_booking']['timeSlotId'] = ['Time slot', 'The booked time slot from the booking timetable of the resource.'];
 $GLOBALS['TL_LANG']['tl_resource_booking']['bookingTime'] = ['Booking time', 'Date and time when the booking was received.'];
 $GLOBALS['TL_LANG']['tl_resource_booking']['member'] = ['Booked by frontend user', 'The member (frontend user) who made the booking.'];
-$GLOBALS['TL_LANG']['tl_resource_booking']['isBlocked'] = ['The slot is unavailable (e.g. during holiday periods)', 'The time slot is blocked and cannot be booked, e.g. during holiday periods.'];
 $GLOBALS['TL_LANG']['tl_resource_booking']['title'] = ['Title', 'The title of the booking. It is generated automatically when booking.'];
 $GLOBALS['TL_LANG']['tl_resource_booking']['description'] = ['Description', 'A short description of the booking, e.g. the purpose or the class.'];
 $GLOBALS['TL_LANG']['tl_resource_booking']['startTime'] = ['Start time', 'Start of the booked time slot. The value is taken from the time slot.'];

@@ -19,3 +19,7 @@ $GLOBALS['TL_LANG']['tl_module']['resourceBooking_clientPersonalData'] = ['Angab
 $GLOBALS['TL_LANG']['tl_module']['resourceBooking_displayBookingDetails'] = ['Weitere Angaben zur Buchung anzeigen', 'Zeigt bei Buchungen die unten gewählten Angaben an, z. B. die Beschreibung. Achtung: Diese Daten sind für alle eingeloggten Mitglieder sichtbar.'];
 $GLOBALS['TL_LANG']['tl_module']['resourceBooking_bookingDetailFields'] = ['Angaben zur Buchung', 'Wählen Sie die Angaben aus, die alle eingeloggten Mitglieder sehen dürfen. Welche Felder zur Auswahl stehen, wird in der Bundle-Konfiguration festgelegt (displayable_booking_fields). Das Template zeigt standardmässig die Beschreibung an; weitere Felder müssen im Template ergänzt werden.'];
 $GLOBALS['TL_LANG']['tl_module']['resourceBooking_appConfig'] = ['App-Konfiguration auswählen', 'Erstellen Sie Ihre eigenen App-Konfigurationen in "config/config.yaml".'];
+$GLOBALS['TL_LANG']['tl_module']['resourceBooking_colorScheme'] = ['Farbschema', 'Automatisch: Der Wochenkalender folgt der Einstellung des Betriebssystems bzw. Browsers oder dem Farbschema der Seite (Attribut data-bs-theme). Mit «Immer hell» bzw. «Immer dunkel» wird das Farbschema fest vorgegeben.'];
+$GLOBALS['TL_LANG']['tl_module']['resourceBooking_colorSchemeOptions']['auto'] = 'Automatisch';
+$GLOBALS['TL_LANG']['tl_module']['resourceBooking_colorSchemeOptions']['light'] = 'Immer hell';
+$GLOBALS['TL_LANG']['tl_module']['resourceBooking_colorSchemeOptions']['dark'] = 'Immer dunkel';

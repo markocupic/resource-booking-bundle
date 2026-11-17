@@ -51,7 +51,7 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = [
     ],
     'palettes' => [
         'default' => '
-        {booking_legend},pid,title,isBlocked,itemsBooked,member,bookingTime,bookingUuid,description,confirmed;
+        {booking_legend},pid,title,itemsBooked,member,bookingTime,bookingUuid,description,confirmed;
         {module_legend},moduleId;
         {time_legend},startTime,endTime
         ',
@@ -169,14 +169,6 @@ $GLOBALS['TL_DCA']['tl_resource_booking'] = [
             'inputType' => 'checkbox',
             'eval'      => ['tl_class' => 'clr'],
             'sql'       => ['type' => 'boolean', 'default' => true],
-        ],
-        'isBlocked'   => [
-            'exclude'   => true,
-            'sorting'   => true,
-            'filter'    => true,
-            'inputType' => 'checkbox',
-            'eval'      => ['tl_class' => 'clr'],
-            'sql'       => ['type' => 'boolean', 'default' => false],
         ],
         'upcoming'    => [
             'exclude'   => true,

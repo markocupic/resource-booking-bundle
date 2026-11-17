@@ -16,6 +16,7 @@ declare(strict_types=1);
 $GLOBALS['TL_LANG']['tl_resource_booking_blocked_period']['title_legend'] = 'Sperrzeit';
 $GLOBALS['TL_LANG']['tl_resource_booking_blocked_period']['date_legend'] = 'Zeitraum';
 $GLOBALS['TL_LANG']['tl_resource_booking_blocked_period']['scope_legend'] = 'Geltungsbereich';
+$GLOBALS['TL_LANG']['tl_resource_booking_blocked_period']['slots_legend'] = 'Gesperrte Slots';
 $GLOBALS['TL_LANG']['tl_resource_booking_blocked_period']['publish_legend'] = 'Veröffentlichung';
 
 // Global operations
@@ -23,6 +24,9 @@ $GLOBALS['TL_LANG']['tl_resource_booking_blocked_period']['new'] = ['Neu', 'Neue
 
 // Fields
 $GLOBALS['TL_LANG']['tl_resource_booking_blocked_period']['title'] = ['Interne Bezeichnung', 'Geben Sie eine Bezeichnung ein, z. B. "Herbstferien 2026". Sie wird nur im Backend angezeigt.'];
+$GLOBALS['TL_LANG']['tl_resource_booking_blocked_period']['mode'] = ['Art der Sperrzeit', '«Zeitraum»: ein Datumsbereich, optional auf Wochentage und Uhrzeiten beschränkt, für mehrere Ressourcen. «Einzelne Slots»: einzelne Zeitfenster einer Ressource, die Sie in der Kalenderansicht anklicken.'];
+$GLOBALS['TL_LANG']['tl_resource_booking_blocked_period']['resource'] = ['Ressource', 'Die Ressource, deren Zeitfenster gesperrt werden.'];
+$GLOBALS['TL_LANG']['tl_resource_booking_blocked_period']['blockedSlots'] = ['Gesperrte Slots', 'Klicken Sie auf ein Zeitfenster, um es zu sperren oder die Sperre wieder aufzuheben. Die Auswahl wird beim Speichern übernommen.'];
 $GLOBALS['TL_LANG']['tl_resource_booking_blocked_period']['description'] = ['Hinweis im Wochenkalender', 'Optionaler Text, der im Wochenkalender in den gesperrten Zeitfenstern angezeigt wird, z. B. "Herbstferien". Bleibt das Feld leer, werden die Zeitfenster ohne Text als gesperrt angezeigt.'];
 $GLOBALS['TL_LANG']['tl_resource_booking_blocked_period']['dateFrom'] = ['Von', 'Erster gesperrter Tag.'];
 $GLOBALS['TL_LANG']['tl_resource_booking_blocked_period']['dateTo'] = ['Bis', 'Letzter gesperrter Tag (inklusive). Leer lassen für eine unbefristete Sperrzeit, z. B. jedes Wochenende.'];
@@ -39,6 +43,9 @@ $GLOBALS['TL_LANG']['tl_resource_booking_blocked_period']['published'] = ['Aktiv
 $GLOBALS['TL_LANG']['tl_resource_booking_blocked_period']['scopeOptions']['all'] = 'Alle Ressourcen';
 $GLOBALS['TL_LANG']['tl_resource_booking_blocked_period']['scopeOptions']['resourceTypes'] = 'Ausgewählte Ressourcen-Typen';
 $GLOBALS['TL_LANG']['tl_resource_booking_blocked_period']['scopeOptions']['resources'] = 'Ausgewählte Ressourcen';
+$GLOBALS['TL_LANG']['tl_resource_booking_blocked_period']['modeOptions']['period'] = 'Zeitraum';
+$GLOBALS['TL_LANG']['tl_resource_booking_blocked_period']['modeOptions']['slots'] = 'Einzelne Slots';
+$GLOBALS['TL_LANG']['tl_resource_booking_blocked_period']['slotsSummary'] = '%s, %s Slot(s)';
 $GLOBALS['TL_LANG']['tl_resource_booking_blocked_period']['unlimited'] = 'unbefristet';
 $GLOBALS['TL_LANG']['tl_resource_booking_blocked_period']['weekdayOptions']['daily'] = 'Täglich';
 $GLOBALS['TL_LANG']['tl_resource_booking_blocked_period']['weekdayOptions']['monday'] = 'Montag';
@@ -48,3 +55,5 @@ $GLOBALS['TL_LANG']['tl_resource_booking_blocked_period']['weekdayOptions']['thu
 $GLOBALS['TL_LANG']['tl_resource_booking_blocked_period']['weekdayOptions']['friday'] = 'Freitag';
 $GLOBALS['TL_LANG']['tl_resource_booking_blocked_period']['weekdayOptions']['saturday'] = 'Samstag';
 $GLOBALS['TL_LANG']['tl_resource_booking_blocked_period']['weekdayOptions']['sunday'] = 'Sonntag';
+$GLOBALS['TL_LANG']['tl_resource_booking_blocked_period']['orphaned']['resource'] = 'verwaist: Die Ressource existiert nicht mehr.';
+$GLOBALS['TL_LANG']['tl_resource_booking_blocked_period']['orphaned']['timeSlots'] = 'verwaist: Keines der Zeitfenster gehört zum Buchungszeitplan der Ressource.';

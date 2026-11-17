@@ -29,10 +29,10 @@ Mitglieder sehen eine übersichtliche Wochenansicht, wählen ein freies Zeitfens
 | 🔁 **Serienbuchungen** | Ein Zeitfenster gleich für mehrere Wochen am Stück reservieren. |
 | 🔢 **Mehrfach buchbar** | Pro Ressource festlegen, wie viele Stück verfügbar sind – ideal für Laptops oder Tablets. |
 | 🗓️ **Flexible Zeitpläne** | Eigene Zeitfenster pro Zeitplan, jedes mit eigenen Wochentagen. |
-| 🏖️ **Sperrzeiten** | Ferien, Wochenenden oder einzelne Nachmittage sperren – für alle oder nur für bestimmte Ressourcen. |
+| 🏖️ **Sperrzeiten** | Ferien, Wochenenden oder einzelne Nachmittage sperren – für alle oder nur für bestimmte Ressourcen. Einzelne Slots einer Ressource per Klick im Kalender sperren. |
 | 🛡️ **Sicher** | Bestehende Buchungen bleiben geschützt, wenn Zeitpläne geändert oder gelöscht werden. |
 | 🎨 **Anpassbares Design** | Eigenes, schlankes Stylesheet ohne Bootstrap. Farben und Abstände über CSS-Variablen. |
-| 🌗 **Dark Mode** | Hell- und Dunkelmodus werden automatisch unterstützt. |
+| 🌗 **Dark Mode** | Hell- und Dunkelmodus werden automatisch unterstützt oder pro Modul fest eingestellt. |
 
 ## 👀 So sieht es aus
 
@@ -93,6 +93,20 @@ Mit **«Gesperrte Zeiten»** lässt sich die Sperre auf einzelne Wochentage oder
 
 Gesperrte Zeitfenster bleiben im Kalender sichtbar, sind aber schraffiert. Die Bezeichnung der Sperrzeit ist intern und erscheint nur im Backend. Soll im Kalender ein Text stehen, z. B. «Herbstferien», tragen Sie ihn unter **«Hinweis im Wochenkalender»** ein.
 
+### Einzelne Slots sperren
+
+Mit der Art **«Einzelne Slots»** sperren Sie einzelne Zeitfenster einer Ressource, z. B. für den Unterhalt oder einen Anlass:
+
+1. Sperrzeit anlegen, **Art der Sperrzeit** auf «Einzelne Slots» stellen.
+2. **Ressource** wählen. Darunter erscheint der Wochenkalender der Ressource; mit den Pfeilen blättern Sie wochenweise.
+3. Die gewünschten Zeitfenster anklicken (nochmals klicken hebt die Sperre auf) und speichern.
+
+Über **«Alle gesperrten Slots»** öffnet sich eine Liste aller Slots dieser Sperrzeit; dort lassen sich Slots entfernen oder per Klick auf das Datum im Kalender anzeigen. Darunter stehen ausgegraut die Slots anderer Sperrzeiten derselben Ressource. Entfernte Slots werden erst beim Speichern gelöscht. Eine Sperrzeit darf auch leer gespeichert und später wiederverwendet werden.
+
+Zeitfenster mit Buchungen lassen sich ebenfalls sperren, z. B. damit bei einer Ressource mit mehreren Einheiten niemand mehr dazubuchen kann. Das Backend weist darauf hin; die bestehenden Buchungen werden nicht gelöscht. Vergangene Zeitfenster und Zeitfenster, die bereits eine andere Sperrzeit sperrt, lassen sich nicht anklicken. Der **«Hinweis im Wochenkalender»** gilt für alle Slots der Sperrzeit; brauchen Sie verschiedene Hinweise, legen Sie mehrere Sperrzeiten an.
+
+Gesperrt wird ein Zeitfenster an einem Tag, die Uhrzeit kommt immer aus dem Buchungszeitplan: Ändern Sie die Zeiten eines Zeitfensters, bleibt die Sperre bestehen. Wird ein Zeitfenster gelöscht, verschwindet es auch aus den Sperrzeiten (eine dadurch leere Sperrzeit bleibt erhalten); wird eine Ressource gelöscht, werden ihre Sperrzeiten «Einzelne Slots» mitgelöscht. Sperrzeiten, die nichts mehr sperren, sind in der Liste rot als «verwaist» markiert.
+
 ## 🔎 Buchung im Backend suchen
 
 Auf der Startseite des Backends steht die Suche **«Buchung suchen»**. Geben Sie die Buchungs-ID (`bookingUuid`) ein, z. B. aus einer Benachrichtigung. Der Anfang der ID genügt (mindestens 8 Zeichen). Gefunden werden alle Termine der Buchung, bei Serienbuchungen also alle Wochen. Ein Klick führt direkt zur Buchung bzw. zu allen Buchungen der Ressource.
@@ -114,6 +128,10 @@ Farben, Abstände und Rundungen passen Sie bequem über CSS-Variablen an:
 ```
 
 Alle verfügbaren Variablen stehen am Anfang von [`assets/styles/frontend.scss`](assets/styles/frontend.scss).
+
+### Hell- und Dunkelmodus
+
+Standardmässig folgt der Wochenkalender der Einstellung des Betriebssystems bzw. Browsers. Setzt Ihr Theme das Attribut `data-bs-theme="light|dark"` am `<html>`-Element (z. B. ein Bootstrap-Theme mit Umschalter), folgt er stattdessen diesem. In den Moduleinstellungen lässt sich unter **«Farbschema»** auch «Immer hell» oder «Immer dunkel» festlegen; das Modul erhält dann das Attribut `data-rbb-color-scheme="light|dark"`.
 
 ### Zusätzliche Mitgliederdaten anzeigen
 

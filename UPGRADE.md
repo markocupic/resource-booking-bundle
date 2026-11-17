@@ -91,8 +91,7 @@ entfernt.
 * Buchungen in einer Sperrzeit werden serverseitig mit `RBB.ERR.slotInBlockedPeriod` abgelehnt.
 * Bestehende Buchungen in einer neuen Sperrzeit werden nicht gelöscht. Beim Speichern der Sperrzeit zeigt das
   Backend die Anzahl betroffener zukünftiger Buchungen an (`RBB.BE.bookingsInBlockedPeriod`).
-* Die bisherigen gesperrten Buchungen (`tl_resource_booking.isBlocked`) funktionieren weiterhin, z. B. um einzelne
-  Zeitfenster zu sperren.
+* Gesperrte Buchungen (`tl_resource_booking.isBlocked`) gibt es nicht mehr, siehe «Einzelne Slots sperren».
 
 Die Tabelle wird beim Datenbank-Update angelegt.
 
@@ -343,9 +342,9 @@ Das Aussehen lässt sich über CSS-Variablen anpassen (z. B. `--rbb-primary`, `-
     Wiederholungen). Sonst: `RBB.ERR.invalidTimeSlot` ("Ungültiges Zeitfenster.").
   * `itemsBooked` muss eine ganze Zahl von 1 bis zur Stückzahl der Ressource sein. Sonst:
     `RBB.ERR.invalidItemsBooked`.
-  * Systemfelder der Buchung (u. a. `isBlocked`, `confirmed`, `member`, `pid`, `timeSlotId`, `startTime`, `endTime`,
+  * Systemfelder der Buchung (u. a. `confirmed`, `member`, `pid`, `timeSlotId`, `startTime`, `endTime`,
     `bookingUuid`) werden aus dem Frontend nicht angenommen, auch nicht, wenn sie in `permitted_form_fields`
-    eingetragen sind. Gesperrte Buchungen (`isBlocked`) können nur noch im Backend angelegt werden.
+    eingetragen sind.
   * Die Prüfung der übermittelten Felder liegt neu in `Markocupic\ResourceBookingBundle\Validator\BookingRequestValidator`.
     Slots haben die neuen Methoden `isValidTimeSlot()` und `hasValidItemCount()`; `isBookable()` berücksichtigt beide.
   * Ressourcen ohne gültige Stückzahl (`itemsAvailable` leer, NULL oder 0) wären damit nicht mehr buchbar. Die
@@ -545,6 +544,46 @@ der neuen `AjaxController\AjaxControllerRegistry`. Die Controller registrieren s
 * Die Konstante `REQUEST_NAME` der Ajax-Controller heisst neu `ACTION`. `CancelController::ACTION` ist
   `cancelBookingRequest` (bisher `REQUEST_NAME = 'cancelRequest'`, was nicht der Aktion des Frontends entsprach).
 * `Exception\UnknownAjaxActionException` wirft neu `AjaxControllerRegistry::get()`.
+
+### Farbschema pro Modul
+
+Neues Modulfeld `resourceBooking_colorScheme` («Farbschema»): leer = automatisch (Betriebssystem bzw.
+`data-bs-theme` der Seite, wie bisher), `light` oder `dark`. Das Template setzt dafür am Modul das Attribut
+`data-rbb-color-scheme` (Template-Variable `colorScheme`); das CSS gibt ihm Vorrang vor den anderen Regeln.
+
+### Einzelne Slots sperren (statt gesperrter Buchungen)
+
+Sperrzeiten haben eine zweite Art **«Einzelne Slots»** (`tl_resource_booking_blocked_period.mode = 'slots'`, bisherige
+Sperrzeiten: `period`). Im Backend wählt man eine Ressource und klickt im Wochenkalender die Zeitfenster an, die
+gesperrt werden (Widget `rbbBlockedSlots`, Route `BlockedSlotsController`, `assets/backend.js`).
+
+* Neue Felder: `mode`, `resource` (genau eine Ressource) und `blockedSlots` (keine Pflicht: eine Sperrzeit darf
+  vorübergehend leer sein; serialisierte Liste von
+  `['timeSlot' => <ID des Zeitfensters>, 'date' => 'Y-m-d']`, siehe `Util\BlockedSlots`). Die Uhrzeiten werden nicht
+  gespeichert, sondern immer aus dem Zeitfenster gelesen: Ändert man die Zeiten im Buchungszeitplan, bleibt die Sperre
+  erhalten. `dateFrom` und `dateTo` werden beim Speichern auf den ersten und den letzten Tag der Slots gesetzt.
+* `ResourceBookingRestriction::isInBlockedPeriod()` hat den neuen optionalen Parameter `$timeSlotId`. Eine Sperrzeit
+  der Art «Einzelne Slots» deckt einen Slot ab, wenn sein Zeitfenster an diesem Tag gesperrt ist (ohne
+  `$timeSlotId` nie). Im Frontend erscheinen die Slots wie andere Sperrzeiten (`isInBlockedPeriod`,
+  `blockedPeriodDescription`).
+* Zeitfenster mit Buchungen lassen sich sperren; das Widget und die Meldung beim Speichern weisen darauf hin. Die
+  Buchungen bleiben bestehen.
+* Verwaiste Sperrzeiten werden vermieden: Wird eine Ressource (oder ihr Ressourcen-Typ) gelöscht, werden ihre
+  Sperrzeiten «Einzelne Slots» mitgelöscht. Wird ein Zeitfenster (oder sein Zeitplan) gelöscht, wird es aus den
+  Sperrzeiten entfernt; Sperrzeiten ohne verbleibende Slots bleiben leer erhalten (`Backend\BlockedSlotCleanup`,
+  `EventListener\DataContainer\BlockedSlotCleanupListener`). Sperrzeiten, die trotzdem nichts mehr sperren, sind in
+  der Liste rot als «verwaist» markiert. Hinweis: «Rückgängig machen» stellt gelöschte Sperrzeiten nicht wieder her.
+* **Gesperrte Buchungen entfallen:** Das Feld `tl_resource_booking.isBlocked` wurde entfernt. Die Migration
+  `MoveBlockedBookingsToBlockedPeriods` legt für die gesperrten Buchungen Sperrzeiten der Art «Einzelne Slots» an
+  (eine pro Ressource, Titel und Beschreibung; ohne Beschreibung wird der Titel zum Hinweis im Wochenkalender, ohne
+  Titel heisst die Sperrzeit «Gesperrte Slots») und löscht die gesperrten Buchungen. Gesperrte Buchungen ohne
+  Zeitfenster erhalten das Zeitfenster des Zeitplans mit denselben Zeiten. Die neuen Spalten legt die Migration
+  selbst an, weil sie vor dem Datenbank-Update läuft. Die Migration `ConvertBlockedSlots` wandelt Slots um, die noch
+  mit Start- und Endzeit gespeichert sind (Entwicklungsstand vor 6.0).
+* Entfernt: `AbstractSlot::isBlocked()`, der Schlüssel `isBlocked` der Slot-Daten (Templates: `slot.isBlocked`,
+  `data-isblocked`; gesperrte Slots haben `isInBlockedPeriod`), die Fehlermeldung `RBB.ERR.slotIsBlocked`, die
+  Sprachschlüssel `RBB.formIsBlocked` und `MSC.rbbBookingSearch.blocked` sowie `isBlocked` in
+  `BookingRequestValidator::PROTECTED_BOOKING_FIELDS`. Eigene Templates mit `slot.isBlocked` anpassen.
 
 ## Version 2.* to 3.0
 

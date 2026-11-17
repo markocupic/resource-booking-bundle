@@ -27,7 +27,6 @@ $GLOBALS['TL_LANG']['tl_resource_booking']['pid'] = ['Ressource', 'Die gebuchte 
 $GLOBALS['TL_LANG']['tl_resource_booking']['timeSlotId'] = ['Zeitpunkt', 'Das gebuchte Zeitfenster aus dem Buchungszeitplan der Ressource.'];
 $GLOBALS['TL_LANG']['tl_resource_booking']['bookingTime'] = ['Buchungseingang', 'Datum und Uhrzeit, an dem die Buchung eingegangen ist.'];
 $GLOBALS['TL_LANG']['tl_resource_booking']['member'] = ['Reserviert durch Frontend-Benutzer', 'Das Mitglied (Frontend-Benutzer), das die Buchung vorgenommen hat.'];
-$GLOBALS['TL_LANG']['tl_resource_booking']['isBlocked'] = ['Slot ist gesperrt (z.B. Ferienzeit)', 'Das Zeitfenster ist gesperrt und kann nicht gebucht werden, z. B. während der Ferien.'];
 $GLOBALS['TL_LANG']['tl_resource_booking']['title'] = ['Titel', 'Der Titel der Buchung. Er wird beim Buchen automatisch erzeugt.'];
 $GLOBALS['TL_LANG']['tl_resource_booking']['description'] = ['Beschreibung', 'Eine kurze Beschreibung der Buchung, z. B. der Zweck oder die Klasse.'];
 $GLOBALS['TL_LANG']['tl_resource_booking']['startTime'] = ['Startzeit', 'Beginn des gebuchten Zeitfensters. Der Wert wird aus dem Zeitfenster übernommen.'];

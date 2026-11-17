@@ -50,7 +50,6 @@ use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInt
  * @property string                            $timeSpanString
  * @property string                            $datimSpanString
  * @property bool                              $hasBookings
- * @property bool                              $isBlocked
  * @property bool                              $isBookable
  * @property bool                              $isCancelable
  * @property bool                              $hasEnoughItemsAvailable
@@ -100,10 +99,7 @@ abstract class AbstractSlot implements SlotInterface
      */
     public function __get(string $strKey)
     {
-        return match ($strKey) {
-            'isBlocked' => !empty($this->getBlockedBookings()),
-            default => $this->arrData[$strKey] ?? null,
-        };
+        return $this->arrData[$strKey] ?? null;
     }
 
     /**
@@ -129,7 +125,7 @@ abstract class AbstractSlot implements SlotInterface
             : $this->findTimeSlotType((int) $resource->timeSlotType);
         $appConfig = ['beginWeek' => ResourceBookingRestriction::getBeginWeek($resourceTimeSlotType)];
         $firstDayOfWeek = $dateHelperAdapter->getFirstDayOfCurrentWeek($appConfig, $startTime);
-        $blockedPeriod = $this->findBlockedPeriod($resource->row(), $startTime, $endTime);
+        $blockedPeriod = $this->findBlockedPeriod($resource->row(), $startTime, $endTime, $timeSlotId);
 
         $this->arrData = [
             'timeSlotId' => $timeSlotId,
@@ -168,7 +164,6 @@ abstract class AbstractSlot implements SlotInterface
         $this->arrData['isWithinAllowedDateRange'] = $this->isWithinAllowedDateRange();
         $this->arrData['isTimeSlotAvailable'] = $this->isTimeSlotAvailable();
         $this->arrData['bookings'] = $this->getBookings();
-        $this->arrData['isBlocked'] = $this->isBlocked;
         $this->arrData['isBookable'] = $this->isBookable();
         $this->arrData['enoughItemsAvailable'] = $this->canFulfillRequestedItems();
         $this->arrData['itemsStillAvailable'] = $this->getRemainingItems();
@@ -337,11 +332,6 @@ abstract class AbstractSlot implements SlotInterface
         return $this->userHasBooking();
     }
 
-    public function isBlocked(): bool
-    {
-        return !empty($this->getBlockedBookings());
-    }
-
     public function setBookings(array $data): void
     {
         $this->arrData['bookings'] = $data;
@@ -373,11 +363,6 @@ abstract class AbstractSlot implements SlotInterface
         }
 
         return $total;
-    }
-
-    private function getBlockedBookings(): array
-    {
-        return array_values(array_filter($this->getBookings(), static fn (array $b) => (bool) ($b['isBlocked'] ?? false)));
     }
 
     private function getRemainingItems(): int
@@ -425,7 +410,7 @@ abstract class AbstractSlot implements SlotInterface
      *
      * @return array<string, mixed>|null
      */
-    private function findBlockedPeriod(array $resource, int $startTime, int $endTime): array|null
+    private function findBlockedPeriod(array $resource, int $startTime, int $endTime, int $timeSlotId): array|null
     {
         $periods = $this->framework
             ->getAdapter(ResourceBookingBlockedPeriodModel::class)
@@ -433,7 +418,7 @@ abstract class AbstractSlot implements SlotInterface
         ;
 
         foreach ($periods as $period) {
-            if (ResourceBookingRestriction::isInBlockedPeriod($period, $resource, $startTime, $endTime)) {
+            if (ResourceBookingRestriction::isInBlockedPeriod($period, $resource, $startTime, $endTime, $timeSlotId)) {
                 return $period;
             }
         }

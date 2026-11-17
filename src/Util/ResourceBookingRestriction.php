@@ -16,6 +16,7 @@ namespace Markocupic\ResourceBookingBundle\Util;
 
 use Contao\StringUtil;
 use Markocupic\ResourceBookingBundle\Config\RbbConfig;
+use Markocupic\ResourceBookingBundle\Model\ResourceBookingBlockedPeriodModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotTypeModel;
@@ -136,13 +137,26 @@ class ResourceBookingRestriction
      * slot overlaps one of the blocked times on its weekday. Without blocked times
      * the whole period is blocked.
      *
+     * In the mode "slots" the period applies to one resource only and covers the
+     * slot if its time slot ($timeSlotId) is blocked on the day of the slot. Without
+     * time slot ID the slot is never covered by such a period.
+     *
      * @param array<string, mixed> $period
      * @param array<string, mixed> $resource
      */
-    public static function isInBlockedPeriod(array $period, array $resource, int $startTime, int $endTime): bool
+    public static function isInBlockedPeriod(array $period, array $resource, int $startTime, int $endTime, int $timeSlotId = 0): bool
     {
         if (empty($period['published'])) {
             return false;
+        }
+
+        // Single blocked slots of one resource (selected in the calendar view of the back end)
+        if (ResourceBookingBlockedPeriodModel::MODE_SLOTS === ($period['mode'] ?? ResourceBookingBlockedPeriodModel::MODE_PERIOD)) {
+            if ((int) ($period['resource'] ?? 0) !== (int) ($resource['id'] ?? 0)) {
+                return false;
+            }
+
+            return BlockedSlots::contains(BlockedSlots::fromPeriod($period), $timeSlotId, $startTime);
         }
 
         if (!self::blockedPeriodAppliesToResource($period, $resource)) {

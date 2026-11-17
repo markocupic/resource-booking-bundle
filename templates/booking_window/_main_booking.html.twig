@@ -52,7 +52,6 @@
                                 <span v-else-if="slot.isInBlockedPeriod && slot.blockedPeriodDescription"><small>[[ slot.blockedPeriodDescription ]]</small></span>
                                 <span v-else-if="slot.isInBlockedPeriod"><small>{{ ('RBB.blocked')|trans }}</small></span>
                                 <span v-else-if="slot.isTimeSlotAvailable === false"><small>{{ ('RBB.notAvailable')|trans }}</small></span>
-                                <span v-else-if="slot.isBlocked"><small>{{ ('RBB.ERR.slotIsBlocked')|trans }}</small></span>
                                 <span v-else-if="!slot.enoughItemsAvailable"><small>{{ ('RBB.ERR.thisSlotHasNotEnoughItemsAvailable')|trans }}</small></span>
                                 <span v-else-if="slot.isFullyBooked"><small>{{ ('RBB.ERR.resourceIsAlreadyFullyBooked')|trans }}</small></span>
                                 <span v-else><small>{{ ('RBB.MSG.resourceAvailable')|trans }}</small></span>
@@ -80,8 +79,8 @@
                         </div>
                         <div class="rbb-layout-row" :class="row.rowData.cssRowClass" :data-row-index="rowIndex" v-for="(row, rowIndex) in rows">
                             <div class="rbb-layout-cell rbb-time-slot-indicator">[[ timeSlots[rowIndex].timeSpanString ]]</div>
-                            <div class="rbb-layout-cell rbb-time-slot-cell" :data-day-index="slot.index" :data-isblocked="slot.isBlocked" :data-isbookable="slot.isBookable && slot.isWithinAllowedDateRange" :data-isbooked="slot.hasBookings" :data-isfullybooked="slot.isFullyBooked" :data-isinvaliddate="!slot.isWithinAllowedDateRange" :data-istimeslotavailable="slot.isTimeSlotAvailable" :data-isinblockedperiod="slot.isInBlockedPeriod" v-for="(slot, colIndex) in row.cellData">
-                                <div v-if="!slot.isBlocked && slot.isBookable && !slot.isFullyBooked">
+                            <div class="rbb-layout-cell rbb-time-slot-cell" :data-day-index="slot.index" :data-isbookable="slot.isBookable && slot.isWithinAllowedDateRange" :data-isbooked="slot.hasBookings" :data-isfullybooked="slot.isFullyBooked" :data-isinvaliddate="!slot.isWithinAllowedDateRange" :data-istimeslotavailable="slot.isTimeSlotAvailable" :data-isinblockedperiod="slot.isInBlockedPeriod" v-for="(slot, colIndex) in row.cellData">
+                                <div v-if="slot.isBookable && !slot.isFullyBooked">
                                     <div class="rbb-form-check">
                                         <input class="rbb-form-check-input" type="checkbox" :id="slot.bookingCheckboxId" :aria-label="slot.datimSpanString" :value="slot.bookingCheckboxValue" v-model="bookingWindow.selectedTimeSlots" @change="bookingFormValidationRequest()">
                                         <label class="rbb-form-check-label" :for="slot.bookingCheckboxId"></label>
@@ -106,15 +105,15 @@
                         <ul class="rbb-booking-slot-list">
                             <template v-for="(row, rowIndex) in rows">
                                 <template v-for="slot in row.cellData">
-                                    <li v-if="slot.index === bookingWindowDayIndex" class="rbb-booking-slot-list-item" :data-isselectable="!slot.isBlocked && slot.isBookable && !slot.isFullyBooked ? 'true' : 'false'">
-                                        <label class="rbb-booking-slot-list-label" v-if="!slot.isBlocked && slot.isBookable && !slot.isFullyBooked" :for="'list_' + slot.bookingCheckboxId">
+                                    <li v-if="slot.index === bookingWindowDayIndex" class="rbb-booking-slot-list-item" :data-isselectable="slot.isBookable && !slot.isFullyBooked ? 'true' : 'false'">
+                                        <label class="rbb-booking-slot-list-label" v-if="slot.isBookable && !slot.isFullyBooked" :for="'list_' + slot.bookingCheckboxId">
                                             <input class="rbb-form-check-input" type="checkbox" :id="'list_' + slot.bookingCheckboxId" :aria-label="slot.datimSpanString" :value="slot.bookingCheckboxValue" v-model="bookingWindow.selectedTimeSlots" @change="bookingFormValidationRequest()">
                                             <span class="rbb-booking-slot-list-time">[[ timeSlots[rowIndex].timeSpanString ]]</span>
                                         </label>
                                         <div class="rbb-booking-slot-list-label" v-else>
                                             <span class="rbb-booking-slot-list-time">[[ timeSlots[rowIndex].timeSpanString ]]</span>
                                             <span class="rbb-booking-slot-list-status" v-if="slot.isInBlockedPeriod && slot.blockedPeriodDescription">[[ slot.blockedPeriodDescription ]]</span>
-                                            <span class="rbb-booking-slot-list-status" v-else-if="slot.isInBlockedPeriod || slot.isBlocked">{{ ('RBB.blocked')|trans }}</span>
+                                            <span class="rbb-booking-slot-list-status" v-else-if="slot.isInBlockedPeriod">{{ ('RBB.blocked')|trans }}</span>
                                             <span class="rbb-booking-slot-list-status" v-else-if="slot.isFullyBooked">{{ ('RBB.legend.fullyBooked')|trans }}</span>
                                             <span class="rbb-booking-slot-list-status" v-else>{{ ('RBB.notAvailable')|trans }}</span>
                                         </div>
