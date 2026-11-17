@@ -25,7 +25,8 @@ use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInt
 use Symfony\Contracts\Service\ResetInterface;
 
 /**
- * Loads the data a slot needs (logged-in member, time slot, timetable, bookings)
+ * Loads the data a slot needs (logged-in member, time slot, timetable, bookings,
+ * blocked periods)
  * and keeps it for the current request.
  *
  * Without this class, every slot of the week calendar ran its own queries. Call
@@ -55,6 +56,11 @@ class SlotDataProvider implements ResetInterface
      * @var array<int, array{from: int, to: int, bookings: array<string, list<array<string, mixed>>>}>
      */
     private array $preloadedBookings = [];
+
+    /**
+     * @var list<array<string, mixed>>|null
+     */
+    private array|null $blockedPeriods = null;
 
     public function __construct(
         private readonly ContaoFramework $framework,
@@ -95,6 +101,17 @@ class SlotDataProvider implements ResetInterface
         }
 
         return $this->timeSlotTypes[$id];
+    }
+
+    /**
+     * The published blocked periods (rows of tl_resource_booking_blocked_period),
+     * loaded once per request.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function getBlockedPeriods(): array
+    {
+        return $this->blockedPeriods ??= $this->framework->getAdapter(ResourceBookingBlockedPeriodModel::class)->findPublishedRows();
     }
 
     /**
@@ -149,6 +166,7 @@ class SlotDataProvider implements ResetInterface
         $this->timeSlots = [];
         $this->timeSlotTypes = [];
         $this->preloadedBookings = [];
+        $this->blockedPeriods = null;
 
         // The blocked periods are cached in a static property (see findPublishedRows())
         ResourceBookingBlockedPeriodModel::resetCache();

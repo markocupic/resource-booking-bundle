@@ -30,7 +30,6 @@ use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Markocupic\ResourceBookingBundle\Slot\SlotCollection;
 use Markocupic\ResourceBookingBundle\Slot\SlotFactory;
-use Markocupic\ResourceBookingBundle\Slot\SlotMain;
 use Markocupic\ResourceBookingBundle\User\LoggedInFrontendUser;
 use Markocupic\ResourceBookingBundle\Util\ResourceBookingRestriction;
 use Markocupic\ResourceBookingBundle\Util\Utils;
@@ -210,12 +209,7 @@ final class BookingController extends AbstractController implements ControllerIn
     {
         $bookings = [];
 
-        $slots->reset();
-
-        while ($slots->next()) {
-            /** @var SlotMain $slot */
-            $slot = $slots->current();
-
+        foreach ($slots as $slot) {
             // Use already available booking entity
             $arrBooking = $slot->userBooking;
 

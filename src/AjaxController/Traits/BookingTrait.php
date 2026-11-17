@@ -21,9 +21,8 @@ use Contao\Input;
 use Markocupic\ResourceBookingBundle\AppState\AppState;
 use Markocupic\ResourceBookingBundle\Booking\BookingSource;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
-use Markocupic\ResourceBookingBundle\Slot\SlotBooking;
+use Markocupic\ResourceBookingBundle\Slot\Slot;
 use Markocupic\ResourceBookingBundle\Slot\SlotCollection;
-use Markocupic\ResourceBookingBundle\Slot\SlotMain;
 use Markocupic\ResourceBookingBundle\Util\DateHelper;
 use Markocupic\ResourceBookingBundle\Validator\BookingRequestValidator;
 use Symfony\Component\HttpFoundation\Request;
@@ -51,7 +50,7 @@ trait BookingTrait
     protected function getSlotCollectionFromRequest(Request $request, ResourceBookingResourceModel $resource, AppState $appState, int $bookingRepeatStopWeekTstamp, string $bookingUuid): SlotCollection
     {
         $arrSlotCollection = [];
-        // Anything that is not a positive integer becomes 0 and is rejected by the slot (see AbstractSlot::hasValidItemCount())
+        // Anything that is not a positive integer becomes 0 and is rejected by the slot (see Slot::hasValidItemCount())
         $itemsBooked = BookingRequestValidator::parseItemCount($request->request->all()['itemsBooked'] ?? null);
         // Contao input handling: tags are stripped and special characters are encoded (input encoding).
         // Do not use the Symfony HTML sanitizer for these plain text values: it encodes characters
@@ -66,18 +65,14 @@ trait BookingTrait
         $bookingRepeatStopWeekTstamp = $this->limitBookingRepeatStopWeek($bookingRepeatStopWeekTstamp, $resource);
 
         foreach ($selectedSlots as ['timeSlotId' => $timeSlotId, 'startTime' => $startTime, 'endTime' => $endTime]) {
-            /** @var SlotBooking $slot */
-            $slot = $this->slotFactory->get(
+            $slot = $this->slotFactory->create(
                 $timeSlotId,
-                SlotBooking::MODE,
                 $resource,
                 $startTime,
                 $endTime,
                 $itemsBooked,
                 $bookingRepeatStopWeekTstamp,
             );
-
-            $slot->setTimeSlotId($timeSlotId);
 
             $arrSlotCollection[] = $slot;
 
@@ -89,10 +84,8 @@ trait BookingTrait
                 $startTime = $this->framework->getAdapter(DateHelper::class)->addDaysToTime(7, $startTime);
                 $endTime = $this->framework->getAdapter(DateHelper::class)->addDaysToTime(7, $endTime);
 
-                /** @var SlotBooking $slot */
-                $slot = $this->slotFactory->get(
+                $slot = $this->slotFactory->create(
                     $timeSlotId,
-                    SlotBooking::MODE,
                     $resource,
                     $startTime,
                     $endTime,
@@ -109,7 +102,7 @@ trait BookingTrait
             }
         }
 
-        $slotCollection = (new SlotCollection($arrSlotCollection))->sortBy('startTime');
+        $slotCollection = (new SlotCollection(...$arrSlotCollection))->sortedByStartTime();
 
         $dca = $this->loadDcaForTable('tl_resource_booking');
         $member = $this->user->getLoggedInUser();
@@ -143,32 +136,29 @@ trait BookingTrait
             }
         }
 
-        $slotCollection->reset();
-
         $dateAdapter = $this->framework->getAdapter(Date::class);
         $datimFormat = $this->framework->getAdapter(Config::class)->get('datimFormat');
 
-        while ($slotCollection->next()) {
-            $slot = $slotCollection->current();
-            $arrUserInput['bookingUuid'] = $bookingUuid;
-            $arrUserInput['timeSlotId'] = $slot->timeSlotId;
-            $arrUserInput['startTime'] = $slot->startTime;
-            $arrUserInput['endTime'] = $slot->endTime;
+        return $slotCollection->map(
+            function (Slot $slot) use ($arrUserInput, $bookingUuid, $resource, $member, $dateAdapter, $datimFormat): Slot {
+                $arrUserInput['bookingUuid'] = $bookingUuid;
+                $arrUserInput['timeSlotId'] = $slot->timeSlotId;
+                $arrUserInput['startTime'] = $slot->startTime;
+                $arrUserInput['endTime'] = $slot->endTime;
 
-            $arrUserInput['title'] = \sprintf(
-                '%s : %s %s %s [%s - %s]',
-                $resource->title,
-                $this->translator->trans('MSC.bookedBy', [], 'contao_default'),
-                $member?->firstname,
-                $member?->lastname,
-                $dateAdapter->parse($datimFormat, $slot->startTime),
-                $dateAdapter->parse($datimFormat, $slot->endTime),
-            );
+                $arrUserInput['title'] = \sprintf(
+                    '%s : %s %s %s [%s - %s]',
+                    $resource->title,
+                    $this->translator->trans('MSC.bookedBy', [], 'contao_default'),
+                    $member?->firstname,
+                    $member?->lastname,
+                    $dateAdapter->parse($datimFormat, $slot->startTime),
+                    $dateAdapter->parse($datimFormat, $slot->endTime),
+                );
 
-            $slotCollection->current()->setBookingData($arrUserInput);
-        }
-
-        return $slotCollection;
+                return $slot->withBookingData($arrUserInput);
+            }
+        );
     }
 
     /**
@@ -179,16 +169,11 @@ trait BookingTrait
      */
     protected function getBookingErrorKey(SlotCollection $slotCollection): string|null
     {
-        $slotCollection->reset();
-
-        if ($slotCollection->count() < 1) {
+        if ($slotCollection->isEmpty()) {
             return 'RBB.ERR.selectBookingDatesPlease';
         }
 
-        while ($slotCollection->next()) {
-            /** @var SlotMain $slot */
-            $slot = $slotCollection->current();
-
+        foreach ($slotCollection as $slot) {
             if ($slot->isBookable()) {
                 continue;
             }

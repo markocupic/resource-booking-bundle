@@ -66,7 +66,7 @@ class BlockedSlotCleanup
      *
      * @throws Exception
      */
-    public function removeTimeSlots(array $timeSlotIds): array
+    public function removeTimeSlots(array $timeSlotIds): int
     {
         $timeSlotIds = array_values(array_filter(array_map('intval', $timeSlotIds)));
         $updated = 0;

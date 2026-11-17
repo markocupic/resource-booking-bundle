@@ -72,11 +72,13 @@ class BlockedSlotCleanupTest extends TestCase
         $connection
             ->expects($this->exactly(2))
             ->method('update')
-            ->willReturnCallback(static function (string $table, array $data, array $criteria) use (&$updates): int {
-                $updates[$criteria['id']] = $data;
+            ->willReturnCallback(
+                static function (string $table, array $data, array $criteria) use (&$updates): int {
+                    $updates[$criteria['id']] = $data;
 
-                return 1;
-            })
+                    return 1;
+                }
+            )
         ;
 
         $this->assertSame(2, (new BlockedSlotCleanup($connection))->removeTimeSlots([7]));

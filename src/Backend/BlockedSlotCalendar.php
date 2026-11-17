@@ -275,6 +275,33 @@ class BlockedSlotCalendar
     }
 
     /**
+     * Returns the slots whose time slot belongs to the timetable of the resource.
+     * Other slots are removed, e.g. after the timetable of the resource has been
+     * replaced or if the request has been manipulated.
+     *
+     * @param list<array{timeSlot: int, date: string}> $slots
+     *
+     * @return list<array{timeSlot: int, date: string}>
+     */
+    public function filterValidSlots(ResourceBookingResourceModel $resource, array $slots): array
+    {
+        $this->framework->initialize();
+
+        $timeSlotModel = $this->framework->getAdapter(ResourceBookingTimeSlotModel::class);
+        $timeSlotTypeId = (int) $resource->timeSlotType;
+        $cache = [];
+
+        return array_values(array_filter(
+            $slots,
+            static function (array $slot) use ($timeSlotModel, $timeSlotTypeId, &$cache): bool {
+                $cache[$slot['timeSlot']] ??= (int) ($timeSlotModel->findById($slot['timeSlot'])?->pid ?? 0);
+
+                return $timeSlotTypeId > 0 && $cache[$slot['timeSlot']] === $timeSlotTypeId;
+            }
+        ));
+    }
+
+    /**
      * Number of bookings and booked items per slot ("<startTime>:<endTime>").
      *
      * @return array<string, array{count: int, items: int}>
@@ -315,29 +342,5 @@ class BlockedSlotCalendar
         }
 
         return $timeSlots;
-    }
-
-    /**
-     * Returns the slots whose time slot belongs to the timetable of the resource.
-     * Other slots are removed, e.g. after the timetable of the resource has been
-     * replaced or if the request has been manipulated.
-     *
-     * @param list<array{timeSlot: int, date: string}> $slots
-     *
-     * @return list<array{timeSlot: int, date: string}>
-     */
-    public function filterValidSlots(ResourceBookingResourceModel $resource, array $slots): array
-    {
-        $this->framework->initialize();
-
-        $timeSlotModel = $this->framework->getAdapter(ResourceBookingTimeSlotModel::class);
-        $timeSlotTypeId = (int) $resource->timeSlotType;
-        $cache = [];
-
-        return array_values(array_filter($slots, static function (array $slot) use ($timeSlotModel, $timeSlotTypeId, &$cache): bool {
-            $cache[$slot['timeSlot']] ??= (int) ($timeSlotModel->findById($slot['timeSlot'])?->pid ?? 0);
-
-            return $timeSlotTypeId > 0 && $cache[$slot['timeSlot']] === $timeSlotTypeId;
-        }));
     }
 }

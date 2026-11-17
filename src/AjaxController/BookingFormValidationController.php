@@ -20,11 +20,13 @@ use Markocupic\ResourceBookingBundle\AjaxController\Traits\BookingTrait;
 use Markocupic\ResourceBookingBundle\AppState\AppState;
 use Markocupic\ResourceBookingBundle\DependencyInjection\Attribute\AsAjaxController;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
+use Markocupic\ResourceBookingBundle\Slot\Slot;
 use Markocupic\ResourceBookingBundle\Slot\SlotFactory;
 use Markocupic\ResourceBookingBundle\User\LoggedInFrontendUser;
 use Markocupic\ResourceBookingBundle\Util\Utils;
 use Markocupic\ResourceBookingBundle\Util\WeekBoundaries;
 use Markocupic\ResourceBookingBundle\Validator\InvalidBookingRequestException;
+use Markocupic\ResourceBookingBundle\WeekCalendar\SlotPresenter;
 use Ramsey\Uuid\Uuid;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -43,6 +45,7 @@ final class BookingFormValidationController extends AbstractController implement
         private readonly TranslatorInterface $translator,
         private readonly SlotFactory $slotFactory,
         private readonly WeekBoundaries $weekBoundaries,
+        private readonly SlotPresenter $slotPresenter,
     ) {
         parent::__construct($framework, $user, $utils);
     }
@@ -84,8 +87,8 @@ final class BookingFormValidationController extends AbstractController implement
         // The booking preview does not need the bookings of other members:
         // remove them, so that no personal data is sent to the front end.
         $ajaxResponse->setData('slotSelection', array_map(
-            static fn (array $slot): array => ['bookings' => [], ...array_diff_key($slot, ['bookings' => true])],
-            $slots->fetchAll(),
+            fn (Slot $slot): array => ['bookings' => [], ...array_diff_key($this->slotPresenter->present($slot), ['bookings' => true])],
+            $slots->all(),
         ));
 
         if ($ajaxResponse->hasErrorMessage()) {

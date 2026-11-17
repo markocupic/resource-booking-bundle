@@ -14,110 +14,57 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\Slot;
 
-class SlotCollection implements \ArrayAccess, \Countable, \IteratorAggregate
+/**
+ * The slots of a booking request (selected slots and their repetitions).
+ *
+ * Immutable: methods that change the collection return a new collection.
+ *
+ * @implements \IteratorAggregate<int, Slot>
+ */
+final class SlotCollection implements \Countable, \IteratorAggregate
 {
-    private int $index = -1;
+    /**
+     * @var list<Slot>
+     */
+    private readonly array $slots;
 
-    private array $slots = [];
-
-    public function __construct(array $slots = [])
+    public function __construct(Slot ...$slots)
     {
-        $slots = array_values($slots);
-
-        foreach ($slots as $slot) {
-            if (!$slot instanceof SlotInterface) {
-                throw new \InvalidArgumentException('Invalid type: '.get_debug_type($slot));
-            }
-        }
-        $this->slots = $slots;
+        $this->slots = array_values($slots);
     }
 
-    public function __get(string $key): mixed
+    /**
+     * Returns a new collection with the slots sorted by start time (ascending).
+     */
+    public function sortedByStartTime(): self
     {
-        return $this->current()->$key ?? null;
+        $slots = $this->slots;
+        usort($slots, static fn (Slot $a, Slot $b): int => (int) $a->startTime <=> (int) $b->startTime);
+
+        return new self(...$slots);
     }
 
-    public function __set(string $key, mixed $value): void
+    /**
+     * Returns a new collection with the result of the callback for every slot.
+     *
+     * @param \Closure(Slot): Slot $callback
+     */
+    public function map(\Closure $callback): self
     {
-        $this->current()->$key = $value;
+        return new self(...array_map($callback, $this->slots));
     }
 
-    public function __isset(string $key): bool
-    {
-        return isset($this->current()->$key);
-    }
-
-    public function first(): static
-    {
-        $this->index = 0;
-
-        return $this;
-    }
-
-    public function last(): static
-    {
-        $this->index = \count($this->slots) - 1;
-
-        return $this;
-    }
-
-    public function reset(): static
-    {
-        $this->index = -1;
-
-        return $this;
-    }
-
-    public function next(): static|false
-    {
-        if (!isset($this->slots[$this->index + 1])) {
-            return false;
-        }
-        ++$this->index;
-
-        return $this;
-    }
-
-    public function prev(): static|false
-    {
-        if ($this->index < 1) {
-            return false;
-        }
-        --$this->index;
-
-        return $this;
-    }
-
-    public function current(): SlotInterface
-    {
-        if ($this->index < 0) {
-            $this->first();
-        }
-
-        return $this->slots[$this->index];
-    }
-
-    public function setRow(array $data): static
-    {
-        $this->current()->setRow($data);
-
-        return $this;
-    }
-
-    public function row(): array
-    {
-        return $this->current()->row();
-    }
-
-    public function delete(): void
-    {
-        unset($this->slots[max($this->index, 0)]);
-        $this->slots = array_values($this->slots);
-    }
-
-    public function getSlots(): array
+    /**
+     * @return list<Slot>
+     */
+    public function all(): array
     {
         return $this->slots;
+    }
+
+    public function isEmpty(): bool
+    {
+        return [] === $this->slots;
     }
 
     public function count(): int
@@ -125,50 +72,9 @@ class SlotCollection implements \ArrayAccess, \Countable, \IteratorAggregate
         return \count($this->slots);
     }
 
-    public function fetchEach(string $key): array
-    {
-        return array_map(static fn (SlotInterface $slot) => $slot->$key, $this->slots);
-    }
-
-    public function fetchAll(): array
-    {
-        return array_map(static fn (SlotInterface $slot) => $slot->row(), $this->slots);
-    }
-
-    public function sortBy(string $key): self
-    {
-        foreach ($this->slots as $slot) {
-            // Reject null/empty string, but allow legitimate "0"/0 values.
-            if ('' === (string) ($slot->{$key} ?? '')) {
-                throw new \InvalidArgumentException(\sprintf("Cannot sort collection: '%s' has an empty value.", $key));
-            }
-        }
-        $slots = $this->slots;
-        usort($slots, static fn ($a, $b) => (string) $a->$key <=> (string) $b->$key);
-
-        return new self($slots);
-    }
-
-    public function offsetExists(mixed $offset): bool
-    {
-        return isset($this->slots[$offset]);
-    }
-
-    public function offsetGet(mixed $offset): SlotInterface|null
-    {
-        return $this->slots[$offset] ?? null;
-    }
-
-    public function offsetSet(mixed $offset, mixed $value): void
-    {
-        throw new \RuntimeException('This collection is immutable.');
-    }
-
-    public function offsetUnset(mixed $offset): void
-    {
-        throw new \RuntimeException('This collection is immutable.');
-    }
-
+    /**
+     * @return \ArrayIterator<int, Slot>
+     */
     public function getIterator(): \ArrayIterator
     {
         return new \ArrayIterator($this->slots);

@@ -14,253 +14,79 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\Tests\Slot;
 
-use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
+use Markocupic\ResourceBookingBundle\Slot\Slot;
 use Markocupic\ResourceBookingBundle\Slot\SlotCollection;
-use Markocupic\ResourceBookingBundle\Slot\SlotInterface;
 use PHPUnit\Framework\TestCase;
 
 class SlotCollectionTest extends TestCase
 {
-    public function testConstructorRejectsNonSlotValues(): void
+    public function testEmptyCollection(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $collection = new SlotCollection();
 
-        new SlotCollection([new \stdClass()]);
-    }
-
-    public function testConstructorReindexesKeys(): void
-    {
-        $a = $this->slot(['id' => 1]);
-        $b = $this->slot(['id' => 2]);
-
-        $collection = new SlotCollection([5 => $a, 9 => $b]);
-
-        $this->assertSame([0, 1], array_keys($collection->getSlots()));
-        $this->assertSame([$a, $b], $collection->getSlots());
-    }
-
-    public function testCountReturnsNumberOfSlots(): void
-    {
-        $this->assertCount(0, new SlotCollection());
-        $this->assertCount(3, new SlotCollection([$this->slot(), $this->slot(), $this->slot()]));
+        $this->assertTrue($collection->isEmpty());
+        $this->assertCount(0, $collection);
+        $this->assertSame([], $collection->all());
     }
 
     public function testIterationYieldsSlotsInOrder(): void
     {
-        $collection = new SlotCollection([
-            $this->slot(['id' => 10]),
-            $this->slot(['id' => 20]),
-            $this->slot(['id' => 30]),
-        ]);
+        $a = $this->slot(100);
+        $b = $this->slot(200);
+        $collection = new SlotCollection($a, $b);
 
-        $seen = [];
-        $collection->reset();
-
-        while ($collection->next()) {
-            $seen[] = $collection->current()->id;
-        }
-
-        $this->assertSame([10, 20, 30], $seen);
-        // Pointer is exhausted.
-        $this->assertFalse($collection->next());
+        $this->assertFalse($collection->isEmpty());
+        $this->assertCount(2, $collection);
+        $this->assertSame([$a, $b], iterator_to_array($collection));
+        $this->assertSame([$a, $b], $collection->all());
     }
 
-    public function testFirstLastAndCurrent(): void
+    public function testListOfSlotsCanBeUnpacked(): void
     {
-        $first = $this->slot(['id' => 1]);
-        $last = $this->slot(['id' => 3]);
+        $slots = [5 => $this->slot(100), 9 => $this->slot(200)];
 
-        $collection = new SlotCollection([$first, $this->slot(['id' => 2]), $last]);
-
-        $this->assertSame($first, $collection->first()->current());
-        $this->assertSame($last, $collection->last()->current());
+        // Keys are not kept: all() is a list
+        $this->assertSame(array_values($slots), (new SlotCollection(...array_values($slots)))->all());
     }
 
-    public function testPrevNavigatesBackwardsAndStopsAtStart(): void
+    public function testSortedByStartTimeReturnsANewCollectionAndLeavesTheOriginalUntouched(): void
     {
-        $collection = new SlotCollection([$this->slot(['id' => 1]), $this->slot(['id' => 2])]);
-
-        $collection->last(); // index 1
-
-        $this->assertSame(1, $collection->prev()->current()->id);
-        // Already at the first element -> prev() returns false.
-        $this->assertFalse($collection->prev());
-    }
-
-    public function testMagicAccessorsDelegateToCurrentSlot(): void
-    {
-        $collection = new SlotCollection([$this->slot(['title' => 'Hello'])]);
-        $collection->first();
-
-        $this->assertSame('Hello', $collection->title);
-        $this->assertTrue(isset($collection->title));
-        $this->assertFalse(isset($collection->missing));
-
-        $collection->title = 'Changed';
-        $this->assertSame('Changed', $collection->current()->title);
-    }
-
-    public function testFetchEachReturnsTheValuesForAKey(): void
-    {
-        $collection = new SlotCollection([
-            $this->slot(['startTime' => 100]),
-            $this->slot(['startTime' => 200]),
-        ]);
-
-        $this->assertSame([100, 200], $collection->fetchEach('startTime'));
-    }
-
-    public function testFetchAllReturnsTheRows(): void
-    {
-        $collection = new SlotCollection([
-            $this->slot(['id' => 1, 'startTime' => 100]),
-            $this->slot(['id' => 2, 'startTime' => 200]),
-        ]);
-
-        $this->assertSame(
-            [
-                ['id' => 1, 'startTime' => 100],
-                ['id' => 2, 'startTime' => 200],
-            ],
-            $collection->fetchAll(),
-        );
-    }
-
-    public function testSortByReturnsANewSortedCollectionAndLeavesTheOriginalUntouched(): void
-    {
-        $original = new SlotCollection([
-            $this->slot(['startTime' => 300]),
-            $this->slot(['startTime' => 100]),
-            $this->slot(['startTime' => 200]),
-        ]);
-
-        $sorted = $original->sortBy('startTime');
+        $original = new SlotCollection($this->slot(300), $this->slot(100), $this->slot(200));
+        $sorted = $original->sortedByStartTime();
 
         $this->assertNotSame($original, $sorted);
-        $this->assertSame([100, 200, 300], $sorted->fetchEach('startTime'));
-        // The original order is preserved (immutability).
-        $this->assertSame([300, 100, 200], $original->fetchEach('startTime'));
+        $this->assertSame([100, 200, 300], $this->startTimes($sorted));
+        $this->assertSame([300, 100, 200], $this->startTimes($original));
     }
 
-    public function testSortByThrowsWhenAValueIsEmpty(): void
+    public function testSortedByStartTimeComparesNumerically(): void
     {
-        $collection = new SlotCollection([
-            $this->slot(['startTime' => 100]),
-            $this->slot(['startTime' => '']),
-        ]);
+        // A string comparison would sort "1000" before "999"
+        $sorted = (new SlotCollection($this->slot(1000), $this->slot(999)))->sortedByStartTime();
 
-        $this->expectException(\InvalidArgumentException::class);
-
-        $collection->sortBy('startTime');
+        $this->assertSame([999, 1000], $this->startTimes($sorted));
     }
 
-    public function testSortByAllowsZeroValues(): void
+    public function testMapReturnsANewCollection(): void
     {
-        $collection = new SlotCollection([
-            $this->slot(['startTime' => 2]),
-            $this->slot(['startTime' => 0]),
-            $this->slot(['startTime' => 1]),
-        ]);
+        $original = new SlotCollection($this->slot(100), $this->slot(200));
+        $mapped = $original->map(static fn (Slot $slot): Slot => $slot->withBookingData(['startTime' => $slot->startTime]));
 
-        // A legitimate 0 must not be treated as "empty".
-        $sorted = $collection->sortBy('startTime');
-
-        $this->assertSame([0, 1, 2], $sorted->fetchEach('startTime'));
-    }
-
-    public function testOffsetSetIsImmutable(): void
-    {
-        $this->expectException(\RuntimeException::class);
-
-        (new SlotCollection([$this->slot()]))->offsetSet(0, $this->slot());
-    }
-
-    public function testOffsetUnsetIsImmutable(): void
-    {
-        $this->expectException(\RuntimeException::class);
-
-        (new SlotCollection([$this->slot()]))->offsetUnset(0);
-    }
-
-    public function testOffsetGetAndExists(): void
-    {
-        $slot = $this->slot(['id' => 42]);
-        $collection = new SlotCollection([$slot]);
-
-        $this->assertTrue($collection->offsetExists(0));
-        $this->assertFalse($collection->offsetExists(1));
-        $this->assertSame($slot, $collection->offsetGet(0));
-        $this->assertNull($collection->offsetGet(99));
-    }
-
-    public function testDeleteRemovesTheCurrentSlotAndReindexes(): void
-    {
-        $collection = new SlotCollection([
-            $this->slot(['id' => 1]),
-            $this->slot(['id' => 2]),
-            $this->slot(['id' => 3]),
-        ]);
-
-        $collection->reset();
-        $collection->next(); // points at id 1
-
-        $collection->delete();
-
-        $this->assertCount(2, $collection);
-        $this->assertSame([2, 3], $collection->fetchEach('id'));
-        $this->assertSame([0, 1], array_keys($collection->getSlots()));
-    }
-
-    public function testGetIteratorIteratesAllSlots(): void
-    {
-        $slots = [$this->slot(['id' => 1]), $this->slot(['id' => 2])];
-        $collection = new SlotCollection($slots);
-
-        $this->assertSame($slots, iterator_to_array($collection));
+        $this->assertNotSame($original, $mapped);
+        $this->assertSame([['startTime' => 100], ['startTime' => 200]], array_map(static fn (Slot $slot): array => $slot->dataBooking, $mapped->all()));
+        $this->assertSame([[], []], array_map(static fn (Slot $slot): array => $slot->dataBooking, $original->all()));
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @return list<int>
      */
-    private function slot(array $data = []): SlotInterface
+    private function startTimes(SlotCollection $collection): array
     {
-        return new class($data) implements SlotInterface {
-            /**
-             * @param array<string, mixed> $data
-             */
-            public function __construct(private array $data = [])
-            {
-            }
+        return array_map(static fn (Slot $slot): int => $slot->startTime, $collection->all());
+    }
 
-            public function __get(string $key): mixed
-            {
-                return $this->data[$key] ?? null;
-            }
-
-            public function __set(string $key, mixed $value): void
-            {
-                $this->data[$key] = $value;
-            }
-
-            public function __isset(string $key): bool
-            {
-                return isset($this->data[$key]);
-            }
-
-            public function create(int $timeSlotId, ResourceBookingResourceModel $resource, int $startTime, int $endTime, int $requestedItems = 1, int|null $bookingRepeatStopWeekTstamp = null): SlotInterface
-            {
-                return $this;
-            }
-
-            public function row(): array
-            {
-                return $this->data;
-            }
-
-            public function setRow(array $data): void
-            {
-                $this->data = $data;
-            }
-        };
+    private function slot(int $startTime): Slot
+    {
+        return new Slot(['startTime' => $startTime, 'endTime' => $startTime + 60], null, 0);
     }
 }

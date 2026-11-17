@@ -133,7 +133,7 @@ final class CancelController extends AbstractController implements ControllerInt
     }
 
     /**
-     * A booking can be canceled until its end (same rule as AbstractSlot::isWithinAllowedDateRange()).
+     * A booking can be canceled until its end (same rule as Slot::isWithinAllowedDateRange()).
      *
      * @param array<string, mixed> $booking
      */

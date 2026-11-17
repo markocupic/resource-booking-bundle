@@ -11,5 +11,6 @@ services:
             - '../src/Response/AjaxResponse.php'
             - '../src/AppState/AppState.php'
             - '../src/Booking/BookingSource.php'
+            - '../src/Slot/{Slot,SlotCollection}.php'
             - '../src/Util/BlockedSlots.php'
             - '../src/Validator/InvalidBookingRequestException.php'

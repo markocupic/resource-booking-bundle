@@ -14,17 +14,19 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\Tests\WeekCalendar;
 
+use Contao\Config;
+use Contao\Date;
 use Contao\MemberModel;
 use Contao\ModuleModel;
 use Contao\TestCase\ContaoTestCase;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotModel;
+use Markocupic\ResourceBookingBundle\Slot\Slot;
 use Markocupic\ResourceBookingBundle\Slot\SlotFactory;
-use Markocupic\ResourceBookingBundle\Slot\SlotMain;
 use Markocupic\ResourceBookingBundle\Util\Utils;
 use Markocupic\ResourceBookingBundle\WeekCalendar\BookingPresenter;
+use Markocupic\ResourceBookingBundle\WeekCalendar\SlotPresenter;
 use Markocupic\ResourceBookingBundle\WeekCalendar\WeekTableBuilder;
-use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class WeekTableBuilderTest extends ContaoTestCase
@@ -93,9 +95,23 @@ class WeekTableBuilderTest extends ContaoTestCase
             ->willReturn(null)
         ;
 
+        $configAdapter = $this->createAdapterStub(['get']);
+        $configAdapter
+            ->method('get')
+            ->willReturn('d.m.Y')
+        ;
+
+        $dateAdapter = $this->createAdapterStub(['parse']);
+        $dateAdapter
+            ->method('parse')
+            ->willReturnCallback(static fn (string $format, int $tstamp): string => date($format, $tstamp))
+        ;
+
         $framework = $this->createContaoFrameworkStub([
             ResourceBookingTimeSlotModel::class => $timeSlotAdapter,
             MemberModel::class => $memberAdapter,
+            Config::class => $configAdapter,
+            Date::class => $dateAdapter,
         ]);
 
         // Monday 08:00 is booked by member 7
@@ -109,14 +125,12 @@ class WeekTableBuilderTest extends ContaoTestCase
         ;
 
         $slotFactory
-            ->method('get')
+            ->method('create')
             ->willReturnCallback(
-                function (int $timeSlotId, string $mode, ResourceBookingResourceModel $resource, int $startTime, int $endTime) use ($week, $booking, $framework): SlotMain {
-                    $slot = new SlotMain($framework, $this->createStub(TokenStorageInterface::class), $this->createStub(Utils::class));
+                static function (int $timeSlotId, ResourceBookingResourceModel $resource, int $startTime, int $endTime) use ($week, $booking): Slot {
                     $isMonday = $startTime === $week + 8 * 3600;
-                    $slot->setRow(['timeSlotId' => $timeSlotId, 'startTime' => $startTime, 'endTime' => $endTime, 'hasBookings' => $isMonday, 'bookings' => $isMonday ? [$booking] : [], 'resource' => ['itemsAvailable' => 1]]);
 
-                    return $slot;
+                    return new Slot(['timeSlotId' => $timeSlotId, 'startTime' => $startTime, 'endTime' => $endTime, 'bookings' => $isMonday ? [$booking] : [], 'resource' => ['itemsAvailable' => 1]], null, $week);
                 },
             )
         ;
@@ -138,7 +152,7 @@ class WeekTableBuilderTest extends ContaoTestCase
             ->willReturn('Anonym')
         ;
 
-        $builder = new WeekTableBuilder($framework, $slotFactory, new BookingPresenter($translator), $utils);
+        $builder = new WeekTableBuilder($framework, $slotFactory, new BookingPresenter($translator), new SlotPresenter($framework), $utils);
 
         $module = $this->createClassWithPropertiesStub(ModuleModel::class, ['id' => 5]);
         $resource = $this->createClassWithPropertiesStub(ResourceBookingResourceModel::class, ['id' => 3, 'timeSlotType' => 2]);
@@ -158,6 +172,10 @@ class WeekTableBuilderTest extends ContaoTestCase
         [$monday, $tuesday] = $rows[0]['cellData'];
 
         $this->assertSame('bookingCheckbox_modId_5_0_1', $tuesday['bookingCheckboxId']);
+        // The texts for the display come from the SlotPresenter
+        $this->assertSame('17.11.2026', $tuesday['date']);
+        $this->assertArrayHasKey('datimSpanString', $tuesday);
+        $this->assertArrayHasKey('timeSpanString', $tuesday);
         $this->assertSame(\sprintf('1-%s-%s-%s', $week + 86400 + 8 * 3600, $week + 86400 + 9 * 3600, $week), $tuesday['bookingCheckboxValue']);
 
         // The booking is passed through the presenter: no original row of tl_resource_booking

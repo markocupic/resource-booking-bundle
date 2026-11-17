@@ -22,7 +22,6 @@ use Contao\StringUtil;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotModel;
 use Markocupic\ResourceBookingBundle\Slot\SlotFactory;
-use Markocupic\ResourceBookingBundle\Slot\SlotMain;
 use Markocupic\ResourceBookingBundle\Util\ResourceBookingRestriction;
 use Markocupic\ResourceBookingBundle\Util\UtcTimeHelper;
 use Markocupic\ResourceBookingBundle\Util\Utils;
@@ -42,6 +41,7 @@ class WeekTableBuilder
         private readonly ContaoFramework $framework,
         private readonly SlotFactory $slotFactory,
         private readonly BookingPresenter $bookingPresenter,
+        private readonly SlotPresenter $slotPresenter,
         private readonly Utils $utils,
     ) {
     }
@@ -243,28 +243,29 @@ class WeekTableBuilder
         $startTime = $dayStart + (int) $timeSlot['startTime'];
         $endTime = $dayStart + (int) $timeSlot['endTime'];
 
-        /** @var SlotMain $slot */
-        $slot = $this->slotFactory->get((int) $timeSlot['id'], SlotMain::MODE, $resource, $startTime, $endTime);
+        $slot = $this->slotFactory->create((int) $timeSlot['id'], $resource, $startTime, $endTime);
 
-        $slot->setIndex($dayIndex);
-        $slot->setBookingCheckboxId(self::getBookingCheckboxId((int) $moduleModel->id, $rowIndex, $dayIndex));
-        $slot->setBookingCheckboxValue(self::getBookingCheckboxValue((int) $timeSlot['id'], $startTime, $endTime, $activeWeekTstamp));
+        $cell = [
+            ...$this->slotPresenter->present($slot),
+            'index' => $dayIndex,
+            'bookingCheckboxId' => self::getBookingCheckboxId((int) $moduleModel->id, $rowIndex, $dayIndex),
+            'bookingCheckboxValue' => self::getBookingCheckboxValue((int) $timeSlot['id'], $startTime, $endTime, $activeWeekTstamp),
+        ];
 
-        if ($slot->hasBookings) {
+        // Only explicitly permitted data of the bookings is sent to the front end
+        if ($slot->hasBookings()) {
             $isCancelable = $slot->isCancelable();
             $loggedInUserId = null === $user ? null : (int) $user->id;
-            $bookings = [];
+            $cell['bookings'] = [];
 
-            foreach ($slot->bookings as $booking) {
+            foreach ($slot->getBookings() as $booking) {
                 $member = $this->framework->getAdapter(MemberModel::class)->findById($booking['member']);
 
-                $bookings[] = $this->bookingPresenter->present($booking, $member?->row(), $loggedInUserId, $memberFields, $bookingFields, $isCancelable);
+                $cell['bookings'][] = $this->bookingPresenter->present($booking, $member?->row(), $loggedInUserId, $memberFields, $bookingFields, $isCancelable);
             }
-
-            $slot->setBookings($bookings);
         }
 
-        return $slot->row();
+        return $cell;
     }
 
     /**

@@ -14,8 +14,10 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\Tests\Slot;
 
+use Contao\CoreBundle\Framework\Adapter;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Doctrine\DBAL\Connection;
+use Markocupic\ResourceBookingBundle\Model\ResourceBookingBlockedPeriodModel;
 use Markocupic\ResourceBookingBundle\Slot\SlotDataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
@@ -90,6 +92,39 @@ class SlotDataProviderTest extends TestCase
 
         // Not preloaded anymore: queried again.
         $provider->getBookings(7, 1100, 1200);
+    }
+
+    public function testBlockedPeriodsAreLoadedOncePerRequest(): void
+    {
+        $periods = [['id' => 1, 'mode' => 'period']];
+
+        $adapter = $this->getMockBuilder(Adapter::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['__call'])
+            ->getMock()
+        ;
+
+        $adapter
+            ->expects($this->exactly(2))
+            ->method('__call')
+            ->with('findPublishedRows', [])
+            ->willReturn($periods)
+        ;
+
+        $framework = $this->createStub(ContaoFramework::class);
+        $framework
+            ->method('getAdapter')
+            ->willReturnMap([[ResourceBookingBlockedPeriodModel::class, $adapter]])
+        ;
+
+        $provider = new SlotDataProvider($framework, $this->createStub(TokenStorageInterface::class), $this->createStub(Connection::class));
+
+        $this->assertSame($periods, $provider->getBlockedPeriods());
+        $this->assertSame($periods, $provider->getBlockedPeriods());
+
+        // After reset() (next request) they are loaded again
+        $provider->reset();
+        $this->assertSame($periods, $provider->getBlockedPeriods());
     }
 
     private function createProvider(Connection $connection): SlotDataProvider

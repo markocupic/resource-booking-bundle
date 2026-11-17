@@ -57,22 +57,26 @@ class MoveBlockedBookingsToBlockedPeriodsTest extends TestCase
         $connection
             ->expects($this->exactly(2))
             ->method('insert')
-            ->willReturnCallback(static function (string $table, array $data) use (&$inserted): int {
-                $inserted[] = $data;
+            ->willReturnCallback(
+                static function (string $table, array $data) use (&$inserted): int {
+                    $inserted[] = $data;
 
-                return 1;
-            })
+                    return 1;
+                }
+            )
         ;
 
         $statements = [];
 
         $connection
             ->method('executeStatement')
-            ->willReturnCallback(static function (string $sql) use (&$statements): int {
-                $statements[] = $sql;
+            ->willReturnCallback(
+                static function (string $sql) use (&$statements): int {
+                    $statements[] = $sql;
 
-                return 0;
-            })
+                    return 0;
+                }
+            )
         ;
 
         $result = $this->migration($connection)->run();

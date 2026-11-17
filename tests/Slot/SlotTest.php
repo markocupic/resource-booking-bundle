@@ -14,20 +14,14 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\Tests\Slot;
 
-use Contao\CoreBundle\Framework\ContaoFramework;
-use Contao\MemberModel;
-use Markocupic\ResourceBookingBundle\Slot\AbstractSlot;
-use Markocupic\ResourceBookingBundle\Slot\SlotMain;
-use Markocupic\ResourceBookingBundle\Util\Utils;
+use Markocupic\ResourceBookingBundle\Slot\Slot;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 
 /**
- * Exercises the booking arithmetic inherited from AbstractSlot through the
- * concrete SlotMain. Bookings and resource are injected via setRow() so the
- * methods run without database access or time() dependencies.
+ * Exercises the booking rules of the slot. The slot is a value object: bookings,
+ * resource and the current time are passed to the constructor, no database access.
  */
-class SlotMainTest extends TestCase
+class SlotTest extends TestCase
 {
     public function testIsFullyBookedReflectsBookedItemsAgainstCapacity(): void
     {
@@ -70,9 +64,8 @@ class SlotMainTest extends TestCase
                 ['itemsBooked' => 1, 'member' => 9],
             ],
             requestedItems: 1,
+            loggedInMemberId: 5,
         );
-
-        $this->setLoggedInUserId($slot, 5);
 
         // Own booking excluded => 1 booked + 1 requested = 2 <= 2 => fits.
         $this->assertTrue($slot->canFulfillRequestedItems());
@@ -105,7 +98,7 @@ class SlotMainTest extends TestCase
 
     public function testSlotWithoutValidationResultIsNotBookable(): void
     {
-        // A slot that has not been created by AbstractSlot::create() must never be bookable
+        // A slot without the result of the time slot validation (see SlotFactory::create()) must never be bookable
         $slot = $this->slotWith(1, [], isValidTimeSlot: null);
 
         $this->assertFalse($slot->isValidTimeSlot());
@@ -180,49 +173,70 @@ class SlotMainTest extends TestCase
         $this->assertFalse($slot->isWithinAllowedDateRange());
     }
 
-    private function setLoggedInUserId(SlotMain $slot, int $id): void
+    public function testRowContainsTheResultsOfTheRules(): void
     {
-        $user = $this->createMock(MemberModel::class);
-        $user
-            ->method('__get')
-            ->willReturnCallback(static fn (string $key): mixed => 'id' === $key ? $id : null)
-        ;
+        $slot = $this->slotWith(2, [['itemsBooked' => 1, 'member' => 5]], loggedInMemberId: 5);
+        $row = $slot->row();
 
-        $property = new \ReflectionProperty(AbstractSlot::class, 'user');
-        $property->setAccessible(true);
-        $property->setValue($slot, $user);
+        $this->assertTrue($row['isBookable']);
+        $this->assertTrue($row['userIsLoggedIn']);
+        $this->assertTrue($row['hasBookings']);
+        $this->assertSame(1, $row['bookingCount']);
+        $this->assertSame(1, $row['itemsStillAvailable']);
+        $this->assertTrue($row['userHasBooked']);
+        $this->assertSame(5, $row['userBooking']['member']);
+        $this->assertTrue($row['isCancelable']);
+
+        // Magic access: input data and results of the rules
+        $this->assertSame(2, $slot->resource['itemsAvailable']);
+        $this->assertTrue($slot->isCancelable);
+    }
+
+    public function testGuestCannotCancel(): void
+    {
+        $slot = $this->slotWith(2, [['itemsBooked' => 1, 'member' => 5]]);
+
+        $this->assertFalse($slot->isCancelable());
+        $this->assertNull($slot->getUserBooking());
+        $this->assertFalse($slot->userIsLoggedIn);
+    }
+
+    public function testWithBookingDataReturnsACopy(): void
+    {
+        $slot = $this->slotWith(1, []);
+        $copy = $slot->withBookingData(['title' => 'Booking']);
+
+        $this->assertNotSame($slot, $copy);
+        $this->assertSame([], $slot->dataBooking);
+        $this->assertSame(['title' => 'Booking'], $copy->dataBooking);
+        $this->assertSame($slot->startTime, $copy->startTime);
     }
 
     /**
      * @param array<int, array<string, mixed>> $bookings
      */
-    private function slotWith(int $itemsAvailable, array $bookings, int $requestedItems = 1, array|null $resource = null, string $weekday = 'monday', int|null $startTime = null, int|null $endTime = null, int|null $firstDayOfWeek = null, int|null $lastPermittedWeek = null, string|null $timeSlotWeekdays = null, array|null $blockedPeriod = null, bool|null $isValidTimeSlot = true): SlotMain
+    private function slotWith(int $itemsAvailable, array $bookings, int $requestedItems = 1, array|null $resource = null, string $weekday = 'monday', int|null $startTime = null, int|null $endTime = null, int|null $firstDayOfWeek = null, int|null $lastPermittedWeek = null, string|null $timeSlotWeekdays = null, array|null $blockedPeriod = null, bool|null $isValidTimeSlot = true, int|null $loggedInMemberId = null): Slot
     {
         $startTime ??= strtotime('tomorrow 08:00');
         $endTime ??= $startTime + 3600;
 
-        $slot = new SlotMain(
-            $this->createMock(ContaoFramework::class),
-            $this->createMock(TokenStorageInterface::class),
-            $this->createMock(Utils::class),
+        return new Slot(
+            [
+                'resource' => $resource ?? ['itemsAvailable' => $itemsAvailable],
+                'itemsBooked' => $requestedItems,
+                'bookings' => $bookings,
+                'weekday' => $weekday,
+                'startTime' => $startTime,
+                'endTime' => $endTime,
+                // Timestamp of the first day of the week up to which the booking is repeated.
+                'bookingRepeatStopWeekTstamp' => $startTime,
+                'beginWeekTimestampSelectedWeek' => $firstDayOfWeek,
+                'lastPermittedWeekTstamp' => $lastPermittedWeek,
+                'timeSlotWeekdays' => $timeSlotWeekdays,
+                'blockedPeriod' => $blockedPeriod,
+                'isValidTimeSlot' => $isValidTimeSlot,
+            ],
+            $loggedInMemberId, time(),
         );
-
-        $slot->setRow([
-            'resource' => $resource ?? ['itemsAvailable' => $itemsAvailable],
-            'itemsBooked' => $requestedItems,
-            'bookings' => $bookings,
-            'weekday' => $weekday,
-            'startTime' => $startTime,
-            'endTime' => $endTime,
-            // Timestamp of the first day of the week up to which the booking is repeated.
-            'bookingRepeatStopWeekTstamp' => $startTime,
-            'beginWeekTimestampSelectedWeek' => $firstDayOfWeek,
-            'lastPermittedWeekTstamp' => $lastPermittedWeek,
-            'timeSlotWeekdays' => $timeSlotWeekdays,
-            'blockedPeriod' => $blockedPeriod,
-            'isValidTimeSlot' => $isValidTimeSlot,
-        ]);
-
-        return $slot;
     }
 }

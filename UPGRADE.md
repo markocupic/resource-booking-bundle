@@ -373,7 +373,7 @@ Das Aussehen lässt sich über CSS-Variablen anpassen (z. B. `--rbb-primary`, `-
 * Die Wochentag- und Datumseinschränkungen sowie die Anzahl Wochen voraus werden nicht mehr nur im Frontend
   (Ausblenden), sondern auch beim Buchen serverseitig geprüft. Ungültige Buchungen werden mit den neuen
   Fehlermeldungen `RBB.ERR.outsideBookingPeriod` bzw. `RBB.ERR.slotInBlockedPeriod` abgelehnt.
-* `SlotBooking::isBookable()` prüft neu auch den erlaubten Zeitraum. Bisher konnten per Ajax-Request Slots in der
+* `Slot::isBookable()` prüft neu auch den erlaubten Zeitraum. Bisher konnten per Ajax-Request Slots in der
   Vergangenheit oder nach dem Buchungsstop-Datum gebucht werden.
 * Die Wochennavigation (erste/letzte erlaubte Woche) hängt von der aktiven Ressource ab und wird beim Wechsel der
   Ressource neu berechnet.
@@ -415,14 +415,15 @@ Das Aussehen lässt sich über CSS-Variablen anpassen (z. B. `--rbb-primary`, `-
 * `DateHelper::isWithinAllowedDateRange()` wurde entfernt. Die erlaubten Wochen werden mit `WeekBoundaries`
   berechnet.
 * Neue Klassen: `Util\WeekBoundaries` und `Util\ResourceBookingRestriction`.
-* Neue Methoden in `AbstractSlot`: `isOutsideBookingPeriod()`, `isTimeSlotAvailable()`, `isInBlockedPeriod()`,
+* Neue Methoden in `Slot`: `isOutsideBookingPeriod()`, `isTimeSlotAvailable()`, `isInBlockedPeriod()`,
   `isValidTimeSlot()` und `hasValidItemCount()`.
 * Neue Konstanten in `RbbConfig`: `RBB_DEFAULT_WEEKS_BACK`, `RBB_DEFAULT_WEEKS_AHEAD`,
   `RBB_DEFAULT_BEGIN_WEEK` und `RBB_BASE_PERMITTED_FORM_FIELDS`.
 * Neue Methode `ResourceBookingRestriction::getBeginWeek()`.
 * Neue Klasse `Slot\SlotDataProvider` (Daten der Slots pro Request, `preloadBookings()`); `SlotFactory` und
-  `AbstractSlot` erhalten sie als optionalen letzten Konstruktor-Parameter, `SlotFactory::preloadBookings()` ist neu.
-  `AbstractSlot::getUserBooking()` liefert die Buchungszeile direkt (ohne erneutes Laden).
+  `Slot` erhalten sie als Pflicht-Parameter (siehe «Slots: eine Klasse `Slot`, `SlotFactory::create()`, `SlotPresenter`»),
+  `SlotFactory::preloadBookings()` ist neu.
+  `Slot::getUserBooking()` liefert die Buchungszeile direkt (ohne erneutes Laden).
 * `BookingTrait` erhält zusätzlich `WeekBoundaries` (Setter `setWeekBoundaries()`).
 * Die Tabelle des Wochenkalenders wird neu von `WeekCalendar\WeekTableBuilder` erzeugt, die Daten einer Buchung von
   `WeekCalendar\BookingPresenter`.
@@ -544,6 +545,34 @@ der neuen `AjaxController\AjaxControllerRegistry`. Die Controller registrieren s
 * Die Konstante `REQUEST_NAME` der Ajax-Controller heisst neu `ACTION`. `CancelController::ACTION` ist
   `cancelBookingRequest` (bisher `REQUEST_NAME = 'cancelRequest'`, was nicht der Aktion des Frontends entsprach).
 * `Exception\UnknownAjaxActionException` wirft neu `AjaxControllerRegistry::get()`.
+
+### Slots: eine Klasse `Slot`, `SlotFactory::create()`, `SlotPresenter`
+
+* `Slot\AbstractSlot`, `Slot\SlotMain` und `Slot\SlotBooking` wurden durch die Klasse `Slot\Slot` ersetzt. Im
+  Wochenkalender und bei Buchungsanfragen gelten dieselben Regeln: `Slot::isBookable()` ist wahr, wenn alle Regeln
+  erfüllt sind und genug Einheiten für die angefragten Einheiten frei sind (im Kalender 1; eigene Buchungen des
+  eingeloggten Mitglieds zählen nicht). Die Konstanten `MODE` entfallen.
+* `Slot\SlotFactory::get($timeSlotId, $mode, …)` wurde entfernt. Neu:
+  `create($timeSlotId, $resource, $startTime, $endTime, $requestedItems = 1, $bookingRepeatStopWeekTstamp = null)`.
+  Jeder Aufruf liefert einen neuen Slot.
+* `Slot` ist ein unveränderliches Wertobjekt ohne Services: `new Slot(array $data, ?int $loggedInMemberId, int $now)`.
+  Die Daten (Zeitfenster, Zeitplan, Buchungen, Sperrzeit, eingeloggtes Mitglied, aktuelle Zeit) sammelt
+  `SlotFactory::create()` über den `SlotDataProvider` (pro Request zwischengespeichert) und die `ClockInterface`
+  (`new SlotFactory($framework, $dataProvider, $clock)`, neue Abhängigkeit `symfony/clock`). `TokenStorageInterface` und
+  `Utils` entfallen.
+* Entfernt: `Slot\SlotInterface`, `initialize()`, `setRow()` und `setBookingData()`. Neu:
+  `Slot::withBookingData($data)` liefert eine Kopie. `row()` liefert die Eingabedaten und die Ergebnisse der Regeln
+  (`isBookable`, `isCancelable`, `userBooking` usw.).
+* `SlotCollection` ist neu unveränderlich und enthält nur `Slot`-Objekte: `new SlotCollection(...$slots)`,
+  `sortedByStartTime()`, `map()`, `all()`, `isEmpty()`, `count()` und `foreach`. Entfernt: der Positionszeiger
+  (`first()`, `last()`, `next()`, `prev()`, `reset()`, `current()`), `delete()`, `sortBy()`, `fetchEach()`, `fetchAll()`,
+  `getSlots()` (neu `all()`), `setRow()`, `row()`, der Array-Zugriff und die magischen Zugriffe auf den aktuellen Slot.
+* Neu: `SlotDataProvider::getBlockedPeriods()` lädt die veröffentlichten Sperrzeiten einmal pro Request.
+* Der Slot enthält keine Darstellung mehr. `startTimeString`, `endTimeString`, `date`, `datimSpanString` und
+  `timeSpanString` erzeugt neu `WeekCalendar\SlotPresenter::present($slot)`; ebenso fügt `WeekTableBuilder` `index`,
+  `bookingCheckboxId`, `bookingCheckboxValue` und die aufbereiteten Buchungen hinzu. Die JSON-Schlüssel im Frontend
+  bleiben gleich. Entfernt: `setIndex()`, `setBookingCheckboxId()`, `setBookingCheckboxValue()`, `setTimeSlotId()`,
+  `setBookings()`.
 
 ### Farbschema pro Modul
 

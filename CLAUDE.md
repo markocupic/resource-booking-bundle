@@ -68,7 +68,7 @@ noch von Migrationen gelesen.
 
 ### Buchen (serverseitige Prüfungen – nichts nur im Frontend verlassen!)
 
-Ein Slot ist buchbar (`SlotMain::isBookable()` / `SlotBooking::isBookable()`), wenn **alle** zutreffen:
+Ein Slot ist buchbar (`Slot::isBookable()`, im Kalender mit 1 angefragten Einheit), wenn **alle** zutreffen:
 
 1. `isValidTimeSlot()`: Zeitfenster und Zeitplan veröffentlicht, Zeitplan = Zeitplan der Ressource, Start/Ende
    passen exakt zum Zeitfenster (auch bei Sommerzeit-Wechsel und Wiederholungen).
@@ -153,10 +153,14 @@ Neue Buchungen: `confirmed` = `autoConfirm` der Ressource. Unbestätigte Buchung
 - Backend-Startseite: Suche nach `bookingUuid` (Präfix ab 8 Zeichen) per Hook `parseBackendTemplate`
   (`AddBookingSearchToWelcomeScreenListener`, Template `@Contao/backend/rbb_booking_search.html.twig`, Abfrage in
   `Backend\BookingSearch`); Zugriff: Admin oder Modul `resource`. Kein Override von `be_welcome`.
-- Slots: `Slot\AbstractSlot::create()` sammelt alle Prüfergebnisse in `arrData`; `SlotMain` (Kalender) und
-  `SlotBooking` (Buchung).
-- Datenzugriff der Slots über `Slot\SlotDataProvider` (pro Request gecacht, `ResetInterface`): Mitglied, Zeitfenster,
-  Zeitplan; `WeekTableBuilder` lädt die Buchungen der Woche vorab (`SlotFactory::preloadBookings()`, eine Abfrage).
+- Slots entstehen über `SlotFactory::create()` (eine Klasse `Slot\Slot` für Kalender und Buchung).
+- `Slot` ist ein unveränderliches Wertobjekt ohne Services (Daten, ID des Mitglieds, aktuelle Zeit im Konstruktor;
+  Regeln als reine Methoden, `row()` liefert Daten + Ergebnisse). Daten sammeln nur `SlotFactory::create()` und
+  `SlotDataProvider` (inkl. Sperrzeiten); Zeit über `ClockInterface` (kein `time()`). Darstellung (Datums-/Zeittexte)
+  nur in `WeekCalendar\SlotPresenter`, nicht im Slot. In Tests Slots direkt mit `new Slot([...], $memberId, $now)`.
+- `SlotCollection` (Buchungsanfrage): unveränderlich, nur `Slot`, mit `foreach` durchlaufen; kein Positionszeiger.
+- Datenzugriff für Slots nur über `Slot\SlotDataProvider` (Pflicht in der `SlotFactory`, pro Request gecacht,
+  `ResetInterface`): Mitglied, Zeitfenster, Zeitplan, Buchungen, Sperrzeiten; `WeekTableBuilder` lädt die Buchungen der Woche vorab (`SlotFactory::preloadBookings()`, eine Abfrage).
   Keine Abfragen pro Zelle einführen.
 - Zentrale Regeln (statisch, testbar): `Util\ResourceBookingRestriction` (`getBeginWeek`, `isValidTimeSlot`,
   `isTimeSlotAvailableOnWeekday`, `isInBlockedPeriod`, `getWeeksBack/Ahead`, `getBookableUntil`,
