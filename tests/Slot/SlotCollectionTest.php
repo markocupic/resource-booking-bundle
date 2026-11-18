@@ -73,8 +73,8 @@ class SlotCollectionTest extends TestCase
         $mapped = $original->map(static fn (Slot $slot): Slot => $slot->withBookingData(['startTime' => $slot->startTime]));
 
         $this->assertNotSame($original, $mapped);
-        $this->assertSame([['startTime' => 100], ['startTime' => 200]], array_map(static fn (Slot $slot): array => $slot->dataBooking, $mapped->all()));
-        $this->assertSame([[], []], array_map(static fn (Slot $slot): array => $slot->dataBooking, $original->all()));
+        $this->assertSame([['startTime' => 100], ['startTime' => 200]], array_map(static fn (Slot $slot): array => $slot->bookingData, $mapped->all()));
+        $this->assertSame([[], []], array_map(static fn (Slot $slot): array => $slot->bookingData, $original->all()));
     }
 
     /**
@@ -87,6 +87,6 @@ class SlotCollectionTest extends TestCase
 
     private function slot(int $startTime): Slot
     {
-        return new Slot(['startTime' => $startTime, 'endTime' => $startTime + 60], null, 0);
+        return new Slot(timeSlotId: 1, resource: [], startTime: $startTime, endTime: $startTime + 60, now: 0);
     }
 }

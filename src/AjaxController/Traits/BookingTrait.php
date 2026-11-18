@@ -96,7 +96,7 @@ trait BookingTrait
                 $arrSlotCollection[] = $slot;
 
                 // Stop repeating
-                if ($slot->beginWeekTimestampSelectedWeek >= $bookingRepeatStopWeekTstamp) {
+                if ($slot->weekStart >= $bookingRepeatStopWeekTstamp) {
                     break;
                 }
             }
@@ -179,11 +179,11 @@ trait BookingTrait
             }
 
             return match (true) {
-                !$slot->isValidTimeSlot() => 'RBB.ERR.invalidTimeSlot',
+                !$slot->isValidTimeSlot => 'RBB.ERR.invalidTimeSlot',
                 !$slot->hasValidItemCount() => 'RBB.ERR.invalidItemsBooked',
                 $slot->isOutsideBookingPeriod() => 'RBB.ERR.outsideBookingPeriod',
-                !$slot->isWithinAllowedDateRange() => 'RBB.ERR.invalidStartOrEndTime',
-                !$slot->isTimeSlotAvailable() => 'RBB.ERR.timeSlotNotAvailableOnWeekday',
+                !$slot->isInBookingWindow() => 'RBB.ERR.invalidStartOrEndTime',
+                !$slot->isAvailableOnWeekday() => 'RBB.ERR.timeSlotNotAvailableOnWeekday',
                 $slot->isInBlockedPeriod() => 'RBB.ERR.slotInBlockedPeriod',
                 $slot->isFullyBooked() => 'RBB.ERR.resourceIsAlreadyFullyBooked',
                 default => 'RBB.ERR.notEnoughItemsAvailable',

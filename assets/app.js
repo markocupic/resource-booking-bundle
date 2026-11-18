@@ -330,7 +330,7 @@ if (typeof ResourceBookingApp !== 'function') {
                         const formData = new FormData(form);
                         formData.append('REQUEST_TOKEN', this.options.requestToken);
                         formData.append('action', action);
-                        formData.append('resourceId', this.bookingWindow.activeTimeSlot.pid);
+                        formData.append('resourceId', this.bookingWindow.activeTimeSlot.resourceId);
                         this.appendAppState(formData);
 
                         for (const selectedTimeSlot of this.bookingWindow.selectedTimeSlots) {
@@ -415,7 +415,7 @@ if (typeof ResourceBookingApp !== 'function') {
                         const formData = new FormData();
                         formData.append('REQUEST_TOKEN', this.options.requestToken);
                         formData.append('action', action);
-                        formData.append('resourceId', this.bookingWindow.activeTimeSlot.pid);
+                        formData.append('resourceId', this.bookingWindow.activeTimeSlot.resourceId);
                         formData.append('bookingRepeatStopWeekTstamp', this.$el.querySelector('.rbb-js-booking-repeat-stop-week-tstamp').value);
                         this.appendAppState(formData);
                         formData.append('itemsBooked', this.$el.querySelector('[name="itemsBooked"]') ? this.$el.querySelector('[name="itemsBooked"]').value : '1');

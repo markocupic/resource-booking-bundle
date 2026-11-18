@@ -20,7 +20,6 @@ use Markocupic\ResourceBookingBundle\AjaxController\Traits\BookingTrait;
 use Markocupic\ResourceBookingBundle\AppState\AppState;
 use Markocupic\ResourceBookingBundle\DependencyInjection\Attribute\AsAjaxController;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
-use Markocupic\ResourceBookingBundle\Slot\Slot;
 use Markocupic\ResourceBookingBundle\Slot\SlotFactory;
 use Markocupic\ResourceBookingBundle\User\LoggedInFrontendUser;
 use Markocupic\ResourceBookingBundle\Util\Utils;
@@ -84,10 +83,9 @@ final class BookingFormValidationController extends AbstractController implement
             $ajaxResponse->setErrorMessage($this->translator->trans($errorKey, [], 'contao_default'));
         }
 
-        // The booking preview does not need the bookings of other members:
-        // remove them, so that no personal data is sent to the front end.
+        // The booking preview contains no bookings of other members (SlotPresenter)
         $ajaxResponse->setData('slotSelection', array_map(
-            fn (Slot $slot): array => ['bookings' => [], ...array_diff_key($this->slotPresenter->present($slot), ['bookings' => true])],
+            $this->slotPresenter->present(...),
             $slots->all(),
         ));
 

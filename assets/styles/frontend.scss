@@ -822,7 +822,7 @@ $rbb-breakpoint-xl: 1200px;
       }
 
       // Past / outside the booking period
-      &.rbb-time-slot-cell[data-isinvaliddate="true"] {
+      &.rbb-time-slot-cell[data-isoutsidebookingwindow="true"] {
         background: var(--rbb-cell-not-bookable-bg);
         color: var(--rbb-cell-not-bookable-color);
         outline: 0;
@@ -842,7 +842,7 @@ $rbb-breakpoint-xl: 1200px;
 
       // At least one booking has not been confirmed yet (orange). An own
       // booking keeps its accent border.
-      &.rbb-time-slot-cell[data-hasunconfirmedbookings="true"]:not([data-isinvaliddate="true"]) {
+      &.rbb-time-slot-cell[data-hasunconfirmedbookings="true"]:not([data-isoutsidebookingwindow="true"]) {
         background: var(--rbb-cell-unconfirmed-bg);
         color: var(--rbb-cell-unconfirmed-color);
       }
@@ -850,7 +850,7 @@ $rbb-breakpoint-xl: 1200px;
       // The time slot is not available on this weekday (tl_resource_booking_time_slot.weekdays)
       // or the slot lies in a blocked period, e.g. holidays (tl_resource_booking_blocked_period)
       &.rbb-time-slot-cell[data-isinblockedperiod="true"],
-      &.rbb-time-slot-cell[data-istimeslotavailable="false"] {
+      &.rbb-time-slot-cell[data-isavailableonweekday="false"] {
         background: var(--rbb-cell-blocked-bg);
         color: var(--rbb-cell-blocked-color);
         box-shadow: none;
@@ -1118,7 +1118,7 @@ $rbb-breakpoint-xl: 1200px;
     }
 
     // Hover on a bookable slot: fill the plus button
-    .rbb-layout-cell[data-userisloggedin][data-isbookable="true"]:hover .rbb-btn-booking {
+    .rbb-layout-cell[data-ismemberloggedin][data-isbookable="true"]:hover .rbb-btn-booking {
       z-index: 30;
       color: var(--rbb-primary-contrast);
       background-color: var(--rbb-primary);

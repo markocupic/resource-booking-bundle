@@ -71,37 +71,37 @@ class SlotTest extends TestCase
         $this->assertTrue($slot->canFulfillRequestedItems());
     }
 
-    public function testIsTimeSlotAvailableRespectsTheWeekdaysOfTheTimeSlot(): void
+    public function testIsAvailableOnWeekdayRespectsTheWeekdaysOfTheTimeSlot(): void
     {
-        $weekdays = serialize(['monday', 'tuesday']);
+        $weekdays = ['monday', 'tuesday'];
 
-        $slot = $this->slotWith(1, [], weekday: 'monday', timeSlotWeekdays: $weekdays);
-        $this->assertTrue($slot->isTimeSlotAvailable());
+        $slot = $this->slotWith(1, [], startTime: strtotime('next monday 08:00'), availableWeekdays: $weekdays);
+        $this->assertTrue($slot->isAvailableOnWeekday());
         $this->assertTrue($slot->isBookable());
 
-        $slot = $this->slotWith(1, [], weekday: 'wednesday', timeSlotWeekdays: $weekdays);
-        $this->assertFalse($slot->isTimeSlotAvailable());
+        $slot = $this->slotWith(1, [], startTime: strtotime('next wednesday 08:00'), availableWeekdays: $weekdays);
+        $this->assertFalse($slot->isAvailableOnWeekday());
         $this->assertFalse($slot->isBookable());
 
         // Time slots without weekdays (not migrated yet) are available on every weekday.
-        $slot = $this->slotWith(1, [], weekday: 'sunday');
-        $this->assertTrue($slot->isTimeSlotAvailable());
+        $slot = $this->slotWith(1, [], startTime: strtotime('next sunday 08:00'));
+        $this->assertTrue($slot->isAvailableOnWeekday());
     }
 
     public function testInvalidTimeSlotIsNotBookable(): void
     {
         $slot = $this->slotWith(1, [], isValidTimeSlot: false);
 
-        $this->assertFalse($slot->isValidTimeSlot());
+        $this->assertFalse($slot->isValidTimeSlot);
         $this->assertFalse($slot->isBookable());
     }
 
     public function testSlotWithoutValidationResultIsNotBookable(): void
     {
         // A slot without the result of the time slot validation (see SlotFactory::create()) must never be bookable
-        $slot = $this->slotWith(1, [], isValidTimeSlot: null);
+        $slot = new Slot(timeSlotId: 1, resource: ['itemsAvailable' => 1], startTime: strtotime('tomorrow 08:00'), endTime: strtotime('tomorrow 09:00'), now: time());
 
-        $this->assertFalse($slot->isValidTimeSlot());
+        $this->assertFalse($slot->isValidTimeSlot);
         $this->assertFalse($slot->isBookable());
     }
 
@@ -123,7 +123,7 @@ class SlotTest extends TestCase
         $this->assertFalse($slot->isInBlockedPeriod());
         $this->assertTrue($slot->isBookable());
 
-        $slot = $this->slotWith(1, [], blockedPeriod: ['id' => 1]);
+        $slot = $this->slotWith(1, [], blockedPeriodId: 1);
         $this->assertTrue($slot->isInBlockedPeriod());
         $this->assertFalse($slot->isBookable());
     }
@@ -139,12 +139,12 @@ class SlotTest extends TestCase
 
         // Slot on the last bookable day -> allowed.
         $slot = $this->slotWith(1, [], resource: $resource, startTime: $bookableUntil + 8 * 3600, endTime: $bookableUntil + 9 * 3600);
-        $this->assertTrue($slot->isWithinAllowedDateRange());
+        $this->assertTrue($slot->isInBookingWindow());
 
         // Slot on the day after -> not allowed.
         $slot = $this->slotWith(1, [], resource: $resource, startTime: $bookableUntil + 86400 + 8 * 3600, endTime: $bookableUntil + 86400 + 9 * 3600);
         $this->assertTrue($slot->isOutsideBookingPeriod());
-        $this->assertFalse($slot->isWithinAllowedDateRange());
+        $this->assertFalse($slot->isInBookingWindow());
         $this->assertFalse($slot->isBookable());
     }
 
@@ -153,13 +153,13 @@ class SlotTest extends TestCase
         $startTime = strtotime('today +20 days 08:00');
 
         // The slot lies in the last permitted week -> allowed.
-        $slot = $this->slotWith(1, [], startTime: $startTime, endTime: $startTime + 3600, firstDayOfWeek: 2000, lastPermittedWeek: 2000);
-        $this->assertTrue($slot->isWithinAllowedDateRange());
+        $slot = $this->slotWith(1, [], startTime: $startTime, endTime: $startTime + 3600, weekStart: 2000, lastBookableWeekStart: 2000);
+        $this->assertTrue($slot->isInBookingWindow());
 
         // The slot lies after the last permitted week -> not allowed.
-        $slot = $this->slotWith(1, [], startTime: $startTime, endTime: $startTime + 3600, firstDayOfWeek: 3000, lastPermittedWeek: 2000);
+        $slot = $this->slotWith(1, [], startTime: $startTime, endTime: $startTime + 3600, weekStart: 3000, lastBookableWeekStart: 2000);
         $this->assertTrue($slot->isOutsideBookingPeriod());
-        $this->assertFalse($slot->isWithinAllowedDateRange());
+        $this->assertFalse($slot->isInBookingWindow());
         $this->assertFalse($slot->isBookable());
     }
 
@@ -170,73 +170,75 @@ class SlotTest extends TestCase
         $slot = $this->slotWith(1, [], startTime: $startTime, endTime: $startTime + 3600);
 
         $this->assertFalse($slot->isOutsideBookingPeriod());
-        $this->assertFalse($slot->isWithinAllowedDateRange());
+        $this->assertFalse($slot->isInBookingWindow());
     }
 
-    public function testRowContainsTheResultsOfTheRules(): void
+    public function testOwnBookingOfTheLoggedInMember(): void
     {
-        $slot = $this->slotWith(2, [['itemsBooked' => 1, 'member' => 5]], loggedInMemberId: 5);
-        $row = $slot->row();
+        $slot = $this->slotWith(2, [['id' => 3, 'itemsBooked' => 1, 'member' => 5]], loggedInMemberId: 5);
 
-        $this->assertTrue($row['isBookable']);
-        $this->assertTrue($row['userIsLoggedIn']);
-        $this->assertTrue($row['hasBookings']);
-        $this->assertSame(1, $row['bookingCount']);
-        $this->assertSame(1, $row['itemsStillAvailable']);
-        $this->assertTrue($row['userHasBooked']);
-        $this->assertSame(5, $row['userBooking']['member']);
-        $this->assertTrue($row['isCancelable']);
-
-        // Magic access: input data and results of the rules
-        $this->assertSame(2, $slot->resource['itemsAvailable']);
-        $this->assertTrue($slot->isCancelable);
+        $this->assertTrue($slot->isMemberLoggedIn());
+        $this->assertTrue($slot->hasBookings());
+        $this->assertSame(1, $slot->getRemainingItems());
+        $this->assertSame(3, $slot->getMemberBooking()['id']);
+        $this->assertTrue($slot->isCancelable());
+        $this->assertTrue($slot->isBookable());
     }
 
     public function testGuestCannotCancel(): void
     {
         $slot = $this->slotWith(2, [['itemsBooked' => 1, 'member' => 5]]);
 
+        $this->assertFalse($slot->isMemberLoggedIn());
+        $this->assertNull($slot->getMemberBooking());
         $this->assertFalse($slot->isCancelable());
-        $this->assertNull($slot->getUserBooking());
-        $this->assertFalse($slot->userIsLoggedIn);
     }
 
     public function testWithBookingDataReturnsACopy(): void
     {
-        $slot = $this->slotWith(1, []);
+        $slot = $this->slotWith(1, [['member' => 5]], loggedInMemberId: 5);
         $copy = $slot->withBookingData(['title' => 'Booking']);
 
         $this->assertNotSame($slot, $copy);
-        $this->assertSame([], $slot->dataBooking);
-        $this->assertSame(['title' => 'Booking'], $copy->dataBooking);
-        $this->assertSame($slot->startTime, $copy->startTime);
+        $this->assertSame([], $slot->bookingData);
+        $this->assertSame(['title' => 'Booking'], $copy->bookingData);
+
+        // All other properties are copied
+        foreach (get_object_vars($slot) as $property => $value) {
+            if ('bookingData' !== $property) {
+                $this->assertSame($value, $copy->{$property}, $property);
+            }
+        }
     }
 
     /**
      * @param array<int, array<string, mixed>> $bookings
      */
-    private function slotWith(int $itemsAvailable, array $bookings, int $requestedItems = 1, array|null $resource = null, string $weekday = 'monday', int|null $startTime = null, int|null $endTime = null, int|null $firstDayOfWeek = null, int|null $lastPermittedWeek = null, string|null $timeSlotWeekdays = null, array|null $blockedPeriod = null, bool|null $isValidTimeSlot = true, int|null $loggedInMemberId = null): Slot
+    /**
+     * @param list<array<string, mixed>> $bookings
+     * @param array<string, mixed>|null  $resource
+     * @param list<string>               $availableWeekdays
+     */
+    private function slotWith(int $itemsAvailable, array $bookings, int $requestedItems = 1, array|null $resource = null, int|null $startTime = null, int|null $endTime = null, int|null $weekStart = null, int|null $lastBookableWeekStart = null, array $availableWeekdays = [], int|null $blockedPeriodId = null, bool $isValidTimeSlot = true, int|null $loggedInMemberId = null): Slot
     {
         $startTime ??= strtotime('tomorrow 08:00');
-        $endTime ??= $startTime + 3600;
 
         return new Slot(
-            [
-                'resource' => $resource ?? ['itemsAvailable' => $itemsAvailable],
-                'itemsBooked' => $requestedItems,
-                'bookings' => $bookings,
-                'weekday' => $weekday,
-                'startTime' => $startTime,
-                'endTime' => $endTime,
-                // Timestamp of the first day of the week up to which the booking is repeated.
-                'bookingRepeatStopWeekTstamp' => $startTime,
-                'beginWeekTimestampSelectedWeek' => $firstDayOfWeek,
-                'lastPermittedWeekTstamp' => $lastPermittedWeek,
-                'timeSlotWeekdays' => $timeSlotWeekdays,
-                'blockedPeriod' => $blockedPeriod,
-                'isValidTimeSlot' => $isValidTimeSlot,
-            ],
-            $loggedInMemberId, time(),
+            timeSlotId: 1,
+            resource: $resource ?? ['itemsAvailable' => $itemsAvailable],
+            startTime: $startTime,
+            endTime: $endTime ?? $startTime + 3600,
+            now: time(),
+            loggedInMemberId: $loggedInMemberId,
+            requestedItems: $requestedItems,
+            isValidTimeSlot: $isValidTimeSlot,
+            availableWeekdays: $availableWeekdays,
+            blockedPeriodId: $blockedPeriodId,
+            weekStart: $weekStart,
+            lastBookableWeekStart: $lastBookableWeekStart,
+            // The booking is repeated up to the week of the slot
+            repeatUntilWeekStart: $startTime,
+            bookings: $bookings,
         );
     }
 }

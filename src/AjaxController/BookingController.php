@@ -211,19 +211,19 @@ final class BookingController extends AbstractController implements ControllerIn
 
         foreach ($slots as $slot) {
             // Use already available booking entity
-            $arrBooking = $slot->userBooking;
+            $arrBooking = $slot->getMemberBooking();
 
-            if (true !== $slot->userHasBooked && null === $arrBooking) {
+            if (null === $arrBooking) {
                 // Create a new booking entity
                 $booking = new ResourceBookingModel();
             } else {
                 // Use the already existing entity instead of creating a new one
-                $booking = ResourceBookingModel::findById($arrBooking['id'] ?? null);
+                $booking = ResourceBookingModel::findById($arrBooking['id']);
             }
 
             // Add data to the model
             if (null !== $booking) {
-                foreach ($slot->dataBooking as $k => $v) {
+                foreach ($slot->bookingData as $k => $v) {
                     if ('id' === $k && empty($v)) {
                         continue;
                     }

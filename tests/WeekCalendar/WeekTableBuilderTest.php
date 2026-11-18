@@ -130,7 +130,7 @@ class WeekTableBuilderTest extends ContaoTestCase
                 static function (int $timeSlotId, ResourceBookingResourceModel $resource, int $startTime, int $endTime) use ($week, $booking): Slot {
                     $isMonday = $startTime === $week + 8 * 3600;
 
-                    return new Slot(['timeSlotId' => $timeSlotId, 'startTime' => $startTime, 'endTime' => $endTime, 'bookings' => $isMonday ? [$booking] : [], 'resource' => ['itemsAvailable' => 1]], null, $week);
+                    return new Slot(timeSlotId: $timeSlotId, resource: ['id' => 3, 'itemsAvailable' => 1], startTime: $startTime, endTime: $endTime, now: $week, bookings: $isMonday ? [$booking] : []);
                 },
             )
         ;
@@ -174,6 +174,8 @@ class WeekTableBuilderTest extends ContaoTestCase
         $this->assertSame('bookingCheckbox_modId_5_0_1', $tuesday['bookingCheckboxId']);
         // The texts for the display come from the SlotPresenter
         $this->assertSame('17.11.2026', $tuesday['date']);
+        $this->assertSame(3, $tuesday['resourceId']);
+        $this->assertArrayNotHasKey('resource', $tuesday);
         $this->assertArrayHasKey('datimSpanString', $tuesday);
         $this->assertArrayHasKey('timeSpanString', $tuesday);
         $this->assertSame(\sprintf('1-%s-%s-%s', $week + 86400 + 8 * 3600, $week + 86400 + 9 * 3600, $week), $tuesday['bookingCheckboxValue']);

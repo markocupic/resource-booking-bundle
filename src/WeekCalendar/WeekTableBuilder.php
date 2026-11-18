@@ -258,7 +258,7 @@ class WeekTableBuilder
             $loggedInUserId = null === $user ? null : (int) $user->id;
             $cell['bookings'] = [];
 
-            foreach ($slot->getBookings() as $booking) {
+            foreach ($slot->bookings as $booking) {
                 $member = $this->framework->getAdapter(MemberModel::class)->findById($booking['member']);
 
                 $cell['bookings'][] = $this->bookingPresenter->present($booking, $member?->row(), $loggedInUserId, $memberFields, $bookingFields, $isCancelable);

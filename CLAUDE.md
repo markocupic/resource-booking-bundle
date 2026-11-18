@@ -154,10 +154,11 @@ Neue Buchungen: `confirmed` = `autoConfirm` der Ressource. Unbestätigte Buchung
   (`AddBookingSearchToWelcomeScreenListener`, Template `@Contao/backend/rbb_booking_search.html.twig`, Abfrage in
   `Backend\BookingSearch`); Zugriff: Admin oder Modul `resource`. Kein Override von `be_welcome`.
 - Slots entstehen über `SlotFactory::create()` (eine Klasse `Slot\Slot` für Kalender und Buchung).
-- `Slot` ist ein unveränderliches Wertobjekt ohne Services (Daten, ID des Mitglieds, aktuelle Zeit im Konstruktor;
-  Regeln als reine Methoden, `row()` liefert Daten + Ergebnisse). Daten sammeln nur `SlotFactory::create()` und
+- `Slot` ist ein unveränderliches Wertobjekt ohne Services (typisierte `readonly`-Properties im Konstruktor, Regeln als
+  reine Methoden). Daten sammeln nur `SlotFactory::create()` und
   `SlotDataProvider` (inkl. Sperrzeiten); Zeit über `ClockInterface` (kein `time()`). Darstellung (Datums-/Zeittexte)
-  nur in `WeekCalendar\SlotPresenter`, nicht im Slot. In Tests Slots direkt mit `new Slot([...], $memberId, $now)`.
+  nur in `WeekCalendar\SlotPresenter`, nicht im Slot. In Tests Slots direkt mit `new Slot(timeSlotId: …, …)` (benannte Argumente).
+- JSON eines Slots nur über `SlotPresenter::present()` (feste Schlüsselliste, keine DB-Zeilen; Test `SlotPresenterTest`).
 - `SlotCollection` (Buchungsanfrage): unveränderlich, nur `Slot`, mit `foreach` durchlaufen; kein Positionszeiger.
 - Datenzugriff für Slots nur über `Slot\SlotDataProvider` (Pflicht in der `SlotFactory`, pro Request gecacht,
   `ResetInterface`): Mitglied, Zeitfenster, Zeitplan, Buchungen, Sperrzeiten; `WeekTableBuilder` lädt die Buchungen der Woche vorab (`SlotFactory::preloadBookings()`, eine Abfrage).
@@ -189,7 +190,7 @@ Alte Spalten erst nach erfolgreicher Migration löschen. Jede Verhaltensänderun
   **Name**») → Filter mit sichtbaren Labels (Kategorie / Ressource / Woche) → Hinweis der Ressource (grüner Kasten)
   → Tabelle → Legende (frei, meine Buchung, ausgebucht, noch nicht bestätigt, gesperrt).
 - Zell-Zustände über `data-*`-Attribute in `_table.html.twig` (`data-isbookable`, `data-isbooked`,
-  `data-iscancelable`, `data-isfullybooked`, `data-isinvaliddate`, `data-istimeslotavailable`,
+  `data-iscancelable`, `data-isfullybooked`, `data-isoutsidebookingwindow`, `data-isavailableonweekday`,
   `data-isinblockedperiod`, `data-hasunconfirmedbookings`, `data-bookedbyanonymous` am Buchungseintrag, …).
   **`data-*`-Attribute immer komplett kleinschreiben:** Das Vue-Template steckt im HTML der Seite, der Browser
   wandelt Attributnamen ohnehin in Kleinbuchstaben um (CSS-Selektoren und `dataset` müssen dazu passen).

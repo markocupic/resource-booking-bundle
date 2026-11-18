@@ -18,7 +18,7 @@ use Markocupic\ResourceBookingBundle\Util\ResourceBookingRestriction;
 use Markocupic\ResourceBookingBundle\Validator\BookingRequestValidator;
 
 /**
- * A slot: a time slot of a resource on a day, with the evaluated booking rules.
+ * A slot: a time slot of a resource on a day, with the booking rules.
  *
  * Immutable value object without services: SlotFactory::create() collects the data
  * (time slot, resource, bookings, blocked period, logged-in member, current time),
@@ -26,119 +26,82 @@ use Markocupic\ResourceBookingBundle\Validator\BookingRequestValidator;
  * booking requests: a slot is bookable, if all rules are met and enough items are
  * left for the requested items (1 in the week calendar).
  *
- * The slot contains no presentation (texts, dates, CSS IDs): see
- * WeekCalendar\SlotPresenter.
- *
- * Input data (see SlotFactory::create()):
- *
- * @property int                        $timeSlotId
- * @property string|null                $timeSlotWeekdays               Serialized weekdays of the time slot
- * @property bool                       $isValidTimeSlot
- * @property array{id: int}|null        $blockedPeriod
- * @property string                     $blockedPeriodDescription
- * @property array<string, mixed>       $resource
- * @property int                        $pid
- * @property int                        $startTime
- * @property int                        $endTime
- * @property int                        $itemsBooked                    Requested items
- * @property int                        $bookingRepeatStopWeekTstamp
- * @property string                     $weekday
- * @property int                        $beginWeekTimestampSelectedWeek
- * @property int                        $lastPermittedWeekTstamp
- * @property list<array<string, mixed>> $bookings                       Rows of tl_resource_booking
- * @property array<string, mixed>       $dataBooking                    Data of the booking to save (see withBookingData())
- *
- * Results of the rules (see row()):
- * @property bool                      $userIsLoggedIn
- * @property bool                      $hasValidItemCount
- * @property bool                      $isInBlockedPeriod
- * @property bool                      $isWithinAllowedDateRange
- * @property bool                      $isTimeSlotAvailable
- * @property bool                      $isBookable
- * @property bool                      $enoughItemsAvailable
- * @property int                       $itemsStillAvailable
- * @property bool                      $isFullyBooked
- * @property bool                      $hasBookings
- * @property int                       $bookingCount
- * @property bool                      $userHasBooked
- * @property array<string, mixed>|null $userBooking
- * @property bool                      $isCancelable
+ * The slot contains no presentation: see WeekCalendar\SlotPresenter.
  */
 final class Slot
 {
     private const SECONDS_IN_DAY = 86400;
 
     /**
-     * Input data and the results of the rules.
-     *
-     * @var array<string, mixed>
-     */
-    private readonly array $data;
-
-    /**
-     * @param array<string, mixed> $data             Input data (see the properties above)
-     * @param int|null             $loggedInMemberId ID of the logged-in member, null for guests
-     * @param int                  $now              Current time
+     * @param array<string, mixed>       $resource              Row of tl_resource_booking_resource
+     * @param int                        $now                   Current time
+     * @param int|null                   $loggedInMemberId      ID of the logged-in member, null for guests
+     * @param int                        $requestedItems        1 in the week calendar, the requested items of a booking request
+     * @param bool                       $isValidTimeSlot       The time slot exists, is published, belongs to the timetable of the resource and the times match (see ResourceBookingRestriction::isValidTimeSlot())
+     * @param list<string>               $availableWeekdays     Weekdays on which the time slot is available, e.g. "monday"; empty: every weekday
+     * @param int|null                   $blockedPeriodId       Blocked period covering this slot, e.g. holidays
+     * @param string                     $blockedPeriodDescription Description of the blocked period (the title is internal)
+     * @param int|null                   $weekStart             First day of the week of the slot
+     * @param int|null                   $lastBookableWeekStart First day of the last week the resource can be booked (tl_resource_booking_resource.weeksAhead)
+     * @param int|null                   $repeatUntilWeekStart  First day of the last week of the repetitions (booking request)
+     * @param list<array<string, mixed>> $bookings              Rows of tl_resource_booking
+     * @param array<string, mixed>       $bookingData           Data of the booking to save (see withBookingData())
      */
     public function __construct(
-        array $data,
-        private readonly int|null $loggedInMemberId,
-        private readonly int $now,
+        public readonly int $timeSlotId,
+        public readonly array $resource,
+        public readonly int $startTime,
+        public readonly int $endTime,
+        public readonly int $now,
+        public readonly int|null $loggedInMemberId = null,
+        public readonly int $requestedItems = 1,
+        public readonly bool $isValidTimeSlot = false,
+        public readonly array $availableWeekdays = [],
+        public readonly int|null $blockedPeriodId = null,
+        public readonly string $blockedPeriodDescription = '',
+        public readonly int|null $weekStart = null,
+        public readonly int|null $lastBookableWeekStart = null,
+        public readonly int|null $repeatUntilWeekStart = null,
+        public readonly array $bookings = [],
+        public readonly array $bookingData = [],
     ) {
-        $data['bookings'] ??= [];
-        $data['dataBooking'] ??= [];
-        $this->data = $data;
-    }
-
-    public function __get(string $key): mixed
-    {
-        // Input data directly, the results of the rules are only evaluated if needed
-        if (\array_key_exists($key, $this->data)) {
-            return $this->data[$key];
-        }
-
-        return $this->row()[$key] ?? null;
-    }
-
-    public function __isset(string $key): bool
-    {
-        return null !== $this->__get($key);
     }
 
     /**
      * Returns a copy of the slot with the data of the booking to save (booking request).
      *
-     * @param array<string, mixed> $dataBooking
+     * @param array<string, mixed> $bookingData
      */
-    public function withBookingData(array $dataBooking): self
+    public function withBookingData(array $bookingData): self
     {
-        return new self([...$this->data, 'dataBooking' => $dataBooking], $this->loggedInMemberId, $this->now);
+        return new self(
+            timeSlotId: $this->timeSlotId,
+            resource: $this->resource,
+            startTime: $this->startTime,
+            endTime: $this->endTime,
+            now: $this->now,
+            loggedInMemberId: $this->loggedInMemberId,
+            requestedItems: $this->requestedItems,
+            isValidTimeSlot: $this->isValidTimeSlot,
+            availableWeekdays: $this->availableWeekdays,
+            blockedPeriodId: $this->blockedPeriodId,
+            blockedPeriodDescription: $this->blockedPeriodDescription,
+            weekStart: $this->weekStart,
+            lastBookableWeekStart: $this->lastBookableWeekStart,
+            repeatUntilWeekStart: $this->repeatUntilWeekStart,
+            bookings: $this->bookings,
+            bookingData: $bookingData,
+        );
     }
 
-    /**
-     * The input data and the results of the rules, e.g. for the front end.
-     *
-     * @return array<string, mixed>
-     */
-    public function row(): array
+    public function getResourceId(): int
     {
-        return [
-            ...$this->data,
-            'userIsLoggedIn' => null !== $this->loggedInMemberId,
-            'hasValidItemCount' => $this->hasValidItemCount(),
-            'isInBlockedPeriod' => $this->isInBlockedPeriod(),
-            'isWithinAllowedDateRange' => $this->isWithinAllowedDateRange(),
-            'isTimeSlotAvailable' => $this->isTimeSlotAvailable(),
-            'isBookable' => $this->isBookable(),
-            'enoughItemsAvailable' => $this->canFulfillRequestedItems(),
-            'itemsStillAvailable' => $this->getRemainingItems(),
-            'isFullyBooked' => $this->isFullyBooked(),
-            'hasBookings' => $this->hasBookings(),
-            'bookingCount' => \count($this->getBookings()),
-            'userHasBooked' => null !== $this->getUserBooking(),
-            'userBooking' => $this->getUserBooking(),
-            'isCancelable' => $this->isCancelable(),
-        ];
+        return (int) ($this->resource['id'] ?? 0);
+    }
+
+    public function isMemberLoggedIn(): bool
+    {
+        return null !== $this->loggedInMemberId;
     }
 
     /**
@@ -147,7 +110,7 @@ final class Slot
      */
     public function isBookable(): bool
     {
-        if (!$this->isValidTimeSlot() || !$this->hasValidItemCount() || !$this->isWithinAllowedDateRange() || !$this->isTimeSlotAvailable() || $this->isInBlockedPeriod()) {
+        if (!$this->isValidTimeSlot || !$this->hasValidItemCount() || !$this->isInBookingWindow() || !$this->isAvailableOnWeekday() || $this->isInBlockedPeriod()) {
             return false;
         }
 
@@ -157,13 +120,13 @@ final class Slot
     /**
      * The slot has not ended yet, lies within the repetitions and within the booking period.
      */
-    public function isWithinAllowedDateRange(): bool
+    public function isInBookingWindow(): bool
     {
-        if ($this->getInt('endTime') < $this->now) {
+        if ($this->endTime < $this->now) {
             return false;
         }
 
-        if ($this->getInt('startTime') > strtotime('+1 week', $this->getInt('bookingRepeatStopWeekTstamp'))) {
+        if (null !== $this->repeatUntilWeekStart && $this->startTime > strtotime('+1 week', $this->repeatUntilWeekStart)) {
             return false;
         }
 
@@ -178,32 +141,23 @@ final class Slot
     public function isOutsideBookingPeriod(): bool
     {
         // The resource can only be booked a certain number of weeks ahead.
-        if (isset($this->data['lastPermittedWeekTstamp'], $this->data['beginWeekTimestampSelectedWeek']) && $this->data['beginWeekTimestampSelectedWeek'] > $this->data['lastPermittedWeekTstamp']) {
+        if (null !== $this->weekStart && null !== $this->lastBookableWeekStart && $this->weekStart > $this->lastBookableWeekStart) {
             return true;
         }
 
         // The resource can only be booked up to and including the "bookable until" date.
-        $bookableUntil = ResourceBookingRestriction::getBookableUntil($this->getResource());
+        $bookableUntil = ResourceBookingRestriction::getBookableUntil($this->resource);
 
-        return null !== $bookableUntil && $this->getInt('endTime') > $bookableUntil + self::SECONDS_IN_DAY;
+        return null !== $bookableUntil && $this->endTime > $bookableUntil + self::SECONDS_IN_DAY;
     }
 
     /**
      * Returns false if the time slot is not available on the weekday of this slot
      * (tl_resource_booking_time_slot.weekdays).
      */
-    public function isTimeSlotAvailable(): bool
+    public function isAvailableOnWeekday(): bool
     {
-        return ResourceBookingRestriction::isTimeSlotAvailableOnWeekday(['weekdays' => $this->data['timeSlotWeekdays'] ?? null], (string) ($this->data['weekday'] ?? ''));
-    }
-
-    /**
-     * Returns true if the slot belongs to a published time slot of the published timetable
-     * of the resource and its start and end time match the time slot.
-     */
-    public function isValidTimeSlot(): bool
-    {
-        return true === ($this->data['isValidTimeSlot'] ?? false);
+        return [] === $this->availableWeekdays || \in_array(strtolower(date('l', $this->startTime)), $this->availableWeekdays, true);
     }
 
     /**
@@ -212,7 +166,7 @@ final class Slot
      */
     public function hasValidItemCount(): bool
     {
-        return BookingRequestValidator::isValidItemCount($this->getInt('itemsBooked'), $this->getItemsAvailable());
+        return BookingRequestValidator::isValidItemCount($this->requestedItems, $this->getItemsAvailable());
     }
 
     /**
@@ -220,7 +174,7 @@ final class Slot
      */
     public function isInBlockedPeriod(): bool
     {
-        return !empty($this->data['blockedPeriod']);
+        return null !== $this->blockedPeriodId;
     }
 
     /**
@@ -228,20 +182,20 @@ final class Slot
      */
     public function canFulfillRequestedItems(): bool
     {
-        return $this->countBookedItems(excludeOwn: true) + $this->getInt('itemsBooked') <= $this->getItemsAvailable();
+        return $this->countBookedItems(excludeOwn: true) + $this->requestedItems <= $this->getItemsAvailable();
     }
 
     /**
-     * @return list<array<string, mixed>> The rows of tl_resource_booking
+     * Items that are not booked yet (bookings of all members).
      */
-    public function getBookings(): array
+    public function getRemainingItems(): int
     {
-        return $this->data['bookings'];
+        return $this->getItemsAvailable() - $this->countBookedItems();
     }
 
     public function hasBookings(): bool
     {
-        return !empty($this->data['bookings']);
+        return [] !== $this->bookings;
     }
 
     public function isFullyBooked(): bool
@@ -254,21 +208,17 @@ final class Slot
      */
     public function isCancelable(): bool
     {
-        if (null === $this->loggedInMemberId || !$this->hasBookings() || !$this->isWithinAllowedDateRange()) {
-            return false;
-        }
-
-        return null !== $this->getUserBooking();
+        return null !== $this->getMemberBooking() && $this->isInBookingWindow();
     }
 
     /**
-     * The booking of the logged-in member (complete row of tl_resource_booking), or null.
+     * The booking of the logged-in member (row of tl_resource_booking), or null.
      *
      * @return array<string, mixed>|null
      */
-    public function getUserBooking(): array|null
+    public function getMemberBooking(): array|null
     {
-        foreach ($this->data['bookings'] as $booking) {
+        foreach ($this->bookings as $booking) {
             if ($this->isOwnedByLoggedInMember($booking)) {
                 return $booking;
             }
@@ -289,7 +239,7 @@ final class Slot
     {
         $total = 0;
 
-        foreach ($this->data['bookings'] as $booking) {
+        foreach ($this->bookings as $booking) {
             if ($excludeOwn && $this->isOwnedByLoggedInMember($booking)) {
                 continue;
             }
@@ -300,26 +250,8 @@ final class Slot
         return $total;
     }
 
-    private function getRemainingItems(): int
-    {
-        return $this->getItemsAvailable() - $this->countBookedItems();
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function getResource(): array
-    {
-        return $this->data['resource'] ?? [];
-    }
-
     private function getItemsAvailable(): int
     {
-        return (int) ($this->getResource()['itemsAvailable'] ?? 0);
-    }
-
-    private function getInt(string $key): int
-    {
-        return (int) ($this->data[$key] ?? 0);
+        return (int) ($this->resource['itemsAvailable'] ?? 0);
     }
 }

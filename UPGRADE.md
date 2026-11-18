@@ -555,24 +555,63 @@ der neuen `AjaxController\AjaxControllerRegistry`. Die Controller registrieren s
 * `Slot\SlotFactory::get($timeSlotId, $mode, …)` wurde entfernt. Neu:
   `create($timeSlotId, $resource, $startTime, $endTime, $requestedItems = 1, $bookingRepeatStopWeekTstamp = null)`.
   Jeder Aufruf liefert einen neuen Slot.
-* `Slot` ist ein unveränderliches Wertobjekt ohne Services: `new Slot(array $data, ?int $loggedInMemberId, int $now)`.
-  Die Daten (Zeitfenster, Zeitplan, Buchungen, Sperrzeit, eingeloggtes Mitglied, aktuelle Zeit) sammelt
-  `SlotFactory::create()` über den `SlotDataProvider` (pro Request zwischengespeichert) und die `ClockInterface`
+* `Slot` ist ein unveränderliches Wertobjekt ohne Services mit typisierten `readonly`-Properties: `timeSlotId`,
+  `resource`, `startTime`, `endTime`, `now`, `loggedInMemberId`, `requestedItems`, `isValidTimeSlot`,
+  `availableWeekdays`, `blockedPeriodId`, `blockedPeriodDescription`, `weekStart`, `lastBookableWeekStart`,
+  `repeatUntilWeekStart`, `bookings`, `bookingData`. Die Daten sammelt `SlotFactory::create()` über den
+  `SlotDataProvider` (pro Request zwischengespeichert) und die `ClockInterface`
   (`new SlotFactory($framework, $dataProvider, $clock)`, neue Abhängigkeit `symfony/clock`). `TokenStorageInterface` und
-  `Utils` entfallen.
-* Entfernt: `Slot\SlotInterface`, `initialize()`, `setRow()` und `setBookingData()`. Neu:
-  `Slot::withBookingData($data)` liefert eine Kopie. `row()` liefert die Eingabedaten und die Ergebnisse der Regeln
-  (`isBookable`, `isCancelable`, `userBooking` usw.).
+  `Utils` entfallen. Der letzte Parameter von `SlotFactory::create()` heisst `$repeatUntilWeekStart`.
+* Entfernt: `Slot\SlotInterface`, `initialize()`, `setRow()`, `setBookingData()`, `row()` und die magischen Zugriffe
+  (`$slot->userBooking` usw.). Neu: `Slot::withBookingData($data)` liefert eine Kopie.
+* Umbenannte Methoden und Eingabedaten des Slots:
+
+  | Alt | Neu |
+  |---|---|
+  | `itemsBooked` (angefragte Einheiten) | `requestedItems` |
+  | `bookingRepeatStopWeekTstamp` | `repeatUntilWeekStart` |
+  | `beginWeekTimestampSelectedWeek` | `weekStart` |
+  | `lastPermittedWeekTstamp` | `lastBookableWeekStart` |
+  | `timeSlotWeekdays` (serialisiert) | `availableWeekdays` (`list<string>`, leer = jeder Wochentag) |
+  | `blockedPeriod` (`['id' => …]`) | `blockedPeriodId` |
+  | `dataBooking` | `bookingData` |
+  | `pid`, `weekday` | entfernt (`getResourceId()`, Wochentag aus `startTime`) |
+  | `isTimeSlotAvailable()` | `isAvailableOnWeekday()` |
+  | `isWithinAllowedDateRange()` | `isInBookingWindow()` |
+  | `getUserBooking()` | `getMemberBooking()` |
+  | `isValidTimeSlot()` | Property `isValidTimeSlot` |
+
 * `SlotCollection` ist neu unveränderlich und enthält nur `Slot`-Objekte: `new SlotCollection(...$slots)`,
   `sortedByStartTime()`, `map()`, `all()`, `isEmpty()`, `count()` und `foreach`. Entfernt: der Positionszeiger
   (`first()`, `last()`, `next()`, `prev()`, `reset()`, `current()`), `delete()`, `sortBy()`, `fetchEach()`, `fetchAll()`,
   `getSlots()` (neu `all()`), `setRow()`, `row()`, der Array-Zugriff und die magischen Zugriffe auf den aktuellen Slot.
 * Neu: `SlotDataProvider::getBlockedPeriods()` lädt die veröffentlichten Sperrzeiten einmal pro Request.
-* Der Slot enthält keine Darstellung mehr. `startTimeString`, `endTimeString`, `date`, `datimSpanString` und
-  `timeSpanString` erzeugt neu `WeekCalendar\SlotPresenter::present($slot)`; ebenso fügt `WeekTableBuilder` `index`,
-  `bookingCheckboxId`, `bookingCheckboxValue` und die aufbereiteten Buchungen hinzu. Die JSON-Schlüssel im Frontend
-  bleiben gleich. Entfernt: `setIndex()`, `setBookingCheckboxId()`, `setBookingCheckboxValue()`, `setTimeSlotId()`,
+* Der Slot enthält keine Darstellung mehr. Die Daten für das Frontend erzeugt neu
+  `WeekCalendar\SlotPresenter::present($slot)`, und zwar nur noch eine feste Liste von Schlüsseln (keine Datenbank-Zeilen
+  mehr). `WeekTableBuilder` fügt `index`, `bookingCheckboxId`, `bookingCheckboxValue` und die aufbereiteten Buchungen
+  hinzu. Entfernt: `setIndex()`, `setBookingCheckboxId()`, `setBookingCheckboxValue()`, `setTimeSlotId()`,
   `setBookings()`.
+* **Eigene Templates und Event-Listener:** Die JSON-Schlüssel eines Slots (`slot.*` in den Vue-Templates, `cellData`
+  in `AjaxResponseEvent`) wurden umbenannt:
+
+  | Alt | Neu |
+  |---|---|
+  | `isTimeSlotAvailable` | `isAvailableOnWeekday` |
+  | `isWithinAllowedDateRange` | `isInBookingWindow` |
+  | `enoughItemsAvailable` | `canFulfillRequestedItems` |
+  | `itemsStillAvailable` | `remainingItems` |
+  | `userIsLoggedIn` | `isMemberLoggedIn` |
+  | `userBooking` (ganze Buchung) | `memberBooking` (nur `id` und `bookingUuid`) |
+  | `resource` (ganze Ressource) | `resourceId`; im Template `activeResource` verwenden |
+  | `pid` | `resourceId` |
+  | `userHasBooked` | entfernt (`memberBooking !== null`) |
+  | `bookingCount` | entfernt (`hasBookings`, `bookings.length`) |
+  | `itemsBooked`, `bookingRepeatStopWeekTstamp`, `beginWeekTimestampSelectedWeek`, `lastPermittedWeekTstamp`, `timeSlotWeekdays`, `weekday`, `blockedPeriod`, `dataBooking` | entfernt (interne Daten) |
+
+  In der Buchungsvorschau (`slotSelection`) fehlt neu der leere Schlüssel `bookings`.
+* `data-*`-Attribute der Zellen (eigenes CSS): `data-isinvaliddate` heisst `data-isoutsidebookingwindow`,
+  `data-istimeslotavailable` heisst `data-isavailableonweekday`, `data-userisloggedin` heisst `data-ismemberloggedin`;
+  `data-bookingcount` wurde entfernt.
 
 ### Farbschema pro Modul
 

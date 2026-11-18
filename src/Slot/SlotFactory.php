@@ -45,11 +45,11 @@ class SlotFactory
 
     /**
      * @param int      $requestedItems              1 in the week calendar, the requested items of a booking request
-     * @param int|null $bookingRepeatStopWeekTstamp First day of the last week of the repetitions (booking request)
+     * @param int|null $repeatUntilWeekStart First day of the last week of the repetitions (booking request)
      *
      * @throws \Exception
      */
-    public function create(int $timeSlotId, ResourceBookingResourceModel $resource, int $startTime, int $endTime, int $requestedItems = 1, int|null $bookingRepeatStopWeekTstamp = null): Slot
+    public function create(int $timeSlotId, ResourceBookingResourceModel $resource, int $startTime, int $endTime, int $requestedItems = 1, int|null $repeatUntilWeekStart = null): Slot
     {
         $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
         $now = $this->clock->now()->getTimestamp();
@@ -68,32 +68,24 @@ class SlotFactory
         $member = $this->dataProvider->getLoggedInMember();
 
         return new Slot(
-            [
-                'timeSlotId' => $timeSlotId,
-                // Weekdays on which the time slot is available (tl_resource_booking_time_slot.weekdays)
-                'timeSlotWeekdays' => $timeSlot?->weekdays,
-                // The time slot exists, is published, belongs to the (published) timetable of the resource
-                // and the start and end time match the time slot (protection against manipulated requests)
-                'isValidTimeSlot' => ResourceBookingRestriction::isValidTimeSlot($timeSlot?->row(), $timeSlotType?->row(), $arrResource, $startTime, $endTime),
-                // Blocked period covering this slot, e.g. holidays (tl_resource_booking_blocked_period).
-                // The title is an internal name and is not sent to the front end, only the description is displayed.
-                'blockedPeriod' => null === $blockedPeriod ? null : ['id' => (int) $blockedPeriod['id']],
-                'blockedPeriodDescription' => null === $blockedPeriod ? '' : trim(StringUtil::decodeEntities((string) ($blockedPeriod['description'] ?? ''))),
-                'resource' => $arrResource,
-                'pid' => (int) $resource->id,
-                'startTime' => $startTime,
-                'endTime' => $endTime,
-                'itemsBooked' => $requestedItems,
-                // Timestamp of the "begin week weekday" (Monday by default)
-                'bookingRepeatStopWeekTstamp' => $bookingRepeatStopWeekTstamp ?? $firstDayOfWeek,
-                'weekday' => strtolower(date('l', $startTime)),
-                'beginWeekTimestampSelectedWeek' => $firstDayOfWeek,
-                // Timestamp of the first day of the last week the resource can be booked (tl_resource_booking_resource.weeksAhead)
-                'lastPermittedWeekTstamp' => $dateHelperAdapter->addWeeksToTime(ResourceBookingRestriction::getWeeksAhead($resource), $dateHelperAdapter->getFirstDayOfCurrentWeek($appConfig, $now)),
-                'bookings' => $this->dataProvider->getBookings((int) $resource->id, $startTime, $endTime),
-            ],
-            null === $member ? null : (int) $member->id,
-            $now,
+            timeSlotId: $timeSlotId,
+            resource: $arrResource,
+            startTime: $startTime,
+            endTime: $endTime,
+            now: $now,
+            loggedInMemberId: null === $member ? null : (int) $member->id,
+            requestedItems: $requestedItems,
+            isValidTimeSlot: ResourceBookingRestriction::isValidTimeSlot($timeSlot?->row(), $timeSlotType?->row(), $arrResource, $startTime, $endTime),
+            // tl_resource_booking_time_slot.weekdays, empty: every weekday
+            availableWeekdays: array_values(array_map('strval', StringUtil::deserialize($timeSlot?->weekdays, true))),
+            blockedPeriodId: null === $blockedPeriod ? null : (int) $blockedPeriod['id'],
+            // The title of the blocked period is an internal name, only the description is displayed
+            blockedPeriodDescription: null === $blockedPeriod ? '' : trim(StringUtil::decodeEntities((string) ($blockedPeriod['description'] ?? ''))),
+            weekStart: $firstDayOfWeek,
+            lastBookableWeekStart: $dateHelperAdapter->addWeeksToTime(ResourceBookingRestriction::getWeeksAhead($resource), $dateHelperAdapter->getFirstDayOfCurrentWeek($appConfig, $now)),
+            // Without repetitions: the week of the slot
+            repeatUntilWeekStart: $repeatUntilWeekStart ?? $firstDayOfWeek,
+            bookings: $this->dataProvider->getBookings((int) $resource->id, $startTime, $endTime),
         );
     }
 
