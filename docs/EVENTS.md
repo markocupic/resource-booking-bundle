@@ -197,14 +197,14 @@ der Antwort weitere Daten anhängen, z. B. für ein angepasstes Template.
 
 | Methode | Zweck |
 |---|---|
-| `getAction()` | Aktion der Anfrage, z. B. `refreshDataRequest` |
+| `getAction()` | Aktion der Anfrage, z. B. `refreshDataRequest` (siehe [API](#api-des-wochenkalenders)) |
 | `getAjaxResponse()` | Antwort (`setData()`, `getAll()`, Meldungen, Status) |
 | `getAppState()` | Auswahl des Wochenkalenders (Modul, Seite, Ressource, Woche, Sprache) |
-| `getRequest()` | Ajax-Request |
+| `getRequest()` | Request an die API (nicht die Seite; die Seite liefert `getAppState()->page`) |
 
-Die Daten der Wochenansicht (`rows`, `timeSlots`, `activeResource`, `activeWeek`, …) liefern die Aktionen
-`refreshDataRequest` (Laden und Aktualisieren, auch nach einer Buchung oder Stornierung) und `applyFilterRequest`
-(Wechsel von Ressource oder Woche).
+Die Daten der Wochenansicht (`rows`, `timeSlots`, `activeResource`, `activeWeek`, …) liefert die Aktion
+`refreshDataRequest` (Laden, Aktualisieren, Wechsel von Ressource oder Woche, auch nach einer Buchung oder
+Stornierung).
 
 > [!WARNING]
 > Alles in der Antwort ist für jeden Besucher der Seite sichtbar (Entwicklertools). Keine Personendaten fremder
@@ -225,7 +225,7 @@ final class AddRoomNoticeListener
 {
     public function __invoke(AjaxResponseEvent $event): void
     {
-        if (!\in_array($event->getAction(), ['refreshDataRequest', 'applyFilterRequest'], true)) {
+        if ('refreshDataRequest' !== $event->getAction()) {
             return;
         }
 
@@ -234,21 +234,34 @@ final class AddRoomNoticeListener
 }
 ```
 
+## API des Wochenkalenders
+
+Das Buchungstool spricht mit einer API unter `/_rbb/api`. Jede Route ist einer Aktion zugeordnet; beantwortet wird
+sie vom Ajax-Controller, der für diese Aktion registriert ist:
+
+| Route | Aktion | Controller | Bedeutung |
+|---|---|---|---|
+| `GET /_rbb/api/calendar` | `refreshDataRequest` | `RefreshDataController` | Wochenansicht laden, aktualisieren, Ressource oder Woche wechseln |
+| `POST /_rbb/api/bookings/validate` | `bookingFormValidationRequest` | `BookingFormValidationController` | Buchungsformular vor dem Absenden prüfen |
+| `POST /_rbb/api/bookings` | `bookingRequest` | `BookingController` | Buchung ausführen |
+| `DELETE /_rbb/api/bookings/{id}` | `cancelBookingRequest` | `CancelController` | Buchung stornieren (`?deleteRepetitions=1` mit Wiederholungen) |
+| `POST /_rbb/api/actions/{action}` | eigene Aktion | eigener Controller | siehe unten |
+
+**Zugang:** Beim Anzeigen des Moduls prüft Contao, ob der Besucher Seite und Modul sehen darf. Dabei erzeugt das Modul
+bei jedem Seitenaufruf ein signiertes Zugangs-Token (Modul, Seite, Mitglied, gültig 8 Stunden), das jede Anfrage im
+Header `X-Rbb-Access-Token` mitschickt. Bei jeder Anfrage wird zusätzlich geprüft, ob noch dasselbe Mitglied
+angemeldet ist, die Seite veröffentlicht und für das Mitglied zugänglich ist (Mitgliedergruppen) und das Modul noch
+existiert. Schreibende Anfragen brauchen zusätzlich das CSRF-Token von Contao (Header `X-Csrf-Token`). Antworten:
+401, wenn das Token abgelaufen ist oder sich das Mitglied geändert hat, 403 ohne Zugang. Das Buchungstool zeigt dann
+«Seite neu laden» an.
+
+Die Auswahl (`resType`, `res`, `date`) steht bei `GET` und `DELETE` im Query-String, bei `POST` im Body.
+
 ## Eigene Ajax-Aktionen
 
-Das Buchungstool kommuniziert per Ajax. Jede Anfrage enthält im Feld `action` eine Aktion; beantwortet wird sie vom
-Ajax-Controller, der für diese Aktion registriert ist:
-
-| Aktion | Controller | Bedeutung |
-|---|---|---|
-| `refreshDataRequest` | `RefreshDataController` | Wochenansicht laden und aktualisieren |
-| `applyFilterRequest` | `ApplyFilterController` | Ressource oder Woche wechseln |
-| `bookingFormValidationRequest` | `BookingFormValidationController` | Buchungsformular vor dem Absenden prüfen |
-| `bookingRequest` | `BookingController` | Buchung ausführen |
-| `cancelBookingRequest` | `CancelController` | Buchung stornieren |
-
 Eine eigene Aktion ist ein eigener Controller: Klasse mit dem Attribut `#[AsAjaxController('…')]`, die
-`ControllerInterface` implementiert (Service mit `autoconfigure`). Die Auswahl des Wochenkalenders liefert
+`ControllerInterface` implementiert (Service mit `autoconfigure`). Erreichbar ist sie über
+`POST /_rbb/api/actions/{action}` mit denselben Zugangsprüfungen. Die Auswahl des Wochenkalenders liefert
 `AppState::fromRequest($request)`. Jede Aktion kann nur von einem Controller beantwortet werden. Für eine Aktion ohne
 Controller antwortet die Erweiterung mit HTTP 400 (`RBB.ERR.invalidAjaxAction`).
 
@@ -278,6 +291,16 @@ final class MyCustomController implements ControllerInterface
         return $ajaxResponse;
     }
 }
+```
+
+Im Template ruft man die Aktion über die Vue-Instanz auf, `apiFetch()` setzt Token und CSRF-Token:
+
+```js
+const formData = new FormData();
+// Auswahl des Wochenkalenders (Ressourcentyp, Ressource, Woche)
+vueInstance.appendAppState(formData);
+const response = await vueInstance.apiFetch('POST', vueInstance.options.apiUrls.action.replace('__action__', 'myCustomRequest'), formData);
+const json = await response.json();
 ```
 
 Die Methoden der `AjaxResponse` im Überblick:

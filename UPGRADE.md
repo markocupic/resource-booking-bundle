@@ -484,7 +484,8 @@ die URL (`?token_<moduleKey>=…`, mit Redirect) und legte Auswahl und Woche im 
 Frontend bei jedem Ajax-Request den Modul-Schlüssel und die Auswahl mit (`resType`, `res`, `date`); der Server prüft
 sie und baut daraus den `AppState`, der am Request hängt. Folgen:
 
-* Keine Redirects und keine Session mehr beim Aufruf der Seite (cachebar, keine Session-Cookies nur für den Kalender).
+* Keine Redirects und keine Session mehr beim Aufruf der Seite (keine Session-Cookies nur für den Kalender). Die
+  Seite selbst wird wegen des Zugangs-Tokens nicht im HTTP-Cache gespeichert (siehe «Eigene API für den Wochenkalender»).
 * Mehrere Browser-Tabs mit unterschiedlicher Auswahl stören sich nicht mehr. Die Auswahl bleibt pro Tab beim
   Neuladen erhalten (`sessionStorage`, Schlüssel `rbb:<Pfad und Query-String>:<moduleKey>`).
 * Direktlinks: `?resType=<id>`, `?res=<id>` (wählt auch den Typ) und `?date=<Zeitstempel oder JJJJ-MM-TT>`.
@@ -521,12 +522,8 @@ Modul-Controller ruft ihn nur noch auf. Fehler werden als JSON beantwortet statt
 * Andere Fehler: HTTP 500, `status: error`, Meldung `RBB.ERR.somethingWentWrong`; die Exception wird ins
   Contao-Systemlog geschrieben. Contao-`ResponseException`s (z. B. Redirects) werden weiterhin durchgereicht.
 * Das Frontend zeigt die Meldung des Servers an (nicht beim automatischen Aktualisieren alle 15 Sekunden).
-* Ajax-Requests eines anderen Wochenkalenders auf derselben Seite beantwortet das Modul mit einer leeren Antwort,
-  statt sich vollständig zu rendern.
 * Cache-Header der JSON-Antworten: `private, no-store` (bisher zusätzlich `max-age=0, must-revalidate`).
-* Der Konstruktor von `ResourceBookingWeekcalendarController` erhält nur noch `AjaxRequestHandler`,
-  `ContaoCsrfTokenManager`, `ModuleKeyGenerator`, `RequestStack` und `ScopeMatcher`; `getAjaxResponse()` wurde
-  entfernt.
+* `getAjaxResponse()` von `ResourceBookingWeekcalendarController` wurde entfernt.
 
 ### Ajax-Controller statt AjaxRequestEvent
 
@@ -612,6 +609,51 @@ der neuen `AjaxController\AjaxControllerRegistry`. Die Controller registrieren s
 * `data-*`-Attribute der Zellen (eigenes CSS): `data-isinvaliddate` heisst `data-isoutsidebookingwindow`,
   `data-istimeslotavailable` heisst `data-isavailableonweekday`, `data-userisloggedin` heisst `data-ismemberloggedin`;
   `data-bookingcount` wurde entfernt.
+
+### Eigene API für den Wochenkalender
+
+Die Anfragen des Wochenkalenders gehen nicht mehr an die URL der Seite (`POST` mit `action`), sondern an eigene Routen
+unter `/_rbb/api` (`Controller\Api\WeekCalendarApiController`):
+
+| Route | Aktion |
+|---|---|
+| `GET /_rbb/api/calendar` | `refreshDataRequest` |
+| `POST /_rbb/api/bookings/validate` | `bookingFormValidationRequest` |
+| `POST /_rbb/api/bookings` | `bookingRequest` |
+| `DELETE /_rbb/api/bookings/{id}?deleteRepetitions=1` | `cancelBookingRequest` |
+| `POST /_rbb/api/actions/{action}` | eigene Aktionen (`#[AsAjaxController]`) |
+
+**Zugang:** Bisher prüfte Contao den Zugang implizit, weil die Seite gerendert wurde. Neu erzeugt das Modul bei jedem
+Seitenaufruf ein signiertes Zugangs-Token (`Api\AccessTokenManager`, HMAC mit `kernel.secret`; Modul, Seite,
+Modul-Schlüssel, Mitglied, gültig 8 Stunden). Es geht im Header `X-Rbb-Access-Token` mit, nie in der URL.
+`Api\AccessChecker` prüft bei jeder Anfrage erneut, ob
+
+* noch dasselbe Mitglied angemeldet ist (sonst HTTP 401),
+* die Seite veröffentlicht ist (inkl. Start/Stopp und Vorschau wie in Contao) und für das Mitglied zugänglich
+  (Mitgliedergruppen, gleiche Regeln wie der `PageAccessListener` von Contao; sonst HTTP 403),
+* das Modul noch existiert und ein Wochenkalender ist (sonst HTTP 403).
+
+Schreibende Anfragen (`POST`, `DELETE`) brauchen zusätzlich das CSRF-Token von Contao im Header `X-Csrf-Token`. Bei
+401/403 stoppt das Buchungstool die automatische Aktualisierung und bittet, die Seite neu zu laden
+(`RBB.ERR.accessTokenExpired`, `RBB.ERR.accessDenied`). Nicht erneut geprüft wird die Einbindung des Moduls in Artikel
+oder Inhaltselemente (z. B. «nur für Gäste»); das bestätigt das Token bis zu seinem Ablauf.
+
+Weitere Folgen:
+
+* **HTTP-Cache:** Die Antwort des Moduls ist `private, no-store` und macht damit die ganze Seite nicht cachebar
+  (sonst würden alle Besucher dasselbe Token erhalten).
+* **Entfernt:** `ApplyFilterController` und die Aktion `applyFilterRequest` (identisch mit `refreshDataRequest`).
+  Listener auf `AjaxResponseEvent` prüfen nur noch `refreshDataRequest`.
+* `AjaxResponseEvent::getAction()` liefert die Aktion der Antwort (nicht mehr den POST-Parameter `action`).
+  `getRequest()` ist der API-Request; die Seite liefert `getAppState()->page`, z. B. für Links zurück zur Seite.
+* `AjaxRequestHandler::handle(Request $request, string $action, ApiContext $context)` (bisher Modul-Schlüssel,
+  Modul und Seite). `createErrorResponse()` ist öffentlich.
+* `CancelController` liest die Buchungs-ID aus der Route und `deleteRepetitions` aus dem Query-String.
+* Konstruktor von `ResourceBookingWeekcalendarController`: `AccessTokenManager`, `ContaoCsrfTokenManager`,
+  `LoggedInFrontendUser`, `ModuleKeyGenerator`, `RequestStack`, `UrlGeneratorInterface`. Das Template erhält zusätzlich
+  `accessToken` und `apiUrls` (bei einem eigenen Template in den Optionen von `ResourceBookingApp` übernehmen).
+* **JavaScript:** Requests über `apiFetch(method, url, formData)` (setzt Token und CSRF-Token). Die Felder `action`,
+  `moduleKey` und `REQUEST_TOKEN` stehen nicht mehr im `FormData` des Events `rbb_before_booking_request`.
 
 ### Farbschema pro Modul
 

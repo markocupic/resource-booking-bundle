@@ -118,16 +118,24 @@ Neue Buchungen: `confirmed` = `autoConfirm` der Ressource. Unbestätigte Buchung
 
 ## Architektur
 
-- Ajax: Frontend sendet `action` (`refreshDataRequest`, `applyFilterRequest`, `bookingFormValidationRequest`,
-  `bookingRequest`, `cancelBookingRequest`). Eingang: `ResourceBookingWeekcalendarController` (nur Modul-Schlüssel,
-  Request eines anderen Moduls → leere Response) → `WeekCalendar\AjaxRequestHandler` (AppState, JSON) →
+- API: `Controller\Api\WeekCalendarApiController` unter `/_rbb/api` (`_scope: frontend`):
+  `GET /calendar` (refreshDataRequest), `POST /bookings/validate` (bookingFormValidationRequest), `POST /bookings`
+  (bookingRequest), `DELETE /bookings/{id}` (cancelBookingRequest), `POST /actions/{action}` (fremde Aktionen).
+  Zugang: `Api\AccessTokenManager` – das Modul (`ResourceBookingWeekcalendarController::getResponse()`) erzeugt bei
+  jedem Seitenaufruf ein signiertes Token (HMAC mit `kernel.secret`; Modul, Seite, Modul-Schlüssel, Mitglied,
+  Ablauf 8 h), Header `X-Rbb-Access-Token`. `Api\AccessChecker` prüft bei jeder Anfrage erneut: gleiches Mitglied
+  (sonst 401), Seite veröffentlicht + Gruppen wie `PageAccessListener` (403), Modul vorhanden und Typ stimmt (403).
+  Schreibende Anfragen zusätzlich CSRF-Token (Header `X-Csrf-Token`). Die Modul-Response ist `private, no-store`
+  (wird in die Seite gemergt: kein Token im HTTP-Cache). JS: `apiFetch()`, bei 401/403 `onAccessLost()`
+  (Intervalle stoppen, Meldung «Seite neu laden»). → `WeekCalendar\AjaxRequestHandler` (AppState, JSON) →
   `AjaxController\AjaxControllerRegistry` (ServiceLocator, Tag `markocupic_resource_booking.ajax_controller`, Index
   `action`) → Controller in `src/AjaxController` mit `#[AsAjaxController(self::ACTION)]`. Kein Event für Ajax
   (das `AjaxRequestEvent` wurde in 6.0 entfernt; Erweitern per `AjaxResponseEvent`). Fehler immer als JSON: unbekannte Aktion → 400 (vor dem AppState),
   sonst geloggt → 500; JS `throwResponseError()` zeigt `messages.error` an. Cache-Header `private, no-store`.
 - Erweiterungspunkt: `Event\AjaxResponseEvent`, ausgelöst im `AjaxRequestHandler` nach jedem erfolgreichen
-  Controller (nicht bei Fehlern). Hochfelden hängt dort bei `refreshDataRequest`/`applyFilterRequest` die signierten
-  Formular-Links für Gäste an (`AddGuestBookingFormLinksListener`).
+  Controller (nicht bei Fehlern). Hochfelden hängt dort bei `refreshDataRequest` die signierten
+  Formular-Links für Gäste an (`AddGuestBookingFormLinksListener`); `getRequest()` ist der API-Request, die URL der
+  Seite liefert `getAppState()->page`.
 - Daten für den Kalender: `WeekCalendar\CalendarDataBuilder::build()` (Filter, Woche, Kopfzeile).
   Die Tabelle baut `WeekCalendar\WeekTableBuilder` (`buildRows()`, `buildTimeSlots()`, Markup-IDs als statische
   Methoden); jede Buchung geht durch `WeekCalendar\BookingPresenter::present()` – nur dort wird entschieden, welche

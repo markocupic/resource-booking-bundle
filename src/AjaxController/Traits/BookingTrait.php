@@ -157,7 +157,7 @@ trait BookingTrait
                 );
 
                 return $slot->withBookingData($arrUserInput);
-            }
+            },
         );
     }
 

@@ -77,7 +77,7 @@ class BlockedSlotCleanupTest extends TestCase
                     $updates[$criteria['id']] = $data;
 
                     return 1;
-                }
+                },
             )
         ;
 

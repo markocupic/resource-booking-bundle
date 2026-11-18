@@ -21,6 +21,7 @@ use Contao\PageModel;
 use Contao\TestCase\ContaoTestCase;
 use Markocupic\ResourceBookingBundle\AjaxController\AjaxControllerRegistry;
 use Markocupic\ResourceBookingBundle\AjaxController\ControllerInterface;
+use Markocupic\ResourceBookingBundle\Api\ApiContext;
 use Markocupic\ResourceBookingBundle\AppState\AppState;
 use Markocupic\ResourceBookingBundle\AppState\AppStateFactory;
 use Markocupic\ResourceBookingBundle\Event\AjaxResponseEvent;
@@ -45,7 +46,7 @@ class AjaxRequestHandlerTest extends ContaoTestCase
      */
     public function testCallsTheControllerOfTheActionAndReturnsAPrivateJsonResponse(): void
     {
-        $request = $this->createXmlHttpRequest(['action' => 'refreshDataRequest', 'resType' => '3', 'res' => '7', 'date' => '1795046400']);
+        $request = $this->createXmlHttpRequest(['resType' => '3', 'res' => '7', 'date' => '1795046400']);
         $appState = $this->createAppState();
 
         $appStateFactory = $this->createMock(AppStateFactory::class);
@@ -69,7 +70,7 @@ class AjaxRequestHandlerTest extends ContaoTestCase
             ),
         ];
 
-        $response = $this->getHandler($controllers, $appStateFactory)->handle($request, self::MODULE_KEY, $this->mockModuleModel(), $this->mockPageModel());
+        $response = $this->getHandler($controllers, $appStateFactory)->handle($request, 'refreshDataRequest', $this->createContext());
 
         $this->assertSame($appState, $stateOfController);
         $this->assertSame(200, $response->getStatusCode());
@@ -78,6 +79,26 @@ class AjaxRequestHandlerTest extends ContaoTestCase
         $this->assertTrue($response->headers->hasCacheControlDirective('no-store'));
         $this->assertTrue($response->headers->hasCacheControlDirective('private'));
         $this->assertFalse($response->headers->hasCacheControlDirective('public'));
+    }
+
+    /**
+     * GET requests (calendar) send the selection in the query string.
+     */
+    public function testGetRequestsReadTheSelectionFromTheQueryString(): void
+    {
+        $request = Request::create('https://example.com/_rbb/api/calendar', 'GET', ['resType' => '3', 'res' => '7', 'date' => '2026-11-20', 'initial' => '1']);
+
+        $appStateFactory = $this->createMock(AppStateFactory::class);
+        $appStateFactory
+            ->expects($this->once())
+            ->method('create')
+            ->with(self::MODULE_KEY, $this->anything(), $this->anything(), ['resType' => '3', 'res' => '7', 'date' => '2026-11-20'], true)
+            ->willReturn($this->createAppState())
+        ;
+
+        $response = $this->getHandler(appStateFactory: $appStateFactory)->handle($request, 'refreshDataRequest', $this->createContext());
+
+        $this->assertSame(200, $response->getStatusCode());
     }
 
     /**
@@ -96,7 +117,7 @@ class AjaxRequestHandlerTest extends ContaoTestCase
         );
 
         $response = $this->getHandler(eventDispatcher: $eventDispatcher)
-            ->handle($this->createXmlHttpRequest(['action' => 'refreshDataRequest']), self::MODULE_KEY, $this->mockModuleModel(), $this->mockPageModel())
+            ->handle($this->createXmlHttpRequest([]), 'refreshDataRequest', $this->createContext())
         ;
 
         $this->assertSame('Bitte Zimmer nach Gebrauch lüften.', $this->decode($response)['data']['notice']);
@@ -121,7 +142,7 @@ class AjaxRequestHandlerTest extends ContaoTestCase
         );
 
         $response = $this->getHandler($controllers, eventDispatcher: $eventDispatcher)
-            ->handle($this->createXmlHttpRequest(['action' => 'bookingRequest']), self::MODULE_KEY, $this->mockModuleModel(), $this->mockPageModel())
+            ->handle($this->createXmlHttpRequest([]), 'bookingRequest', $this->createContext())
         ;
 
         $this->assertSame(500, $response->getStatusCode());
@@ -130,7 +151,7 @@ class AjaxRequestHandlerTest extends ContaoTestCase
 
     public function testTheFirstRequestOfThePageSelectsAResourceAutomatically(): void
     {
-        $request = $this->createXmlHttpRequest(['action' => 'refreshDataRequest', 'initial' => '1']);
+        $request = $this->createXmlHttpRequest(['initial' => '1']);
 
         $appStateFactory = $this->createMock(AppStateFactory::class);
         $appStateFactory
@@ -140,7 +161,7 @@ class AjaxRequestHandlerTest extends ContaoTestCase
             ->willReturn($this->createAppState())
         ;
 
-        $response = $this->getHandler(appStateFactory: $appStateFactory)->handle($request, self::MODULE_KEY, $this->mockModuleModel(), $this->mockPageModel());
+        $response = $this->getHandler(appStateFactory: $appStateFactory)->handle($request, 'refreshDataRequest', $this->createContext());
 
         $this->assertSame(200, $response->getStatusCode());
     }
@@ -163,7 +184,7 @@ class AjaxRequestHandlerTest extends ContaoTestCase
         ;
 
         $response = $this->getHandler(appStateFactory: $appStateFactory, logger: $logger)
-            ->handle($this->createXmlHttpRequest(['action' => 'fooRequest']), self::MODULE_KEY, $this->mockModuleModel(), $this->mockPageModel())
+            ->handle($this->createXmlHttpRequest([]), 'fooRequest', $this->createContext())
         ;
 
         $this->assertSame(400, $response->getStatusCode());
@@ -187,7 +208,7 @@ class AjaxRequestHandlerTest extends ContaoTestCase
         ;
 
         $response = $this->getHandler($controllers, logger: $logger)
-            ->handle($this->createXmlHttpRequest(['action' => 'bookingRequest']), self::MODULE_KEY, $this->mockModuleModel(), $this->mockPageModel())
+            ->handle($this->createXmlHttpRequest([]), 'bookingRequest', $this->createContext())
         ;
 
         $this->assertSame(500, $response->getStatusCode());
@@ -205,7 +226,7 @@ class AjaxRequestHandlerTest extends ContaoTestCase
         $this->expectException(ResponseException::class);
 
         $this->getHandler($controllers)
-            ->handle($this->createXmlHttpRequest(['action' => 'bookingRequest']), self::MODULE_KEY, $this->mockModuleModel(), $this->mockPageModel())
+            ->handle($this->createXmlHttpRequest([]), 'bookingRequest', $this->createContext())
         ;
     }
 
@@ -271,14 +292,19 @@ class AjaxRequestHandlerTest extends ContaoTestCase
     /**
      * @param array<string, string> $post
      */
-    private function createXmlHttpRequest(array $post): Request
+    private function createXmlHttpRequest(array $post = []): Request
     {
-        return Request::create('https://example.com/calendar', 'POST', $post, [], [], ['HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest']);
+        return Request::create('https://example.com/_rbb/api/bookings', 'POST', $post, [], [], ['HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest']);
     }
 
     private function decode(JsonResponse $response): array
     {
         return json_decode((string) $response->getContent(), true, 512, JSON_THROW_ON_ERROR);
+    }
+
+    private function createContext(): ApiContext
+    {
+        return new ApiContext($this->mockModuleModel(), $this->mockPageModel(), self::MODULE_KEY);
     }
 
     private function createAppState(): AppState

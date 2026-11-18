@@ -15,7 +15,6 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\Tests\AjaxController;
 
 use Markocupic\ResourceBookingBundle\AjaxController\AjaxControllerRegistry;
-use Markocupic\ResourceBookingBundle\AjaxController\ApplyFilterController;
 use Markocupic\ResourceBookingBundle\AjaxController\BookingController;
 use Markocupic\ResourceBookingBundle\AjaxController\BookingFormValidationController;
 use Markocupic\ResourceBookingBundle\AjaxController\CancelController;
@@ -77,7 +76,6 @@ class AjaxControllerRegistryTest extends TestCase
     public static function provideControllers(): iterable
     {
         yield [RefreshDataController::class, 'refreshDataRequest'];
-        yield [ApplyFilterController::class, 'applyFilterRequest'];
         yield [BookingFormValidationController::class, 'bookingFormValidationRequest'];
         yield [BookingController::class, 'bookingRequest'];
         yield [CancelController::class, 'cancelBookingRequest'];

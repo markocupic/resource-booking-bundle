@@ -100,10 +100,14 @@
         <script>
             document.addEventListener('DOMContentLoaded', () => {
                 new ResourceBookingApp('#resourceBookingApp_{{ moduleKey }}', {
-                    'requestToken': '{{ csrfToken }}',
-                    'moduleKey': '{{ moduleKey }}',
+                    'requestToken': '{{ csrfToken|e('js') }}',
+                    'moduleKey': '{{ moduleKey|e('js') }}',
+                    'accessToken': '{{ accessToken|e('js') }}',
+                    'apiUrls': {{ apiUrls|json_encode|raw }},
                     'texts': {
                         'networkError': '{{ ('RBB.ERR.networkError')|trans|e('js') }}',
+                        'accessTokenExpired': '{{ ('RBB.ERR.accessTokenExpired')|trans|e('js') }}',
+                        'accessDenied': '{{ ('RBB.ERR.accessDenied')|trans|e('js') }}',
                     },
                 });
             });

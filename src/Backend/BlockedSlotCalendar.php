@@ -297,7 +297,7 @@ class BlockedSlotCalendar
                 $cache[$slot['timeSlot']] ??= (int) ($timeSlotModel->findById($slot['timeSlot'])?->pid ?? 0);
 
                 return $timeSlotTypeId > 0 && $cache[$slot['timeSlot']] === $timeSlotTypeId;
-            }
+            },
         ));
     }
 

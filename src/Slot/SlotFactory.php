@@ -44,7 +44,7 @@ class SlotFactory
     }
 
     /**
-     * @param int      $requestedItems              1 in the week calendar, the requested items of a booking request
+     * @param int      $requestedItems       1 in the week calendar, the requested items of a booking request
      * @param int|null $repeatUntilWeekStart First day of the last week of the repetitions (booking request)
      *
      * @throws \Exception

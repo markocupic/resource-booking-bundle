@@ -26,7 +26,7 @@ class AjaxResponseEventTest extends ContaoTestCase
 {
     public function testProvidesRequestActionAppStateAndResponse(): void
     {
-        $request = Request::create('https://example.com/calendar', 'POST', ['action' => 'applyFilterRequest']);
+        $request = Request::create('https://example.com/_rbb/api/calendar');
 
         $appState = new AppState(
             '33_0',
@@ -43,11 +43,12 @@ class AjaxResponseEventTest extends ContaoTestCase
 
         $appState->attachTo($request);
 
-        $ajaxResponse = new AjaxResponse('applyFilterRequest');
+        $ajaxResponse = new AjaxResponse('refreshDataRequest');
         $event = new AjaxResponseEvent($request, $ajaxResponse);
 
         $this->assertSame($request, $event->getRequest());
-        $this->assertSame('applyFilterRequest', $event->getAction());
+        // The action comes from the response (the API route sets it)
+        $this->assertSame('refreshDataRequest', $event->getAction());
         $this->assertSame($appState, $event->getAppState());
         $this->assertSame($ajaxResponse, $event->getAjaxResponse());
     }

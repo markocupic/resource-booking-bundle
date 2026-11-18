@@ -62,7 +62,7 @@ class MoveBlockedBookingsToBlockedPeriodsTest extends TestCase
                     $inserted[] = $data;
 
                     return 1;
-                }
+                },
             )
         ;
 
@@ -75,7 +75,7 @@ class MoveBlockedBookingsToBlockedPeriodsTest extends TestCase
                     $statements[] = $sql;
 
                     return 0;
-                }
+                },
             )
         ;
 

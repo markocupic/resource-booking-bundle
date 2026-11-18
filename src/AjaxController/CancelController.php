@@ -61,14 +61,15 @@ final class CancelController extends AbstractController implements ControllerInt
     {
         $this->getSystemAdapter()->loadLanguageFile('default', $this->translator->getLocale());
 
-        $deleteRepetitions = 'true' === $request->request->get('deleteRepetitions');
+        // DELETE /_rbb/api/bookings/{id}?deleteRepetitions=1 (see WeekCalendarApiController)
+        $deleteRepetitions = \in_array((string) $request->query->get('deleteRepetitions'), ['1', 'true'], true);
 
         $this->connection->beginTransaction();
 
         try {
             $appState = AppState::fromRequest($request);
             $user = $this->user->getLoggedInUser();
-            $bookingId = (int) $request->request->get('id');
+            $bookingId = (int) $request->attributes->get('id');
 
             if (null === $user || $bookingId <= 0) {
                 throw new StopBookingCancellationException($this->translator->trans('RBB.ERR.notAuthorized', [], 'contao_default'));

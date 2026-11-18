@@ -33,19 +33,19 @@ final class Slot
     private const SECONDS_IN_DAY = 86400;
 
     /**
-     * @param array<string, mixed>       $resource              Row of tl_resource_booking_resource
-     * @param int                        $now                   Current time
-     * @param int|null                   $loggedInMemberId      ID of the logged-in member, null for guests
-     * @param int                        $requestedItems        1 in the week calendar, the requested items of a booking request
-     * @param bool                       $isValidTimeSlot       The time slot exists, is published, belongs to the timetable of the resource and the times match (see ResourceBookingRestriction::isValidTimeSlot())
-     * @param list<string>               $availableWeekdays     Weekdays on which the time slot is available, e.g. "monday"; empty: every weekday
-     * @param int|null                   $blockedPeriodId       Blocked period covering this slot, e.g. holidays
+     * @param array<string, mixed>       $resource                 Row of tl_resource_booking_resource
+     * @param int                        $now                      Current time
+     * @param int|null                   $loggedInMemberId         ID of the logged-in member, null for guests
+     * @param int                        $requestedItems           1 in the week calendar, the requested items of a booking request
+     * @param bool                       $isValidTimeSlot          The time slot exists, is published, belongs to the timetable of the resource and the times match (see ResourceBookingRestriction::isValidTimeSlot())
+     * @param list<string>               $availableWeekdays        Weekdays on which the time slot is available, e.g. "monday"; empty: every weekday
+     * @param int|null                   $blockedPeriodId          Blocked period covering this slot, e.g. holidays
      * @param string                     $blockedPeriodDescription Description of the blocked period (the title is internal)
-     * @param int|null                   $weekStart             First day of the week of the slot
-     * @param int|null                   $lastBookableWeekStart First day of the last week the resource can be booked (tl_resource_booking_resource.weeksAhead)
-     * @param int|null                   $repeatUntilWeekStart  First day of the last week of the repetitions (booking request)
-     * @param list<array<string, mixed>> $bookings              Rows of tl_resource_booking
-     * @param array<string, mixed>       $bookingData           Data of the booking to save (see withBookingData())
+     * @param int|null                   $weekStart                First day of the week of the slot
+     * @param int|null                   $lastBookableWeekStart    First day of the last week the resource can be booked (tl_resource_booking_resource.weeksAhead)
+     * @param int|null                   $repeatUntilWeekStart     First day of the last week of the repetitions (booking request)
+     * @param list<array<string, mixed>> $bookings                 Rows of tl_resource_booking
+     * @param array<string, mixed>       $bookingData              Data of the booking to save (see withBookingData())
      */
     public function __construct(
         public readonly int $timeSlotId,

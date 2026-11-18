@@ -36,11 +36,12 @@ class AjaxResponseEvent extends Event
     }
 
     /**
-     * The action of the Ajax request, e.g. refreshDataRequest or bookingRequest.
+     * The action of the request, e.g. refreshDataRequest or bookingRequest
+     * (see WeekCalendarApiController).
      */
     public function getAction(): string
     {
-        return (string) $this->request->request->get('action', '');
+        return (string) $this->ajaxResponse->getAction();
     }
 
     public function getRequest(): Request

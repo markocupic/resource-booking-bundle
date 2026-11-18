@@ -10,6 +10,7 @@ services:
             - '../src/{DependencyInjection,Session,Config,Model,Event,Exception,Widget}'
             - '../src/Response/AjaxResponse.php'
             - '../src/AppState/AppState.php'
+            - '../src/Api/{AccessToken,ApiContext,InvalidAccessTokenException}.php'
             - '../src/Booking/BookingSource.php'
             - '../src/Slot/{Slot,SlotCollection}.php'
             - '../src/Util/BlockedSlots.php'

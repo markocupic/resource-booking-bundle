@@ -17,19 +17,20 @@ namespace Markocupic\ResourceBookingBundle\Tests\Controller\FrontendModule;
 use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController;
 use Contao\CoreBundle\Csrf\ContaoCsrfTokenManager;
 use Contao\CoreBundle\DependencyInjection\Attribute\AsFrontendModule;
-use Contao\CoreBundle\Exception\ResponseException;
-use Contao\CoreBundle\Routing\ScopeMatcher;
 use Contao\CoreBundle\Twig\FragmentTemplate;
+use Contao\FrontendUser;
 use Contao\ModuleModel;
 use Contao\PageModel;
 use Contao\TestCase\ContaoTestCase;
+use Markocupic\ResourceBookingBundle\Api\AccessTokenManager;
 use Markocupic\ResourceBookingBundle\AppState\ModuleKeyGenerator;
 use Markocupic\ResourceBookingBundle\Controller\FrontendModule\ResourceBookingWeekcalendarController;
-use Markocupic\ResourceBookingBundle\WeekCalendar\AjaxRequestHandler;
-use Symfony\Component\HttpFoundation\JsonResponse;
+use Markocupic\ResourceBookingBundle\User\LoggedInFrontendUser;
+use Symfony\Component\Clock\MockClock;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class ResourceBookingWeekcalendarControllerTest extends ContaoTestCase
 {
@@ -37,118 +38,89 @@ class ResourceBookingWeekcalendarControllerTest extends ContaoTestCase
 
     private const PAGE_ID = 5;
 
-    // First week calendar on the page: "<moduleId>_<index>"
-    private const MODULE_KEY = '33_0';
-
     public function testIsAFrontendModuleController(): void
     {
-        $controller = $this->getController();
-
-        $this->assertInstanceOf(AbstractFrontendModuleController::class, $controller);
+        $this->assertInstanceOf(AbstractFrontendModuleController::class, $this->getController());
         $this->assertSame('resourceBookingWeekcalendar', ResourceBookingWeekcalendarController::TYPE);
     }
 
     /**
-     * An XHR request with an "action" and the module key of this module is answered
-     * by the AjaxRequestHandler, the JSON response is wrapped in a ResponseException.
+     * getResponse() passes the module key, the CSRF token, the access token and the
+     * URLs of the API to the template and excludes the calendar from the search index.
      */
-    public function testXmlHttpActionRequestThrowsResponseExceptionWithJsonResponse(): void
+    public function testGetResponseAssignsTheTemplateData(): void
     {
-        $request = $this->createXmlHttpRequest(['action' => 'refreshDataRequest', 'moduleKey' => self::MODULE_KEY]);
-        $jsonResponse = new JsonResponse(['status' => 'success']);
-
-        $handler = $this->createMock(AjaxRequestHandler::class);
-        $handler
-            ->expects($this->once())
-            ->method('handle')
-            ->with($request, self::MODULE_KEY, $this->anything(), $this->anything())
-            ->willReturn($jsonResponse)
-        ;
-
-        $controller = $this->getController(ajaxRequestHandler: $handler, requestStack: $this->createRequestStack($request));
-
-        try {
-            $controller($request, $this->mockModuleModel(), 'main', null, $this->mockPageModel());
-
-            $this->fail('Expected a ResponseException to be thrown.');
-        } catch (ResponseException $e) {
-            $this->assertSame($jsonResponse, $e->getResponse());
-        }
-    }
-
-    /**
-     * Requests for another week calendar on the same page (other module key) are not
-     * answered by this module, and the module is not rendered either.
-     */
-    public function testRequestsOfAnotherModuleReturnAnEmptyResponse(): void
-    {
-        $request = $this->createXmlHttpRequest(['action' => 'refreshDataRequest', 'moduleKey' => '33_1']);
-
-        $handler = $this->createMock(AjaxRequestHandler::class);
-        $handler
-            ->expects($this->never())
-            ->method('handle')
-        ;
-
-        $controller = $this->getController(ajaxRequestHandler: $handler, requestStack: $this->createRequestStack($request));
-
-        $response = $controller($request, $this->mockModuleModel(), 'main', null, $this->mockPageModel());
-
-        $this->assertSame('', $response->getContent());
-        $this->assertSame(self::MODULE_KEY, $request->attributes->get('_rbb_module_key'));
-    }
-
-    /**
-     * XHR requests of other extensions (no module key) render the module as usual.
-     */
-    public function testOtherXmlHttpRequestsAreNotTouched(): void
-    {
-        $request = $this->createXmlHttpRequest(['action' => 'somethingElse']);
-
-        $handler = $this->createMock(AjaxRequestHandler::class);
-        $handler
-            ->expects($this->never())
-            ->method('handle')
-        ;
-
-        $controller = $this->getController(ajaxRequestHandler: $handler, requestStack: $this->createRequestStack($request));
-
-        // The module renders its template (not available in this test)
-        try {
-            $response = $controller($request, $this->mockModuleModel(), 'main', null, $this->mockPageModel());
-            $this->assertNotSame('', $response->getContent());
-        } catch (ResponseException) {
-            $this->fail('The module must not answer foreign Ajax requests.');
-        } catch (\Throwable) {
-            // Rendering the template needs a complete Contao environment
-        }
-    }
-
-    /**
-     * getResponse() exposes the module key and the CSRF token to the template and
-     * excludes the calendar from the search index.
-     */
-    public function testGetResponseAssignsModuleKeyAndCsrfTokenToTemplate(): void
-    {
-        $expectedResponse = new Response('rendered');
-
-        $csrfTokenManager = $this->createMock(ContaoCsrfTokenManager::class);
+        $csrfTokenManager = $this->createStub(ContaoCsrfTokenManager::class);
         $csrfTokenManager
             ->method('getDefaultTokenValue')
             ->willReturn('csrf-token-value')
         ;
 
-        $template = new FragmentTemplate('frontend_module/resource_booking_weekcalendar', static fn (): Response => $expectedResponse);
+        $tokenManager = new AccessTokenManager('secret', new MockClock());
+        $template = new FragmentTemplate('frontend_module/resource_booking_weekcalendar', static fn (): Response => new Response('rendered'));
+        $request = $this->createRequest();
 
-        $request = Request::create('https://example.com/calendar');
-        $request->attributes->set('_rbb_module_key', '33_1');
+        $this->invokeProtected($this->getController($csrfTokenManager, $tokenManager, memberId: 7, requestStack: $this->createRequestStack($request)), 'getResponse', [$template, $this->mockModuleModel(), $request]);
 
-        $controller = $this->getController(contaoCsrfTokenManager: $csrfTokenManager);
+        $data = $template->getData();
 
-        $response = $this->invokeProtected($controller, 'getResponse', [$template, $this->mockModuleModel(), $request]);
+        $this->assertSame('33_0', $data['moduleKey']);
+        $this->assertSame('csrf-token-value', $data['csrfToken']);
+        $this->assertFalse($data['searchable']);
+        $this->assertSame('', $data['colorScheme']);
+        $this->assertSame(['calendar' => '/route/markocupic_resource_booking_api_calendar', 'validateBooking' => '/route/markocupic_resource_booking_api_validate_booking', 'bookings' => '/route/markocupic_resource_booking_api_create_booking', 'action' => '/route/markocupic_resource_booking_api_action'], $data['apiUrls']);
 
-        $this->assertSame($expectedResponse, $response);
-        $this->assertSame(['moduleKey' => '33_1', 'csrfToken' => 'csrf-token-value', 'searchable' => false, 'colorScheme' => ''], $template->getData());
+        // The token names module, page, module key and member
+        $token = $tokenManager->parse($data['accessToken']);
+
+        $this->assertSame(self::MODULE_ID, $token->moduleId);
+        $this->assertSame(self::PAGE_ID, $token->pageId);
+        $this->assertSame('33_0', $token->moduleKey);
+        $this->assertSame(7, $token->memberId);
+    }
+
+    /**
+     * Every page load gets a new token.
+     */
+    public function testEveryPageLoadGetsANewToken(): void
+    {
+        $tokens = [];
+
+        foreach ([1, 2] as $i) {
+            $template = new FragmentTemplate('frontend_module/resource_booking_weekcalendar', static fn (): Response => new Response());
+            $request = $this->createRequest();
+
+            $this->invokeProtected($this->getController(requestStack: $this->createRequestStack($request)), 'getResponse', [$template, $this->mockModuleModel(), $request]);
+
+            $tokens[] = $template->getData()['accessToken'];
+        }
+
+        $this->assertNotSame($tokens[0], $tokens[1]);
+    }
+
+    /**
+     * The page contains the access token: it must never be stored in a shared cache.
+     */
+    public function testTheResponseIsPrivateAndNotStored(): void
+    {
+        $template = new FragmentTemplate('frontend_module/resource_booking_weekcalendar', static fn (): Response => new Response('rendered'));
+        $request = $this->createRequest();
+
+        $response = $this->invokeProtected($this->getController(requestStack: $this->createRequestStack($request)), 'getResponse', [$template, $this->mockModuleModel(), $request]);
+
+        $this->assertTrue($response->headers->hasCacheControlDirective('private'));
+        $this->assertTrue($response->headers->hasCacheControlDirective('no-store'));
+    }
+
+    public function testGuestsGetATokenWithoutMember(): void
+    {
+        $tokenManager = new AccessTokenManager('secret', new MockClock());
+        $template = new FragmentTemplate('frontend_module/resource_booking_weekcalendar', static fn (): Response => new Response());
+        $request = $this->createRequest();
+
+        $this->invokeProtected($this->getController(accessTokenManager: $tokenManager, requestStack: $this->createRequestStack($request)), 'getResponse', [$template, $this->mockModuleModel(), $request]);
+
+        $this->assertNull($tokenManager->parse($template->getData()['accessToken'])->memberId);
     }
 
     /**
@@ -156,13 +128,12 @@ class ResourceBookingWeekcalendarControllerTest extends ContaoTestCase
      */
     public function testGetResponseAssignsTheColorScheme(): void
     {
-        $controller = $this->getController();
-
         foreach (['dark' => 'dark', 'light' => 'light', '' => '', 'foo' => ''] as $value => $expected) {
             $template = new FragmentTemplate('frontend_module/resource_booking_weekcalendar', static fn (): Response => new Response());
             $model = $this->createClassWithPropertiesStub(ModuleModel::class, ['id' => self::MODULE_ID, 'resourceBooking_colorScheme' => $value]);
+            $request = $this->createRequest();
 
-            $this->invokeProtected($controller, 'getResponse', [$template, $model, Request::create('https://example.com/calendar')]);
+            $this->invokeProtected($this->getController(requestStack: $this->createRequestStack($request)), 'getResponse', [$template, $model, $request]);
 
             $this->assertSame($expected, $template->getData()['colorScheme']);
         }
@@ -175,35 +146,39 @@ class ResourceBookingWeekcalendarControllerTest extends ContaoTestCase
         $this->assertSame('frontend_module/resource_booking_weekcalendar', $attribute->attributes['template']);
     }
 
-    /**
-     * Builds the controller with sensible mock defaults; every collaborator can
-     * be overridden per test.
-     */
-    private function getController(AjaxRequestHandler|null $ajaxRequestHandler = null, ContaoCsrfTokenManager|null $contaoCsrfTokenManager = null, RequestStack|null $requestStack = null, ScopeMatcher|null $scopeMatcher = null): ResourceBookingWeekcalendarController
+    private function getController(ContaoCsrfTokenManager|null $contaoCsrfTokenManager = null, AccessTokenManager|null $accessTokenManager = null, int|null $memberId = null, RequestStack|null $requestStack = null): ResourceBookingWeekcalendarController
     {
-        if (null === $scopeMatcher) {
-            $scopeMatcher = $this->createMock(ScopeMatcher::class);
-            $scopeMatcher
-                ->method('isFrontendRequest')
-                ->willReturn(true)
-            ;
-        }
+        $loggedInUser = $this->createStub(LoggedInFrontendUser::class);
+        $loggedInUser
+            ->method('getLoggedInUser')
+            ->willReturn(null === $memberId ? null : $this->createClassWithPropertiesStub(FrontendUser::class, ['id' => $memberId]))
+        ;
+
+        $urlGenerator = $this->createStub(UrlGeneratorInterface::class);
+        $urlGenerator
+            ->method('generate')
+            ->willReturnCallback(static fn (string $name): string => '/route/'.$name)
+        ;
 
         return new ResourceBookingWeekcalendarController(
-            $ajaxRequestHandler ?? $this->createMock(AjaxRequestHandler::class),
-            $contaoCsrfTokenManager ?? $this->createMock(ContaoCsrfTokenManager::class),
+            $accessTokenManager ?? new AccessTokenManager('secret', new MockClock()),
+            $contaoCsrfTokenManager ?? $this->createStub(ContaoCsrfTokenManager::class),
+            $loggedInUser,
             new ModuleKeyGenerator(),
             $requestStack ?? new RequestStack(),
-            $scopeMatcher,
+            $urlGenerator,
         );
     }
 
     /**
-     * @param array<string, string> $post
+     * Request of the module with the page (set by __invoke()).
      */
-    private function createXmlHttpRequest(array $post): Request
+    private function createRequest(): Request
     {
-        return Request::create('https://example.com/calendar', 'POST', $post, [], [], ['HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest']);
+        $request = Request::create('https://example.com/calendar');
+        $request->attributes->set('_rbb_page', $this->createClassWithPropertiesStub(PageModel::class, ['id' => self::PAGE_ID]));
+
+        return $request;
     }
 
     private function createRequestStack(Request $request): RequestStack
@@ -219,18 +194,8 @@ class ResourceBookingWeekcalendarControllerTest extends ContaoTestCase
         return $this->createClassWithPropertiesStub(ModuleModel::class, ['id' => self::MODULE_ID]);
     }
 
-    private function mockPageModel(): PageModel
-    {
-        return $this->createClassWithPropertiesStub(PageModel::class, ['id' => self::PAGE_ID]);
-    }
-
-    /**
-     * Calls a protected/private method on the given object.
-     */
     private function invokeProtected(object $object, string $method, array $args = []): mixed
     {
-        $ref = new \ReflectionMethod($object, $method);
-
-        return $ref->invokeArgs($object, $args);
+        return (new \ReflectionMethod($object, $method))->invokeArgs($object, $args);
     }
 }

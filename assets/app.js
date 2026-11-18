@@ -23,9 +23,21 @@ if (typeof ResourceBookingApp !== 'function') {
                         options: {
                             requestToken: '',
                             moduleKey: '',
+                            // Access token of the API: created by the server with every page load
+                            accessToken: '',
+                            // URLs of the API (WeekCalendarApiController)
+                            apiUrls: {
+                                calendar: '',
+                                validateBooking: '',
+                                bookings: '',
+                                // Actions of other extensions, "__action__" is replaced by the name of the action
+                                action: '',
+                            },
                             // Texts for errors detected in the browser (translated in the module template)
                             texts: {
                                 networkError: 'The request could not be sent. Please check your internet connection and try again.',
+                                accessTokenExpired: 'Please reload the page.',
+                                accessDenied: 'You do not have access to this calendar. Please reload the page.',
                             },
                         },
                         // indicates if application is initialized, switches to true, when refreshData request was fired first time
@@ -80,6 +92,8 @@ if (typeof ResourceBookingApp !== 'function') {
                         isBusy: false,
                         // true if the server could not be reached (network error), see handleRequestError()
                         connectionLost: false,
+                        // The API refused the access token (HTTP 401/403): the page has to be reloaded
+                        accessLost: false,
                         // Day displayed on small screens (index of the weekday, see weekdays[].index)
                         activeDayIndex: null,
                         // Day displayed in the slot list of the booking window on small screens
@@ -194,11 +208,11 @@ if (typeof ResourceBookingApp !== 'function') {
                      */
                     refreshDataRequest: async function (blnInitial = false) {
 
-                        let action = 'refreshDataRequest';
+                        if (this.accessLost) {
+                            return;
+                        }
 
                         const formData = new FormData();
-                        formData.append('REQUEST_TOKEN', this.options.requestToken);
-                        formData.append('action', action);
 
                         if (blnInitial) {
                             // First request of the page: restore the selection of this tab or use the
@@ -211,16 +225,7 @@ if (typeof ResourceBookingApp !== 'function') {
                         }
 
                         try {
-                            const response = await fetch(window.location.href, {
-                                method: "POST",
-                                body: formData,
-                                headers: {
-                                    'x-requested-with': 'XMLHttpRequest'
-                                },
-                            });
-                            this.lastResponseCode = response.status;
-                            // The server answered: the connection is back
-                            this.connectionLost = false;
+                            const response = await this.apiFetch('GET', this.options.apiUrls.calendar, formData);
 
                             if (!response.ok) {
                                 await this.throwResponseError(response);
@@ -264,25 +269,17 @@ if (typeof ResourceBookingApp !== 'function') {
 
                         this.deleteMessages();
 
+                        if (this.accessLost) {
+                            return;
+                        }
+
                         this.isBusy = true;
-                        let action = 'applyFilterRequest';
 
                         const formData = new FormData();
-                        formData.append('REQUEST_TOKEN', this.options.requestToken);
-                        formData.append('action', action);
                         this.appendAppState(formData, {resType: activeResourceTypeId, res: activeResourceId, date: activeWeekTstamp});
 
                         try {
-                            const response = await fetch(window.location.href, {
-                                method: "POST",
-                                body: formData,
-                                headers: {
-                                    'x-requested-with': 'XMLHttpRequest'
-                                },
-                            });
-                            this.lastResponseCode = response.status;
-                            // The server answered: the connection is back
-                            this.connectionLost = false;
+                            const response = await this.apiFetch('GET', this.options.apiUrls.calendar, formData);
 
                             if (!response.ok) {
                                 await this.throwResponseError(response);
@@ -318,7 +315,6 @@ if (typeof ResourceBookingApp !== 'function') {
                     bookingRequest: async function () {
                         this.deleteMessages();
                         this.clearFieldErrors();
-                        let action = 'bookingRequest';
                         this.isBusy = true;
 
                         let form = this.$el.querySelector('.rbb-js-booking-form');
@@ -328,8 +324,6 @@ if (typeof ResourceBookingApp !== 'function') {
                         }
 
                         const formData = new FormData(form);
-                        formData.append('REQUEST_TOKEN', this.options.requestToken);
-                        formData.append('action', action);
                         formData.append('resourceId', this.bookingWindow.activeTimeSlot.resourceId);
                         this.appendAppState(formData);
 
@@ -351,17 +345,7 @@ if (typeof ResourceBookingApp !== 'function') {
 
                         if (event.detail.blnSend === true) {
                             try {
-                                const response = await fetch(window.location.href,
-                                    {
-                                        method: "POST",
-                                        body: formData,
-                                        headers: {
-                                            'x-requested-with': 'XMLHttpRequest'
-                                        },
-                                    });
-                                this.lastResponseCode = response.status;
-                                // The server answered: the connection is back
-                                this.connectionLost = false;
+                                const response = await this.apiFetch('POST', this.options.apiUrls.bookings, formData);
 
                                 if (!response.ok) {
                                     await this.throwResponseError(response);
@@ -409,12 +393,9 @@ if (typeof ResourceBookingApp !== 'function') {
                      */
                     bookingFormValidationRequest: async function () {
                         this.deleteMessages();
-                        const action = 'bookingFormValidationRequest';
                         this.isBusy = true;
 
                         const formData = new FormData();
-                        formData.append('REQUEST_TOKEN', this.options.requestToken);
-                        formData.append('action', action);
                         formData.append('resourceId', this.bookingWindow.activeTimeSlot.resourceId);
                         formData.append('bookingRepeatStopWeekTstamp', this.$el.querySelector('.rbb-js-booking-repeat-stop-week-tstamp').value);
                         this.appendAppState(formData);
@@ -425,18 +406,7 @@ if (typeof ResourceBookingApp !== 'function') {
                         }
 
                         try {
-                            const response = await fetch(window.location.href,
-                                {
-                                    method: "POST",
-                                    body: formData,
-                                    headers: {
-                                        'x-requested-with': 'XMLHttpRequest'
-                                    }
-                                });
-
-                            this.lastResponseCode = response.status;
-                            // The server answered: the connection is back
-                            this.connectionLost = false;
+                            const response = await this.apiFetch('POST', this.options.apiUrls.validateBooking, formData);
 
                             if (!response.ok) {
                                 await this.throwResponseError(response);
@@ -465,30 +435,22 @@ if (typeof ResourceBookingApp !== 'function') {
                      */
                     cancelBookingRequest: async function () {
                         this.deleteMessages();
-                        let action = 'cancelBookingRequest';
 
                         this.bookingWindow.showCancelBookingForm = false;
                         this.bookingWindow.showCancelBookingButton = false;
 
-                        const formData = new FormData();
-                        formData.append('REQUEST_TOKEN', this.options.requestToken);
-                        formData.append('action', action);
-                        formData.append('id', this.bookingWindow.booking.id);
-                        formData.append('deleteRepetitions', this.bookingWindow.deleteRepetitions);
-                        this.appendAppState(formData);
+                        // DELETE {bookings}/{id}, the parameters are sent in the query string
+                        const params = new FormData();
+                        this.appendAppState(params);
+
+                        if (this.bookingWindow.deleteRepetitions) {
+                            params.append('deleteRepetitions', '1');
+                        }
+
+                        const url = this.options.apiUrls.bookings.replace(/\/$/, '') + '/' + encodeURIComponent(String(this.bookingWindow.booking.id));
 
                         try {
-                            const response = await fetch(window.location.href, {
-                                method: "POST",
-                                body: formData,
-                                headers: {
-                                    'x-requested-with': 'XMLHttpRequest'
-                                },
-                            });
-
-                            this.lastResponseCode = response.status;
-                            // The server answered: the connection is back
-                            this.connectionLost = false;
+                            const response = await this.apiFetch('DELETE', url, params);
 
                             if (!response.ok) {
                                 await this.throwResponseError(response);
@@ -722,7 +684,8 @@ if (typeof ResourceBookingApp !== 'function') {
 
                     /**
                      * The server does not store anything between the requests: every request
-                     * carries the module key and the selection (resource type, resource, week).
+                     * carries the selection (resource type, resource, week). Module and page
+                     * are part of the access token.
                      */
                     appendAppState: function (formData, state = null) {
                         state = state || {
@@ -730,8 +693,6 @@ if (typeof ResourceBookingApp !== 'function') {
                             res: this.activeResourceId,
                             date: this.activeWeekTstamp,
                         };
-
-                        formData.append('moduleKey', this.options.moduleKey);
 
                         for (const key of ['resType', 'res', 'date']) {
                             // A direct link may contain the date as "2026-11-20"
@@ -887,6 +848,71 @@ if (typeof ResourceBookingApp !== 'function') {
                     },
 
                     /**
+                     * Request to the API of the week calendar (WeekCalendarApiController).
+                     * GET and DELETE send the data in the query string, POST in the body.
+                     * Every request carries the access token, write requests also the CSRF token.
+                     * @param method
+                     * @param url
+                     * @param data FormData
+                     */
+                    apiFetch: async function (method, url, data = null) {
+                        const init = {
+                            method: method,
+                            credentials: 'same-origin',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-Rbb-Access-Token': this.options.accessToken,
+                            },
+                        };
+
+                        if (method !== 'GET') {
+                            init.headers['X-Csrf-Token'] = this.options.requestToken;
+                        }
+
+                        if (data && method === 'POST') {
+                            init.body = data;
+                        } else if (data) {
+                            const query = new URLSearchParams(data).toString();
+
+                            if (query) {
+                                url += (url.includes('?') ? '&' : '?') + query;
+                            }
+                        }
+
+                        const response = await fetch(url, init);
+
+                        this.lastResponseCode = response.status;
+                        // The server answered: the connection is back
+                        this.connectionLost = false;
+
+                        // Token expired, logged in or out in another tab, page no longer accessible
+                        if (response.status === 401 || response.status === 403) {
+                            this.onAccessLost(response.status);
+                        }
+
+                        return response;
+                    },
+
+                    /**
+                     * The API does not accept the access token any more: stop the periodic
+                     * requests and ask the visitor to reload the page (a new token is created).
+                     * @param status
+                     */
+                    onAccessLost: function (status) {
+                        if (this.accessLost) {
+                            return;
+                        }
+
+                        this.accessLost = true;
+
+                        for (const key of Object.keys(this.intervals)) {
+                            window.clearInterval(this.intervals[key]);
+                        }
+
+                        this.setMessage('error', status === 401 ? this.options.texts.accessTokenExpired : this.options.texts.accessDenied);
+                    },
+
+                    /**
                      * Check json response
                      * @param response
                      */
@@ -927,6 +953,13 @@ if (typeof ResourceBookingApp !== 'function') {
                      */
                     handleRequestError: function (error, isRefresh = false) {
                         console.error('Fetch', error);
+
+                        // The message to reload the page is already displayed (onAccessLost)
+                        if (this.accessLost) {
+                            this.isReady = false;
+
+                            return;
+                        }
 
                         if (error instanceof TypeError) {
                             this.connectionLost = true;

@@ -17,72 +17,73 @@ namespace Markocupic\ResourceBookingBundle\Controller\FrontendModule;
 use Contao\CoreBundle\Controller\FrontendModule\AbstractFrontendModuleController;
 use Contao\CoreBundle\Csrf\ContaoCsrfTokenManager;
 use Contao\CoreBundle\DependencyInjection\Attribute\AsFrontendModule;
-use Contao\CoreBundle\Exception\ResponseException;
-use Contao\CoreBundle\Routing\ScopeMatcher;
 use Contao\CoreBundle\Twig\FragmentTemplate;
 use Contao\ModuleModel;
 use Contao\PageModel;
+use Markocupic\ResourceBookingBundle\Api\AccessTokenManager;
 use Markocupic\ResourceBookingBundle\AppState\ModuleKeyGenerator;
-use Markocupic\ResourceBookingBundle\WeekCalendar\AjaxRequestHandler;
+use Markocupic\ResourceBookingBundle\User\LoggedInFrontendUser;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 #[AsFrontendModule(ResourceBookingWeekcalendarController::TYPE, category: 'resourceBooking', template: 'frontend_module/resource_booking_weekcalendar')]
 class ResourceBookingWeekcalendarController extends AbstractFrontendModuleController
 {
     public const TYPE = 'resourceBookingWeekcalendar';
 
-    private const MODULE_KEY_ATTRIBUTE = '_rbb_module_key';
+    private const PAGE_ATTRIBUTE = '_rbb_page';
 
     public function __construct(
-        private readonly AjaxRequestHandler $ajaxRequestHandler,
+        private readonly AccessTokenManager $accessTokenManager,
         private readonly ContaoCsrfTokenManager $contaoCsrfTokenManager,
+        private readonly LoggedInFrontendUser $loggedInUser,
         private readonly ModuleKeyGenerator $moduleKeyGenerator,
         private readonly RequestStack $requestStack,
-        private readonly ScopeMatcher $scopeMatcher,
+        private readonly UrlGeneratorInterface $urlGenerator,
     ) {
     }
 
     /**
-     * The page model is only needed for the Ajax requests (AppState), the parent
-     * method does not expect it: Contao passes it to __invoke() only.
+     * Contao passes the page model to __invoke() only: keep it for getResponse().
      */
     public function __invoke(Request $request, ModuleModel $model, string $section, array|null $classes = null, PageModel|null $page = null): Response
     {
-        if ($this->scopeMatcher->isFrontendRequest($request) && null !== $page) {
-            /*
-             * The module key ("<module id>_<index>", e.g. "33_0") identifies the week calendar
-             * on the page, several week calendars may be placed on the same page. It is sent
-             * with every Ajax request, only the module with this key answers. Nothing is
-             * stored in the session: the front end sends the selection (resource type,
-             * resource and week) with every request.
-             */
-            $mainRequest = $this->requestStack->getMainRequest() ?? $request;
-            $moduleKey = $this->moduleKeyGenerator->generate($mainRequest, (int) $model->id);
-            $request->attributes->set(self::MODULE_KEY_ATTRIBUTE, $moduleKey);
-
-            // Ajax request of a week calendar (other Ajax requests on the page are not touched)
-            if ($request->isXmlHttpRequest() && $request->request->has('action') && $request->request->has('moduleKey')) {
-                if ($request->request->get('moduleKey') !== $moduleKey) {
-                    // Ajax request of another week calendar on this page: rendering this
-                    // module would be wasted, its HTML is discarded anyway
-                    return new Response();
-                }
-
-                // Send the JSON response
-                throw new ResponseException($this->ajaxRequestHandler->handle($request, $moduleKey, $model, $page));
-            }
-        }
+        $request->attributes->set(self::PAGE_ATTRIBUTE, $page);
 
         return parent::__invoke($request, $model, $section, $classes);
     }
 
     protected function getResponse(FragmentTemplate $template, ModuleModel $model, Request $request): Response
     {
-        // Used, if multiple rbb modules are used on the same page
-        $template->set('moduleKey', $request->attributes->get(self::MODULE_KEY_ATTRIBUTE, $model->id.'_0'));
+        /*
+         * The module key ("<module id>_<index>", e.g. "33_0") identifies the week calendar
+         * on the page, several week calendars may be placed on the same page.
+         */
+        $mainRequest = $this->requestStack->getMainRequest() ?? $request;
+        $moduleKey = $this->moduleKeyGenerator->generate($mainRequest, (int) $model->id);
+
+        $template->set('moduleKey', $moduleKey);
         $template->set('csrfToken', $this->contaoCsrfTokenManager->getDefaultTokenValue());
+
+        /*
+         * The API (WeekCalendarApiController) answers the requests of the week calendar.
+         * Contao has just checked that the visitor may see this page and this module:
+         * the access token proves it to the API. It is created anew with every page load.
+         */
+        $page = $request->attributes->get(self::PAGE_ATTRIBUTE);
+        $user = $this->loggedInUser->getLoggedInUser();
+
+        $template->set('accessToken', !$page instanceof PageModel ? '' : $this->accessTokenManager->create((int) $model->id, (int) $page->id, $moduleKey, null === $user ? null : (int) $user->id));
+        $template->set('apiUrls', [
+            'calendar' => $this->urlGenerator->generate('markocupic_resource_booking_api_calendar'),
+            'validateBooking' => $this->urlGenerator->generate('markocupic_resource_booking_api_validate_booking'),
+            // POST: create bookings, DELETE {bookings}/{id}: cancel a booking
+            'bookings' => $this->urlGenerator->generate('markocupic_resource_booking_api_create_booking'),
+            // Actions of other extensions: the front end replaces "__action__"
+            'action' => $this->urlGenerator->generate('markocupic_resource_booking_api_action', ['action' => '__action__']),
+        ]);
 
         // The calendar changes with every booking: not indexed by the search
         $template->set('searchable', false);
@@ -92,6 +93,13 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
         $template->set('colorScheme', \in_array($colorScheme, ['light', 'dark'], true) ? $colorScheme : '');
 
         // Let vue.js take care of the rest ;-)
-        return $template->getResponse();
+        $response = $template->getResponse();
+
+        // The page contains the access token of this visitor: it must never be stored in
+        // a shared cache (the setting is merged into the response of the page)
+        $response->setPrivate();
+        $response->headers->addCacheControlDirective('no-store');
+
+        return $response;
     }
 }

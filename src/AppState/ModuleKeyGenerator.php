@@ -19,8 +19,8 @@ use Symfony\Component\HttpFoundation\Request;
 /**
  * Generates the module key that identifies a week calendar module on the page
  * ("<module id>_<index>", e.g. "33_0" for the first and "33_1" for the second
- * week calendar). It allows several week calendars on the same page: every Ajax
- * request contains the module key, only the module with this key answers.
+ * week calendar). It allows several week calendars on the same page: the key is
+ * part of the access token of the API and of the IDs in the template.
  *
  * The counter is stored in the attributes of the main request (the modules are
  * rendered as fragments, i.e. sub requests) and therefore starts again with
