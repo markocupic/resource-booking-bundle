@@ -19,7 +19,7 @@ use Contao\CoreBundle\Migration\MigrationResult;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 use Markocupic\ResourceBookingBundle\Migration\BlockedPeriodMigrationTrait;
-use Markocupic\ResourceBookingBundle\Util\ResourceBookingRestriction;
+use Markocupic\ResourceBookingBundle\Util\TimeOfDay;
 
 /**
  * A pre-release version of the blocked periods had a single time range for all
@@ -76,8 +76,8 @@ class ConvertBlockedPeriodTimeRange extends AbstractMigration
                 [
                     'blockedTimes' => serialize([[
                         'weekday' => 'daily',
-                        'timeFrom' => self::formatTime(ResourceBookingRestriction::timeToSeconds($row['timeFrom'])),
-                        'timeTo' => self::formatTime(ResourceBookingRestriction::timeToSeconds($row['timeTo'])),
+                        'timeFrom' => self::formatTime(TimeOfDay::toSeconds($row['timeFrom'])),
+                        'timeTo' => self::formatTime(TimeOfDay::toSeconds($row['timeTo'])),
                     ]]),
                     'addTimeRange' => 0,
                 ],

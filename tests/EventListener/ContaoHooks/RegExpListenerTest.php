@@ -18,7 +18,6 @@ use Contao\Controller;
 use Contao\TestCase\ContaoTestCase;
 use Contao\Widget;
 use Markocupic\ResourceBookingBundle\EventListener\ContaoHooks\RegExpListener;
-use Markocupic\ResourceBookingBundle\Util\DateHelper;
 use Symfony\Component\Validator\Validation;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -36,7 +35,7 @@ class RegExpListenerTest extends ContaoTestCase
             ->method('addError')
         ;
 
-        $listener = $this->createListener(isValidBookingTime: true);
+        $listener = $this->createListener();
 
         $this->assertFalse($listener->onCustomRegexp('somethingElse', '08:00', $widget));
     }
@@ -49,7 +48,7 @@ class RegExpListenerTest extends ContaoTestCase
             ->method('addError')
         ;
 
-        $listener = $this->createListener(isValidBookingTime: true);
+        $listener = $this->createListener();
 
         $this->assertTrue(
             $listener->onCustomRegexp(RegExpListener::REGEX_RESOURCE_BOOKING_START_TIME, '08:00', $widget),
@@ -65,14 +64,14 @@ class RegExpListenerTest extends ContaoTestCase
             ->with(self::START_ERROR)
         ;
 
-        $listener = $this->createListener(isValidBookingTime: true);
+        $listener = $this->createListener();
 
         $this->assertTrue(
             $listener->onCustomRegexp(RegExpListener::REGEX_RESOURCE_BOOKING_START_TIME, '99:99', $widget),
         );
     }
 
-    public function testStartTimeOutsideAllowedBookingWindowAddsError(): void
+    public function testStartTimeWithSurroundingWhitespaceAddsError(): void
     {
         $widget = $this->createMock(Widget::class);
         $widget
@@ -81,28 +80,37 @@ class RegExpListenerTest extends ContaoTestCase
             ->with(self::START_ERROR)
         ;
 
-        // Format is valid, but the booking time is rejected by the DateHelper.
-        $listener = $this->createListener(isValidBookingTime: false);
-
+        // The constraint trims the value, the DateHelper does not
         $this->assertTrue(
-            $listener->onCustomRegexp(RegExpListener::REGEX_RESOURCE_BOOKING_START_TIME, '08:00', $widget),
+            $this->createListener()->onCustomRegexp(RegExpListener::REGEX_RESOURCE_BOOKING_START_TIME, ' 08:00', $widget),
         );
     }
 
-    public function testStartTimeFailingBothChecksAddsTwoErrors(): void
+    public function testAnInvalidTimeAddsOnlyOneError(): void
     {
         $widget = $this->createMock(Widget::class);
         $widget
-            ->expects($this->exactly(2))
+            ->expects($this->once())
             ->method('addError')
             ->with(self::START_ERROR)
         ;
 
-        $listener = $this->createListener(isValidBookingTime: false);
-
         $this->assertTrue(
-            $listener->onCustomRegexp(RegExpListener::REGEX_RESOURCE_BOOKING_START_TIME, '99:99', $widget),
+            $this->createListener()->onCustomRegexp(RegExpListener::REGEX_RESOURCE_BOOKING_START_TIME, '99:99', $widget),
         );
+    }
+
+    public function testTheEndOfTheDayIsAValidEndTimeButNoValidStartTime(): void
+    {
+        $widget = $this->createMock(Widget::class);
+        $widget
+            ->expects($this->once())
+            ->method('addError')
+            ->with(self::START_ERROR)
+        ;
+
+        $this->assertTrue($this->createListener()->onCustomRegexp(RegExpListener::REGEX_RESOURCE_BOOKING_END_TIME, '24:00', $widget));
+        $this->assertTrue($this->createListener()->onCustomRegexp(RegExpListener::REGEX_RESOURCE_BOOKING_START_TIME, '24:00', $widget));
     }
 
     public function testValidEndTimeAddsNoError(): void
@@ -113,7 +121,7 @@ class RegExpListenerTest extends ContaoTestCase
             ->method('addError')
         ;
 
-        $listener = $this->createListener(isValidBookingTime: true);
+        $listener = $this->createListener();
 
         $this->assertTrue(
             $listener->onCustomRegexp(RegExpListener::REGEX_RESOURCE_BOOKING_END_TIME, '10:00', $widget),
@@ -129,30 +137,19 @@ class RegExpListenerTest extends ContaoTestCase
             ->with(self::END_ERROR)
         ;
 
-        $listener = $this->createListener(isValidBookingTime: true);
+        $listener = $this->createListener();
 
         $this->assertTrue(
             $listener->onCustomRegexp(RegExpListener::REGEX_RESOURCE_BOOKING_END_TIME, '99:99', $widget),
         );
     }
 
-    private function createListener(bool $isValidBookingTime): RegExpListener
+    private function createListener(): RegExpListener
     {
-        $controllerAdapter = $this->createAdapterMock(['loadLanguageFile']);
-
-        $dateHelperAdapter = $this->createAdapterMock(['isValidBookingTime']);
-        $dateHelperAdapter
-            ->method('isValidBookingTime')
-            ->willReturn($isValidBookingTime)
-        ;
-
-        $framework = $this->createContaoFrameworkMock([
-            Controller::class => $controllerAdapter,
-            DateHelper::class => $dateHelperAdapter,
-        ]);
+        $framework = $this->createContaoFrameworkStub([Controller::class => $this->createAdapterStub(['loadLanguageFile'])]);
 
         // Translator echoes the message key so assertions can match on it.
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator
             ->method('trans')
             ->willReturnCallback(static fn (string $id): string => $id)

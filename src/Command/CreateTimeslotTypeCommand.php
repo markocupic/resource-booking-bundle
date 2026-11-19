@@ -19,6 +19,8 @@ use Markocupic\ResourceBookingBundle\Config\RbbConfig;
 use Markocupic\ResourceBookingBundle\Util\UtcTimeHelper;
 use Markocupic\ResourceBookingBundle\Validator\Constraints\RbbEndTime;
 use Markocupic\ResourceBookingBundle\Validator\Constraints\RbbStartTime;
+use Symfony\Component\Clock\ClockInterface;
+use Symfony\Component\Clock\NativeClock;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -50,6 +52,7 @@ class CreateTimeslotTypeCommand extends Command
     public function __construct(
         private readonly Connection $connection,
         private readonly ValidatorInterface $validator,
+        private readonly ClockInterface $clock = new NativeClock(),
     ) {
         parent::__construct();
     }
@@ -66,7 +69,7 @@ class CreateTimeslotTypeCommand extends Command
             return Command::INVALID;
         }
 
-        $arrSlots = [];
+        $slots = [];
         $i = 0;
 
         // Set the start and end time of the first slot
@@ -74,7 +77,7 @@ class CreateTimeslotTypeCommand extends Command
         $endTimestamp = $this->startTimestamp + $this->slotDuration * 60;
 
         while ($endTimestamp <= $this->stopTimestamp) {
-            $arrSlots[] = [
+            $slots[] = [
                 'title' => 'Slot '.$i,
                 'startTimestamp' => $startTimestamp,
                 'endTimestamp' => $endTimestamp,
@@ -89,7 +92,7 @@ class CreateTimeslotTypeCommand extends Command
             ++$i;
         }
 
-        if (empty($arrSlots)) {
+        if (empty($slots)) {
             $io->error('Could not create any slots. Please check your inputs. The slot end time cannot exceed the stop time.');
 
             return Command::INVALID;
@@ -100,7 +103,7 @@ class CreateTimeslotTypeCommand extends Command
         try {
             $set = [
                 'title' => $this->scheduleName,
-                'tstamp' => time(),
+                'tstamp' => $this->clock->now()->getTimestamp(),
                 'published' => 0,
                 'description' => '',
             ];
@@ -119,11 +122,11 @@ class CreateTimeslotTypeCommand extends Command
 
                 $messages[] = \sprintf('<fg=green>Created new schedule: "%s"</>', $this->scheduleName);
 
-                foreach ($arrSlots as $i => $slot) {
+                foreach ($slots as $i => $slot) {
                     $set = [
                         'pid' => (int) $pid,
                         'title' => (string) $slot['title'],
-                        'tstamp' => time(),
+                        'tstamp' => $this->clock->now()->getTimestamp(),
                         'published' => 1,
                         'startTime' => $slot['startTimestamp'],
                         'endTime' => $slot['endTimestamp'],
@@ -151,7 +154,7 @@ class CreateTimeslotTypeCommand extends Command
             return Command::FAILURE;
         }
 
-        $io->success(\sprintf('Operation successfully completed. Created %s new time slots in schedule "%s". You have to publish the schedule manually in the Contao Backend.', \count($arrSlots), $this->scheduleName));
+        $io->success(\sprintf('Operation successfully completed. Created %s new time slots in schedule "%s". You have to publish the schedule manually in the Contao Backend.', \count($slots), $this->scheduleName));
 
         return Command::SUCCESS;
     }

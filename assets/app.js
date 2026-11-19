@@ -68,7 +68,7 @@ if (typeof ResourceBookingApp !== 'function') {
                         // Contains the data in an array: id, title, etc.
                         activeResource: [],
                         // Begin week weekday of current week 00:00 UTC
-                        activeWeekTstamp: 0,
+                        activeWeekStart: 0,
                         // Contains data about the active week: tstampStart, tstampEnd, dateStart, dateEnd, weekNumber, year
                         activeWeek: [],
                         bookingRepeatsSelection: [],
@@ -177,14 +177,14 @@ if (typeof ResourceBookingApp !== 'function') {
                         //
                     },
                     activeResourceTypeId: function activeResourceTypeId(newVal, oldVal) {
-                        //this.applyFilterRequest(newVal, this.activeResourceId, this.activeWeekTstamp);
-                        this.requestQueue.push([newVal, this.activeResourceId, this.activeWeekTstamp]);
+                        //this.applyFilterRequest(newVal, this.activeResourceId, this.activeWeekStart);
+                        this.requestQueue.push([newVal, this.activeResourceId, this.activeWeekStart]);
                     },
                     activeResourceId: function activeResourceId(newVal, oldVal) {
-                        //this.applyFilterRequest(this.activeResourceTypeId, newVal, this.activeWeekTstamp);
-                        this.requestQueue.push([this.activeResourceTypeId, newVal, this.activeWeekTstamp]);
+                        //this.applyFilterRequest(this.activeResourceTypeId, newVal, this.activeWeekStart);
+                        this.requestQueue.push([this.activeResourceTypeId, newVal, this.activeWeekStart]);
                     },
-                    activeWeekTstamp: function activeWeekTstamp(newVal, oldVal) {
+                    activeWeekStart: function activeWeekStart(newVal, oldVal) {
                         this.requestQueue.push([this.activeResourceTypeId, this.activeResourceId, newVal]);
                         //this.applyFilterRequest(this.activeResourceTypeId, this.activeResourceId, newVal);
                     },
@@ -244,7 +244,7 @@ if (typeof ResourceBookingApp !== 'function') {
                                     if (!blnInitial && key === 'activeResourceTypeId') continue;
                                     if (!blnInitial && key === 'activeResourceType') continue;
                                     if (!blnInitial && key === 'activeWeek') continue;
-                                    if (!blnInitial && key === 'activeWeekTstamp') continue;
+                                    if (!blnInitial && key === 'activeWeekStart') continue;
 
                                     this[key] = json['data'][key];
                                 }
@@ -265,7 +265,7 @@ if (typeof ResourceBookingApp !== 'function') {
                     /**
                      * Apply the filter changes
                      */
-                    applyFilterRequest: async function (activeResourceTypeId, activeResourceId, activeWeekTstamp) {
+                    applyFilterRequest: async function (activeResourceTypeId, activeResourceId, activeWeekStart) {
 
                         this.deleteMessages();
 
@@ -276,7 +276,7 @@ if (typeof ResourceBookingApp !== 'function') {
                         this.isBusy = true;
 
                         const formData = new FormData();
-                        this.appendAppState(formData, {resType: activeResourceTypeId, res: activeResourceId, date: activeWeekTstamp});
+                        this.appendAppState(formData, {resType: activeResourceTypeId, res: activeResourceId, date: activeWeekStart});
 
                         try {
                             const response = await this.apiFetch('GET', this.options.apiUrls.calendar, formData);
@@ -290,7 +290,7 @@ if (typeof ResourceBookingApp !== 'function') {
                             const json = await response.json();
 
                             if (json.status === 'success') {
-                                if (this.activeWeekTstamp && parseInt(this.activeWeekTstamp) !== parseInt(json.data['activeWeekTstamp'])) {
+                                if (this.activeWeekStart && parseInt(this.activeWeekStart) !== parseInt(json.data['activeWeekStart'])) {
                                     this.isBusy = false;
                                     return;
                                 }
@@ -327,8 +327,13 @@ if (typeof ResourceBookingApp !== 'function') {
                         formData.append('resourceId', this.bookingWindow.activeTimeSlot.resourceId);
                         this.appendAppState(formData);
 
+                        // Without the field (e.g. a custom template without repetitions): only the selected week
+                        if (!formData.get('repeatUntil')) {
+                            formData.set('repeatUntil', String(this.activeWeekStart));
+                        }
+
                         for (const selectedTimeSlot of this.bookingWindow.selectedTimeSlots) {
-                            formData.append('bookingDateSelection[]', selectedTimeSlot);
+                            formData.append('slots[]', selectedTimeSlot);
                         }
 
                         const event = new CustomEvent('rbb_before_booking_request', {
@@ -397,12 +402,15 @@ if (typeof ResourceBookingApp !== 'function') {
 
                         const formData = new FormData();
                         formData.append('resourceId', this.bookingWindow.activeTimeSlot.resourceId);
-                        formData.append('bookingRepeatStopWeekTstamp', this.$el.querySelector('.rbb-js-booking-repeat-stop-week-tstamp').value);
+                        // Without the field (e.g. a custom template without repetitions): only the selected week
+                        const ctrlRepeatUntil = this.$el.querySelector('[name="repeatUntil"]');
+                        formData.append('repeatUntil', ctrlRepeatUntil && ctrlRepeatUntil.value ? ctrlRepeatUntil.value : String(this.activeWeekStart));
                         this.appendAppState(formData);
-                        formData.append('itemsBooked', this.$el.querySelector('[name="itemsBooked"]') ? this.$el.querySelector('[name="itemsBooked"]').value : '1');
+                        const ctrlRequestedItems = this.$el.querySelector('[name="requestedItems"]');
+                        formData.append('requestedItems', ctrlRequestedItems ? ctrlRequestedItems.value : '1');
 
                         for (const selectedTimeSlot of this.bookingWindow.selectedTimeSlots) {
-                            formData.append('bookingDateSelection[]', selectedTimeSlot);
+                            formData.append('slots[]', selectedTimeSlot);
                         }
 
                         try {
@@ -494,12 +502,12 @@ if (typeof ResourceBookingApp !== 'function') {
                         evt.stopPropagation();
 
                         // Prevent bubbling invalid requests
-                        if (tstamp === this.activeWeekTstamp || tstamp < this.filterBoard.tstampFirstPermittedWeek || tstamp > this.filterBoard.tstampLastPermittedWeek) {
+                        if (tstamp === this.activeWeekStart || tstamp < this.filterBoard.firstPermittedWeekStart || tstamp > this.filterBoard.lastPermittedWeekStart) {
                             return false;
                         }
 
                         // Vue watcher will trigger this.applyFilterRequest()
-                        this.activeWeekTstamp = tstamp;
+                        this.activeWeekStart = tstamp;
                     },
 
                     /**
@@ -557,7 +565,7 @@ if (typeof ResourceBookingApp !== 'function') {
                                 inputBookingDescription.setAttribute('value', '');
                             }
 
-                            let weekRepeatOptions = this.$el.querySelectorAll('.rbb-js-booking-form .rbb-js-booking-repeat-stop-week-tstamp option');
+                            let weekRepeatOptions = this.$el.querySelectorAll('.rbb-js-booking-form .rbb-js-repeat-until option');
 
                             if (weekRepeatOptions.length > 0) {
                                 for (const elOption of weekRepeatOptions) {
@@ -691,7 +699,7 @@ if (typeof ResourceBookingApp !== 'function') {
                         state = state || {
                             resType: this.activeResourceTypeId,
                             res: this.activeResourceId,
-                            date: this.activeWeekTstamp,
+                            date: this.activeWeekStart,
                         };
 
                         for (const key of ['resType', 'res', 'date']) {
@@ -719,7 +727,7 @@ if (typeof ResourceBookingApp !== 'function') {
                             window.sessionStorage.setItem(this.getAppStateStorageKey(), JSON.stringify({
                                 resType: this.activeResourceTypeId,
                                 res: this.activeResourceId,
-                                date: this.activeWeekTstamp,
+                                date: this.activeWeekStart,
                             }));
                         } catch (e) {
                             // Storage not available (e.g. private mode): the selection is not kept on reload

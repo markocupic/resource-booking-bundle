@@ -23,6 +23,8 @@ use Contao\System;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Types\Types;
+use Symfony\Component\Clock\ClockInterface;
+use Symfony\Component\Clock\NativeClock;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ResourceBookingTimeSlotType
@@ -31,6 +33,7 @@ class ResourceBookingTimeSlotType
         private readonly ContaoFramework $framework,
         private readonly Connection $connection,
         private readonly TranslatorInterface $translator,
+        private readonly ClockInterface $clock = new NativeClock(),
     ) {
     }
 
@@ -54,7 +57,7 @@ class ResourceBookingTimeSlotType
                 WHERE endTime > ? AND timeSlotId IN (
                     SELECT id FROM tl_resource_booking_time_slot WHERE pid = ?
                 )',
-            [time(), (int) $dc->id],
+            [$this->clock->now()->getTimestamp(), (int) $dc->id],
             [Types::INTEGER, Types::INTEGER],
         );
 

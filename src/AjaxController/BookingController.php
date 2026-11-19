@@ -18,8 +18,11 @@ use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Model\Collection;
 use Contao\System;
 use Doctrine\DBAL\Connection;
-use Markocupic\ResourceBookingBundle\AjaxController\Traits\BookingTrait;
+use Markocupic\ResourceBookingBundle\Api\Input\BookingInput;
+use Markocupic\ResourceBookingBundle\Api\Output\BookingResult;
 use Markocupic\ResourceBookingBundle\AppState\AppState;
+use Markocupic\ResourceBookingBundle\Booking\BookingRepository;
+use Markocupic\ResourceBookingBundle\Booking\BookingRequestHandler;
 use Markocupic\ResourceBookingBundle\DependencyInjection\Attribute\AsAjaxController;
 use Markocupic\ResourceBookingBundle\Event\PostBookingEvent;
 use Markocupic\ResourceBookingBundle\Event\PreBookingEvent;
@@ -28,13 +31,8 @@ use Markocupic\ResourceBookingBundle\Exception\StopBookingProcessException;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
-use Markocupic\ResourceBookingBundle\Slot\SlotCollection;
-use Markocupic\ResourceBookingBundle\Slot\SlotFactory;
+use Markocupic\ResourceBookingBundle\Response\AjaxStatus;
 use Markocupic\ResourceBookingBundle\User\LoggedInFrontendUser;
-use Markocupic\ResourceBookingBundle\Util\ResourceBookingRestriction;
-use Markocupic\ResourceBookingBundle\Util\Utils;
-use Markocupic\ResourceBookingBundle\Util\WeekBoundaries;
-use Markocupic\ResourceBookingBundle\Validator\BookingRequestValidator;
 use Markocupic\ResourceBookingBundle\Validator\InvalidBookingRequestException;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
@@ -45,25 +43,30 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 #[AsAjaxController(self::ACTION)]
 final class BookingController extends AbstractController implements ControllerInterface
 {
-    use BookingTrait;
-
     public const ACTION = 'bookingRequest';
 
     public function __construct(
         ContaoFramework $framework,
         LoggedInFrontendUser $user,
-        Utils $utils,
         private readonly Connection $connection,
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly TranslatorInterface $translator,
-        private readonly SlotFactory $slotFactory,
-        private readonly WeekBoundaries $weekBoundaries,
+        private readonly BookingRequestHandler $bookingRequestHandler,
+        private readonly BookingRepository $bookingRepository,
         private readonly LoggerInterface|null $contaoGeneralLogger = null,
         private readonly LoggerInterface|null $contaoErrorLogger = null,
     ) {
-        parent::__construct($framework, $user, $utils);
+        parent::__construct($framework, $user);
     }
 
+    /**
+     * The booking process:
+     *
+     *  1. read and validate the input, find the resource
+     *  2. lock the resource (transaction), create the slots and check the rules
+     *  3. create the bookings, PreBookingEvent (listeners can change them or stop the process)
+     *  4. save the bookings, PostBookingEvent (e.g. notifications)
+     */
     public function generateResponse(Request $request, AjaxResponse $ajaxResponse): AjaxResponse
     {
         $this->framework->getAdapter(System::class)->loadLanguageFile('default', $this->translator->getLocale());
@@ -71,34 +74,28 @@ final class BookingController extends AbstractController implements ControllerIn
         try {
             $appState = AppState::fromRequest($request);
             $user = $this->getLoggedInUserOrThrow();
-            $resource = $this->getRequestedResource($request, $appState);
-            $bookingRepeatStopWeekTstamp = self::getBookingRepeatStopWeekTstamp($request);
+            $input = $this->getBookingInput($request, $appState);
+            $resource = $this->bookingRequestHandler->getResource($input, $appState);
             $bookingUuid = Uuid::uuid4()->toString();
 
-            // Serialize all bookings of the same resource: lock the resource record until the
-            // transaction is committed. Otherwise two members booking the same slot at the same
-            // time could both pass the availability check (double booking). The lock must be
-            // acquired before the first read of the transaction (consistent snapshot).
             $this->connection->beginTransaction();
-            $this->lockResource((int) $resource->id);
+            $this->bookingRepository->lockResource((int) $resource->id);
 
-            $this->validateInputs($request, $appState->getPermittedFormFields());
+            $slots = $this->bookingRequestHandler->createSlots($input, $resource, $appState, $bookingUuid);
 
-            $slots = $this->getSlotCollectionFromRequest($request, $resource, $appState, $bookingRepeatStopWeekTstamp, $bookingUuid);
-
-            if (null !== ($errorKey = $this->getBookingErrorKey($slots))) {
+            if (null !== ($errorKey = $this->bookingRequestHandler->getErrorKey($slots))) {
                 throw new StopBookingProcessException($this->translator->trans($errorKey, [], 'contao_default'));
             }
 
-            /** @var Collection<ResourceBookingModel> $bookings */
-            $bookings = $this->getBookingCollection($slots, $resource);
+            $bookings = $this->bookingRepository->createBookings($slots, $resource);
 
             $this->eventDispatcher->dispatch(new PreBookingEvent($request, $ajaxResponse, $appState, $user, $bookings));
 
-            $this->saveBookings($bookings, $resource);
+            if (null !== $bookings) {
+                $this->bookingRepository->save($bookings, $resource);
+            }
 
-            /** @var Collection<ResourceBookingModel>|null $bookings */
-            $bookings = $this->framework->getAdapter(ResourceBookingModel::class)->findByBookingUuid($bookingUuid);
+            $bookings = $this->bookingRepository->findByBookingUuid($bookingUuid);
 
             if (null === $bookings) {
                 throw new StopBookingProcessException($this->translator->trans('RBB.ERR.generalBookingError', [], 'contao_default'));
@@ -110,7 +107,8 @@ final class BookingController extends AbstractController implements ControllerIn
             $this->connection->commit();
         } catch (StopBookingProcessException $e) {
             $this->rollBack();
-            $ajaxResponse->setStatus(AjaxResponse::STATUS_WARNING);
+            $ajaxResponse->setStatus(AjaxStatus::Warning);
+            $ajaxResponse->setResult(new BookingResult(false));
 
             if ($e instanceof FieldValidationException) {
                 // The messages are listed per field in the booking window (no additional general message)
@@ -125,17 +123,13 @@ final class BookingController extends AbstractController implements ControllerIn
             $this->contaoGeneralLogger?->info($e->getMessage());
         } catch (\Exception $e) {
             $this->rollBack();
-            $ajaxResponse->setStatus(AjaxResponse::STATUS_ERROR);
+            $ajaxResponse->setStatus(AjaxStatus::Error);
+            $ajaxResponse->setResult(new BookingResult(false));
             $ajaxResponse->setErrorMessage($this->translator->trans('RBB.ERR.generalBookingError', [], 'contao_default'));
             $this->contaoErrorLogger?->error($e->getMessage());
         }
 
         return $ajaxResponse;
-    }
-
-    private function lockResource(int $resourceId): void
-    {
-        $this->connection->executeQuery('SELECT id FROM tl_resource_booking_resource WHERE id = ? FOR UPDATE', [$resourceId]);
     }
 
     private function rollBack(): void
@@ -146,40 +140,11 @@ final class BookingController extends AbstractController implements ControllerIn
     }
 
     /**
-     * @param Collection<ResourceBookingModel>|null $bookings
-     */
-    private function saveBookings(Collection|null $bookings, ResourceBookingResourceModel $resource): void
-    {
-        if (null === $bookings) {
-            return;
-        }
-
-        $bookings->reset();
-
-        while ($bookings->next()) {
-            $booking = $bookings->current();
-
-            if (true !== ($res = $this->utils->checkMandatoryFieldsSet($booking->row(), 'tl_resource_booking'))) {
-                [$tableName, $fieldName] = $res;
-                $label = $GLOBALS['TL_LANG'][$tableName][$fieldName][0] ?? $fieldName;
-
-                throw FieldValidationException::forField($fieldName, $this->translator->trans('RBB.ERR.mandatoryFieldNotFilledIn', [$label], 'contao_default'));
-            }
-
-            $booking->save();
-            $this->contaoGeneralLogger?->info(
-                \sprintf('New resource "%s" (with ID %s) has been booked.', $resource->title, $booking->id),
-            );
-        }
-    }
-
-    /**
      * @param Collection<ResourceBookingModel> $bookings
      */
     private function setSuccessResponse(AjaxResponse $ajaxResponse, Collection $bookings, ResourceBookingResourceModel $resource): void
     {
-        $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
-        $ajaxResponse->setData('bookingProcessSucceeded', true);
+        $ajaxResponse->setStatus(AjaxStatus::Success);
 
         if (null === $ajaxResponse->getConfirmationMessage()) {
             $ajaxResponse->setConfirmationMessage(
@@ -187,59 +152,22 @@ final class BookingController extends AbstractController implements ControllerIn
             );
         }
 
+        // Only the IDs and times of the saved bookings
         $bookings->reset();
-        $ajaxResponse->setData('bookingSelection', $bookings->fetchAll());
+        $ajaxResponse->setResult(BookingResult::fromBookingRows($bookings->fetchAll()));
     }
 
     /**
-     * @param array<int, string> $permittedFormFields
+     * An invalid or not permitted field is shown at the field in the booking window.
      *
-     * @throws \Exception
+     * @throws FieldValidationException
      */
-    private function validateInputs(Request $request, array $permittedFormFields): void
+    private function getBookingInput(Request $request, AppState $appState): BookingInput
     {
         try {
-            (new BookingRequestValidator())->validate($request->request->all(), $permittedFormFields);
+            return BookingInput::fromRequest($request, $appState->getPermittedFormFields());
         } catch (InvalidBookingRequestException $e) {
             throw FieldValidationException::forField($e->getField(), $this->translator->trans($e->getTranslationKey(), [$e->getField()], 'contao_default'), $e);
         }
-    }
-
-    private function getBookingCollection(SlotCollection $slots, ResourceBookingResourceModel $resource): Collection|null
-    {
-        $bookings = [];
-
-        foreach ($slots as $slot) {
-            // Use already available booking entity
-            $arrBooking = $slot->getMemberBooking();
-
-            if (null === $arrBooking) {
-                // Create a new booking entity
-                $booking = new ResourceBookingModel();
-            } else {
-                // Use the already existing entity instead of creating a new one
-                $booking = ResourceBookingModel::findById($arrBooking['id']);
-            }
-
-            // Add data to the model
-            if (null !== $booking) {
-                foreach ($slot->bookingData as $k => $v) {
-                    if ('id' === $k && empty($v)) {
-                        continue;
-                    }
-
-                    $booking->{$k} = $v;
-                }
-
-                // !Do not save the model here, this will be done later
-                $booking->confirmed = ResourceBookingRestriction::isAutoConfirmEnabled($resource);
-                $booking->tstamp = time();
-                $booking->bookingTime = time();
-
-                $bookings[] = $booking;
-            }
-        }
-
-        return !empty($bookings) ? new Collection($bookings, 'tl_resource_booking') : null;
     }
 }

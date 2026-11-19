@@ -34,7 +34,7 @@
             {% block rbb_filter_board__week_select %}
                 <div class="rbb-week-select">
                     <label for="date_{{ moduleKey }}" class="rbb-filter-label">{{ ('RBB.filterWeek')|trans }}</label>
-                    <select id="date_{{ moduleKey }}" :disabled="!rows.length" class="rbb-time-span-select rbb-form-control" name="date" v-model="activeWeekTstamp">
+                    <select id="date_{{ moduleKey }}" :disabled="!rows.length" class="rbb-time-span-select rbb-form-control" name="date" v-model="activeWeekStart">
                         <option v-for="(week, index) in filterBoard.weekSelection" :class="week.cssClass" :value="week.tstampBeginWeek">[[ week.optionText ]]</option>
                     </select>
                 </div>

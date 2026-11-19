@@ -15,7 +15,8 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\Validator;
 
 /**
- * Validates the POST data of a booking request sent by the front end.
+ * Validates the POST data of a booking request sent by the front end
+ * (see Api\Input\BookingInput::fromRequest()).
  *
  * Only the system fields listed in FIELD_TYPES and the permitted form fields
  * of the app configuration (apps.<name>.permitted_form_fields) are accepted.
@@ -35,9 +36,9 @@ final class BookingRequestValidator
      */
     public const FIELD_TYPES = [
         // resType, res and date: state of the week calendar, validated by the AppStateFactory
-        'string' => ['REQUEST_TOKEN', 'action', 'moduleKey', 'resType', 'res', 'date', 'bookingDescription'],
-        'array' => ['bookingDateSelection'],
-        'integer' => ['resourceId', 'bookingRepeatStopWeekTstamp'],
+        'string' => ['resType', 'res', 'date', 'bookingDescription', 'requestedItems'],
+        'array' => ['slots'],
+        'integer' => ['resourceId', 'repeatUntil'],
     ];
 
     /**
@@ -84,7 +85,7 @@ final class BookingRequestValidator
                     throw InvalidBookingRequestException::invalidValue($key);
                 }
 
-                if ('bookingDateSelection' === $key) {
+                if ('slots' === $key) {
                     self::parseSlotSelection($value);
                 }
             } elseif (\in_array($key, self::FIELD_TYPES['integer'], true)) {
@@ -101,30 +102,30 @@ final class BookingRequestValidator
      * Returns true if the value is a valid number of items: an integer between 1
      * and the number of available items of the resource.
      */
-    public static function isValidItemCount(mixed $itemsBooked, int $itemsAvailable): bool
+    public static function isValidItemCount(mixed $requestedItems, int $itemsAvailable): bool
     {
-        if (\is_string($itemsBooked) && preg_match('/^\d+$/', $itemsBooked)) {
-            $itemsBooked = (int) $itemsBooked;
+        if (\is_string($requestedItems) && preg_match('/^\d+$/', $requestedItems)) {
+            $requestedItems = (int) $requestedItems;
         }
 
-        return \is_int($itemsBooked) && $itemsBooked >= 1 && $itemsBooked <= $itemsAvailable;
+        return \is_int($requestedItems) && $requestedItems >= 1 && $requestedItems <= $itemsAvailable;
     }
 
     /**
      * Converts the submitted number of items: an empty value means one item,
      * anything that is not a positive integer becomes 0 (invalid).
      */
-    public static function parseItemCount(mixed $itemsBooked): int
+    public static function parseItemCount(mixed $requestedItems): int
     {
-        if (null === $itemsBooked || '' === $itemsBooked) {
+        if (null === $requestedItems || '' === $requestedItems) {
             return 1;
         }
 
-        if (\is_int($itemsBooked)) {
-            return max(0, $itemsBooked);
+        if (\is_int($requestedItems)) {
+            return max(0, $requestedItems);
         }
 
-        return \is_string($itemsBooked) && preg_match('/^\d+$/', $itemsBooked) ? (int) $itemsBooked : 0;
+        return \is_string($requestedItems) && preg_match('/^\d+$/', $requestedItems) ? (int) $requestedItems : 0;
     }
 
     /**
@@ -142,20 +143,20 @@ final class BookingRequestValidator
         }
 
         if (!\is_array($selection) || \count($selection) > self::MAX_SELECTED_SLOTS) {
-            throw InvalidBookingRequestException::invalidValue('bookingDateSelection');
+            throw InvalidBookingRequestException::invalidValue('slots');
         }
 
         $slots = [];
 
         foreach ($selection as $entry) {
             if (!\is_string($entry) || !preg_match('/^(\d+)-(\d+)-(\d+)-\d+$/', $entry, $matches)) {
-                throw InvalidBookingRequestException::invalidValue('bookingDateSelection');
+                throw InvalidBookingRequestException::invalidValue('slots');
             }
 
             [, $timeSlotId, $startTime, $endTime] = array_map('intval', $matches);
 
             if ($timeSlotId < 1 || $endTime <= $startTime) {
-                throw InvalidBookingRequestException::invalidValue('bookingDateSelection');
+                throw InvalidBookingRequestException::invalidValue('slots');
             }
 
             $slots[] = ['timeSlotId' => $timeSlotId, 'startTime' => $startTime, 'endTime' => $endTime];

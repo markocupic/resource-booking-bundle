@@ -21,10 +21,11 @@ use Contao\ModuleModel;
 use Contao\TestCase\ContaoTestCase;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotModel;
+use Markocupic\ResourceBookingBundle\Restriction\ResourceRules;
 use Markocupic\ResourceBookingBundle\Slot\Slot;
 use Markocupic\ResourceBookingBundle\Slot\SlotFactory;
-use Markocupic\ResourceBookingBundle\Util\Utils;
 use Markocupic\ResourceBookingBundle\WeekCalendar\BookingPresenter;
+use Markocupic\ResourceBookingBundle\WeekCalendar\DisplayedFields;
 use Markocupic\ResourceBookingBundle\WeekCalendar\SlotPresenter;
 use Markocupic\ResourceBookingBundle\WeekCalendar\WeekTableBuilder;
 use Symfony\Contracts\Translation\TranslatorInterface;
@@ -36,8 +37,8 @@ class WeekTableBuilderTest extends ContaoTestCase
     public function testWeekdaysWithoutAnyTimeSlotAreHidden(): void
     {
         $timeSlots = [
-            ['id' => 1, 'weekdays' => serialize(['monday', 'tuesday'])],
-            ['id' => 2, 'weekdays' => serialize(['friday'])],
+            ['id' => 1, 'weekdays' => 'monday,tuesday'],
+            ['id' => 2, 'weekdays' => 'friday'],
         ];
 
         $this->assertSame(['monday', 'tuesday', 'friday'], WeekTableBuilder::getVisibleWeekdays($timeSlots, self::DAYS));
@@ -50,8 +51,8 @@ class WeekTableBuilderTest extends ContaoTestCase
 
     public function testTimeSlotsWithoutAnyDisplayedWeekdayAreHidden(): void
     {
-        $this->assertTrue(WeekTableBuilder::isTimeSlotDisplayed(['weekdays' => serialize(['friday'])], ['monday', 'friday']));
-        $this->assertFalse(WeekTableBuilder::isTimeSlotDisplayed(['weekdays' => serialize(['sunday'])], ['monday', 'friday']));
+        $this->assertTrue(WeekTableBuilder::isTimeSlotDisplayed(['weekdays' => 'friday'], ['monday', 'friday']));
+        $this->assertFalse(WeekTableBuilder::isTimeSlotDisplayed(['weekdays' => 'sunday'], ['monday', 'friday']));
         // A time slot without weekdays is available on every weekday
         $this->assertTrue(WeekTableBuilder::isTimeSlotDisplayed(['weekdays' => null], ['monday']));
     }
@@ -78,9 +79,9 @@ class WeekTableBuilderTest extends ContaoTestCase
         $week = strtotime('2026-11-16 00:00:00');
 
         $timeSlots = [
-            $this->timeSlot(['id' => 1, 'startTime' => 8 * 3600, 'endTime' => 9 * 3600, 'weekdays' => serialize(['monday', 'tuesday'])]),
+            $this->timeSlot(['id' => 1, 'startTime' => 8 * 3600, 'endTime' => 9 * 3600, 'weekdays' => 'monday,tuesday']),
             // Only available on sunday: sunday becomes a displayed weekday (column)
-            $this->timeSlot(['id' => 2, 'startTime' => 10 * 3600, 'endTime' => 11 * 3600, 'weekdays' => serialize(['sunday'])]),
+            $this->timeSlot(['id' => 2, 'startTime' => 10 * 3600, 'endTime' => 11 * 3600, 'weekdays' => 'sunday']),
         ];
 
         $timeSlotAdapter = $this->createAdapterStub(['findPublishedByPid']);
@@ -130,19 +131,19 @@ class WeekTableBuilderTest extends ContaoTestCase
                 static function (int $timeSlotId, ResourceBookingResourceModel $resource, int $startTime, int $endTime) use ($week, $booking): Slot {
                     $isMonday = $startTime === $week + 8 * 3600;
 
-                    return new Slot(timeSlotId: $timeSlotId, resource: ['id' => 3, 'itemsAvailable' => 1], startTime: $startTime, endTime: $endTime, now: $week, bookings: $isMonday ? [$booking] : []);
+                    return new Slot(timeSlotId: $timeSlotId, resource: new ResourceRules(id: 3, itemsAvailable: 1), startTime: $startTime, endTime: $endTime, now: $week, bookings: $isMonday ? [$booking] : []);
                 },
             )
         ;
 
-        $utils = $this->createStub(Utils::class);
-        $utils
-            ->method('getDisplayedMemberFields')
+        $displayedFields = $this->createStub(DisplayedFields::class);
+        $displayedFields
+            ->method('getMemberFields')
             ->willReturn(['firstname', 'lastname'])
         ;
 
-        $utils
-            ->method('getDisplayedBookingFields')
+        $displayedFields
+            ->method('getBookingFields')
             ->willReturn([])
         ;
 
@@ -152,7 +153,7 @@ class WeekTableBuilderTest extends ContaoTestCase
             ->willReturn('Anonym')
         ;
 
-        $builder = new WeekTableBuilder($framework, $slotFactory, new BookingPresenter($translator), new SlotPresenter($framework), $utils);
+        $builder = new WeekTableBuilder($framework, $slotFactory, new BookingPresenter($translator), new SlotPresenter($framework), $displayedFields);
 
         $module = $this->createClassWithPropertiesStub(ModuleModel::class, ['id' => 5]);
         $resource = $this->createClassWithPropertiesStub(ResourceBookingResourceModel::class, ['id' => 3, 'timeSlotType' => 2]);

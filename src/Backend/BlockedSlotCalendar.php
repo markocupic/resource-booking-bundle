@@ -23,11 +23,15 @@ use Markocupic\ResourceBookingBundle\Model\ResourceBookingBlockedPeriodModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotTypeModel;
+use Markocupic\ResourceBookingBundle\Restriction\BlockedPeriod;
+use Markocupic\ResourceBookingBundle\Restriction\ResourceRules;
+use Markocupic\ResourceBookingBundle\Restriction\TimeSlotRules;
 use Markocupic\ResourceBookingBundle\Util\BlockedSlots;
 use Markocupic\ResourceBookingBundle\Util\DateHelper;
-use Markocupic\ResourceBookingBundle\Util\ResourceBookingRestriction;
 use Markocupic\ResourceBookingBundle\Util\UtcTimeHelper;
 use Markocupic\ResourceBookingBundle\WeekCalendar\WeekTableBuilder;
+use Symfony\Component\Clock\ClockInterface;
+use Symfony\Component\Clock\NativeClock;
 
 /**
  * Week view of a resource for the back end widget "rbbBlockedSlots": the time slots
@@ -38,6 +42,7 @@ class BlockedSlotCalendar
     public function __construct(
         private readonly ContaoFramework $framework,
         private readonly Connection $connection,
+        private readonly ClockInterface $clock = new NativeClock(),
     ) {
     }
 
@@ -54,16 +59,17 @@ class BlockedSlotCalendar
         $this->framework->initialize();
 
         $timeSlotType = $this->framework->getAdapter(ResourceBookingTimeSlotTypeModel::class)->findById((int) $resource->timeSlotType);
-        $beginWeek = ResourceBookingRestriction::getBeginWeek($timeSlotType);
-        $weekStart = DateHelper::getFirstDayOfWeek(['beginWeek' => $beginWeek], $tstamp);
+        $beginWeek = TimeSlotRules::getBeginWeek($timeSlotType);
+        $weekStart = DateHelper::getFirstDayOfWeek($beginWeek, $tstamp);
         $daysOfWeek = self::getDaysOfWeek($beginWeek);
 
         $timeSlots = $this->getPublishedTimeSlots($resource);
         $visibleWeekdays = WeekTableBuilder::getVisibleWeekdays($timeSlots, $daysOfWeek);
         $bookings = $this->getBookings((int) $resource->id, $weekStart, strtotime('+8 days', $weekStart));
+        $resourceRules = ResourceRules::fromModel($resource);
         $otherPeriods = array_filter(
-            $this->framework->getAdapter(ResourceBookingBlockedPeriodModel::class)->findPublishedRows(),
-            static fn (array $period): bool => (int) $period['id'] !== $periodId,
+            BlockedPeriod::listFromRows($this->framework->getAdapter(ResourceBookingBlockedPeriodModel::class)->findPublishedRows()),
+            static fn (BlockedPeriod $period): bool => $period->id !== $periodId,
         );
 
         $dateAdapter = $this->framework->getAdapter(Date::class);
@@ -99,7 +105,7 @@ class BlockedSlotCalendar
             foreach (array_keys($days) as $dayIndex) {
                 $weekday = $daysOfWeek[$dayIndex];
 
-                if (!ResourceBookingRestriction::isTimeSlotAvailableOnWeekday($timeSlot, $weekday)) {
+                if (!TimeSlotRules::isAvailableOnWeekday($timeSlot, $weekday)) {
                     $cells[] = ['available' => false];
                     continue;
                 }
@@ -113,9 +119,8 @@ class BlockedSlotCalendar
                 $blockedBy = [];
 
                 foreach ($otherPeriods as $period) {
-                    if (ResourceBookingRestriction::isInBlockedPeriod($period, $resource->row(), $startTime, $endTime, (int) $timeSlot['id'])) {
-                        // Title (internal name), otherwise the note of the week calendar or the ID
-                        $blockedBy[] = trim((string) $period['title']) ?: (trim((string) ($period['description'] ?? '')) ?: '#'.$period['id']);
+                    if ($period->covers($resourceRules, $startTime, $endTime, (int) $timeSlot['id'])) {
+                        $blockedBy[] = $period->getLabel();
                     }
                 }
 
@@ -124,7 +129,7 @@ class BlockedSlotCalendar
                     'value' => BlockedSlots::key(['timeSlot' => (int) $timeSlot['id'], 'date' => date('Y-m-d', $dayStart)]),
                     // E.g. "Mi 14.06.2023, 08:00 – 09:00", for the warning about blocked slots with bookings
                     'label' => $days[$dayIndex]['label'].', '.$rowLabel,
-                    'isPast' => $endTime <= time(),
+                    'isPast' => $endTime <= $this->clock->now()->getTimestamp(),
                     'bookingCount' => $slotBookings['count'],
                     'itemsBooked' => $slotBookings['items'],
                     'blockedBy' => $blockedBy,
@@ -182,7 +187,7 @@ class BlockedSlotCalendar
             // Bookings of the time slot on this day (the times are read from the time slot)
             $count = (int) $this->connection->fetchOne(
                 'SELECT COUNT(*) FROM tl_resource_booking WHERE pid = ? AND timeSlotId = ? AND startTime >= ? AND startTime < ? AND endTime > ?',
-                [(int) $resource->id, $slot['timeSlot'], $dayStart, strtotime('+1 day', $dayStart), time()],
+                [(int) $resource->id, $slot['timeSlot'], $dayStart, strtotime('+1 day', $dayStart), $this->clock->now()->getTimestamp()],
             );
 
             if ($count < 1) {
@@ -235,7 +240,7 @@ class BlockedSlotCalendar
             [ResourceBookingBlockedPeriodModel::MODE_SLOTS, (int) $resource->id, $periodId],
         );
 
-        $today = date('Y-m-d');
+        $today = date('Y-m-d', $this->clock->now()->getTimestamp());
         $result = [];
 
         foreach ($periods as $period) {

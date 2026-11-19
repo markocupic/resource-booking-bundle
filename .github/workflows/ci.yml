@@ -72,3 +72,33 @@ jobs:
 
       - name: Run the unit tests
         run: composer unit-tests
+
+  integration:
+    name: Integration tests (MySQL)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.4
+          extensions: dom, fileinfo, filter, gd, hash, intl, json, mbstring, mysqli, pcre, pdo_mysql, zlib
+
+      # MySQL is installed on the runner (user root, password root), as in the workflows of Contao
+      - name: Initialize the database
+        run: |
+          sudo systemctl start mysql.service
+          mysql -uroot -proot -e "CREATE DATABASE rbb_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install phpunit
+        run: cd tools/phpunit && composer update --no-interaction --no-suggest
+
+      - name: Install the dependencies
+        run: composer update --no-interaction --no-suggest
+
+      - name: Run the integration tests
+        run: composer unit-tests -- --testsuite integration
+        env:
+          RBB_TEST_DATABASE_URL: mysql://root:root@127.0.0.1:3306/rbb_test

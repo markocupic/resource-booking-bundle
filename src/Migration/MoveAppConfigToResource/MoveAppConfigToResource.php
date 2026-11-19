@@ -124,7 +124,7 @@ class MoveAppConfigToResource extends AbstractMigration
         $autoConfirmSettings = [];
 
         foreach ($modules as $module) {
-            // An empty value means the "default" app configuration (as in Utils::getAppConfigByName())
+            // An empty value means the "default" app configuration (as in AppConfigResolver::getByName())
             $appConfigName = (string) $module['resourceBooking_appConfig'] ?: 'default';
 
             // If the app configuration does not exist anymore, the values of the former default app configuration apply.

@@ -39,8 +39,8 @@ class BookingPresenter
      * @param array<string, mixed>      $booking          Row of tl_resource_booking
      * @param array<string, mixed>|null $member           Row of tl_member (the booking person), null if the member does not exist anymore
      * @param int|null                  $loggedInUserId   ID of the logged-in member, null for guests
-     * @param list<string>              $memberFields     Displayed member fields (Utils::getDisplayedMemberFields())
-     * @param list<string>              $bookingFields    Displayed booking fields (Utils::getDisplayedBookingFields())
+     * @param list<string>              $memberFields     Displayed member fields (DisplayedFields::getMemberFields())
+     * @param list<string>              $bookingFields    Displayed booking fields (DisplayedFields::getBookingFields())
      * @param bool                      $slotIsCancelable The slot can be canceled (time, logged-in user)
      *
      * @return array<string, mixed>

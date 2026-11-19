@@ -16,6 +16,7 @@ namespace Markocupic\ResourceBookingBundle\Tests\Notification;
 
 use Contao\TestCase\ContaoTestCase;
 use Markocupic\ResourceBookingBundle\Notification\TokenBuilder;
+use Symfony\Component\Clock\MockClock;
 
 class TokenBuilderTest extends ContaoTestCase
 {
@@ -57,5 +58,12 @@ class TokenBuilderTest extends ContaoTestCase
 
         $this->assertSame($uuid, $tokens['booking_person_singleSRC']);
         $this->assertSame('', $tokens['booking_person_empty']);
+    }
+
+    public function testTheDateOfTheBookingComesFromTheClock(): void
+    {
+        $tokens = (new TokenBuilder(new MockClock('@1795046400')))->build([], [], [], [], 'Y-m-d');
+
+        $this->assertSame(date('Y-m-d', 1795046400), $tokens['booking_datim']);
     }
 }

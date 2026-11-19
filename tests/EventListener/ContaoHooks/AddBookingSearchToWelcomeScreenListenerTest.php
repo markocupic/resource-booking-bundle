@@ -120,7 +120,7 @@ class AddBookingSearchToWelcomeScreenListenerTest extends ContaoTestCase
             ]]])
         ;
 
-        $router = $this->createMock(UrlGeneratorInterface::class);
+        $router = $this->createStub(UrlGeneratorInterface::class);
         $router
             ->method('generate')
             ->willReturnCallback(static fn (string $name, array $params = []): string => '/contao?'.http_build_query($params))
@@ -128,7 +128,7 @@ class AddBookingSearchToWelcomeScreenListenerTest extends ContaoTestCase
 
         $context = null;
 
-        $twig = $this->createMock(Environment::class);
+        $twig = $this->createStub(Environment::class);
         $twig
             ->method('render')
             ->willReturnCallback(

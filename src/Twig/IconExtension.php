@@ -47,16 +47,16 @@ class IconExtension extends AbstractExtension
      * {{ rbb_icon('fa-my-icon.svg')|raw }} // The default icon folder will be used
      * {{ rbb_icon('/absolute_path/to/my/icon/fa-my-icon.svg')|raw }} // Use the absolute path to your icon.
      */
-    public function generateIcon(string $iconNameOrPath, string $strClass = ''): string
+    public function generateIcon(string $iconNameOrPath, string $class = ''): string
     {
-        $strClass = $this->framework
+        $class = $this->framework
             ->getAdapter(StringUtil::class)
-            ->specialcharsAttribute($strClass)
+            ->specialcharsAttribute($class)
         ;
-        $classes = explode(' ', trim($strClass));
+        $classes = explode(' ', trim($class));
         $classes[] = 'rbb-icon';
         $classes = array_filter(array_unique($classes));
-        $strClass = implode(' ', $classes);
+        $class = implode(' ', $classes);
 
         if ($this->filesystem->exists($iconNameOrPath)) {
             $iconPath = $iconNameOrPath;
@@ -71,11 +71,10 @@ class IconExtension extends AbstractExtension
             throw new \Exception(\sprintf('Could not find icon "%s" in "%s".', $iconNameOrPath, $iconPath));
         }
 
-        $strXml = $this->filesystem->readFile($iconPath);
-        $xml = new \SimpleXMLElement($strXml);
+        $xml = new \SimpleXMLElement($this->filesystem->readFile($iconPath));
 
-        if (!empty($strClass)) {
-            $xml->addAttribute('class', $strClass);
+        if (!empty($class)) {
+            $xml->addAttribute('class', $class);
         }
 
         return $xml->asXML();

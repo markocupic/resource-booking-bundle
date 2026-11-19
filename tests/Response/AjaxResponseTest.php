@@ -14,30 +14,53 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\Tests\Response;
 
+use Markocupic\ResourceBookingBundle\Api\Output\BookingResult;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
+use Markocupic\ResourceBookingBundle\Response\AjaxStatus;
+use Markocupic\ResourceBookingBundle\Response\MessageType;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 class AjaxResponseTest extends TestCase
 {
-    public function testConstructorInitializesTheDataStructure(): void
+    public function testTheJsonOfAnEmptyResponse(): void
     {
+        $expected = [
+            'status' => null,
+            'messages' => [
+                'warning' => null,
+                'error' => null,
+                'confirm' => null,
+                'info' => null,
+            ],
+            'fieldErrors' => [],
+            'data' => [],
+            'action' => 'showBookingForm',
+        ];
+
         $response = new AjaxResponse('showBookingForm');
+
+        $this->assertSame($expected, $response->toArray());
+        $this->assertSame(json_encode($expected), json_encode($response));
+    }
+
+    public function testTheJsonContainsStatusMessagesFieldErrorsAndData(): void
+    {
+        $response = new AjaxResponse('bookingRequest');
+        $response->setStatus(AjaxStatus::Warning);
+        $response->setWarningMessage('Bitte prüfen');
+        $response->setFieldError('email', 'Ungültige E-Mail-Adresse');
+        $response->setData('isBooked', false);
 
         $this->assertSame(
             [
-                'status' => null,
-                'messages' => [
-                    'warning' => null,
-                    'error' => null,
-                    'confirm' => null,
-                    'info' => null,
-                ],
-                'fieldErrors' => [],
-                'data' => [],
-                'action' => 'showBookingForm',
+                'status' => 'warning',
+                'messages' => ['warning' => 'Bitte prüfen', 'error' => null, 'confirm' => null, 'info' => null],
+                'fieldErrors' => ['email' => 'Ungültige E-Mail-Adresse'],
+                'data' => ['isBooked' => false],
+                'action' => 'bookingRequest',
             ],
-            $response->getAll(),
+            $response->toArray(),
         );
     }
 
@@ -51,80 +74,60 @@ class AjaxResponseTest extends TestCase
 
         $this->assertTrue($response->hasFieldErrors());
         $this->assertSame(['postal', 'email'], array_keys($response->getFieldErrors()));
-        $this->assertSame($response->getFieldErrors(), $response->getAll()['fieldErrors']);
     }
 
-    public function testActionRoundTrip(): void
+    public function testAction(): void
     {
         $response = new AjaxResponse('initialAction');
-
         $this->assertSame('initialAction', $response->getAction());
 
         $response->setAction('changedAction');
-
         $this->assertSame('changedAction', $response->getAction());
     }
 
-    #[DataProvider('provideValidStatuses')]
-    public function testSetAndGetValidStatus(string $status): void
+    #[DataProvider('provideStatuses')]
+    public function testStatus(AjaxStatus $status, string $json): void
     {
         $response = new AjaxResponse('action');
-
         $this->assertNull($response->getStatus());
 
         $response->setStatus($status);
 
         $this->assertSame($status, $response->getStatus());
+        $this->assertSame($json, $response->toArray()['status']);
     }
 
-    public function testSetStatusThrowsOnInvalidValue(): void
+    #[DataProvider('provideMessageTypes')]
+    public function testMessages(MessageType $type, string $setter, string $getter, string $checker): void
     {
         $response = new AjaxResponse('action');
 
-        $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('can not be "bogus"');
-
-        $response->setStatus('bogus');
-    }
-
-    #[DataProvider('provideMessageAccessors')]
-    public function testMessageRoundTrip(string $setter, string $getter, string $checker, string $deleter): void
-    {
-        $response = new AjaxResponse('action');
-
-        $this->assertFalse($response->{$checker}());
-        $this->assertNull($response->{$getter}());
+        $this->assertFalse($response->hasMessage($type));
+        $this->assertNull($response->getMessage($type));
 
         $response->{$setter}('Some message');
 
+        $this->assertTrue($response->hasMessage($type));
         $this->assertTrue($response->{$checker}());
         $this->assertSame('Some message', $response->{$getter}());
+        $this->assertSame('Some message', $response->toArray()['messages'][$type->value]);
 
-        $response->{$deleter}();
+        $response->removeMessage($type);
 
         $this->assertFalse($response->{$checker}());
         $this->assertNull($response->{$getter}());
     }
 
-    public function testHasMessageTreatsEmptyStringAsAbsent(): void
+    public function testAnEmptyMessageCountsAsNoMessage(): void
     {
         $response = new AjaxResponse('action');
         $response->setErrorMessage('');
 
-        // hasErrorMessage() uses !empty(), so an empty string counts as "no message".
         $this->assertFalse($response->hasErrorMessage());
         $this->assertSame('', $response->getErrorMessage());
     }
 
-    public function testPrepareBeforeSendReturnsSelf(): void
-    {
-        $response = new AjaxResponse('action');
-
-        $this->assertSame($response, $response->prepareBeforeSend());
-        $this->assertSame($response, $response->prepareBeforeSend(true));
-    }
-
-    public function testPrepareBeforeSendRemovesInfoAndConfirmationWhenAnErrorIsPresent(): void
+    public function testAnErrorReplacesTheInfoAndConfirmationMessages(): void
     {
         $response = new AjaxResponse('action');
         $response->setErrorMessage('Boom');
@@ -132,39 +135,26 @@ class AjaxResponseTest extends TestCase
         $response->setConfirmationMessage('Confirm');
         $response->setWarningMessage('Warning');
 
-        $response->prepareBeforeSend(true);
+        $this->assertSame(
+            ['warning' => 'Warning', 'error' => 'Boom', 'confirm' => null, 'info' => null],
+            $response->toArray()['messages'],
+        );
 
-        // Info and confirmation are cleared ...
-        $this->assertNull($response->getInfoMessage());
-        $this->assertNull($response->getConfirmationMessage());
-        // ... while error and warning survive.
-        $this->assertSame('Boom', $response->getErrorMessage());
-        $this->assertSame('Warning', $response->getWarningMessage());
+        // The messages themselves are kept
+        $this->assertSame('Info', $response->getInfoMessage());
+        $this->assertSame('Confirm', $response->getConfirmationMessage());
     }
 
-    public function testPrepareBeforeSendKeepsMessagesWhenThereIsNoError(): void
+    public function testInfoAndConfirmationMessagesAreSentWithoutError(): void
     {
         $response = new AjaxResponse('action');
         $response->setInfoMessage('Info');
         $response->setConfirmationMessage('Confirm');
 
-        $response->prepareBeforeSend(true);
-
-        $this->assertSame('Info', $response->getInfoMessage());
-        $this->assertSame('Confirm', $response->getConfirmationMessage());
-    }
-
-    public function testPrepareBeforeSendKeepsMessagesWhenFlagIsFalse(): void
-    {
-        $response = new AjaxResponse('action');
-        $response->setErrorMessage('Boom');
-        $response->setInfoMessage('Info');
-        $response->setConfirmationMessage('Confirm');
-
-        $response->prepareBeforeSend(false);
-
-        $this->assertSame('Info', $response->getInfoMessage());
-        $this->assertSame('Confirm', $response->getConfirmationMessage());
+        $this->assertSame(
+            ['warning' => null, 'error' => null, 'confirm' => 'Confirm', 'info' => 'Info'],
+            $response->toArray()['messages'],
+        );
     }
 
     public function testSetDataAndGetData(): void
@@ -174,65 +164,60 @@ class AjaxResponseTest extends TestCase
         $this->assertNull($response->getData('missing'));
 
         $response->setData('bookings', ['a', 'b']);
-
-        $this->assertSame(['a', 'b'], $response->getData('bookings'));
-    }
-
-    public function testSetDataAndGetDataSupportScalarValues(): void
-    {
-        $response = new AjaxResponse('action');
-
-        // The controllers store booleans/scalars too, e.g. setData('bookingProcessSucceeded', true).
-        $response->setData('bookingProcessSucceeded', true);
+        // Listeners of the AjaxResponseEvent store booleans/scalars too
+        $response->setData('isSpecial', true);
         $response->setData('count', 5);
 
-        $this->assertTrue($response->getData('bookingProcessSucceeded'));
+        $this->assertSame(['a', 'b'], $response->getData('bookings'));
+        $this->assertTrue($response->getData('isSpecial'));
         $this->assertSame(5, $response->getData('count'));
+        $this->assertSame(['bookings' => ['a', 'b'], 'isSpecial' => true, 'count' => 5], $response->getAllData());
     }
 
-    public function testSetDataFromArrayMergesWithExistingData(): void
+    public function testSetResultAddsTheDataOfTheResult(): void
+    {
+        $response = new AjaxResponse('bookingRequest');
+        $response->setData('notice', 'kept');
+
+        $response->setResult(new BookingResult(true, [['id' => 1, 'timeSlotId' => 2, 'startTime' => 3, 'endTime' => 4]]));
+
+        $this->assertSame('kept', $response->getData('notice'));
+        $this->assertTrue($response->getData('isBooked'));
+        $this->assertSame([['id' => 1, 'timeSlotId' => 2, 'startTime' => 3, 'endTime' => 4]], $response->getData('bookings'));
+    }
+
+    public function testMergeDataOverwritesExistingKeys(): void
     {
         $response = new AjaxResponse('action');
         $response->setData('a', [1]);
         $response->setData('b', [2]);
 
-        $response->setDataFromArray([
-            'b' => [22], // overwrites
-            'c' => [3], // added
+        $response->mergeData([
+            'b' => [22],
+            'c' => [3],
         ]);
 
-        $this->assertSame([1], $response->getData('a'));
-        $this->assertSame([22], $response->getData('b'));
-        $this->assertSame([3], $response->getData('c'));
-
-        $this->assertSame(
-            ['a' => [1], 'b' => [22], 'c' => [3]],
-            $response->getAll()['data'],
-        );
+        $this->assertSame(['a' => [1], 'b' => [22], 'c' => [3]], $response->toArray()['data']);
     }
 
     /**
-     * @return array<string, array{string}>
+     * @return iterable<string, array{AjaxStatus, string}>
      */
-    public static function provideValidStatuses(): iterable
+    public static function provideStatuses(): iterable
     {
-        return [
-            'error' => [AjaxResponse::STATUS_ERROR],
-            'success' => [AjaxResponse::STATUS_SUCCESS],
-            'warning' => [AjaxResponse::STATUS_WARNING],
-        ];
+        yield 'error' => [AjaxStatus::Error, 'error'];
+        yield 'success' => [AjaxStatus::Success, 'success'];
+        yield 'warning' => [AjaxStatus::Warning, 'warning'];
     }
 
     /**
-     * @return array<string, array{string, string, string, string}>
+     * @return iterable<string, array{MessageType, string, string, string}>
      */
-    public static function provideMessageAccessors(): iterable
+    public static function provideMessageTypes(): iterable
     {
-        return [
-            'error' => ['setErrorMessage', 'getErrorMessage', 'hasErrorMessage', 'deleteErrorMessage'],
-            'warning' => ['setWarningMessage', 'getWarningMessage', 'hasWarningMessage', 'deleteWarningMessage'],
-            'info' => ['setInfoMessage', 'getInfoMessage', 'hasInfoMessage', 'deleteInfoMessage'],
-            'confirm' => ['setConfirmationMessage', 'getConfirmationMessage', 'hasConfirmationMessage', 'deleteConfirmationMessage'],
-        ];
+        yield 'confirm' => [MessageType::Confirm, 'setConfirmationMessage', 'getConfirmationMessage', 'hasConfirmationMessage'];
+        yield 'error' => [MessageType::Error, 'setErrorMessage', 'getErrorMessage', 'hasErrorMessage'];
+        yield 'info' => [MessageType::Info, 'setInfoMessage', 'getInfoMessage', 'hasInfoMessage'];
+        yield 'warning' => [MessageType::Warning, 'setWarningMessage', 'getWarningMessage', 'hasWarningMessage'];
     }
 }

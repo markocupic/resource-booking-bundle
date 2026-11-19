@@ -21,7 +21,9 @@ use Contao\Message;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Types\Types;
-use Markocupic\ResourceBookingBundle\Util\ResourceBookingRestriction;
+use Markocupic\ResourceBookingBundle\Restriction\TimeSlotRules;
+use Symfony\Component\Clock\ClockInterface;
+use Symfony\Component\Clock\NativeClock;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ResourceBookingResource
@@ -30,6 +32,7 @@ class ResourceBookingResource
         private readonly ContaoFramework $framework,
         private readonly Connection $connection,
         private readonly TranslatorInterface $translator,
+        private readonly ClockInterface $clock = new NativeClock(),
     ) {
     }
 
@@ -87,7 +90,7 @@ class ResourceBookingResource
 
         $bookings = $this->connection->fetchAllAssociative(
             'SELECT id, startTime, endTime FROM tl_resource_booking WHERE pid = ? AND endTime > ?',
-            [$resourceId, time()],
+            [$resourceId, $this->clock->now()->getTimestamp()],
             [Types::INTEGER, Types::INTEGER],
         );
 
@@ -134,7 +137,7 @@ class ResourceBookingResource
                 continue;
             }
 
-            if (ResourceBookingRestriction::isTimeSlotAvailableOnWeekday($timeSlot, $weekday)) {
+            if (TimeSlotRules::isAvailableOnWeekday($timeSlot, $weekday)) {
                 return true;
             }
         }

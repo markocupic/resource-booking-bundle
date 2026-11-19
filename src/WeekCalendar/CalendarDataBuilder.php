@@ -18,16 +18,18 @@ use Contao\Config;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Date;
 use Contao\ModuleModel;
-use Contao\StringUtil;
 use Contao\System;
+use Markocupic\ResourceBookingBundle\Api\Output\CalendarData;
 use Markocupic\ResourceBookingBundle\AppState\AppState;
 use Markocupic\ResourceBookingBundle\Config\RbbConfig;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceTypeModel;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Markocupic\ResourceBookingBundle\User\LoggedInFrontendUser;
+use Markocupic\ResourceBookingBundle\Util\CsvList;
 use Markocupic\ResourceBookingBundle\Util\DateHelper;
-use Markocupic\ResourceBookingBundle\Util\Str;
+use Symfony\Component\Clock\ClockInterface;
+use Symfony\Component\Clock\NativeClock;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 /**
@@ -43,21 +45,18 @@ class CalendarDataBuilder
         private readonly LoggedInFrontendUser $user,
         private readonly TranslatorInterface $translator,
         private readonly WeekTableBuilder $weekTableBuilder,
+        private readonly ClockInterface $clock = new NativeClock(),
     ) {
     }
 
     /**
      * @throws \Exception
      */
-    public function build(AppState $state, AjaxResponse $ajaxResponse): array
+    public function build(AppState $state, AjaxResponse $ajaxResponse): CalendarData
     {
         $configAdapter = $this->framework->getAdapter(Config::class);
         $dateAdapter = $this->framework->getAdapter(Date::class);
-        $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
-        $strAdapter = $this->framework->getAdapter(Str::class);
         $systemAdapter = $this->framework->getAdapter(System::class);
-
-        $arrData = [];
 
         // Load language file
         $systemAdapter->loadLanguageFile('default', $this->translator->getLocale());
@@ -72,252 +71,189 @@ class CalendarDataBuilder
             $ajaxResponse->setInfoMessage($this->translator->trans('RBB.MSG.selectResourcePlease', [], 'contao_default'));
         }
 
-        // Get the module id
-        $arrData['moduleId'] = $state->module->id;
-
-        // Filter form: get resource types dropdown
-        $arrData['filterBoard']['resourceTypes'] = $this->getResourceTypeSelectOptions($state->module);
-
-        // Filter form: get resource dropdown
-        $arrData['filterBoard']['resources'] = $this->getResourceSelectOptions($state->resourceType);
-
-        // Filter form get jump week array
-        $arrData['filterBoard']['jumpNextWeek'] = $this->getJumpWeekDate(1, $state);
-        $arrData['filterBoard']['jumpPrevWeek'] = $this->getJumpWeekDate(-1, $state);
-
-        // Filter form: get date dropdown
-        $arrData['filterBoard']['weekSelection'] = $this->getWeekSelection($state, $state->firstPermittedWeekTstamp, $state->lastPermittedWeekTstamp, true);
-
-        // Logged in user
-        $arrData['hasLoggedInUser'] = false;
-        $arrData['loggedInUser'] = null;
-
-        if (null !== $this->user->getLoggedInUser()) {
-            $arrData['hasLoggedInUser'] = true;
-            $arrData['loggedInUser'] = array_map(static fn ($v) => $strAdapter->convertBinUuidsToStringUuids($v), $this->user->getModel()->row());
-            $arrData['loggedInUser']['gender'] = !empty($this->user->getModel()->gender) ? $this->translator->trans('MSC.'.$this->user->getModel()->gender, [], 'contao_default') : '';
-            unset($arrData['loggedInUser']['password']);
-        }
-
-        // Selected week
-        $arrData['activeWeekTstamp'] = $state->activeWeekTstamp;
-        $arrData['activeWeek'] = [
-            'tstampStart' => $state->activeWeekTstamp,
-            'tstampEnd' => $dateHelperAdapter->addDaysToTime(6, $state->activeWeekTstamp),
-            'dateStart' => $dateAdapter->parse($configAdapter->get('dateFormat'), $state->activeWeekTstamp),
-            'dateEnd' => $dateAdapter->parse($configAdapter->get('dateFormat'), $dateHelperAdapter->addDaysToTime(6, $state->activeWeekTstamp)),
-            'weekNumber' => $dateAdapter->parse('W', $state->activeWeekTstamp),
-            'year' => $dateAdapter->parse('Y', $state->activeWeekTstamp),
-        ];
-
-        // Get booking RepeatsSelection
-        $arrData['bookingRepeatsSelection'] = $this->getWeekSelection($state, $state->activeWeekTstamp, $state->lastPermittedWeekTstamp, false);
-
-        // Weekdays
-        $arrData['weekdays'] = $this->getWeekdays($state, $state->activeWeekTstamp, $state->resource);
-
-        // Displayed days of the active week for the header, e.g. "Montag, 16. bis Freitag, 20. November 2026"
-        $arrData['activeWeek']['calWeek'] = (int) $arrData['activeWeek']['weekNumber'];
-        $arrData['activeWeek']['daySpan'] = $this->getDaySpan($arrData['weekdays'], $state->activeWeekTstamp);
-
-        // Always send the active resource type and resource, so that the
-        // front end does not keep the previous ones after a filter change.
-        $arrData['activeResourceType'] = [];
-        $arrData['activeResource'] = [];
-        $arrData['activeResourceTypeId'] = 'undefined';
-
-        if (null !== $state->resourceType) {
-            $arrData['activeResourceType'] = $state->resourceType->row();
-            $arrData['activeResourceTypeId'] = $state->resourceType->id;
-        }
-
-        // Generate table data
-        $arrData['activeResourceId'] = 'undefined';
-
-        if (null !== $state->resource && null !== $state->resourceType) {
-            $arrData['activeResourceId'] = $state->resource->id;
-            $arrData['activeResource'] = $state->resource->row();
-        }
+        $dateFormat = (string) $configAdapter->get('dateFormat');
+        $weekEnd = DateHelper::addDays(6, $state->activeWeekStart);
+        $weekdays = $this->getWeekdays($state, $state->activeWeekStart, $state->resource);
+        $weekNumber = $dateAdapter->parse('W', $state->activeWeekStart);
 
         // Table of the week calendar (rows with one slot per displayed weekday) and the time slots of the first column
-        $arrData['rows'] = [];
-        $arrData['timeSlots'] = [];
-        $resource = $state->resource;
-        $moduleModel = $state->module;
+        $rows = [];
+        $timeSlots = [];
 
-        if (null !== $resource && null !== $moduleModel) {
+        if (null !== $state->resource && null !== $state->resourceType) {
             // All seven days of the week, starting with the first day of the week of the timetable
             $daysOfWeek = $this->getDaysOfWeek($state);
 
-            $arrData['rows'] = $this->weekTableBuilder->buildRows($daysOfWeek, $state->activeWeekTstamp, $moduleModel, $resource, $this->user->getLoggedInUser());
-            $arrData['timeSlots'] = $this->weekTableBuilder->buildTimeSlots($resource, $daysOfWeek);
+            $rows = $this->weekTableBuilder->buildRows($daysOfWeek, $state->activeWeekStart, $state->module, $state->resource, $this->user->getLoggedInUser());
+            $timeSlots = $this->weekTableBuilder->buildTimeSlots($state->resource, $daysOfWeek);
         }
 
-        $arrData['isReady'] = true;
-
-        return $arrData;
-    }
-
-    private function getResourceTypeSelectOptions(ModuleModel|null $objModule = null): array
-    {
-        $resourceBookingResourceTypeModelAdapter = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class);
-        $stringUtilAdapter = $this->framework->getAdapter(StringUtil::class);
-
-        $rows = [];
-        $arrIds = $stringUtilAdapter->deserialize($objModule->resourceBooking_resourceTypes, true);
-
-        if (null !== ($objResourceTypes = $resourceBookingResourceTypeModelAdapter->findPublishedByIds($arrIds))) {
-            while ($objResourceTypes->next()) {
-                $rows[] = $objResourceTypes->row();
-            }
-        }
-
-        return $rows;
-    }
-
-    private function getResourceSelectOptions(ResourceBookingResourceTypeModel|null $resType = null): array
-    {
-        $resourceBookingResourceModelAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
-
-        $rows = [];
-
-        if (null !== $resType && null !== ($objResources = $resourceBookingResourceModelAdapter->findPublishedByPid((int) $resType->id))) {
-            while ($objResources->next()) {
-                $rows[] = $objResources->row();
-            }
-        }
-
-        return $rows;
+        return new CalendarData(
+            resourceTypes: $this->getResourceTypeSelectOptions($state->module),
+            resources: $this->getResourceSelectOptions($state->resourceType),
+            jumpPrevWeek: $this->getJumpWeekDate(-1, $state),
+            jumpNextWeek: $this->getJumpWeekDate(1, $state),
+            weekSelection: $this->getWeekSelection($state, $state->firstPermittedWeekStart, $state->lastPermittedWeekStart, true),
+            firstPermittedWeekStart: $state->firstPermittedWeekStart,
+            lastPermittedWeekStart: $state->lastPermittedWeekStart,
+            // CalendarData sends only the name of the member to the front end
+            member: null === $this->user->getLoggedInUser() ? null : $this->user->getModel()?->row(),
+            activeWeekStart: $state->activeWeekStart,
+            activeWeek: [
+                'tstampStart' => $state->activeWeekStart,
+                'tstampEnd' => $weekEnd,
+                'dateStart' => $dateAdapter->parse($dateFormat, $state->activeWeekStart),
+                'dateEnd' => $dateAdapter->parse($dateFormat, $weekEnd),
+                'weekNumber' => $weekNumber,
+                'year' => $dateAdapter->parse('Y', $state->activeWeekStart),
+                'calWeek' => (int) $weekNumber,
+                // Displayed days of the active week for the header, e.g. "Montag, 16. bis Freitag, 20. November 2026"
+                'daySpan' => $this->getDaySpan($weekdays, $state->activeWeekStart),
+            ],
+            bookingRepeatsSelection: $this->getWeekSelection($state, $state->activeWeekStart, $state->lastPermittedWeekStart, false),
+            weekdays: $weekdays,
+            activeResourceType: $state->resourceType?->row(),
+            activeResource: null === $state->resourceType ? null : $state->resource?->row(),
+            rows: $rows,
+            timeSlots: $timeSlots,
+        );
     }
 
     /**
-     * @throws \Exception
+     * The published resource types of the module.
+     *
+     * @return list<array<string, mixed>>
      */
-    private function getJumpWeekDate(int $intJumpWeek, AppState $state): array
+    private function getResourceTypeSelectOptions(ModuleModel $module): array
     {
-        $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
+        $resourceTypeIds = CsvList::parseIds($module->resourceBooking_resourceTypes);
+        $resourceTypes = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class)->findPublishedByIds($resourceTypeIds);
 
-        $arrReturn = [
-            'disabled' => false,
-        ];
-
-        $intJumpDays = 7 * $intJumpWeek;
-        // Create 1 week back and 1 week ahead links
-        $jumpTime = $dateHelperAdapter->addDaysToTime($intJumpDays, $state->activeWeekTstamp);
-
-        // The permitted weeks depend on the active resource and are stored in the session.
-        $isPermittedWeek = $jumpTime >= $state->firstPermittedWeekTstamp && $jumpTime <= $state->lastPermittedWeekTstamp;
-
-        if (!$isPermittedWeek) {
-            $jumpTime = $state->activeWeekTstamp;
-            $arrReturn['disabled'] = true;
-        }
-
-        if (!($state->activeWeekTstamp > 0) || null === $state->resourceType || null === $state->resource) {
-            $arrReturn['disabled'] = true;
-        }
-
-        $arrReturn['tstamp'] = (int) $jumpTime;
-
-        return $arrReturn;
+        return null === $resourceTypes ? [] : array_values($resourceTypes->fetchAll());
     }
 
     /**
-     * @throws \Exception
+     * The published resources of the resource type.
+     *
+     * @return list<array<string, mixed>>
      */
-    private function getWeekSelection(AppState $state, int $startTstamp, int $endTstamp, bool $injectEmptyLine = false): array
+    private function getResourceSelectOptions(ResourceBookingResourceTypeModel|null $resourceType): array
     {
-        $systemAdapter = $this->framework->getAdapter(System::class);
-        $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
+        if (null === $resourceType) {
+            return [];
+        }
+
+        $resources = $this->framework->getAdapter(ResourceBookingResourceModel::class)->findPublishedByPid((int) $resourceType->id);
+
+        return null === $resources ? [] : array_values($resources->fetchAll());
+    }
+
+    /**
+     * Link to the previous (-1) or next (1) week; disabled outside the permitted weeks
+     * or without an active resource.
+     *
+     * @return array{disabled: bool, tstamp: int}
+     */
+    private function getJumpWeekDate(int $weeks, AppState $state): array
+    {
+        $jumpTime = DateHelper::addDays(7 * $weeks, $state->activeWeekStart);
+        $disabled = false;
+
+        // The permitted weeks depend on the active resource
+        if ($jumpTime < $state->firstPermittedWeekStart || $jumpTime > $state->lastPermittedWeekStart) {
+            $jumpTime = $state->activeWeekStart;
+            $disabled = true;
+        }
+
+        if ($state->activeWeekStart <= 0 || null === $state->resourceType || null === $state->resource) {
+            $disabled = true;
+        }
+
+        return ['disabled' => $disabled, 'tstamp' => $jumpTime];
+    }
+
+    /**
+     * Options of the week selection from the first to the last week (first days of the weeks).
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function getWeekSelection(AppState $state, int $firstWeek, int $lastWeek, bool $injectEmptyLine = false): array
+    {
         $dateAdapter = $this->framework->getAdapter(Date::class);
 
-        // Load language file
-        $systemAdapter->loadLanguageFile('default', $this->translator->getLocale());
+        $this->framework->getAdapter(System::class)->loadLanguageFile('default', $this->translator->getLocale());
 
-        $arrWeeks = [];
+        $currentWeek = DateHelper::getFirstDayOfWeek($state->getBeginWeek(), $this->clock->now()->getTimestamp());
+        $weeks = [];
 
-        $currentTstamp = $startTstamp;
+        for ($weekStart = $firstWeek; $weekStart <= $lastWeek; $weekStart = DateHelper::addDays(7, $weekStart)) {
+            $cssClass = match (true) {
+                $weekStart === $currentWeek => 'current-week',
+                $weekStart > $currentWeek => 'future-week',
+                default => 'past-week',
+            };
 
-        while ($currentTstamp <= $endTstamp) {
-            $cssClass = 'past-week';
-
-            $arrAppConfig = $state->appConfig;
-
-            // add empty
-            if ($dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig) === $currentTstamp) {
-                if ($injectEmptyLine) {
-                    $arrWeeks[] = [
-                        'tstamp' => '',
-                        'date' => '',
-                        'optionText' => '-------------',
-                    ];
-                }
-
-                $cssClass = 'current-week';
+            // Separator before the current week
+            if ($injectEmptyLine && $weekStart === $currentWeek) {
+                $weeks[] = ['tstamp' => '', 'date' => '', 'optionText' => '-------------'];
             }
 
-            if ($dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig) < $currentTstamp) {
-                $cssClass = 'future-week';
-            }
+            $dateStart = $dateAdapter->parse('d.m.Y', $weekStart);
+            $weekEnd = strtotime($dateStart.' + 6 days');
+            $dateEnd = $dateAdapter->parse('d.m.Y', $weekEnd);
+            $weekNumber = $dateAdapter->parse('W', $weekStart);
+            $year = $dateAdapter->parse('Y', $weekStart);
 
-            $tstampBeginWeek = $currentTstamp;
-            $dateBeginWeek = $dateAdapter->parse('d.m.Y', $currentTstamp);
-            $tstampEndWeek = strtotime($dateBeginWeek.' + 6 days');
-            $dateEndWeek = $dateAdapter->parse('d.m.Y', $tstampEndWeek);
-            $calWeek = $dateAdapter->parse('W', $tstampBeginWeek);
-            $yearBeginWeek = $dateAdapter->parse('Y', $tstampBeginWeek);
-            $arrWeeks[] = [
+            $weeks[] = [
                 'cssClass' => $cssClass,
-                'tstamp' => (int) $currentTstamp,
-                'tstampBeginWeek' => (int) $tstampBeginWeek,
-                'tstampEndWeek' => (int) $tstampEndWeek,
-                'stringBeginWeek' => $dateBeginWeek,
-                'stringEndWeek' => $dateEndWeek,
-                'daySpan' => $dateBeginWeek.' - '.$dateEndWeek,
-                'calWeek' => (int) $calWeek,
-                'year' => $yearBeginWeek,
-                'optionDateStart' => $dateBeginWeek,
-                'optionDateEnd' => $dateEndWeek,
-                'optionText' => $this->translator->trans('MSC.weekSelectOptionText', [$calWeek, $yearBeginWeek, $dateBeginWeek, $dateEndWeek], 'contao_default'),
+                'tstamp' => $weekStart,
+                'tstampBeginWeek' => $weekStart,
+                'tstampEndWeek' => (int) $weekEnd,
+                'stringBeginWeek' => $dateStart,
+                'stringEndWeek' => $dateEnd,
+                'daySpan' => $dateStart.' - '.$dateEnd,
+                'calWeek' => (int) $weekNumber,
+                'year' => $year,
+                'optionDateStart' => $dateStart,
+                'optionDateEnd' => $dateEnd,
+                'optionText' => $this->translator->trans('MSC.weekSelectOptionText', [$weekNumber, $year, $dateStart, $dateEnd], 'contao_default'),
             ];
-
-            $currentTstamp = $dateHelperAdapter->addDaysToTime(7, $currentTstamp);
         }
 
-        return $arrWeeks;
+        return $weeks;
     }
 
     /**
-     * @throws \Exception
+     * The displayed weekdays of the active week (header of the table): weekdays on
+     * which none of the time slots of the resource is available are skipped.
+     *
+     * @return list<array<string, mixed>>
      */
-    private function getWeekdays(AppState $state, int $activeWeekTstamp, ResourceBookingResourceModel|null $resourceModel = null): array
+    private function getWeekdays(AppState $state, int $activeWeekStart, ResourceBookingResourceModel|null $resource = null): array
     {
         $dateAdapter = $this->framework->getAdapter(Date::class);
+        $daysOfWeek = $this->getDaysOfWeek($state);
+        $visibleWeekdays = $this->weekTableBuilder->getVisibleWeekdaysOfResource($resource, $daysOfWeek);
+        $weekdays = [];
 
-        // Send weekdays, dates and day
-        $arrWeek = [];
-
-        // First get a full week,
-        $arrWeekdays = $this->getDaysOfWeek($state);
-        $visibleWeekdays = $this->weekTableBuilder->getVisibleWeekdaysOfResource($resourceModel, $arrWeekdays);
-
-        foreach ($arrWeekdays as $i => $weekday) {
-            // Skip weekdays on which none of the time slots is available
+        foreach ($daysOfWeek as $index => $weekday) {
             if (!\in_array($weekday, $visibleWeekdays, true)) {
                 continue;
             }
 
-            $arrWeek[] = [
-                'index' => $i,
-                'tstamp' => strtotime($dateAdapter->parse('Y-m-d', $activeWeekTstamp).' +'.$i.' day'),
+            $day = strtotime($dateAdapter->parse('Y-m-d', $activeWeekStart).' +'.$index.' day');
+
+            $weekdays[] = [
+                'index' => $index,
+                'tstamp' => $day,
                 'name' => $weekday,
                 'title' => $this->translator->trans('MSC.DAYS_LONG.'.$weekday, [], 'contao_default'),
                 'titleShort' => $this->translator->trans('MSC.DAYS_SHORTENED.'.$weekday, [], 'contao_default'),
-                'date' => $dateAdapter->parse('d.m.Y', strtotime($dateAdapter->parse('Y-m-d', $activeWeekTstamp).' +'.$i.' day')),
+                'date' => $dateAdapter->parse('d.m.Y', $day),
             ];
         }
 
-        return $arrWeek;
+        return $weekdays;
     }
 
     /**
@@ -328,17 +264,17 @@ class CalendarDataBuilder
      *
      * @param array<int, array{tstamp: int}> $weekdays
      */
-    private function getDaySpan(array $weekdays, int $activeWeekTstamp): string
+    private function getDaySpan(array $weekdays, int $activeWeekStart): string
     {
-        if ($activeWeekTstamp <= 0) {
+        if ($activeWeekStart <= 0) {
             return '';
         }
 
         $dateAdapter = $this->framework->getAdapter(Date::class);
 
         if (empty($weekdays)) {
-            $start = $activeWeekTstamp;
-            $end = strtotime($dateAdapter->parse('Y-m-d', $activeWeekTstamp).' +6 days');
+            $start = $activeWeekStart;
+            $end = strtotime($dateAdapter->parse('Y-m-d', $activeWeekStart).' +6 days');
         } else {
             $start = (int) reset($weekdays)['tstamp'];
             $end = (int) end($weekdays)['tstamp'];
@@ -360,17 +296,15 @@ class CalendarDataBuilder
     }
 
     /**
-     * @throws \Exception
+     * All seven weekdays, starting with the first day of the week of the timetable.
+     *
+     * @return list<string>
      */
     private function getDaysOfWeek(AppState $state): array
     {
-        // $arrWeekdays[0] should be the weekday defined in the application configuration
-        $arrWeekdays = RbbConfig::RBB_WEEKDAYS;
-        $arrWeekdays = [...$arrWeekdays, ...$arrWeekdays];
-        $arrAppConfig = $state->appConfig;
-        $beginWeek = $arrAppConfig['beginWeek'];
-        $offset = array_search($beginWeek, $arrWeekdays, true);
+        $weekdays = [...RbbConfig::RBB_WEEKDAYS, ...RbbConfig::RBB_WEEKDAYS];
+        $offset = (int) array_search($state->getBeginWeek(), $weekdays, true);
 
-        return \array_slice($arrWeekdays, $offset, 7);
+        return \array_slice($weekdays, $offset, 7);
     }
 }

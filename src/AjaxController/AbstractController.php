@@ -15,13 +15,7 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\AjaxController;
 
 use Contao\CoreBundle\Framework\ContaoFramework;
-use Contao\ModuleModel;
-use Contao\StringUtil;
-use Markocupic\ResourceBookingBundle\AppState\AppState;
-use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\User\LoggedInFrontendUser;
-use Markocupic\ResourceBookingBundle\Util\Utils;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
@@ -36,19 +30,7 @@ abstract class AbstractController
     public function __construct(
         protected readonly ContaoFramework $framework,
         protected readonly LoggedInFrontendUser $user,
-        protected readonly Utils $utils,
     ) {
-    }
-
-    /**
-     * Returns true if the resource belongs to one of the resource types selected
-     * in the module (tl_module.resourceBooking_resourceTypes).
-     */
-    public static function isResourceOfModule(ResourceBookingResourceModel $resource, ModuleModel $moduleModel): bool
-    {
-        $resourceTypeIds = array_map('intval', StringUtil::deserialize($moduleModel->resourceBooking_resourceTypes, true));
-
-        return \in_array((int) $resource->pid, $resourceTypeIds, true);
     }
 
     /**
@@ -57,41 +39,5 @@ abstract class AbstractController
     protected function getLoggedInUserOrThrow(): UserInterface
     {
         return $this->user->getLoggedInUser() ?? throw new \Exception('No logged in user found.');
-    }
-
-    /**
-     * The resource of a booking request (POST resourceId): it must be published and
-     * belong to a resource type of the module (protection against manipulated requests).
-     *
-     * @throws \Exception
-     */
-    protected function getRequestedResource(Request $request, AppState $appState): ResourceBookingResourceModel
-    {
-        $resource = $this->framework
-            ->getAdapter(ResourceBookingResourceModel::class)
-            ->findPublishedByPk((int) $request->request->get('resourceId'))
-        ;
-
-        if (null === $resource) {
-            throw new \Exception(\sprintf('Resource with Id %s not found.', $request->request->get('resourceId')));
-        }
-
-        if (!self::isResourceOfModule($resource, $appState->module)) {
-            throw new \Exception(\sprintf('Resource with Id %s is not available in module with Id %s.', $resource->id, $appState->getModuleId()));
-        }
-
-        return $resource;
-    }
-
-    /**
-     * @throws \Exception
-     */
-    protected static function getBookingRepeatStopWeekTstamp(Request $request): int
-    {
-        if (!$request->request->has('bookingRepeatStopWeekTstamp')) {
-            throw new \Exception('No booking repeat stop week timestamp found.');
-        }
-
-        return (int) $request->request->get('bookingRepeatStopWeekTstamp');
     }
 }

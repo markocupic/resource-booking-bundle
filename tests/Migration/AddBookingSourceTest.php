@@ -20,6 +20,7 @@ use Doctrine\DBAL\Schema\Column;
 use Markocupic\ResourceBookingBundle\Booking\BookingSource;
 use Markocupic\ResourceBookingBundle\Migration\AddBookingSource\AddBookingSource;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class AddBookingSourceTest extends TestCase
@@ -38,7 +39,7 @@ class AddBookingSourceTest extends TestCase
 
     public function testSetsTheSourceWeekCalendar(): void
     {
-        $connection = $this->connection(found: true);
+        $connection = $this->connectionMock(found: true);
         $connection
             ->expects($this->once())
             ->method('executeStatement')
@@ -55,7 +56,23 @@ class AddBookingSourceTest extends TestCase
     /**
      * @param list<string> $columns
      */
-    private function connection(bool $tableExists = true, array $columns = ['bookingsource', 'member'], bool $found = true): Connection&MockObject
+    private function connection(bool $tableExists = true, array $columns = ['bookingsource', 'member'], bool $found = true): Connection&Stub
+    {
+        $stub = $this->createStub(Connection::class);
+        $this->configureConnection($stub, $tableExists, $columns, $found);
+
+        return $stub;
+    }
+
+    private function connectionMock(bool $tableExists = true, array $columns = ['bookingsource', 'member'], bool $found = true): Connection&MockObject
+    {
+        $mock = $this->createMock(Connection::class);
+        $this->configureConnection($mock, $tableExists, $columns, $found);
+
+        return $mock;
+    }
+
+    private function configureConnection(Connection&Stub $connection, bool $tableExists = true, array $columns = ['bookingsource', 'member'], bool $found = true): void
     {
         $schemaManager = $this->createStub(AbstractSchemaManager::class);
         $schemaManager
@@ -68,7 +85,6 @@ class AddBookingSourceTest extends TestCase
             ->willReturn(array_fill_keys($columns, $this->createStub(Column::class)))
         ;
 
-        $connection = $this->createMock(Connection::class);
         $connection
             ->method('createSchemaManager')
             ->willReturn($schemaManager)
@@ -78,7 +94,5 @@ class AddBookingSourceTest extends TestCase
             ->method('fetchOne')
             ->willReturn($found ? 1 : false)
         ;
-
-        return $connection;
     }
 }

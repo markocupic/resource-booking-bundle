@@ -47,7 +47,7 @@ class ResourceBookingResourceTest extends ContaoTestCase
         ];
 
         $timeSlots = [
-            ['startTime' => 8 * 3600, 'endTime' => 9 * 3600, 'weekdays' => serialize(['monday'])],
+            ['startTime' => 8 * 3600, 'endTime' => 9 * 3600, 'weekdays' => 'monday'],
         ];
 
         $dca = new ResourceBookingResource($this->createContaoFrameworkStub(), $this->connection(['id' => 3, 'timeSlotType' => 4], $bookings, $timeSlots), $this->translator());

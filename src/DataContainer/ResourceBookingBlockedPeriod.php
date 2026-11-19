@@ -26,8 +26,12 @@ use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Types\Types;
 use Markocupic\ResourceBookingBundle\Backend\BlockedSlotCleanup;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingBlockedPeriodModel;
+use Markocupic\ResourceBookingBundle\Restriction\BlockedPeriod;
+use Markocupic\ResourceBookingBundle\Restriction\BlockedTime;
+use Markocupic\ResourceBookingBundle\Restriction\ResourceRules;
 use Markocupic\ResourceBookingBundle\Util\BlockedSlots;
-use Markocupic\ResourceBookingBundle\Util\ResourceBookingRestriction;
+use Symfony\Component\Clock\ClockInterface;
+use Symfony\Component\Clock\NativeClock;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ResourceBookingBlockedPeriod
@@ -37,6 +41,7 @@ class ResourceBookingBlockedPeriod
         private readonly Connection $connection,
         private readonly TranslatorInterface $translator,
         private readonly BlockedSlotCleanup|null $blockedSlotCleanup = null,
+        private readonly ClockInterface $clock = new NativeClock(),
     ) {
     }
 
@@ -94,13 +99,13 @@ class ResourceBookingBlockedPeriod
 
         $summary = [];
 
-        foreach (ResourceBookingRestriction::getBlockedTimes($row) as $blockedTime) {
-            $text = 'daily' === $blockedTime['weekday']
+        foreach (BlockedTime::listFromSerialized($row['blockedTimes'] ?? null) as $blockedTime) {
+            $text = BlockedTime::DAILY === $blockedTime->weekday
                 ? $this->translator->trans('tl_resource_booking_blocked_period.weekdayOptions.daily', [], 'contao_tl_resource_booking_blocked_period')
-                : $this->translator->trans('MSC.DAYS_SHORTENED.'.$blockedTime['weekday'], [], 'contao_default');
+                : $this->translator->trans('MSC.DAYS_SHORTENED.'.$blockedTime->weekday, [], 'contao_default');
 
-            if (0 !== $blockedTime['timeFrom'] || 86400 !== $blockedTime['timeTo']) {
-                $text .= ' '.self::formatTime($blockedTime['timeFrom']).'–'.self::formatTime($blockedTime['timeTo']);
+            if (!$blockedTime->isWholeDay()) {
+                $text .= ' '.self::formatTime($blockedTime->timeFrom).'–'.self::formatTime($blockedTime->timeTo);
             }
 
             $summary[] = $text;
@@ -197,7 +202,7 @@ class ResourceBookingBlockedPeriod
             );
         }
 
-        $count = $this->countFutureBookingsInBlockedPeriod($period);
+        $count = $this->countFutureBookingsInBlockedPeriod(BlockedPeriod::fromRow($period));
 
         if ($count > 0) {
             $this->framework
@@ -210,13 +215,11 @@ class ResourceBookingBlockedPeriod
     /**
      * Returns the number of future bookings that fall into the blocked period.
      *
-     * @param array<string, mixed> $period
-     *
      * @throws Exception
      */
-    public function countFutureBookingsInBlockedPeriod(array $period): int
+    public function countFutureBookingsInBlockedPeriod(BlockedPeriod $period): int
     {
-        if (empty($period['published'])) {
+        if (!$period->published) {
             return 0;
         }
 
@@ -224,16 +227,16 @@ class ResourceBookingBlockedPeriod
             'SELECT b.startTime, b.endTime, b.timeSlotId, r.id, r.pid FROM tl_resource_booking b
                 INNER JOIN tl_resource_booking_resource r ON r.id = b.pid
                 WHERE b.endTime > ? AND b.startTime < ? AND b.endTime > ?',
-            [time(), empty($period['dateTo']) ? PHP_INT_MAX : strtotime('+1 day', (int) $period['dateTo']), (int) $period['dateFrom']],
+            [$this->clock->now()->getTimestamp(), null === $period->dateTo ? PHP_INT_MAX : strtotime('+1 day', $period->dateTo), $period->dateFrom],
             [Types::INTEGER, Types::INTEGER, Types::INTEGER],
         );
 
         $count = 0;
 
         foreach ($bookings as $booking) {
-            $resource = ['id' => $booking['id'], 'pid' => $booking['pid']];
+            $resource = new ResourceRules(id: (int) $booking['id'], resourceTypeId: (int) $booking['pid']);
 
-            if (ResourceBookingRestriction::isInBlockedPeriod($period, $resource, (int) $booking['startTime'], (int) $booking['endTime'], (int) ($booking['timeSlotId'] ?? 0))) {
+            if ($period->covers($resource, (int) $booking['startTime'], (int) $booking['endTime'], (int) ($booking['timeSlotId'] ?? 0))) {
                 ++$count;
             }
         }

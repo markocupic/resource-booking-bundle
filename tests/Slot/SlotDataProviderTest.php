@@ -18,6 +18,7 @@ use Contao\CoreBundle\Framework\Adapter;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Doctrine\DBAL\Connection;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingBlockedPeriodModel;
+use Markocupic\ResourceBookingBundle\Restriction\BlockedPeriod;
 use Markocupic\ResourceBookingBundle\Slot\SlotDataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
@@ -119,19 +120,27 @@ class SlotDataProviderTest extends TestCase
 
         $provider = new SlotDataProvider($framework, $this->createStub(TokenStorageInterface::class), $this->createStub(Connection::class));
 
-        $this->assertSame($periods, $provider->getBlockedPeriods());
-        $this->assertSame($periods, $provider->getBlockedPeriods());
+        $blockedPeriods = $provider->getBlockedPeriods();
 
-        // After reset() (next request) they are loaded again
+        $this->assertContainsOnlyInstancesOf(BlockedPeriod::class, $blockedPeriods);
+        $this->assertSame([1], array_map(static fn (BlockedPeriod $period): int => $period->id, $blockedPeriods));
+
+        // Same objects: not loaded again
+        $this->assertSame($blockedPeriods, $provider->getBlockedPeriods());
+
+        // After reset() (next request) they are loaded again: new objects
         $provider->reset();
-        $this->assertSame($periods, $provider->getBlockedPeriods());
+        $reloaded = $provider->getBlockedPeriods();
+
+        $this->assertNotSame($blockedPeriods, $reloaded);
+        $this->assertSame([1], array_map(static fn (BlockedPeriod $period): int => $period->id, $reloaded));
     }
 
     private function createProvider(Connection $connection): SlotDataProvider
     {
         return new SlotDataProvider(
-            $this->createMock(ContaoFramework::class),
-            $this->createMock(TokenStorageInterface::class),
+            $this->createStub(ContaoFramework::class),
+            $this->createStub(TokenStorageInterface::class),
             $connection,
         );
     }

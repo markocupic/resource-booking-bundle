@@ -45,7 +45,7 @@ class ResourceBookingTest extends TestCase
 
     public function testGetRbbModulesReturnsEmptyArrayWhenNoModulesExist(): void
     {
-        $connection = $this->createMock(Connection::class);
+        $connection = $this->createStub(Connection::class);
         $connection
             ->method('fetchAllAssociative')
             ->willReturn([])

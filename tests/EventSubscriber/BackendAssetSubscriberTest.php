@@ -59,7 +59,7 @@ class BackendAssetSubscriberTest extends TestCase
 
     public function testRegistersTheBackendCssOnBackendRequests(): void
     {
-        $scopeMatcher = $this->createMock(ScopeMatcher::class);
+        $scopeMatcher = $this->createStub(ScopeMatcher::class);
         $scopeMatcher
             ->method('isBackendRequest')
             ->willReturn(true)
@@ -81,7 +81,7 @@ class BackendAssetSubscriberTest extends TestCase
 
     public function testDoesNotRegisterAnyCssOnNonBackendRequests(): void
     {
-        $scopeMatcher = $this->createMock(ScopeMatcher::class);
+        $scopeMatcher = $this->createStub(ScopeMatcher::class);
         $scopeMatcher
             ->method('isBackendRequest')
             ->willReturn(false)
@@ -101,7 +101,7 @@ class BackendAssetSubscriberTest extends TestCase
 
     private function mockRequestEvent(): RequestEvent
     {
-        $event = $this->createMock(RequestEvent::class);
+        $event = $this->createStub(RequestEvent::class);
         $event
             ->method('getRequest')
             ->willReturn(Request::create('https://example.com/contao'))

@@ -17,6 +17,7 @@ namespace Markocupic\ResourceBookingBundle\Tests\Event;
 use Contao\Model\Collection;
 use Contao\ModuleModel;
 use Contao\PageModel;
+use Markocupic\ResourceBookingBundle\AppState\AppConfig;
 use Markocupic\ResourceBookingBundle\AppState\AppState;
 use Markocupic\ResourceBookingBundle\Event\PreBookingEvent;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
@@ -28,11 +29,11 @@ class PreBookingEventTest extends TestCase
 {
     public function testGettersReturnTheConstructorArguments(): void
     {
-        $request = $this->createMock(Request::class);
+        $request = $this->createStub(Request::class);
         $ajaxResponse = new AjaxResponse('book');
         $appState = $this->createAppState();
-        $user = $this->createMock(UserInterface::class);
-        $collection = $this->createMock(Collection::class);
+        $user = $this->createStub(UserInterface::class);
+        $collection = $this->createStub(Collection::class);
 
         $event = new PreBookingEvent($request, $ajaxResponse, $appState, $user, $collection);
 
@@ -46,10 +47,10 @@ class PreBookingEventTest extends TestCase
     public function testBookingCollectionMayBeNull(): void
     {
         $event = new PreBookingEvent(
-            $this->createMock(Request::class),
+            $this->createStub(Request::class),
             new AjaxResponse('book'),
             $this->createAppState(),
-            $this->createMock(UserInterface::class),
+            $this->createStub(UserInterface::class),
             null,
         );
 
@@ -64,7 +65,8 @@ class PreBookingEventTest extends TestCase
             $this->createStub(PageModel::class),
             null,
             null,
-            ['beginWeek' => 'monday', 'autoSelectFirstResource' => true, 'permittedFormFields' => []],
+            new AppConfig(),
+            'monday',
             0,
             0,
             0,

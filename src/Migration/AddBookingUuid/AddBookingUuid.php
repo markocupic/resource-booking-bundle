@@ -78,9 +78,9 @@ class AddBookingUuid extends AbstractMigration
     private function addBookingUuid(): void
     {
         $this->framework->initialize();
-        $arrIds = $this->connection->fetchFirstColumn('SELECT id FROM tl_resource_booking WHERE bookingUuid = ?', ['']);
+        $ids = $this->connection->fetchFirstColumn('SELECT id FROM tl_resource_booking WHERE bookingUuid = ?', ['']);
 
-        foreach ($arrIds as $id) {
+        foreach ($ids as $id) {
             $set = [
                 'bookingUuid' => StringUtil::binToUuid(Database::getInstance()->getUuid()),
             ];

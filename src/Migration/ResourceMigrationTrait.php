@@ -14,10 +14,10 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\Migration;
 
-use Contao\StringUtil;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
+use Markocupic\ResourceBookingBundle\Util\CsvList;
 
 /**
  * Shared helpers for the migrations that move module settings to the resources.
@@ -57,9 +57,10 @@ trait ResourceMigrationTrait
      *
      * @throws Exception
      */
-    private function getResourceIds(string|null $serializedResourceTypeIds): array
+    private function getResourceIds(string|null $resourceTypeIds): array
     {
-        $resourceTypeIds = array_map('intval', StringUtil::deserialize($serializedResourceTypeIds, true));
+        // CSV or (not migrated yet) serialized array
+        $resourceTypeIds = CsvList::parseIds($resourceTypeIds);
 
         if (empty($resourceTypeIds)) {
             return [];

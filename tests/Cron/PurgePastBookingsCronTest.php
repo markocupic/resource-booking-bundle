@@ -17,9 +17,9 @@ namespace Markocupic\ResourceBookingBundle\Tests\Cron;
 use Contao\TestCase\ContaoTestCase;
 use Doctrine\DBAL\Connection;
 use Markocupic\ResourceBookingBundle\Cron\PurgePastBookingsCron;
-use Markocupic\ResourceBookingBundle\Util\DateHelper;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Clock\MockClock;
 
 class PurgePastBookingsCronTest extends ContaoTestCase
 {
@@ -36,7 +36,7 @@ class PurgePastBookingsCronTest extends ContaoTestCase
             ->method('executeStatement')
         ;
 
-        $cron = new PurgePastBookingsCron($connection, $this->createContaoFrameworkMock(), false, null);
+        $cron = new PurgePastBookingsCron($connection, false, null);
         $cron();
     }
 
@@ -118,7 +118,7 @@ class PurgePastBookingsCronTest extends ContaoTestCase
             ])
         ;
 
-        $cron = new PurgePastBookingsCron($connection, $this->createContaoFrameworkMock(), true, null);
+        $cron = new PurgePastBookingsCron($connection, true, null);
 
         $this->assertSame(
             [
@@ -132,7 +132,7 @@ class PurgePastBookingsCronTest extends ContaoTestCase
 
     public function testCalculatePurgeLimitReturnsNullIfTheUserCannotNavigateBack(): void
     {
-        $cron = new PurgePastBookingsCron($this->createMock(Connection::class), $this->createContaoFrameworkMock(), true, null);
+        $cron = new PurgePastBookingsCron($this->createStub(Connection::class), true, null);
 
         $this->assertNull($this->invoke($cron, 'calculatePurgeLimit', [0, 'monday']));
         $this->assertNull($this->invoke($cron, 'calculatePurgeLimit', [-3, 'monday']));
@@ -140,29 +140,15 @@ class PurgePastBookingsCronTest extends ContaoTestCase
 
     public function testCalculatePurgeLimitCountsTheWeeksFromTheFirstDayOfTheWeekOfTheTimetable(): void
     {
-        $dateHelperAdapter = $this->createAdapterMock(['getFirstDayOfCurrentWeek', 'addWeeksToTime']);
-        $dateHelperAdapter
-            ->expects($this->once())
-            ->method('getFirstDayOfCurrentWeek')
-            ->with(['beginWeek' => 'sunday'])
-            ->willReturn(1000)
-        ;
+        // Wednesday
+        $clock = new MockClock(new \DateTimeImmutable('2030-10-16 12:00'));
+        $cron = new PurgePastBookingsCron($this->createStub(Connection::class), true, null, $clock);
 
-        $dateHelperAdapter
-            ->expects($this->once())
-            ->method('addWeeksToTime')
-            ->with(-2, 1000)
-            ->willReturn(500)
-        ;
+        // Two weeks before sunday, 2030-10-13
+        $this->assertSame(strtotime('2030-09-29 00:00'), $this->invoke($cron, 'calculatePurgeLimit', [2, 'sunday']));
 
-        $cron = new PurgePastBookingsCron(
-            $this->createMock(Connection::class),
-            $this->createContaoFrameworkMock([DateHelper::class => $dateHelperAdapter]),
-            true,
-            null,
-        );
-
-        $this->assertSame(500, $this->invoke($cron, 'calculatePurgeLimit', [2, 'sunday']));
+        // Two weeks before monday, 2030-10-14
+        $this->assertSame(strtotime('2030-09-30 00:00'), $this->invoke($cron, 'calculatePurgeLimit', [2, 'monday']));
     }
 
     public function testDeleteExpiredBookingsIssuesTheDeleteStatement(): void
@@ -179,7 +165,7 @@ class PurgePastBookingsCronTest extends ContaoTestCase
             ->willReturn(4)
         ;
 
-        $cron = new PurgePastBookingsCron($connection, $this->createContaoFrameworkMock(), true, null);
+        $cron = new PurgePastBookingsCron($connection, true, null);
 
         $this->assertSame(4, $this->invoke($cron, 'deleteExpiredBookings', [5, 1000]));
     }
@@ -191,8 +177,7 @@ class PurgePastBookingsCronTest extends ContaoTestCase
     {
         return $this->getMockBuilder(PurgePastBookingsCron::class)
             ->setConstructorArgs([
-                $this->createMock(Connection::class),
-                $this->createContaoFrameworkMock(),
+                $this->createStub(Connection::class),
                 true,
                 $logger,
             ])
@@ -208,7 +193,6 @@ class PurgePastBookingsCronTest extends ContaoTestCase
     private function invoke(object $object, string $method, array $args = []): mixed
     {
         $ref = new \ReflectionMethod($object, $method);
-        $ref->setAccessible(true);
 
         return $ref->invokeArgs($object, $args);
     }

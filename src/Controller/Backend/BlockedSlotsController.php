@@ -19,6 +19,8 @@ use Contao\CoreBundle\Security\ContaoCorePermissions;
 use Contao\System;
 use Markocupic\ResourceBookingBundle\Backend\BlockedSlotCalendar;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
+use Symfony\Component\Clock\ClockInterface;
+use Symfony\Component\Clock\NativeClock;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -32,8 +34,10 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('%contao.backend.route_prefix%/rbb/blocked-slots', name: self::class, defaults: ['_scope' => 'backend'], methods: ['GET'])]
 class BlockedSlotsController extends AbstractController
 {
-    public function __construct(private readonly BlockedSlotCalendar $calendar)
-    {
+    public function __construct(
+        private readonly BlockedSlotCalendar $calendar,
+        private readonly ClockInterface $clock = new NativeClock(),
+    ) {
     }
 
     public function __invoke(Request $request): JsonResponse
@@ -51,7 +55,7 @@ class BlockedSlotsController extends AbstractController
             throw new NotFoundHttpException('Resource not found.');
         }
 
-        $week = $request->query->getInt('week') ?: time();
+        $week = $request->query->getInt('week') ?: $this->clock->now()->getTimestamp();
 
         $response = new JsonResponse($this->calendar->getWeek($resource, $week, $request->query->getInt('period')));
         $response->setPrivate();

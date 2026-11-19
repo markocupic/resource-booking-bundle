@@ -20,6 +20,8 @@ use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\ParameterType;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingBlockedPeriodModel;
 use Markocupic\ResourceBookingBundle\Util\BlockedSlots;
+use Symfony\Component\Clock\ClockInterface;
+use Symfony\Component\Clock\NativeClock;
 
 /**
  * Keeps the blocked periods in the mode "slots" consistent when resources or
@@ -28,8 +30,10 @@ use Markocupic\ResourceBookingBundle\Util\BlockedSlots;
  */
 class BlockedSlotCleanup
 {
-    public function __construct(private readonly Connection $connection)
-    {
+    public function __construct(
+        private readonly Connection $connection,
+        private readonly ClockInterface $clock = new NativeClock(),
+    ) {
     }
 
     /**
@@ -88,7 +92,7 @@ class BlockedSlotCleanup
                 continue;
             }
 
-            $set = ['tstamp' => time(), 'blockedSlots' => serialize($remaining)];
+            $set = ['tstamp' => $this->clock->now()->getTimestamp(), 'blockedSlots' => serialize($remaining)];
 
             // Without remaining slots the date range is kept
             if (null !== ($dateRange = BlockedSlots::getDateRange($remaining))) {

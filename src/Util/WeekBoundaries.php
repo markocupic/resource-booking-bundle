@@ -14,8 +14,8 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\Util;
 
-use Contao\CoreBundle\Framework\ContaoFramework;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
+use Markocupic\ResourceBookingBundle\Restriction\ResourceRules;
 
 /**
  * Computes the first and the last week the user may navigate to. Both depend
@@ -26,46 +26,34 @@ use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
  *   - tl_resource_booking_resource.addBookableUntil/bookableUntil
  *
  * Without an active resource the defaults (RbbConfig::RBB_DEFAULT_WEEKS_*) apply.
+ * The weeks start on $beginWeek (first day of the week of the timetable, e.g. "monday").
  */
 class WeekBoundaries
 {
-    public function __construct(private readonly ContaoFramework $framework)
+    public function getFirstPermittedWeek(string $beginWeek, ResourceBookingResourceModel|null $resource, int $now): int
     {
+        $currentWeek = DateHelper::getFirstDayOfWeek($beginWeek, $now);
+
+        return DateHelper::addWeeks(-ResourceRules::fromModel($resource)->weeksBack, $currentWeek);
     }
 
-    /**
-     * @throws \Exception
-     */
-    public function getFirstPermittedWeek(array $arrAppConfig, ResourceBookingResourceModel|null $resource): int
+    public function getLastPermittedWeek(string $beginWeek, ResourceBookingResourceModel|null $resource, int $now): int
     {
-        $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
+        $rules = ResourceRules::fromModel($resource);
+        $currentWeek = DateHelper::getFirstDayOfWeek($beginWeek, $now);
+        $lastWeek = DateHelper::addWeeks($rules->weeksAhead, $currentWeek);
 
-        return $dateHelperAdapter->addWeeksToTime(-ResourceBookingRestriction::getWeeksBack($resource), $dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig));
-    }
-
-    /**
-     * @throws \Exception
-     */
-    public function getLastPermittedWeek(array $arrAppConfig, ResourceBookingResourceModel|null $resource, int $currentTime): int
-    {
-        $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
-
-        $intTstampLastPermittedWeek = $dateHelperAdapter->addWeeksToTime(ResourceBookingRestriction::getWeeksAhead($resource), $dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig));
-
-        $bookableUntil = ResourceBookingRestriction::getBookableUntil($resource);
-
-        if (null !== $bookableUntil) {
-            $intTstampStop = $dateHelperAdapter->getFirstDayOfWeek($arrAppConfig, $bookableUntil);
-
-            if ($intTstampStop < $intTstampLastPermittedWeek) {
-                $intTstampLastPermittedWeek = $intTstampStop;
-            }
-
-            if ($intTstampStop < $currentTime) {
-                $intTstampLastPermittedWeek = $dateHelperAdapter->getFirstDayOfCurrentWeek($arrAppConfig);
-            }
+        if (null === $rules->bookableUntil) {
+            return $lastWeek;
         }
 
-        return $intTstampLastPermittedWeek;
+        // The week of the last bookable day, but at least the current week
+        $weekOfBookableUntil = DateHelper::getFirstDayOfWeek($beginWeek, $rules->bookableUntil);
+
+        if ($weekOfBookableUntil < $now) {
+            return $currentWeek;
+        }
+
+        return min($lastWeek, $weekOfBookableUntil);
     }
 }

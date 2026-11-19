@@ -19,9 +19,9 @@ use Contao\Validator;
 
 class Str
 {
-    public static function convertBinUuidsToStringUuids($varData): string
+    public static function convertBinUuidsToStringUuids($data): string
     {
-        $stringData = (string) $varData;
+        $stringData = (string) $data;
 
         // Early return if empty or already UTF-8
         if (self::isEmptyOrUtf8($stringData)) {

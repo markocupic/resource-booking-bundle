@@ -20,6 +20,7 @@ use Doctrine\DBAL\Schema\Column;
 use Markocupic\ResourceBookingBundle\Migration\ConvertBlockedSlots\ConvertBlockedSlots;
 use Markocupic\ResourceBookingBundle\Migration\LegacyBlockedSlotConverter;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class ConvertBlockedSlotsTest extends TestCase
@@ -33,7 +34,7 @@ class ConvertBlockedSlotsTest extends TestCase
 
     public function testConvertsTheSlotsAndUpdatesTheDateRange(): void
     {
-        $connection = $this->connection();
+        $connection = $this->connectionMock();
         $connection
             ->method('fetchAllAssociative')
             ->willReturn([
@@ -74,7 +75,23 @@ class ConvertBlockedSlotsTest extends TestCase
     /**
      * @param list<string> $columns
      */
-    private function connection(array $columns = ['mode', 'resource', 'blockedslots'], bool $found = true): Connection&MockObject
+    private function connection(array $columns = ['mode', 'resource', 'blockedslots'], bool $found = true): Connection&Stub
+    {
+        $stub = $this->createStub(Connection::class);
+        $this->configureConnection($stub, $columns, $found);
+
+        return $stub;
+    }
+
+    private function connectionMock(array $columns = ['mode', 'resource', 'blockedslots'], bool $found = true): Connection&MockObject
+    {
+        $mock = $this->createMock(Connection::class);
+        $this->configureConnection($mock, $columns, $found);
+
+        return $mock;
+    }
+
+    private function configureConnection(Connection&Stub $connection, array $columns = ['mode', 'resource', 'blockedslots'], bool $found = true): void
     {
         $schemaManager = $this->createStub(AbstractSchemaManager::class);
         $schemaManager
@@ -87,7 +104,6 @@ class ConvertBlockedSlotsTest extends TestCase
             ->willReturn(array_fill_keys($columns, $this->createStub(Column::class)))
         ;
 
-        $connection = $this->createMock(Connection::class);
         $connection
             ->method('createSchemaManager')
             ->willReturn($schemaManager)
@@ -97,7 +113,5 @@ class ConvertBlockedSlotsTest extends TestCase
             ->method('fetchOne')
             ->willReturn($found ? 4 : false)
         ;
-
-        return $connection;
     }
 }

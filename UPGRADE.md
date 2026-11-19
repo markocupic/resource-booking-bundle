@@ -496,8 +496,8 @@ API-Änderungen:
 
 * **Events:** `getSessionBag()` von `PreBookingEvent`, `PostBookingEvent`, `PreCancellingEvent` und
   `PostCancellingEvent` heisst neu `getAppState()` und liefert einen `AppState\AppState` (öffentliche, unveränderliche
-  Eigenschaften `moduleKey`, `module`, `page`, `resourceType`, `resource`, `appConfig`, `activeWeekTstamp`,
-  `firstPermittedWeekTstamp`, `lastPermittedWeekTstamp`, `language`). Statt `$sessionBag->get('language')` also
+  Eigenschaften `moduleKey`, `module`, `page`, `resourceType`, `resource`, `appConfig`, `activeWeekStart`,
+  `firstPermittedWeekStart`, `lastPermittedWeekStart`, `language`). Statt `$sessionBag->get('language')` also
   `$event->getAppState()->language`. In anderen Listenern: `AppState::fromRequest($event->getRequest())`.
 * **Entfernt:** `AppInitialization\Initialize`, `AppInitialization\Helper\{ModuleIndex,ModuleKey,TokenManager}`,
   `Session\Attribute\ArrayAttributeBag`, `Session\SessionFactory`, die Services `markocupic.rbb.session_bag` und
@@ -654,6 +654,248 @@ Weitere Folgen:
   `accessToken` und `apiUrls` (bei einem eigenen Template in den Optionen von `ResourceBookingApp` übernehmen).
 * **JavaScript:** Requests über `apiFetch(method, url, formData)` (setzt Token und CSRF-Token). Die Felder `action`,
   `moduleKey` und `REQUEST_TOKEN` stehen nicht mehr im `FormData` des Events `rbb_before_booking_request`.
+
+### Typisierte Eingabe und `BookingRequestHandler`
+
+Die Parameter der API werden nur noch an einer Stelle gelesen und geprüft, in typisierten Objekten mit
+`fromRequest()` (`Api\Input`):
+
+| Objekt | Felder |
+|---|---|
+| `CalendarQuery` | `resType`, `res`, `date`, `initial` (GET im Query-String, POST im Body) |
+| `BookingInput` | `resourceId`, `slots[]`, `requestedItems`, `repeatUntil`, `bookingDescription`, eigene Formularfelder |
+| `CancelBookingInput` | Buchungs-ID aus der Route, `deleteRepetitions` |
+
+**Umbenannte POST-Felder der Buchung** (eigene Templates, Erweiterungen und Listener auf
+`rbb_before_booking_request` anpassen):
+
+| Alt | Neu |
+|---|---|
+| `itemsBooked` | `requestedItems` |
+| `bookingDateSelection[]` | `slots[]` |
+| `bookingRepeatStopWeekTstamp` | `repeatUntil` |
+
+Die alten Namen werden abgelehnt («Feld nicht erlaubt»), sofern sie nicht in `permitted_form_fields` stehen. Im
+Template `booking_window/_booking_form_inputs.html.twig` heissen die Felder entsprechend (`name="requestedItems"`,
+`name="repeatUntil"`), ebenso die IDs (`ctrlRequestedItems_…`, `ctrlRepeatUntil_…`) und Klassen
+(`rbb-ctrl-requested-items`, `rbb-requested-items-help`, `rbb-js-repeat-until`). Die Felder `REQUEST_TOKEN`, `action`
+und `moduleKey` gehören nicht mehr zur Buchung.
+
+* **`permitted_form_fields`** enthält nur noch die eigenen Felder. Die Felder des Bundles sind immer erlaubt;
+  `RbbConfig::RBB_BASE_PERMITTED_FORM_FIELDS` wurde entfernt. Eigene Felder können keine Felder des Bundles
+  überschreiben (z. B. `itemsBooked`, `description`).
+* **`BookingTrait` entfernt:** Neu der Service `Booking\BookingRequestHandler` mit `getResource(BookingInput, AppState)`,
+  `createSlots(BookingInput, $resource, AppState, $bookingUuid)` (Wiederholungen und Buchungsdaten) und
+  `getErrorKey(SlotCollection)` (bisher `getBookingErrorKey()`). `BookingTrait::MAX_REPETITIONS` heisst
+  `BookingRequestHandler::MAX_REPETITIONS`.
+* **`AbstractController`:** `isResourceOfModule()` liegt neu in `BookingRequestHandler`; `getRequestedResource()` und
+  `getBookingRepeatStopWeekTstamp()` wurden entfernt.
+* Konstruktoren: `BookingController` und `BookingFormValidationController` erhalten `BookingRequestHandler` statt
+  `SlotFactory` und `WeekBoundaries`.
+* Die Antwort der Buchungsvorschau enthält `noBookingRepeatStopWeekTstampSelected` nicht mehr.
+
+### Typisierte Ergebnisse der API
+
+Die Controller setzen keine losen Schlüssel mehr mit `setData()`, sondern ein Ergebnis-Objekt mit
+`AjaxResponse::setResult()` (`Api\Output`, je mit `toArray()`). Listener auf `AjaxResponseEvent` können weiterhin mit
+`setData()` ergänzen.
+
+| Aktion | Ergebnis | Daten (`data`) |
+|---|---|---|
+| `refreshDataRequest` | `CalendarData` | wie bisher, siehe unten |
+| `bookingFormValidationRequest` | `BookingPreview` | `isBookable`, `slots` |
+| `bookingRequest` | `BookingResult` | `isBooked`, `bookings` (nur `id`, `timeSlotId`, `startTime`, `endTime`) |
+| `cancelBookingRequest` | `CancelResult` | `isCancelled`, `cancelledBookingIds` |
+
+**Umbenannt bzw. entfernt** (eigene Templates und JavaScript anpassen):
+
+| Alt | Neu |
+|---|---|
+| `bookingValidationProcessSucceeded` | `isBookable` |
+| `slotSelection` | `slots` |
+| `bookingProcessSucceeded` | `isBooked` |
+| `bookingSelection` (ganze Buchungen) | `bookings` (nur IDs und Zeiten) |
+| `cancelBookingProcessSucceeded` | `isCancelled` |
+| `noDatesSelected`, `resourceIsAlreadyFullyBooked` | entfernt (wurden nie gesetzt bzw. nicht verwendet) |
+| `moduleId` (Kalenderdaten) | entfernt |
+
+Im Template `booking_window/_main_booking.html.twig`: `bookingWindow.response.isBookable`,
+`bookingWindow.response.slots`, `bookingWindow.response.isBooked`.
+
+**Kalenderdaten ohne Datenbank-Zeilen (Datenschutz):** `CalendarData` schickt nur noch die Felder, die das Frontend
+braucht:
+
+* `loggedInUser`: nur `firstname` und `lastname` (bisher die ganze Zeile von `tl_member` ohne Passwort, also z. B.
+  E-Mail, Adresse und Sicherheitsfelder).
+* `activeResource` und `filterBoard.resources`: `id`, `title`, `description`, `itemsAvailable`
+  (`CalendarData::RESOURCE_FIELDS`).
+* `activeResourceType` und `filterBoard.resourceTypes`: `id`, `title` (`CalendarData::RESOURCE_TYPE_FIELDS`).
+
+Wer in einem eigenen Template weitere Felder braucht, ergänzt sie mit einem Listener auf `AjaxResponseEvent`
+(siehe `docs/EVENTS.md`).
+
+* **Behoben:** `filterBoard.firstPermittedWeekStart` und `lastPermittedWeekStart` werden jetzt mitgeschickt. Das
+  Frontend las sie schon, sie fehlten aber, sodass die Prüfung beim Wochenwechsel im Browser nie griff.
+* `CalendarDataBuilder::build()` liefert `CalendarData` statt eines Arrays.
+
+### Buchen und Stornieren: Speichern im `BookingRepository`
+
+`BookingController` und `CancelController` steuern nur noch den Ablauf (Eingabe, Transaktion, Events, Antwort).
+Sperren, Erstellen, Speichern, Laden und Löschen der Buchungen übernimmt der neue Service
+`Markocupic\ResourceBookingBundle\Booking\BookingRepository` (`lockResource()`, `createBookings()`, `save()`,
+`findByBookingUuid()`, `findById()`, `findBookingsToCancel()`, `delete()`). Die Regeln zum Stornieren stehen in
+`Booking\CancellationRules` (`isOwnedBy()`, `isCancelableByTime()`).
+
+* `CancelController::isCancelableByTime()` wurde entfernt: `CancellationRules::isCancelableByTime()` verwenden.
+* Die Konstruktoren von `BookingController` und `CancelController` haben sich geändert (Autowiring).
+* Die Events (`PreBookingEvent`, `PostBookingEvent`, `PreCancellingEvent`, `PostCancellingEvent`) und ihr Zeitpunkt im
+  Ablauf sind unverändert.
+* Eigene Erweiterungen, die Buchungen speichern, können `BookingRepository::lockResource()` für dieselbe Sperre nutzen.
+
+### Listen als kommagetrennte Werte statt serialisierter Arrays
+
+Die folgenden Felder speichern ihre Werte als kommagetrennte Liste (DCA `'eval' => ['csv' => ',']`), z. B.
+`monday,tuesday` statt `a:2:{i:0;s:6:"monday";i:1;s:7:"tuesday";}`:
+
+| Tabelle | Feld | Spalte neu |
+|---|---|---|
+| `tl_resource_booking_time_slot` | `weekdays` | `TEXT NULL` |
+| `tl_resource_booking_blocked_period` | `resourceTypes`, `resources` | `TEXT NULL` |
+| `tl_module` | `resourceBooking_resourceTypes` | `TEXT NULL` |
+| `tl_module` | `resourceBooking_clientPersonalData`, `resourceBooking_bookingDetailFields` | wie bisher `VARCHAR(1024)`, neuer Standardwert `firstname,lastname` bzw. `title,description` |
+
+* Die Migration `ConvertSerializedListsToCsv` wandelt die bestehenden Werte um (`contao:migrate`).
+* Eigener Code, der diese Felder mit `StringUtil::deserialize()` liest, erhält nach der Migration einen String statt
+  eines Arrays. Stattdessen `Markocupic\ResourceBookingBundle\Util\CsvList::parse()` (bzw. `parseIds()`) verwenden: Die
+  Methode liest CSV, noch nicht migrierte serialisierte Arrays und Arrays. Zum Schreiben `CsvList::toString()`.
+* `blockedTimes` und `blockedSlots` der Sperrzeiten bleiben serialisiert (verschachtelte Strukturen).
+
+### Buchungsregeln als Objekte: `ResourceBookingRestriction` aufgeteilt
+
+`Util\ResourceBookingRestriction` wurde entfernt. Die Regeln liegen im neuen Namespace
+`Markocupic\ResourceBookingBundle\Restriction` und arbeiten mit unveränderlichen, typisierten Objekten statt mit
+Datenbankzeilen:
+
+| Alt (`ResourceBookingRestriction::…`) | Neu |
+|---|---|
+| `getWeeksBack($resource)` | `ResourceRules::fromModel($resource)->weeksBack` |
+| `getWeeksAhead($resource)` | `ResourceRules::fromModel($resource)->weeksAhead` |
+| `getBookableUntil($resource)` | `ResourceRules::fromModel($resource)->bookableUntil` |
+| `isAutoConfirmEnabled($resource)` | `ResourceRules::fromModel($resource)->autoConfirm` |
+| `isInBlockedPeriod($period, $resource, $start, $end, $timeSlotId)` | `BlockedPeriod::fromRow($period)->covers(ResourceRules::fromRow($resource), $start, $end, $timeSlotId)` |
+| `blockedPeriodAppliesToResource($period, $resource)` | `BlockedPeriod::fromRow($period)->appliesTo(ResourceRules::fromRow($resource))` |
+| `getBlockedTimes($period)` | `BlockedPeriod::fromRow($period)->blockedTimes` bzw. `BlockedTime::listFromSerialized($period['blockedTimes'])` (Objekte statt Arrays) |
+| `getBeginWeek($timeSlotType)` | `TimeSlotRules::getBeginWeek($timeSlotType)` |
+| `isTimeSlotAvailableOnWeekday($timeSlot, $weekday)` | `TimeSlotRules::isAvailableOnWeekday($timeSlot, $weekday)` |
+| `isValidTimeSlot($timeSlot, $timeSlotType, $resource, $start, $end)` | `TimeSlotRules::isValidTimeSlot($timeSlot, $timeSlotType, ResourceRules::fromRow($resource), $start, $end)` |
+| `timeToSeconds($time)` | `Util\TimeOfDay::toSeconds($time)` |
+
+Weitere Änderungen:
+
+* `Slot::$resource` ist ein `ResourceRules` statt der Zeile von `tl_resource_booking_resource`. Wer einen `Slot` selbst
+  erstellt, übergibt z. B. `new ResourceRules(id: 3, itemsAvailable: 2)`. `SlotFactory::create()` ist unverändert.
+* `SlotDataProvider::getBlockedPeriods()` liefert `list<BlockedPeriod>` statt Zeilen.
+* `ResourceBookingBlockedPeriod::countFutureBookingsInBlockedPeriod()` erwartet ein `BlockedPeriod`.
+* Das Verhalten ist unverändert (gleiche Standardwerte, gleiche Regeln).
+
+### Einheitliche Namen der Wochen, aktuelle Zeit über `ClockInterface`
+
+**Umbenannt** (PHP, JSON und JavaScript; eigene Templates, Listener und JavaScript anpassen):
+
+| Alt | Neu |
+|---|---|
+| `AppState::$activeWeekTstamp` | `AppState::$activeWeekStart` |
+| `AppState::$firstPermittedWeekTstamp` | `AppState::$firstPermittedWeekStart` |
+| `AppState::$lastPermittedWeekTstamp` | `AppState::$lastPermittedWeekStart` |
+| JSON/Vue `activeWeekTstamp` | `activeWeekStart` |
+| `filterBoard.tstampFirstPermittedWeek` / `tstampLastPermittedWeek` | `filterBoard.firstPermittedWeekStart` / `lastPermittedWeekStart` |
+
+«Start» ist jeweils der erste Tag der Woche (Wochenbeginn des Zeitplans), wie bei `Slot::$weekStart`.
+«Permitted» sind die Wochen, die man anzeigen kann (`weeksBack` bis `weeksAhead`), nicht nur die buchbaren.
+
+**Aktuelle Zeit:** Die Services lesen die aktuelle Zeit über `Symfony\Component\Clock\ClockInterface` statt
+`time()` (Tests mit `MockClock`): `AppStateFactory`, `BookingController`, `CancelController`, `BookingRequestHandler`,
+`SlotFactory`, `CalendarDataBuilder`, `TokenBuilder`, `BlockedSlotCalendar`, `BlockedSlotCleanup`, die Crons, der
+Backend-Controller der gesperrten Slots, der Befehl `CreateTimeslotTypeCommand` und die DCA-Klassen. Der Parameter
+ist optional (`new NativeClock()`), bestehende Aufrufe funktionieren weiter.
+
+* `WeekBoundaries::getFirstPermittedWeek()` erhält wie `getLastPermittedWeek()` die aktuelle Zeit als dritten
+  Parameter; beide rechnen damit statt mit `time()`.
+* `CancelController::getCurrentTime()` wurde entfernt.
+* Weiterhin mit `time()`: das Widget der gesperrten Slots, `ResourceBookingBlockedPeriodModel` und die Migrationen.
+
+### `Utils` aufgeteilt, `DateHelper` und `WeekBoundaries` vereinfacht
+
+**`Util\Utils` wurde entfernt.** Die Aufgaben übernehmen:
+
+| Alt | Neu |
+|---|---|
+| `Utils::getAppConfig($module, $resource)` | `AppState\AppConfigResolver::getAppConfig($module)` und `getBeginWeek($resource)` |
+| `Utils::getAppConfigByName($name)` | `AppConfigResolver::getByName($name)` |
+| `Utils::getBeginWeek($resource)` | `AppConfigResolver::getBeginWeek($resource)` |
+| `Utils::getDisplayedMemberFields($module)` | `WeekCalendar\DisplayedFields::getMemberFields($module)` |
+| `Utils::getDisplayedBookingFields($module)` | `DisplayedFields::getBookingFields($module)` |
+| `Utils::checkMandatoryFieldsSet()` | intern in `BookingRepository::save()` |
+
+**`Util\DateHelper`** ist eine rein statische Klasse (nicht mehr über `getAdapter()` aufrufen) und erhält immer
+einen Zeitstempel:
+
+| Alt | Neu |
+|---|---|
+| `getFirstDayOfCurrentWeek($appConfig, $time)` | `DateHelper::getFirstDayOfWeek($beginWeek, $time)` |
+| `getFirstDayOfWeek($appConfig, $time)` | `DateHelper::getFirstDayOfWeek($beginWeek, $time)` |
+| `addDaysToTime($days, $time)` | `DateHelper::addDays($days, $time)` |
+| `addWeeksToTime($weeks, $time)` | `DateHelper::addWeeks($weeks, $time)` |
+
+`$beginWeek` ist der Wochentag (z. B. `'sunday'`) statt des App-Config-Arrays; ungültige Werte ergeben Montag. Die
+Funktionen rechnen über `strtotime()` und bleiben bei der Sommerzeit-Umstellung auf Mitternacht.
+
+* `WeekBoundaries::getFirstPermittedWeek()` und `getLastPermittedWeek()` erhalten den Wochenbeginn als String:
+  `($beginWeek, $resource, $now)`. Der Konstruktor hat keine Parameter mehr.
+* `AppStateFactory::resolveWeeks()` erhält den Wochenbeginn als String statt der App-Config.
+* Geänderte Konstruktoren (Autowiring): `AbstractController` und die Ajax-Controller (ohne `Utils`), `AppStateFactory`
+  und `BookingRequestHandler` (`AppConfigResolver`), `WeekTableBuilder` (`DisplayedFields`), `BookingRepository`,
+  `SlotFactory` und `PurgePastBookingsCron` (ohne `ContaoFramework`).
+* `RegExpListener`: Eine ungültige Start- oder Endzeit ergibt nur noch eine Fehlermeldung (bisher bis zu zwei).
+* Alte Variablennamen (`$arr…`, `$obj…`, `$str…`) wurden ausserhalb der Models umbenannt, auch Parameter öffentlicher
+  Methoden (z. B. `AjaxResponse::setAction(string $action)`). Aufrufe mit benannten Argumenten anpassen.
+
+### App-Konfiguration als Objekt
+
+Die App-Konfiguration ist kein Array mehr, sondern ein `Markocupic\ResourceBookingBundle\AppState\AppConfig`
+(`name`, `autoSelectFirstResource`, `permittedFormFields`). `AppConfigResolver::getAppConfig()` und `getByName()`
+liefern dieses Objekt.
+
+Der Wochenbeginn gehört zum Zeitplan der Ressource, nicht zur App-Konfiguration, und ist deshalb eine eigene
+Eigenschaft von `AppState`:
+
+| Alt | Neu |
+|---|---|
+| `$appState->appConfig['beginWeek']` | `$appState->beginWeek` oder `$appState->getBeginWeek()` |
+| `$appState->appConfig['permittedFormFields']` | `$appState->appConfig->permittedFormFields` oder `getPermittedFormFields()` |
+| `$appState->appConfig['autoSelectFirstResource']` | `$appState->appConfig->autoSelectFirstResource` |
+
+* Der Konstruktor von `AppState` erhält `AppConfig $appConfig, string $beginWeek` statt des Arrays (eigene Tests
+  anpassen, z. B. `new AppConfig(), 'monday'`).
+
+### `AjaxResponse` typisiert
+
+`Markocupic\ResourceBookingBundle\Response\AjaxResponse` speichert Status, Meldungen, Feldfehler und Daten in
+typisierten Eigenschaften statt in einem Array. Das JSON an das Frontend ist unverändert. Die Klasse ist `final`.
+
+| Alt | Neu |
+|---|---|
+| `AjaxResponse::STATUS_SUCCESS` / `STATUS_WARNING` / `STATUS_ERROR` | Enum `Response\AjaxStatus::Success` / `Warning` / `Error` |
+| `setStatus(string)`, `getStatus(): ?string` | `setStatus(AjaxStatus)`, `getStatus(): ?AjaxStatus` |
+| `AjaxResponse::MESSAGE_*` | Enum `Response\MessageType` (`setMessage()`, `getMessage()`, `hasMessage()`, `removeMessage()`) |
+| `deleteInfoMessage()` usw. | `removeMessage(MessageType::Info)` |
+| `getAll()` | `toArray()` (auch `json_encode($ajaxResponse)`) |
+| `getAll()['data']` | `getAllData()` |
+| `setDataFromArray(array)` | `mergeData(array)` |
+| `prepareBeforeSend(true)` | entfällt: `toArray()` lässt Info- und Bestätigungsmeldung bei einer Fehlermeldung immer weg |
+
+`setConfirmationMessage()`, `setErrorMessage()`, `setInfoMessage()`, `setWarningMessage()` und die passenden
+`get…()`/`has…()` bleiben. `AjaxResponseFactory::create()` hat den Rückgabetyp `AjaxResponse`.
 
 ### Farbschema pro Modul
 

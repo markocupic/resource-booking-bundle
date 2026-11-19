@@ -25,6 +25,8 @@ use Contao\System;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Types\Types;
 use Markocupic\ResourceBookingBundle\Util\UtcTimeHelper;
+use Symfony\Component\Clock\ClockInterface;
+use Symfony\Component\Clock\NativeClock;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
@@ -35,6 +37,7 @@ readonly class ResourceBookingTimeSlot
         private Connection $connection,
         private RequestStack $requestStack,
         private TranslatorInterface $translator,
+        private ClockInterface $clock = new NativeClock(),
     ) {
     }
 
@@ -59,31 +62,31 @@ readonly class ResourceBookingTimeSlot
     #[AsCallback(table: 'tl_resource_booking_time_slot', target: 'fields.startTime.load', priority: 100)]
     public function loadStartTime(int $timestamp): string
     {
-        $strTime = '';
+        $time = '';
 
         if ($timestamp >= 0) {
-            $strTime = $this->framework
+            $time = $this->framework
                 ->getAdapter(UtcTimeHelper::class)
                 ->parseStartTime($timestamp)
             ;
         }
 
-        return $strTime;
+        return $time;
     }
 
     #[AsCallback(table: 'tl_resource_booking_time_slot', target: 'fields.endTime.load', priority: 100)]
     public function loadEndTime(int $timestamp): string
     {
-        $strTime = '';
+        $time = '';
 
         if ($timestamp >= 0) {
-            $strTime = $this->framework
+            $time = $this->framework
                 ->getAdapter(UtcTimeHelper::class)
                 ->parseEndTime($timestamp)
             ;
         }
 
-        return $strTime;
+        return $time;
     }
 
     /**
@@ -92,14 +95,14 @@ readonly class ResourceBookingTimeSlot
      * @throws \Exception
      */
     #[AsCallback(table: 'tl_resource_booking_time_slot', target: 'fields.startTime.save', priority: 100)]
-    public function setCorrectStartTime(string $strTime, DataContainer $dc): int
+    public function setCorrectStartTime(string $time, DataContainer $dc): int
     {
         $request = $this->requestStack->getCurrentRequest();
 
-        if (preg_match('/^(2[0-3]|[01][0-9]):[0-5][0-9]$/', $strTime)) {
+        if (preg_match('/^(2[0-3]|[01][0-9]):[0-5][0-9]$/', $time)) {
             $timestamp = $this->framework
                 ->getAdapter(UtcTimeHelper::class)
-                ->strToTime('1970-01-01 '.$strTime)
+                ->strToTime('1970-01-01 '.$time)
             ;
         } else {
             $timestamp = $this->framework
@@ -119,17 +122,17 @@ readonly class ResourceBookingTimeSlot
      * @throws \Exception
      */
     #[AsCallback(table: 'tl_resource_booking_time_slot', target: 'fields.endTime.save', priority: 100)]
-    public function setCorrectEndTime(string $strTime, DataContainer $dc): int
+    public function setCorrectEndTime(string $time, DataContainer $dc): int
     {
         $request = $this->requestStack->getCurrentRequest();
 
-        if (preg_match('/^(24|2[0-3]|[01][0-9]):[0-5][0-9]$/', $strTime)) {
-            if ('00:00' === $strTime) {
-                $strTime = '24:00';
+        if (preg_match('/^(24|2[0-3]|[01][0-9]):[0-5][0-9]$/', $time)) {
+            if ('00:00' === $time) {
+                $time = '24:00';
                 $request->request->set('endTime', '24:00');
             }
 
-            if ('24:00' === $strTime) {
+            if ('24:00' === $time) {
                 $timestampEndTime = $this->framework
                     ->getAdapter(UtcTimeHelper::class)
                     ->strToTime('1970-01-02 00:00')
@@ -137,7 +140,7 @@ readonly class ResourceBookingTimeSlot
             } else {
                 $timestampEndTime = $this->framework
                     ->getAdapter(UtcTimeHelper::class)
-                    ->strToTime('1970-01-01 '.$strTime)
+                    ->strToTime('1970-01-01 '.$time)
                 ;
             }
         } else {
@@ -146,18 +149,18 @@ readonly class ResourceBookingTimeSlot
 
         // Adjust endTime if it is smaller than the startTime
         if (!empty($request->request->get('startTime'))) {
-            $strStartTime = $request->request->get('startTime');
+            $startTimeInput = $request->request->get('startTime');
         } else {
-            $strStartTime = $this->framework
+            $startTimeInput = $this->framework
                 ->getAdapter(UtcTimeHelper::class)
                 ->parseStartTime((int) ($dc->getCurrentRecord()['startTime'] ?? 0))
             ;
         }
 
-        if (!empty($strStartTime)) {
+        if (!empty($startTimeInput)) {
             $startTime = $this->framework
                 ->getAdapter(UtcTimeHelper::class)
-                ->strToTime('01-01-1970 '.$strStartTime)
+                ->strToTime('01-01-1970 '.$startTimeInput)
             ;
 
             if ($timestampEndTime <= $startTime) {
@@ -184,7 +187,7 @@ readonly class ResourceBookingTimeSlot
 
         $count = (int) $this->connection->fetchOne(
             'SELECT COUNT(*) FROM tl_resource_booking WHERE timeSlotId = ? AND endTime > ?',
-            [(int) $dc->id, time()],
+            [(int) $dc->id, $this->clock->now()->getTimestamp()],
             [Types::INTEGER, Types::INTEGER],
         );
 
@@ -207,29 +210,29 @@ readonly class ResourceBookingTimeSlot
     #[AsCallback(table: 'tl_resource_booking_time_slot', target: 'config.onsubmit')]
     public function adaptBookingStartAndEndTime(DataContainer $dc): void
     {
-        $intId = (int) $dc->id;
+        $id = (int) $dc->id;
 
-        if (!$intId) {
+        if (!$id) {
             return;
         }
 
-        $arrSlot = $this->connection->fetchAssociative(
+        $slot = $this->connection->fetchAssociative(
             'SELECT * FROM tl_resource_booking_time_slot WHERE id = ?',
-            [$intId],
+            [$id],
             [Types::INTEGER],
         );
 
-        if (!$arrSlot) {
+        if (!$slot) {
             return;
         }
 
-        $arrBookings = $this->connection->fetchAllAssociative(
+        $bookings = $this->connection->fetchAllAssociative(
             'SELECT * FROM tl_resource_booking WHERE timeSlotId = ? AND startTime > ?',
-            [$intId, time()],
+            [$id, $this->clock->now()->getTimestamp()],
             [Types::INTEGER, Types::INTEGER],
         );
 
-        if (empty($arrBookings)) {
+        if (empty($bookings)) {
             return;
         }
 
@@ -238,27 +241,27 @@ readonly class ResourceBookingTimeSlot
         $datimFormat = (string) $this->framework->getAdapter(Config::class)->get('datimFormat');
 
         $newTimes = [
-            'startTime' => $utcTimeHelperAdapter->parseStartTime((int) $arrSlot['startTime']),
-            'endTime' => $utcTimeHelperAdapter->parseEndTime((int) $arrSlot['endTime']),
+            'startTime' => $utcTimeHelperAdapter->parseStartTime((int) $slot['startTime']),
+            'endTime' => $utcTimeHelperAdapter->parseEndTime((int) $slot['endTime']),
         ];
 
         $adapted = 0;
 
-        foreach ($arrBookings as $arrBooking) {
+        foreach ($bookings as $booking) {
             $set = [];
 
-            foreach ($newTimes as $field => $strTimeNew) {
+            foreach ($newTimes as $field => $newTime) {
                 // Keep the date of the booking, take the new time of the time slot
-                $strDate = explode(' ', $dateAdapter->parse('Y-m-d H:i', (int) $arrBooking[$field]))[0];
-                $set[$field] = strtotime($strDate.' '.$strTimeNew);
+                $date = explode(' ', $dateAdapter->parse('Y-m-d H:i', (int) $booking[$field]))[0];
+                $set[$field] = strtotime($date.' '.$newTime);
             }
 
-            if ((int) $set['startTime'] === (int) $arrBooking['startTime'] && (int) $set['endTime'] === (int) $arrBooking['endTime']) {
+            if ((int) $set['startTime'] === (int) $booking['startTime'] && (int) $set['endTime'] === (int) $booking['endTime']) {
                 continue;
             }
 
             // The title ends with the booked time span, e.g. "Room : booked by John Doe [16.11.2026 08:00 - 16.11.2026 08:45]"
-            $title = (string) ($arrBooking['title'] ?? '');
+            $title = (string) ($booking['title'] ?? '');
 
             if ('' !== $title && preg_match('/\[[^\]]*\]\s*$/', $title)) {
                 $set['title'] = preg_replace(
@@ -271,7 +274,7 @@ readonly class ResourceBookingTimeSlot
             $this->connection->update(
                 'tl_resource_booking',
                 $set,
-                ['id' => $arrBooking['id']],
+                ['id' => $booking['id']],
             );
 
             ++$adapted;

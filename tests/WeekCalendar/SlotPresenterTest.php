@@ -18,6 +18,7 @@ use Contao\Config;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Date;
 use Contao\TestCase\ContaoTestCase;
+use Markocupic\ResourceBookingBundle\Restriction\ResourceRules;
 use Markocupic\ResourceBookingBundle\Slot\Slot;
 use Markocupic\ResourceBookingBundle\WeekCalendar\SlotPresenter;
 
@@ -28,7 +29,7 @@ class SlotPresenterTest extends ContaoTestCase
         $startTime = strtotime('tomorrow 08:00');
         $slot = new Slot(
             timeSlotId: 4,
-            resource: ['id' => 3, 'itemsAvailable' => 2, 'title' => 'Room', 'internalNote' => 'secret'],
+            resource: new ResourceRules(id: 3, itemsAvailable: 2),
             startTime: $startTime,
             endTime: $startTime + 3600,
             now: time(),
@@ -65,7 +66,7 @@ class SlotPresenterTest extends ContaoTestCase
     public function testGuestHasNoMemberBooking(): void
     {
         $startTime = strtotime('tomorrow 08:00');
-        $slot = new Slot(timeSlotId: 4, resource: ['id' => 3, 'itemsAvailable' => 1], startTime: $startTime, endTime: $startTime + 3600, now: time(), isValidTimeSlot: true);
+        $slot = new Slot(timeSlotId: 4, resource: new ResourceRules(id: 3, itemsAvailable: 1), startTime: $startTime, endTime: $startTime + 3600, now: time(), isValidTimeSlot: true);
 
         $data = (new SlotPresenter($this->createFramework()))->present($slot);
 

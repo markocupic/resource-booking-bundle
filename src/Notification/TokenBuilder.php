@@ -15,6 +15,8 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\Notification;
 
 use Contao\StringUtil;
+use Symfony\Component\Clock\ClockInterface;
+use Symfony\Component\Clock\NativeClock;
 
 /**
  * Builds the notification tokens from the booking person, the bookings,
@@ -22,6 +24,10 @@ use Contao\StringUtil;
  */
 class TokenBuilder
 {
+    public function __construct(private readonly ClockInterface $clock = new NativeClock())
+    {
+    }
+
     /**
      * @param array<string, mixed>       $member       row of tl_member
      * @param list<array<string, mixed>> $bookings     rows of tl_resource_booking
@@ -59,7 +65,7 @@ class TokenBuilder
 
         $tokens['booking_details'] = $details;
         $tokens['booking_details_html'] = nl2br($details);
-        $tokens['booking_datim'] = date($datimFormat, $time ?? time());
+        $tokens['booking_datim'] = date($datimFormat, $time ?? $this->clock->now()->getTimestamp());
 
         // Tokens about the resource (tl_resource_booking_resource)
         foreach ($resource as $key => $value) {

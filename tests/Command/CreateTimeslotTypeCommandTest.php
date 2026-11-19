@@ -169,7 +169,8 @@ class CreateTimeslotTypeCommandTest extends TestCase
     {
         $slotInserts = [];
 
-        $connection = $this->createConnection();
+        // The inserts are collected and checked below (no expectations)
+        $connection = $this->createStub(Connection::class);
         $connection
             ->method('insert')
             ->willReturnCallback(

@@ -21,10 +21,9 @@ use Contao\ModuleModel;
 use Contao\StringUtil;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotModel;
+use Markocupic\ResourceBookingBundle\Restriction\TimeSlotRules;
 use Markocupic\ResourceBookingBundle\Slot\SlotFactory;
-use Markocupic\ResourceBookingBundle\Util\ResourceBookingRestriction;
 use Markocupic\ResourceBookingBundle\Util\UtcTimeHelper;
-use Markocupic\ResourceBookingBundle\Util\Utils;
 
 /**
  * Builds the table of the week calendar: one row per time slot, one cell (slot)
@@ -42,7 +41,7 @@ class WeekTableBuilder
         private readonly SlotFactory $slotFactory,
         private readonly BookingPresenter $bookingPresenter,
         private readonly SlotPresenter $slotPresenter,
-        private readonly Utils $utils,
+        private readonly DisplayedFields $displayedFields,
     ) {
     }
 
@@ -55,18 +54,18 @@ class WeekTableBuilder
      *
      * @throws \Exception
      */
-    public function buildRows(array $daysOfWeek, int $activeWeekTstamp, ModuleModel $moduleModel, ResourceBookingResourceModel $resource, FrontendUser|null $user = null): array
+    public function buildRows(array $daysOfWeek, int $activeWeekStart, ModuleModel $moduleModel, ResourceBookingResourceModel $resource, FrontendUser|null $user = null): array
     {
         $timeSlots = $this->getPublishedTimeSlots($resource);
         $visibleWeekdays = self::getVisibleWeekdays($timeSlots, $daysOfWeek);
 
         // Fields that may be sent to the front end (module settings and bundle configuration)
-        $memberFields = $this->utils->getDisplayedMemberFields($moduleModel);
-        $bookingFields = $this->utils->getDisplayedBookingFields($moduleModel);
+        $memberFields = $this->displayedFields->getMemberFields($moduleModel);
+        $bookingFields = $this->displayedFields->getBookingFields($moduleModel);
 
         // Fetch the bookings of the whole week with one query instead of one query per cell.
         // A day is added as a margin for time slots ending after midnight.
-        $this->slotFactory->preloadBookings((int) $resource->id, $activeWeekTstamp, strtotime('+8 days', $activeWeekTstamp));
+        $this->slotFactory->preloadBookings((int) $resource->id, $activeWeekStart, strtotime('+8 days', $activeWeekStart));
 
         $rows = [];
 
@@ -85,7 +84,7 @@ class WeekTableBuilder
                     continue;
                 }
 
-                $cells[] = $this->buildCell($timeSlot, $dayIndex, $rowIndex, $activeWeekTstamp, $moduleModel, $resource, $user, $memberFields, $bookingFields);
+                $cells[] = $this->buildCell($timeSlot, $dayIndex, $rowIndex, $activeWeekStart, $moduleModel, $resource, $user, $memberFields, $bookingFields);
             }
 
             $rows[] = ['cellData' => $cells, 'rowData' => self::getRowAttributes((int) $moduleModel->id, $timeSlot)];
@@ -121,15 +120,15 @@ class WeekTableBuilder
             $endTimeFormatted = $utcTimeHelperAdapter->parseEndTime($timeSlot['endTime']);
             $endTimeFormatted = '00:00' === $endTimeFormatted ? '24:00' : $endTimeFormatted;
 
-            $objTs = new \stdClass();
-            $objTs->cssClass = !empty($cssId[1]) ? $cssId[1] : null;
-            $objTs->startTimeString = $startTimeFormatted;
-            $objTs->startTime = (int) $timeSlot['startTime'];
-            $objTs->endTimeString = $endTimeFormatted;
-            $objTs->timeSpanString = $startTimeFormatted.' - '.$endTimeFormatted;
-            $objTs->endTime = (int) $timeSlot['endTime'];
+            $timetable = new \stdClass();
+            $timetable->cssClass = !empty($cssId[1]) ? $cssId[1] : null;
+            $timetable->startTimeString = $startTimeFormatted;
+            $timetable->startTime = (int) $timeSlot['startTime'];
+            $timetable->endTimeString = $endTimeFormatted;
+            $timetable->timeSpanString = $startTimeFormatted.' - '.$endTimeFormatted;
+            $timetable->endTime = (int) $timeSlot['endTime'];
 
-            $result[] = $objTs;
+            $result[] = $timetable;
         }
 
         return $result;
@@ -167,7 +166,7 @@ class WeekTableBuilder
 
         foreach ($daysOfWeek as $weekday) {
             foreach ($timeSlots as $timeSlot) {
-                if (ResourceBookingRestriction::isTimeSlotAvailableOnWeekday($timeSlot, $weekday)) {
+                if (TimeSlotRules::isAvailableOnWeekday($timeSlot, $weekday)) {
                     $visibleWeekdays[] = $weekday;
                     break;
                 }
@@ -187,7 +186,7 @@ class WeekTableBuilder
     public static function isTimeSlotDisplayed(array $timeSlot, array $visibleWeekdays): bool
     {
         foreach ($visibleWeekdays as $weekday) {
-            if (ResourceBookingRestriction::isTimeSlotAvailableOnWeekday($timeSlot, $weekday)) {
+            if (TimeSlotRules::isAvailableOnWeekday($timeSlot, $weekday)) {
                 return true;
             }
         }
@@ -223,9 +222,9 @@ class WeekTableBuilder
      * Value of the checkbox of a slot: "timeSlotId-startTime-endTime-beginWeekTimestamp".
      * It is parsed again by BookingRequestValidator::parseSlotSelection().
      */
-    public static function getBookingCheckboxValue(int $timeSlotId, int $startTime, int $endTime, int $activeWeekTstamp): string
+    public static function getBookingCheckboxValue(int $timeSlotId, int $startTime, int $endTime, int $activeWeekStart): string
     {
-        return \sprintf('%s-%s-%s-%s', $timeSlotId, $startTime, $endTime, $activeWeekTstamp);
+        return \sprintf('%s-%s-%s-%s', $timeSlotId, $startTime, $endTime, $activeWeekStart);
     }
 
     /**
@@ -237,9 +236,9 @@ class WeekTableBuilder
      *
      * @throws \Exception
      */
-    private function buildCell(array $timeSlot, int $dayIndex, int $rowIndex, int $activeWeekTstamp, ModuleModel $moduleModel, ResourceBookingResourceModel $resource, FrontendUser|null $user, array $memberFields, array $bookingFields): array
+    private function buildCell(array $timeSlot, int $dayIndex, int $rowIndex, int $activeWeekStart, ModuleModel $moduleModel, ResourceBookingResourceModel $resource, FrontendUser|null $user, array $memberFields, array $bookingFields): array
     {
-        $dayStart = strtotime(\sprintf('+%s day', $dayIndex), $activeWeekTstamp);
+        $dayStart = strtotime(\sprintf('+%s day', $dayIndex), $activeWeekStart);
         $startTime = $dayStart + (int) $timeSlot['startTime'];
         $endTime = $dayStart + (int) $timeSlot['endTime'];
 
@@ -249,7 +248,7 @@ class WeekTableBuilder
             ...$this->slotPresenter->present($slot),
             'index' => $dayIndex,
             'bookingCheckboxId' => self::getBookingCheckboxId((int) $moduleModel->id, $rowIndex, $dayIndex),
-            'bookingCheckboxValue' => self::getBookingCheckboxValue((int) $timeSlot['id'], $startTime, $endTime, $activeWeekTstamp),
+            'bookingCheckboxValue' => self::getBookingCheckboxValue((int) $timeSlot['id'], $startTime, $endTime, $activeWeekStart),
         ];
 
         // Only explicitly permitted data of the bookings is sent to the front end

@@ -16,10 +16,10 @@ namespace Markocupic\ResourceBookingBundle\Migration\MoveNotificationsToResource
 
 use Contao\CoreBundle\Migration\AbstractMigration;
 use Contao\CoreBundle\Migration\MigrationResult;
-use Contao\StringUtil;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
+use Markocupic\ResourceBookingBundle\Util\CsvList;
 
 /**
  * Up to version 4 the notifications were selected in the frontend module.
@@ -198,9 +198,10 @@ class MoveNotificationsToResource extends AbstractMigration
      *
      * @throws Exception
      */
-    private function getResourceIds(string|null $serializedResourceTypeIds): array
+    private function getResourceIds(string|null $resourceTypeIds): array
     {
-        $resourceTypeIds = array_map('intval', StringUtil::deserialize($serializedResourceTypeIds, true));
+        // CSV or (not migrated yet) serialized array
+        $resourceTypeIds = CsvList::parseIds($resourceTypeIds);
 
         if (empty($resourceTypeIds)) {
             return [];

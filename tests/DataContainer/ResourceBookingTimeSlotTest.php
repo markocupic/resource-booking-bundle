@@ -66,7 +66,7 @@ class ResourceBookingTimeSlotTest extends ContaoTestCase
         // A request must be present: the invalid branch writes "00:00" back to it.
         $dca = $this->createInstance($this->requestStackWithPost([]));
 
-        $this->assertSame($expected, $dca->setCorrectStartTime($input, $this->createMock(DataContainer::class)));
+        $this->assertSame($expected, $dca->setCorrectStartTime($input, $this->createStub(DataContainer::class)));
     }
 
     /**
@@ -89,21 +89,21 @@ class ResourceBookingTimeSlotTest extends ContaoTestCase
     {
         $dca = $this->createInstance($this->requestStackWithPost(['startTime' => '08:00']));
 
-        $this->assertSame(36000, $dca->setCorrectEndTime('10:00', $this->createMock(DataContainer::class)));
+        $this->assertSame(36000, $dca->setCorrectEndTime('10:00', $this->createStub(DataContainer::class)));
     }
 
     public function testSetCorrectEndTimeNormalizesMidnightToEndOfDay(): void
     {
         $dca = $this->createInstance($this->requestStackWithPost(['startTime' => '08:00']));
 
-        $this->assertSame(86400, $dca->setCorrectEndTime('00:00', $this->createMock(DataContainer::class)));
+        $this->assertSame(86400, $dca->setCorrectEndTime('00:00', $this->createStub(DataContainer::class)));
     }
 
     public function testSetCorrectEndTimeBumpsEndByOneMinuteWhenNotAfterStart(): void
     {
         $dca = $this->createInstance($this->requestStackWithPost(['startTime' => '10:00']));
 
-        $this->assertSame(36060, $dca->setCorrectEndTime('09:00', $this->createMock(DataContainer::class)));
+        $this->assertSame(36060, $dca->setCorrectEndTime('09:00', $this->createStub(DataContainer::class)));
     }
 
     public function testDeletionIsAllowedWithoutAnId(): void
@@ -340,7 +340,7 @@ class ResourceBookingTimeSlotTest extends ContaoTestCase
      */
     private function framework(array $extraAdapters = []): ContaoFramework
     {
-        $utcAdapter = $this->createAdapterMock(['parseStartTime', 'parseEndTime', 'strToTime']);
+        $utcAdapter = $this->createAdapterStub(['parseStartTime', 'parseEndTime', 'strToTime']);
         $utcAdapter
             ->method('parseStartTime')
             ->willReturnCallback(static fn (int $t): string => UtcTimeHelper::parseStartTime($t))
@@ -356,7 +356,7 @@ class ResourceBookingTimeSlotTest extends ContaoTestCase
             ->willReturnCallback(static fn (string $s): int => UtcTimeHelper::strToTime($s))
         ;
 
-        return $this->createContaoFrameworkMock(array_merge([UtcTimeHelper::class => $utcAdapter], $extraAdapters));
+        return $this->createContaoFrameworkStub(array_merge([UtcTimeHelper::class => $utcAdapter], $extraAdapters));
     }
 
     /**

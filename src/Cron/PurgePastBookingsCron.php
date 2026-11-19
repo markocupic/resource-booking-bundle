@@ -15,12 +15,13 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\Cron;
 
 use Contao\CoreBundle\DependencyInjection\Attribute\AsCronJob;
-use Contao\CoreBundle\Framework\ContaoFramework;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Types\Types;
+use Markocupic\ResourceBookingBundle\Restriction\TimeSlotRules;
 use Markocupic\ResourceBookingBundle\Util\DateHelper;
-use Markocupic\ResourceBookingBundle\Util\ResourceBookingRestriction;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Clock\ClockInterface;
+use Symfony\Component\Clock\NativeClock;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
@@ -34,10 +35,10 @@ class PurgePastBookingsCron
 {
     public function __construct(
         private readonly Connection $connection,
-        private readonly ContaoFramework $framework,
         #[Autowire('%markocupic_resource_booking.purge_past_bookings_with_cron%')]
         private readonly bool $purgeOldBookingsWithCron,
         private readonly LoggerInterface|null $contaoCronLogger = null,
+        private readonly ClockInterface $clock = new NativeClock(),
     ) {
     }
 
@@ -50,7 +51,7 @@ class PurgePastBookingsCron
             return;
         }
 
-        $intAffectedRows = 0;
+        $affectedRows = 0;
 
         foreach ($this->getPurgeSettingsByResource() as $resourceId => $settings) {
             $tstampLimit = $this->calculatePurgeLimit($settings['weeksBack'], $settings['beginWeek']);
@@ -59,11 +60,11 @@ class PurgePastBookingsCron
                 continue;
             }
 
-            $intAffectedRows += $this->deleteExpiredBookings($resourceId, $tstampLimit);
+            $affectedRows += $this->deleteExpiredBookings($resourceId, $tstampLimit);
         }
 
-        if ($intAffectedRows > 0) {
-            $this->contaoCronLogger?->info(\sprintf('CRON: tl_resource_booking has been cleared from %s old entries.', $intAffectedRows));
+        if ($affectedRows > 0) {
+            $this->contaoCronLogger?->info(\sprintf('CRON: tl_resource_booking has been cleared from %s old entries.', $affectedRows));
         }
     }
 
@@ -88,7 +89,7 @@ class PurgePastBookingsCron
             if ($resourceId > 0) {
                 $settings[$resourceId] = [
                     'weeksBack' => (int) ($row['weeksBack'] ?? 0),
-                    'beginWeek' => ResourceBookingRestriction::getBeginWeek($row),
+                    'beginWeek' => TimeSlotRules::getBeginWeek($row),
                 ];
             }
         }
@@ -108,11 +109,9 @@ class PurgePastBookingsCron
             return null;
         }
 
-        $dateHelperAdapter = $this->framework->getAdapter(DateHelper::class);
+        $currentWeek = DateHelper::getFirstDayOfWeek($beginWeek, $this->clock->now()->getTimestamp());
 
-        $tstampBeginCurrentWeek = $dateHelperAdapter->getFirstDayOfCurrentWeek(['beginWeek' => $beginWeek]);
-
-        return $dateHelperAdapter->addWeeksToTime(-$weeksBack, $tstampBeginCurrentWeek);
+        return DateHelper::addWeeks(-$weeksBack, $currentWeek);
     }
 
     protected function deleteExpiredBookings(int $resourceId, int $tstampLimit): int

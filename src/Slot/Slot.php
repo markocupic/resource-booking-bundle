@@ -14,7 +14,7 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\Slot;
 
-use Markocupic\ResourceBookingBundle\Util\ResourceBookingRestriction;
+use Markocupic\ResourceBookingBundle\Restriction\ResourceRules;
 use Markocupic\ResourceBookingBundle\Validator\BookingRequestValidator;
 
 /**
@@ -33,11 +33,11 @@ final class Slot
     private const SECONDS_IN_DAY = 86400;
 
     /**
-     * @param array<string, mixed>       $resource                 Row of tl_resource_booking_resource
+     * @param ResourceRules              $resource                 Booking rules of the resource
      * @param int                        $now                      Current time
      * @param int|null                   $loggedInMemberId         ID of the logged-in member, null for guests
      * @param int                        $requestedItems           1 in the week calendar, the requested items of a booking request
-     * @param bool                       $isValidTimeSlot          The time slot exists, is published, belongs to the timetable of the resource and the times match (see ResourceBookingRestriction::isValidTimeSlot())
+     * @param bool                       $isValidTimeSlot          The time slot exists, is published, belongs to the timetable of the resource and the times match (see TimeSlotRules::isValidTimeSlot())
      * @param list<string>               $availableWeekdays        Weekdays on which the time slot is available, e.g. "monday"; empty: every weekday
      * @param int|null                   $blockedPeriodId          Blocked period covering this slot, e.g. holidays
      * @param string                     $blockedPeriodDescription Description of the blocked period (the title is internal)
@@ -49,7 +49,7 @@ final class Slot
      */
     public function __construct(
         public readonly int $timeSlotId,
-        public readonly array $resource,
+        public readonly ResourceRules $resource,
         public readonly int $startTime,
         public readonly int $endTime,
         public readonly int $now,
@@ -96,7 +96,7 @@ final class Slot
 
     public function getResourceId(): int
     {
-        return (int) ($this->resource['id'] ?? 0);
+        return $this->resource->id;
     }
 
     public function isMemberLoggedIn(): bool
@@ -146,7 +146,7 @@ final class Slot
         }
 
         // The resource can only be booked up to and including the "bookable until" date.
-        $bookableUntil = ResourceBookingRestriction::getBookableUntil($this->resource);
+        $bookableUntil = $this->resource->bookableUntil;
 
         return null !== $bookableUntil && $this->endTime > $bookableUntil + self::SECONDS_IN_DAY;
     }
@@ -252,6 +252,6 @@ final class Slot
 
     private function getItemsAvailable(): int
     {
-        return (int) ($this->resource['itemsAvailable'] ?? 0);
+        return $this->resource->itemsAvailable;
     }
 }

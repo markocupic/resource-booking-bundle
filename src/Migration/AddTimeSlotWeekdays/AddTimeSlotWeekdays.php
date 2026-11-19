@@ -19,6 +19,7 @@ use Contao\CoreBundle\Migration\MigrationResult;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 use Markocupic\ResourceBookingBundle\Config\RbbConfig;
+use Markocupic\ResourceBookingBundle\Util\CsvList;
 
 /**
  * Adds the new field tl_resource_booking_time_slot.weekdays and makes all
@@ -72,7 +73,7 @@ class AddTimeSlotWeekdays extends AbstractMigration
 
         $count = $this->connection->executeStatement(
             \sprintf("UPDATE %s SET weekdays = ? WHERE weekdays IS NULL OR weekdays = ''", self::TABLE),
-            [serialize(RbbConfig::RBB_WEEKDAYS)],
+            [CsvList::toString(RbbConfig::RBB_WEEKDAYS)],
         );
 
         return $this->createResult(true, \sprintf('Made %d time slot(s) available on every weekday (tl_resource_booking_time_slot.weekdays).', $count));

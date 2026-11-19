@@ -21,7 +21,7 @@ use PHPUnit\Framework\TestCase;
 
 class BookingRequestValidatorTest extends TestCase
 {
-    private const PERMITTED = ['bookingDescription', 'itemsBooked', 'bookingRepeatStopWeekTstamp'];
+    private const PERMITTED = ['phone'];
 
     public function testAcceptsAValidBookingRequest(): void
     {
@@ -74,7 +74,7 @@ class BookingRequestValidatorTest extends TestCase
     {
         $this->expectException(InvalidBookingRequestException::class);
 
-        (new BookingRequestValidator())->validate([...$this->validPost(), 'bookingDateSelection' => '1-2-3-4'], self::PERMITTED);
+        (new BookingRequestValidator())->validate([...$this->validPost(), 'slots' => '1-2-3-4'], self::PERMITTED);
     }
 
     public static function itemCountProvider(): iterable
@@ -135,7 +135,7 @@ class BookingRequestValidatorTest extends TestCase
             BookingRequestValidator::parseSlotSelection($selection);
             $this->fail('An invalid slot selection must be rejected.');
         } catch (InvalidBookingRequestException $e) {
-            $this->assertSame('bookingDateSelection', $e->getField());
+            $this->assertSame('slots', $e->getField());
             $this->assertSame(InvalidBookingRequestException::INVALID_VALUE, $e->getTranslationKey());
         }
     }
@@ -159,23 +159,21 @@ class BookingRequestValidatorTest extends TestCase
     {
         $this->expectException(InvalidBookingRequestException::class);
 
-        (new BookingRequestValidator())->validate([...$this->validPost(), 'bookingDateSelection' => ['12-1795420800']], self::PERMITTED);
+        (new BookingRequestValidator())->validate([...$this->validPost(), 'slots' => ['12-1795420800']], self::PERMITTED);
     }
 
     private function validPost(): array
     {
         return [
-            'REQUEST_TOKEN' => 'abc',
-            'action' => 'bookingRequest',
-            'moduleKey' => '33_0',
             'resType' => '2',
             'res' => '3',
             'date' => '1795046400',
             'resourceId' => '3',
-            'bookingRepeatStopWeekTstamp' => '1795046400',
-            'bookingDateSelection' => ['12-1795420800-1795423500-1795046400'],
+            'repeatUntil' => '1795046400',
+            'slots' => ['12-1795420800-1795423500-1795046400'],
             'bookingDescription' => 'Werken 3b',
-            'itemsBooked' => '1',
+            'requestedItems' => '1',
+            'phone' => '079 123 45 67',
         ];
     }
 }

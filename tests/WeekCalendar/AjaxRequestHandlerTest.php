@@ -22,11 +22,13 @@ use Contao\TestCase\ContaoTestCase;
 use Markocupic\ResourceBookingBundle\AjaxController\AjaxControllerRegistry;
 use Markocupic\ResourceBookingBundle\AjaxController\ControllerInterface;
 use Markocupic\ResourceBookingBundle\Api\ApiContext;
+use Markocupic\ResourceBookingBundle\AppState\AppConfig;
 use Markocupic\ResourceBookingBundle\AppState\AppState;
 use Markocupic\ResourceBookingBundle\AppState\AppStateFactory;
 use Markocupic\ResourceBookingBundle\Event\AjaxResponseEvent;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponseFactory;
+use Markocupic\ResourceBookingBundle\Response\AjaxStatus;
 use Markocupic\ResourceBookingBundle\WeekCalendar\AjaxRequestHandler;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ServiceLocator;
@@ -63,7 +65,7 @@ class AjaxRequestHandlerTest extends ContaoTestCase
             'refreshDataRequest' => $this->createController(
                 static function (Request $request, AjaxResponse $ajaxResponse) use (&$stateOfController): AjaxResponse {
                     $stateOfController = AppState::fromRequest($request);
-                    $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
+                    $ajaxResponse->setStatus(AjaxStatus::Success);
 
                     return $ajaxResponse;
                 },
@@ -238,7 +240,7 @@ class AjaxRequestHandlerTest extends ContaoTestCase
         $controllers ??= [
             'refreshDataRequest' => $this->createController(
                 static function (Request $request, AjaxResponse $ajaxResponse): AjaxResponse {
-                    $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
+                    $ajaxResponse->setStatus(AjaxStatus::Success);
 
                     return $ajaxResponse;
                 },
@@ -246,7 +248,7 @@ class AjaxRequestHandlerTest extends ContaoTestCase
         ];
 
         if (null === $appStateFactory) {
-            $appStateFactory = $this->createMock(AppStateFactory::class);
+            $appStateFactory = $this->createStub(AppStateFactory::class);
             $appStateFactory
                 ->method('create')
                 ->willReturn($this->createAppState())
@@ -254,7 +256,7 @@ class AjaxRequestHandlerTest extends ContaoTestCase
         }
 
         // Returns the translation key, the texts are not loaded in this test
-        $translator = $this->createMock(TranslatorInterface::class);
+        $translator = $this->createStub(TranslatorInterface::class);
         $translator
             ->method('trans')
             ->willReturnArgument(0)
@@ -315,7 +317,8 @@ class AjaxRequestHandlerTest extends ContaoTestCase
             $this->mockPageModel(),
             null,
             null,
-            ['beginWeek' => 'monday', 'autoSelectFirstResource' => true, 'permittedFormFields' => []],
+            new AppConfig(),
+            'monday',
             0,
             0,
             0,

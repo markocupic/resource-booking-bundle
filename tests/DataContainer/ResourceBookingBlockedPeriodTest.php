@@ -17,6 +17,7 @@ namespace Markocupic\ResourceBookingBundle\Tests\DataContainer;
 use Contao\TestCase\ContaoTestCase;
 use Doctrine\DBAL\Connection;
 use Markocupic\ResourceBookingBundle\DataContainer\ResourceBookingBlockedPeriod;
+use Markocupic\ResourceBookingBundle\Restriction\BlockedPeriod;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class ResourceBookingBlockedPeriodTest extends ContaoTestCase
@@ -100,13 +101,13 @@ class ResourceBookingBlockedPeriodTest extends ContaoTestCase
             'dateTo' => $dateTo,
             'blockedTimes' => null,
             'scope' => 'resourceTypes',
-            'resourceTypes' => serialize(['4']),
+            'resourceTypes' => '4',
         ];
 
         $dca = new ResourceBookingBlockedPeriod($this->createContaoFrameworkStub(), $connection, $this->translator());
 
-        $this->assertSame(1, $dca->countFutureBookingsInBlockedPeriod($period));
-        $this->assertSame(0, $dca->countFutureBookingsInBlockedPeriod(['published' => ''] + $period));
+        $this->assertSame(1, $dca->countFutureBookingsInBlockedPeriod(BlockedPeriod::fromRow($period)));
+        $this->assertSame(0, $dca->countFutureBookingsInBlockedPeriod(BlockedPeriod::fromRow(['published' => ''] + $period)));
     }
 
     public function testCountsFutureBookingsInBlockedSlots(): void
@@ -137,7 +138,7 @@ class ResourceBookingBlockedPeriodTest extends ContaoTestCase
 
         $dca = new ResourceBookingBlockedPeriod($this->createContaoFrameworkStub(), $connection, $this->translator());
 
-        $this->assertSame(1, $dca->countFutureBookingsInBlockedPeriod($period));
+        $this->assertSame(1, $dca->countFutureBookingsInBlockedPeriod(BlockedPeriod::fromRow($period)));
     }
 
     private function translator(): TranslatorInterface

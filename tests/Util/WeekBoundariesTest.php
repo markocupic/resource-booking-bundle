@@ -14,114 +14,74 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\Tests\Util;
 
-use Contao\CoreBundle\Framework\ContaoFramework;
-use Contao\Date;
 use Contao\TestCase\ContaoTestCase;
 use Markocupic\ResourceBookingBundle\Config\RbbConfig;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
-use Markocupic\ResourceBookingBundle\Util\DateHelper;
 use Markocupic\ResourceBookingBundle\Util\WeekBoundaries;
 
 class WeekBoundariesTest extends ContaoTestCase
 {
-    private const APP_CONFIG = ['beginWeek' => 'monday'];
-
-    private const CURRENT_WEEK = 1000;
-
-    // Resource settings used in most tests: 2 weeks back (-> 500), 4 weeks ahead (-> 2000)
-    private const FIRST_WEEK_OF_RESOURCE = 500;
-
-    private const LAST_WEEK_OF_RESOURCE = 2000;
-
-    // Defaults (RbbConfig::RBB_DEFAULT_WEEKS_BACK/AHEAD) if there is no resource
-    private const FIRST_WEEK_BY_DEFAULT = 100;
-
-    private const LAST_WEEK_BY_DEFAULT = 6000;
+    /**
+     * Wednesday; the current week starts on monday 2030-10-14.
+     */
+    private const NOW = '2030-10-16 12:00';
 
     public function testWithoutResourceTheDefaultsApply(): void
     {
-        $weekBoundaries = new WeekBoundaries($this->getFramework(1500));
+        $now = strtotime(self::NOW);
 
-        $this->assertSame(self::FIRST_WEEK_BY_DEFAULT, $weekBoundaries->getFirstPermittedWeek(self::APP_CONFIG, null));
-        $this->assertSame(self::LAST_WEEK_BY_DEFAULT, $weekBoundaries->getLastPermittedWeek(self::APP_CONFIG, null, 1100));
+        $this->assertSame(strtotime(\sprintf('2030-10-14 -%d weeks', RbbConfig::RBB_DEFAULT_WEEKS_BACK)), (new WeekBoundaries())->getFirstPermittedWeek('monday', null, $now));
+        $this->assertSame(strtotime(\sprintf('2030-10-14 +%d weeks', RbbConfig::RBB_DEFAULT_WEEKS_AHEAD)), (new WeekBoundaries())->getLastPermittedWeek('monday', null, $now));
     }
 
     public function testTheResourceDefinesTheWeeksBackAndAhead(): void
     {
-        $weekBoundaries = new WeekBoundaries($this->getFramework(1500));
-        $resource = $this->mockResource(false, '');
+        $resource = $this->resource();
 
-        $this->assertSame(self::FIRST_WEEK_OF_RESOURCE, $weekBoundaries->getFirstPermittedWeek(self::APP_CONFIG, $resource));
-        $this->assertSame(self::LAST_WEEK_OF_RESOURCE, $weekBoundaries->getLastPermittedWeek(self::APP_CONFIG, $resource, 1100));
+        $this->assertSame(strtotime('2030-09-30'), (new WeekBoundaries())->getFirstPermittedWeek('monday', $resource, strtotime(self::NOW)));
+        $this->assertSame(strtotime('2030-11-11'), (new WeekBoundaries())->getLastPermittedWeek('monday', $resource, strtotime(self::NOW)));
+    }
+
+    public function testTheWeeksStartOnTheFirstDayOfTheTimetable(): void
+    {
+        $resource = $this->resource();
+
+        // The current week starts on sunday 2030-10-13
+        $this->assertSame(strtotime('2030-09-29'), (new WeekBoundaries())->getFirstPermittedWeek('sunday', $resource, strtotime(self::NOW)));
+        $this->assertSame(strtotime('2030-11-10'), (new WeekBoundaries())->getLastPermittedWeek('sunday', $resource, strtotime(self::NOW)));
     }
 
     public function testBookableUntilBeforeTheWeeksAheadLimitDefinesTheLastWeek(): void
     {
-        // "Bookable until" lies in the week starting at 1500.
-        $weekBoundaries = new WeekBoundaries($this->getFramework(1500));
-        $resource = $this->mockResource(true, '1550');
+        $resource = $this->resource(bookableUntil: '2030-10-30');
 
-        $this->assertSame(1500, $weekBoundaries->getLastPermittedWeek(self::APP_CONFIG, $resource, 1100));
+        $this->assertSame(strtotime('2030-10-28'), (new WeekBoundaries())->getLastPermittedWeek('monday', $resource, strtotime(self::NOW)));
     }
 
     public function testBookableUntilAfterTheWeeksAheadLimitIsIgnored(): void
     {
-        $weekBoundaries = new WeekBoundaries($this->getFramework(3000));
-        $resource = $this->mockResource(true, '3050');
+        $resource = $this->resource(bookableUntil: '2031-06-01');
 
-        $this->assertSame(self::LAST_WEEK_OF_RESOURCE, $weekBoundaries->getLastPermittedWeek(self::APP_CONFIG, $resource, 1100));
+        $this->assertSame(strtotime('2030-11-11'), (new WeekBoundaries())->getLastPermittedWeek('monday', $resource, strtotime(self::NOW)));
     }
 
     public function testBookableUntilInThePastClampsToTheCurrentWeek(): void
     {
-        $weekBoundaries = new WeekBoundaries($this->getFramework(300));
-        $resource = $this->mockResource(true, '350');
+        $resource = $this->resource(bookableUntil: '2030-09-01');
 
-        $this->assertSame(self::CURRENT_WEEK, $weekBoundaries->getLastPermittedWeek(self::APP_CONFIG, $resource, 1100));
+        $this->assertSame(strtotime('2030-10-14'), (new WeekBoundaries())->getLastPermittedWeek('monday', $resource, strtotime(self::NOW)));
     }
 
-    private function getFramework(int $firstDayOfBookableUntilWeek): ContaoFramework
+    /**
+     * 2 weeks back, 4 weeks ahead.
+     */
+    private function resource(string|null $bookableUntil = null): ResourceBookingResourceModel
     {
-        $dateHelperAdapter = $this->createAdapterMock(['getFirstDayOfCurrentWeek', 'addWeeksToTime', 'getFirstDayOfWeek']);
-        $dateHelperAdapter
-            ->method('getFirstDayOfCurrentWeek')
-            ->willReturn(self::CURRENT_WEEK)
-        ;
-
-        $dateHelperAdapter
-            ->method('addWeeksToTime')
-            ->willReturnMap([
-                [-2, self::CURRENT_WEEK, self::FIRST_WEEK_OF_RESOURCE],
-                [4, self::CURRENT_WEEK, self::LAST_WEEK_OF_RESOURCE],
-                [-RbbConfig::RBB_DEFAULT_WEEKS_BACK, self::CURRENT_WEEK, self::FIRST_WEEK_BY_DEFAULT],
-                [RbbConfig::RBB_DEFAULT_WEEKS_AHEAD, self::CURRENT_WEEK, self::LAST_WEEK_BY_DEFAULT],
-            ])
-        ;
-
-        $dateHelperAdapter
-            ->method('getFirstDayOfWeek')
-            ->willReturn($firstDayOfBookableUntilWeek)
-        ;
-
-        $dateAdapter = $this->createAdapterMock(['parse']);
-        $dateAdapter
-            ->method('parse')
-            ->willReturnCallback(static fn (string $format, int $tstamp): string => 'd'.$tstamp)
-        ;
-
-        return $this->createContaoFrameworkMock([
-            DateHelper::class => $dateHelperAdapter,
-            Date::class => $dateAdapter,
-        ]);
-    }
-
-    private function mockResource(bool $addBookableUntil, string $bookableUntil): ResourceBookingResourceModel
-    {
-        return $this->createClassWithPropertiesMock(ResourceBookingResourceModel::class, [
+        return $this->createClassWithPropertiesStub(ResourceBookingResourceModel::class, [
             'weeksBack' => 2,
             'weeksAhead' => 4,
-            'addBookableUntil' => $addBookableUntil,
-            'bookableUntil' => $bookableUntil,
+            'addBookableUntil' => null !== $bookableUntil,
+            'bookableUntil' => null === $bookableUntil ? '' : (string) strtotime($bookableUntil),
         ]);
     }
 }

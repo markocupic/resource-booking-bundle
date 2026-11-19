@@ -1,0 +1,8 @@
+# Routes of Contao (as in the test kernel of Contao) and of the bundle
+# (as in ContaoManager\Plugin::getRouteCollection())
+contao:
+    resource: '@ContaoCoreBundle/config/routes.yaml'
+
+markocupic_resource_booking:
+    resource: ../../../../src/Controller/
+    type: attribute

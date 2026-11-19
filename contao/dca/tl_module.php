@@ -39,8 +39,8 @@ $GLOBALS['TL_DCA']['tl_module']['subpalettes']['resourceBooking_displayBookingDe
 $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_resourceTypes'] = [
     'exclude'   => true,
     'inputType' => 'checkbox',
-    'eval'      => ['multiple' => true, 'tl_class' => 'clr'],
-    'sql'       => 'blob NULL',
+    'eval'      => ['multiple' => true, 'csv' => ',', 'tl_class' => 'clr'],
+    'sql'       => ['type' => 'text', 'notnull' => false],
 ];
 
 $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_displayClientPersonalData'] = [
@@ -54,8 +54,8 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_clientPersonalData'] 
     'exclude'   => true,
     'reference' => &$GLOBALS['TL_LANG']['tl_member'],
     'inputType' => 'select',
-    'eval'      => ['mandatory' => true, 'chosen' => true, 'multiple' => true, 'tl_class' => 'clr'],
-    'sql'       => ['type' => 'string', 'length' => 1024, 'notnull' => true, 'default' => 'a:2:{i:0;s:9:"firstname";i:1;s:8:"lastname";}'],
+    'eval'      => ['mandatory' => true, 'chosen' => true, 'multiple' => true, 'csv' => ',', 'tl_class' => 'clr'],
+    'sql'       => ['type' => 'string', 'length' => 1024, 'notnull' => true, 'default' => 'firstname,lastname'],
 ];
 
 $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_displayBookingDetails'] = [
@@ -69,8 +69,8 @@ $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_bookingDetailFields']
     'exclude'   => true,
     'reference' => &$GLOBALS['TL_LANG']['tl_resource_booking'],
     'inputType' => 'select',
-    'eval'      => ['mandatory' => true, 'chosen' => true, 'multiple' => true, 'tl_class' => 'clr'],
-    'sql'       => ['type' => 'string', 'length' => 1024, 'notnull' => true, 'default' => 'a:2:{i:0;s:5:"title";i:1;s:11:"description";}'],
+    'eval'      => ['mandatory' => true, 'chosen' => true, 'multiple' => true, 'csv' => ',', 'tl_class' => 'clr'],
+    'sql'       => ['type' => 'string', 'length' => 1024, 'notnull' => true, 'default' => 'title,description'],
 ];
 
 $GLOBALS['TL_DCA']['tl_module']['fields']['resourceBooking_appConfig'] = [

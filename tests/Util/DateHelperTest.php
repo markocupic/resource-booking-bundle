@@ -24,12 +24,9 @@ class DateHelperTest extends TestCase
      * 2026-11-11 is a wednesday.
      */
     #[DataProvider('provideFirstDaysOfWeek')]
-    public function testGetFirstDayOfCurrentWeekReturnsTheBeginningOfTheWeek(string $beginWeek, string $date, string $expected): void
+    public function testReturnsTheFirstDayOfTheWeek(string $beginWeek, string $date, string $expected): void
     {
-        $timestamp = strtotime($date.' 14:30');
-
-        $this->assertSame(strtotime($expected), DateHelper::getFirstDayOfCurrentWeek(['beginWeek' => $beginWeek], $timestamp));
-        $this->assertSame(strtotime($expected), DateHelper::getFirstDayOfWeek(['beginWeek' => $beginWeek], $timestamp));
+        $this->assertSame(strtotime($expected), DateHelper::getFirstDayOfWeek($beginWeek, strtotime($date.' 14:30')));
     }
 
     public static function provideFirstDaysOfWeek(): iterable
@@ -44,8 +41,44 @@ class DateHelperTest extends TestCase
         yield 'saturday, friday' => ['saturday', '2026-11-13', '2026-11-07'];
     }
 
-    public function testGetFirstDayOfWeekStartsOnMondayWithoutBeginWeek(): void
+    public function testAnInvalidFirstDayOfTheWeekFallsBackToMonday(): void
     {
-        $this->assertSame(strtotime('2026-11-09'), DateHelper::getFirstDayOfWeek([], strtotime('2026-11-11 08:00')));
+        $this->assertSame(strtotime('2026-11-09'), DateHelper::getFirstDayOfWeek('', strtotime('2026-11-11 08:00')));
+        $this->assertSame(strtotime('2026-11-09'), DateHelper::getFirstDayOfWeek('someday', strtotime('2026-11-11 08:00')));
+    }
+
+    public function testAddsDaysAndWeeks(): void
+    {
+        $start = strtotime('2026-11-11 08:00');
+
+        $this->assertSame(strtotime('2026-11-18 08:00'), DateHelper::addDays(7, $start));
+        $this->assertSame(strtotime('2026-11-05 08:00'), DateHelper::addDays(-6, $start));
+        $this->assertSame(strtotime('2026-11-25 08:00'), DateHelper::addWeeks(2, $start));
+        $this->assertSame(strtotime('2026-10-28 08:00'), DateHelper::addWeeks(-2, $start));
+        $this->assertSame($start, DateHelper::addWeeks(0, $start));
+    }
+
+    public function testKeepsTheTimeOfDayAcrossADaylightSavingTimeChange(): void
+    {
+        $timezone = date_default_timezone_get();
+        date_default_timezone_set('Europe/Zurich');
+
+        try {
+            // The clocks change on 2026-10-25
+            $this->assertSame(strtotime('2026-10-27 08:00'), DateHelper::addDays(7, strtotime('2026-10-20 08:00')));
+            $this->assertSame(strtotime('2026-10-27 08:00'), DateHelper::addWeeks(1, strtotime('2026-10-20 08:00')));
+        } finally {
+            date_default_timezone_set($timezone);
+        }
+    }
+
+    public function testValidatesTheBookingTime(): void
+    {
+        $this->assertTrue(DateHelper::isValidBookingTime('08:30'));
+        $this->assertTrue(DateHelper::isValidBookingTime('00:00'));
+        $this->assertTrue(DateHelper::isValidBookingTime('24:00'));
+        $this->assertFalse(DateHelper::isValidBookingTime('8:30'));
+        $this->assertFalse(DateHelper::isValidBookingTime('24:30'));
+        $this->assertFalse(DateHelper::isValidBookingTime('abc'));
     }
 }

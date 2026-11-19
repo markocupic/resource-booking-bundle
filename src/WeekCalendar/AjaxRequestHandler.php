@@ -17,10 +17,11 @@ namespace Markocupic\ResourceBookingBundle\WeekCalendar;
 use Contao\CoreBundle\Exception\ResponseException;
 use Markocupic\ResourceBookingBundle\AjaxController\AjaxControllerRegistry;
 use Markocupic\ResourceBookingBundle\Api\ApiContext;
+use Markocupic\ResourceBookingBundle\Api\Input\CalendarQuery;
 use Markocupic\ResourceBookingBundle\AppState\AppStateFactory;
 use Markocupic\ResourceBookingBundle\Event\AjaxResponseEvent;
-use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponseFactory;
+use Markocupic\ResourceBookingBundle\Response\AjaxStatus;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -55,21 +56,15 @@ class AjaxRequestHandler
         }
 
         try {
-            // POST: request body, GET and DELETE: query string
-            $input = $request->isMethod('POST') ? $request->request : $request->query;
+            $query = CalendarQuery::fromRequest($request);
 
             // Validated selection of the front end, attached to the request for the Ajax controllers
             $appState = $this->appStateFactory->create(
                 $context->moduleKey,
                 $context->module,
                 $context->page,
-                [
-                    'resType' => $input->get('resType'),
-                    'res' => $input->get('res'),
-                    'date' => $input->get('date'),
-                ],
-                // First request of the page: select a resource automatically if nothing is selected
-                '1' === $input->get('initial'),
+                $query->toSelection(),
+                $query->initial,
                 $request->getLocale(),
             );
 
@@ -83,7 +78,7 @@ class AjaxRequestHandler
             // Other extensions can add data to the response
             $this->eventDispatcher->dispatch(new AjaxResponseEvent($request, $ajaxResponse));
 
-            return $this->createJsonResponse($ajaxResponse->prepareBeforeSend(true)->getAll());
+            return $this->createJsonResponse($ajaxResponse->toArray());
         } catch (ResponseException $e) {
             // Contao responses (e.g. redirects) are passed through
             throw $e;
@@ -100,10 +95,10 @@ class AjaxRequestHandler
     public function createErrorResponse(string $action, string $translationKey, int $statusCode): JsonResponse
     {
         $ajaxResponse = $this->ajaxResponseFactory->create($action);
-        $ajaxResponse->setStatus(AjaxResponse::STATUS_ERROR);
+        $ajaxResponse->setStatus(AjaxStatus::Error);
         $ajaxResponse->setErrorMessage($this->translator->trans($translationKey, [], 'contao_default'));
 
-        return $this->createJsonResponse($ajaxResponse->getAll(), $statusCode);
+        return $this->createJsonResponse($ajaxResponse->toArray(), $statusCode);
     }
 
     private function createJsonResponse(array $data, int $statusCode = Response::HTTP_OK): JsonResponse

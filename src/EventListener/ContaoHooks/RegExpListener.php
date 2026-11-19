@@ -16,7 +16,6 @@ namespace Markocupic\ResourceBookingBundle\EventListener\ContaoHooks;
 
 use Contao\Controller;
 use Contao\CoreBundle\DependencyInjection\Attribute\AsHook;
-use Contao\CoreBundle\Framework\Adapter;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\Widget;
 use Markocupic\ResourceBookingBundle\Util\DateHelper;
@@ -38,52 +37,28 @@ class RegExpListener
     ) {
     }
 
+    /**
+     * Validates the start and end time of the time slots (tl_resource_booking_time_slot).
+     */
     #[AsHook('addCustomRegexp')]
-    public function onCustomRegexp(string $strRegexp, string $varValue, Widget $objWidget): bool
+    public function onCustomRegexp(string $regexp, string $value, Widget $widget): bool
     {
-        if (self::REGEX_RESOURCE_BOOKING_START_TIME === $strRegexp) {
-            $this->framework
-                ->getAdapter(Controller::class)
-                ->loadLanguageFile('default')
-            ;
+        [$constraint, $message] = match ($regexp) {
+            self::REGEX_RESOURCE_BOOKING_START_TIME => [new RbbStartTime(), 'RBB.MSG.pleaseInsertValidBookingStartTime'],
+            self::REGEX_RESOURCE_BOOKING_END_TIME => [new RbbEndTime(), 'RBB.MSG.pleaseInsertValidBookingEndTime'],
+            default => [null, null],
+        };
 
-            $violations = $this->validator->validate($varValue, new RbbStartTime());
-
-            if (\count($violations) > 0) {
-                $objWidget->addError($this->translator->trans('RBB.MSG.pleaseInsertValidBookingStartTime', [], 'contao_default'));
-            }
-
-            if (!$this->getDateHelper()->isValidBookingTime($varValue)) {
-                $objWidget->addError($this->translator->trans('RBB.MSG.pleaseInsertValidBookingStartTime', [], 'contao_default'));
-            }
-
-            return true;
+        if (null === $constraint) {
+            return false;
         }
 
-        if (self::REGEX_RESOURCE_BOOKING_END_TIME === $strRegexp) {
-            $this->framework
-                ->getAdapter(Controller::class)
-                ->loadLanguageFile('default')
-            ;
+        $this->framework->getAdapter(Controller::class)->loadLanguageFile('default');
 
-            $violations = $this->validator->validate($varValue, new RbbEndTime());
-
-            if (\count($violations) > 0) {
-                $objWidget->addError($this->translator->trans('RBB.MSG.pleaseInsertValidBookingEndTime', [], 'contao_default'));
-            }
-
-            if (!$this->getDateHelper()->isValidBookingTime($varValue)) {
-                $objWidget->addError($this->translator->trans('RBB.MSG.pleaseInsertValidBookingEndTime', [], 'contao_default'));
-            }
-
-            return true;
+        if (\count($this->validator->validate($value, $constraint)) > 0 || !DateHelper::isValidBookingTime($value)) {
+            $widget->addError($this->translator->trans($message, [], 'contao_default'));
         }
 
-        return false;
-    }
-
-    private function getDateHelper(): Adapter
-    {
-        return $this->framework->getAdapter(DateHelper::class);
+        return true;
     }
 }

@@ -18,6 +18,8 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use Doctrine\DBAL\Schema\Column;
 use Markocupic\ResourceBookingBundle\Migration\EnsureItemsAvailable\EnsureItemsAvailable;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class EnsureItemsAvailableTest extends TestCase
@@ -45,7 +47,7 @@ class EnsureItemsAvailableTest extends TestCase
 
     public function testSetsInvalidValuesToOne(): void
     {
-        $connection = $this->connection(invalidCount: 2);
+        $connection = $this->connectionMock(invalidCount: 2);
         $connection
             ->method('fetchFirstColumn')
             ->willReturn([3, 7])
@@ -71,7 +73,23 @@ class EnsureItemsAvailableTest extends TestCase
     /**
      * @param array<string, Column>|null $columns
      */
-    private function connection(bool $tableExists = true, array|null $columns = null, int $invalidCount = 0): Connection
+    private function connection(bool $tableExists = true, array|null $columns = null, int $invalidCount = 0): Connection&Stub
+    {
+        $stub = $this->createStub(Connection::class);
+        $this->configureConnection($stub, $tableExists, $columns, $invalidCount);
+
+        return $stub;
+    }
+
+    private function connectionMock(bool $tableExists = true, array|null $columns = null, int $invalidCount = 0): Connection&MockObject
+    {
+        $mock = $this->createMock(Connection::class);
+        $this->configureConnection($mock, $tableExists, $columns, $invalidCount);
+
+        return $mock;
+    }
+
+    private function configureConnection(Connection&Stub $connection, bool $tableExists = true, array|null $columns = null, int $invalidCount = 0): void
     {
         $schemaManager = $this->createStub(AbstractSchemaManager::class);
         $schemaManager
@@ -84,7 +102,6 @@ class EnsureItemsAvailableTest extends TestCase
             ->willReturn($columns ?? ['itemsavailable' => $this->createStub(Column::class)])
         ;
 
-        $connection = $this->createMock(Connection::class);
         $connection
             ->method('createSchemaManager')
             ->willReturn($schemaManager)
@@ -94,7 +111,5 @@ class EnsureItemsAvailableTest extends TestCase
             ->method('fetchOne')
             ->willReturn($invalidCount)
         ;
-
-        return $connection;
     }
 }

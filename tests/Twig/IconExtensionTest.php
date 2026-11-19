@@ -26,7 +26,7 @@ class IconExtensionTest extends ContaoTestCase
 
     public function testGetFunctionsExposesTheRbbIconFunction(): void
     {
-        $functions = $this->createExtension($this->createMock(Filesystem::class))->getFunctions();
+        $functions = $this->createExtension($this->createStub(Filesystem::class))->getFunctions();
 
         $this->assertCount(1, $functions);
         $this->assertInstanceOf(TwigFunction::class, $functions[0]);
@@ -35,7 +35,7 @@ class IconExtensionTest extends ContaoTestCase
 
     public function testGeneratesIconFromAnExistingPathAndAddsClasses(): void
     {
-        $filesystem = $this->createMock(Filesystem::class);
+        $filesystem = $this->createStub(Filesystem::class);
         $filesystem
             ->method('exists')
             ->willReturn(true)
@@ -99,13 +99,13 @@ class IconExtensionTest extends ContaoTestCase
     private function createExtension(Filesystem $filesystem): IconExtension
     {
         // specialcharsAttribute is stubbed as identity so the class list stays predictable.
-        $stringUtilAdapter = $this->createAdapterMock(['specialcharsAttribute']);
+        $stringUtilAdapter = $this->createAdapterStub(['specialcharsAttribute']);
         $stringUtilAdapter
             ->method('specialcharsAttribute')
             ->willReturnCallback(static fn (string $value): string => $value)
         ;
 
-        $framework = $this->createContaoFrameworkMock([StringUtil::class => $stringUtilAdapter]);
+        $framework = $this->createContaoFrameworkStub([StringUtil::class => $stringUtilAdapter]);
 
         return new IconExtension($framework, $filesystem, '/project');
     }

@@ -18,6 +18,8 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use Doctrine\DBAL\Schema\Column;
 use Markocupic\ResourceBookingBundle\Migration\MoveBeginWeekToTimeSlotType\MoveBeginWeekToTimeSlotType;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class MoveBeginWeekToTimeSlotTypeTest extends TestCase
@@ -45,7 +47,7 @@ class MoveBeginWeekToTimeSlotTypeTest extends TestCase
 
     public function testCopiesTheFirstDayOfTheWeekToTheTimetables(): void
     {
-        $connection = $this->connection();
+        $connection = $this->connectionMock();
         $connection
             ->expects($this->once())
             ->method('executeStatement')
@@ -107,7 +109,7 @@ class MoveBeginWeekToTimeSlotTypeTest extends TestCase
 
     public function testReportsTimetablesUsedWithDifferentValues(): void
     {
-        $connection = $this->connection();
+        $connection = $this->connectionMock();
         $connection
             ->method('fetchAllAssociative')
             ->willReturn([
@@ -138,7 +140,23 @@ class MoveBeginWeekToTimeSlotTypeTest extends TestCase
         $this->assertStringContainsString('please check: 4', $result->getMessage());
     }
 
-    private function connection(bool $tablesExist = true, bool $appConfigExists = true, bool $beginWeekExists = false): Connection
+    private function connection(bool $tablesExist = true, bool $appConfigExists = true, bool $beginWeekExists = false): Connection&Stub
+    {
+        $stub = $this->createStub(Connection::class);
+        $this->configureConnection($stub, $tablesExist, $appConfigExists, $beginWeekExists);
+
+        return $stub;
+    }
+
+    private function connectionMock(bool $tablesExist = true, bool $appConfigExists = true, bool $beginWeekExists = false): Connection&MockObject
+    {
+        $mock = $this->createMock(Connection::class);
+        $this->configureConnection($mock, $tablesExist, $appConfigExists, $beginWeekExists);
+
+        return $mock;
+    }
+
+    private function configureConnection(Connection&Stub $connection, bool $tablesExist = true, bool $appConfigExists = true, bool $beginWeekExists = false): void
     {
         $column = $this->createStub(Column::class);
 
@@ -158,12 +176,9 @@ class MoveBeginWeekToTimeSlotTypeTest extends TestCase
             })
         ;
 
-        $connection = $this->createMock(Connection::class);
         $connection
             ->method('createSchemaManager')
             ->willReturn($schemaManager)
         ;
-
-        return $connection;
     }
 }

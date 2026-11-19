@@ -28,7 +28,7 @@
 
     {# Start booking preview #}
     {% block rbb_booking_window__booking_form__booking_preview %}
-        <details class="rbb-booking-preview" v-if="bookingWindow.response.bookingValidationProcessSucceeded === false && isBusy === false">
+        <details class="rbb-booking-preview" v-if="bookingWindow.response.isBookable === false && isBusy === false">
             {% block rbb_booking_window__booking_form__booking_preview_button %}
                 {# Start toggle button #}
                 <summary class="rbb-btn rbb-btn--danger rbb-btn--sm">
@@ -41,7 +41,7 @@
                 {# Start booking preview table #}
                 <div class="rbb-booking-preview-table rbb-layout-table" id="bookingPreview_{{ moduleKey }}">
                     <div class="rbb-layout-box-inner">
-                        <div class="rbb-layout-row" :class="!slot.isBookable ? 'not-bookable' : 'bookable'" v-for="(slot, index) in bookingWindow.response.slotSelection">
+                        <div class="rbb-layout-row" :class="!slot.isBookable ? 'not-bookable' : 'bookable'" v-for="(slot, index) in bookingWindow.response.slots">
                             <div class="rbb-layout-cell">
                                 <small>[[ slot.datimSpanString ]]: </small>
                             </div>
@@ -67,7 +67,7 @@
 
     {# Start booking form #}
     {% block rbb_booking_window__booking_form__form %}
-        <form v-if="!bookingWindow.response.bookingProcessSucceeded" :aria-busy="isBusy ? 'true' : 'false'" class="rbb-booking-form rbb-js-booking-form" :class="isBusy ? 'rbb-opacity-0' : 'rbb-opacity-1'">
+        <form v-if="!bookingWindow.response.isBooked" :aria-busy="isBusy ? 'true' : 'false'" class="rbb-booking-form rbb-js-booking-form" :class="isBusy ? 'rbb-opacity-0' : 'rbb-opacity-1'">
             <div class="rbb-booking-form-grid">
                 <!-- start booking table -->
                 <div class="rbb-layout-table rbb-booking-table-booking-form" v-if="rows.length > 0">
@@ -132,7 +132,7 @@
     {# Start footer #}
     {% block rbb_booking_window__booking_form__footer %}
         <div class="rbb-booking-window-footer">
-            <button class="rbb-btn rbb-btn--primary" type="button" v-if="!bookingWindow.response.bookingProcessSucceeded" @click="bookingRequest">
+            <button class="rbb-btn rbb-btn--primary" type="button" v-if="!bookingWindow.response.isBooked" @click="bookingRequest">
                 {{ ('RBB.bookResource')|trans }}
             </button>
             <button class="rbb-btn rbb-btn--secondary rbb-js-close-booking-window" type="button" @click="hideBookingWindow">

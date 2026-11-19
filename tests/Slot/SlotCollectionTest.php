@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\Tests\Slot;
 
+use Markocupic\ResourceBookingBundle\Restriction\ResourceRules;
 use Markocupic\ResourceBookingBundle\Slot\Slot;
 use Markocupic\ResourceBookingBundle\Slot\SlotCollection;
 use PHPUnit\Framework\TestCase;
@@ -87,6 +88,6 @@ class SlotCollectionTest extends TestCase
 
     private function slot(int $startTime): Slot
     {
-        return new Slot(timeSlotId: 1, resource: [], startTime: $startTime, endTime: $startTime + 60, now: 0);
+        return new Slot(timeSlotId: 1, resource: new ResourceRules(), startTime: $startTime, endTime: $startTime + 60, now: 0);
     }
 }

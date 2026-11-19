@@ -4,11 +4,11 @@
     <div class="rbb-layout-box rbb-booking-form-inputs">
         <div class="rbb-layout-box-inner" :class="isBusy ? 'rbb-opacity-0' : 'rbb-opacity-1'">
             <div class="rbb-form-group" v-if="parseInt(activeResource.itemsAvailable) > 1">
-                <label for="ctrlItemsBooked_{{ moduleKey }}">{{ ('RBB.formLegendItems')|trans }}</label>
-                <select class="rbb-ctrl-items-booked rbb-form-control" id="ctrlItemsBooked_{{ moduleKey }}" name="itemsBooked" @change="bookingFormValidationRequest()">
+                <label for="ctrlRequestedItems_{{ moduleKey }}">{{ ('RBB.formLegendItems')|trans }}</label>
+                <select class="rbb-ctrl-requested-items rbb-form-control" id="ctrlRequestedItems_{{ moduleKey }}" name="requestedItems" @change="bookingFormValidationRequest()">
                     <option :value="i" v-for="i in parseInt(activeResource.itemsAvailable)"> [[ i ]] {{ ('RBB.pieces')|trans }}</option>
                 </select>
-                <small class="rbb-items-booked-help rbb-input-help-text">{{ ('RBB.formHelpItems')|trans }}</small>
+                <small class="rbb-requested-items-help rbb-input-help-text">{{ ('RBB.formHelpItems')|trans }}</small>
             </div>
             <div class="rbb-form-group">
                 <label for="ctrlBookingDescription_{{ moduleKey }}">{{ ('RBB.formLegendDescription')|trans }}</label>
@@ -17,8 +17,8 @@
             </div>
 
             <div class="rbb-form-group">
-                <label for="ctrlBookingRepeatStopWeekTstamp_{{ moduleKey }}">{{ ('RBB.formLegendRepetitions')|trans }}</label>
-                <select class="rbb-js-booking-repeat-stop-week-tstamp rbb-time-span-select rbb-form-control" id="ctrlBookingRepeatStopWeekTstamp_{{ moduleKey }}" name="bookingRepeatStopWeekTstamp" @change="bookingFormValidationRequest()">
+                <label for="ctrlRepeatUntil_{{ moduleKey }}">{{ ('RBB.formLegendRepetitions')|trans }}</label>
+                <select class="rbb-js-repeat-until rbb-time-span-select rbb-form-control" id="ctrlRepeatUntil_{{ moduleKey }}" name="repeatUntil" @change="bookingFormValidationRequest()">
                     <option :value="row.tstamp" v-for="(row, rowIndex) in bookingRepeatsSelection">[[ row.optionText ]]</option>
                 </select>
             </div>

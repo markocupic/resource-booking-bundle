@@ -17,6 +17,7 @@ namespace Markocupic\ResourceBookingBundle\Tests\Event;
 use Contao\ModuleModel;
 use Contao\PageModel;
 use Contao\TestCase\ContaoTestCase;
+use Markocupic\ResourceBookingBundle\AppState\AppConfig;
 use Markocupic\ResourceBookingBundle\AppState\AppState;
 use Markocupic\ResourceBookingBundle\Event\AjaxResponseEvent;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
@@ -34,7 +35,8 @@ class AjaxResponseEventTest extends ContaoTestCase
             $this->createClassWithPropertiesStub(PageModel::class, ['id' => 5]),
             null,
             null,
-            ['beginWeek' => 'monday', 'autoSelectFirstResource' => true, 'permittedFormFields' => []],
+            new AppConfig(),
+            'monday',
             0,
             0,
             0,

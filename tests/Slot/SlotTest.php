@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\Tests\Slot;
 
+use Markocupic\ResourceBookingBundle\Restriction\ResourceRules;
 use Markocupic\ResourceBookingBundle\Slot\Slot;
 use PHPUnit\Framework\TestCase;
 
@@ -99,7 +100,7 @@ class SlotTest extends TestCase
     public function testSlotWithoutValidationResultIsNotBookable(): void
     {
         // A slot without the result of the time slot validation (see SlotFactory::create()) must never be bookable
-        $slot = new Slot(timeSlotId: 1, resource: ['itemsAvailable' => 1], startTime: strtotime('tomorrow 08:00'), endTime: strtotime('tomorrow 09:00'), now: time());
+        $slot = new Slot(timeSlotId: 1, resource: new ResourceRules(itemsAvailable: 1), startTime: strtotime('tomorrow 08:00'), endTime: strtotime('tomorrow 09:00'), now: time());
 
         $this->assertFalse($slot->isValidTimeSlot);
         $this->assertFalse($slot->isBookable());
@@ -225,7 +226,7 @@ class SlotTest extends TestCase
 
         return new Slot(
             timeSlotId: 1,
-            resource: $resource ?? ['itemsAvailable' => $itemsAvailable],
+            resource: ResourceRules::fromRow($resource ?? ['itemsAvailable' => $itemsAvailable]),
             startTime: $startTime,
             endTime: $endTime ?? $startTime + 3600,
             now: time(),

@@ -26,8 +26,8 @@ class ModuleTest extends ContaoTestCase
     public function testGetAppConfigurationsReturnsTheConfigKeys(): void
     {
         $module = new Module(
-            $this->createContaoFrameworkMock(),
-            $this->createMock(Connection::class),
+            $this->createContaoFrameworkStub(),
+            $this->createStub(Connection::class),
             ['default' => [], 'app_b' => []],
         );
 
@@ -38,7 +38,7 @@ class ModuleTest extends ContaoTestCase
     {
         $module = new Module(
             $this->frameworkWithFieldNames(['id', 'firstname', 'lastname', 'password', 'email', 'city', 'secret']),
-            $this->createMock(Connection::class),
+            $this->createStub(Connection::class),
             [],
             // "company" does not exist, "secret" is never permitted
             ['lastname', 'firstname', 'company', 'city', 'secret'],
@@ -51,7 +51,7 @@ class ModuleTest extends ContaoTestCase
     {
         $module = new Module(
             $this->frameworkWithFieldNames(['id', 'firstname', 'lastname', 'password', 'email', 'company', 'city', 'phone']),
-            $this->createMock(Connection::class),
+            $this->createStub(Connection::class),
         );
 
         $this->assertSame(['firstname', 'lastname', 'company', 'city', 'phone'], $module->getTlMemberFields());
@@ -61,7 +61,7 @@ class ModuleTest extends ContaoTestCase
     {
         $module = new Module(
             $this->frameworkWithFieldNames(['id', 'pid', 'member', 'title', 'description', 'bookingUuid']),
-            $this->createMock(Connection::class),
+            $this->createStub(Connection::class),
         );
 
         // Default: title and description, not member or bookingUuid
@@ -69,7 +69,7 @@ class ModuleTest extends ContaoTestCase
 
         $module = new Module(
             $this->frameworkWithFieldNames(['id', 'pid', 'member', 'title', 'description']),
-            $this->createMock(Connection::class),
+            $this->createStub(Connection::class),
             [],
             [],
             ['description', 'unknown'],
@@ -98,15 +98,15 @@ class ModuleTest extends ContaoTestCase
             }
         };
 
-        $databaseAdapter = $this->createAdapterMock(['getInstance']);
+        $databaseAdapter = $this->createAdapterStub(['getInstance']);
         $databaseAdapter
             ->method('getInstance')
             ->willReturn($databaseInstance)
         ;
 
-        $systemAdapter = $this->createAdapterMock(['loadLanguageFile']);
+        $systemAdapter = $this->createAdapterStub(['loadLanguageFile']);
 
-        return $this->createContaoFrameworkMock([
+        return $this->createContaoFrameworkStub([
             Database::class => $databaseAdapter,
             System::class => $systemAdapter,
         ]);

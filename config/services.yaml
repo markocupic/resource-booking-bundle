@@ -8,10 +8,12 @@ services:
         resource: ../src/
         exclude:
             - '../src/{DependencyInjection,Session,Config,Model,Event,Exception,Widget}'
-            - '../src/Response/AjaxResponse.php'
-            - '../src/AppState/AppState.php'
+            - '../src/Response/{AjaxResponse,AjaxStatus,MessageType}.php'
+            - '../src/AppState/{AppConfig,AppState}.php'
             - '../src/Api/{AccessToken,ApiContext,InvalidAccessTokenException}.php'
-            - '../src/Booking/BookingSource.php'
+            - '../src/Api/{Input,Output}'
+            - '../src/Booking/{BookingSource,CancellationRules}.php'
             - '../src/Slot/{Slot,SlotCollection}.php'
-            - '../src/Util/BlockedSlots.php'
+            - '../src/Restriction'
+            - '../src/Util/{BlockedSlots,CsvList,DateHelper,TimeOfDay}.php'
             - '../src/Validator/InvalidBookingRequestException.php'

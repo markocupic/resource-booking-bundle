@@ -34,7 +34,7 @@ final class AppState
     public const REQUEST_ATTRIBUTE = '_rbb_app_state';
 
     /**
-     * @param array{beginWeek: string, autoSelectFirstResource: bool, permittedFormFields: list<string>} $appConfig
+     * @param string $beginWeek First day of the week of the timetable of the resource, e.g. "monday"
      */
     public function __construct(
         public readonly string $moduleKey,
@@ -42,10 +42,11 @@ final class AppState
         public readonly PageModel $page,
         public readonly ResourceBookingResourceTypeModel|null $resourceType,
         public readonly ResourceBookingResourceModel|null $resource,
-        public readonly array $appConfig,
-        public readonly int $activeWeekTstamp,
-        public readonly int $firstPermittedWeekTstamp,
-        public readonly int $lastPermittedWeekTstamp,
+        public readonly AppConfig $appConfig,
+        public readonly string $beginWeek,
+        public readonly int $activeWeekStart,
+        public readonly int $firstPermittedWeekStart,
+        public readonly int $lastPermittedWeekStart,
         public readonly string $language,
     ) {
     }
@@ -93,7 +94,7 @@ final class AppState
 
     public function getBeginWeek(): string
     {
-        return $this->appConfig['beginWeek'];
+        return $this->beginWeek;
     }
 
     /**
@@ -103,6 +104,6 @@ final class AppState
      */
     public function getPermittedFormFields(): array
     {
-        return $this->appConfig['permittedFormFields'];
+        return $this->appConfig->permittedFormFields;
     }
 }

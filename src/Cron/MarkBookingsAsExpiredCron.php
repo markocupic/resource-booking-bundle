@@ -17,19 +17,23 @@ namespace Markocupic\ResourceBookingBundle\Cron;
 use Contao\CoreBundle\DependencyInjection\Attribute\AsCronJob;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Types\Types;
+use Symfony\Component\Clock\ClockInterface;
+use Symfony\Component\Clock\NativeClock;
 
 #[AsCronJob('minutely')]
 class MarkBookingsAsExpiredCron
 {
-    public function __construct(private readonly Connection $connection)
-    {
+    public function __construct(
+        private readonly Connection $connection,
+        private readonly ClockInterface $clock = new NativeClock(),
+    ) {
     }
 
     public function __invoke(): void
     {
         $this->connection->executeStatement(
             'UPDATE tl_resource_booking SET upcoming = 0 WHERE endTime < ? AND upcoming = ?',
-            [time(), 1],
+            [$this->clock->now()->getTimestamp(), 1],
             [Types::INTEGER, Types::BOOLEAN],
         );
     }

@@ -21,6 +21,7 @@ use Markocupic\ResourceBookingBundle\Migration\LegacyBlockedSlotConverter;
 use Markocupic\ResourceBookingBundle\Migration\MoveBlockedBookingsToBlockedPeriods\MoveBlockedBookingsToBlockedPeriods;
 use Markocupic\ResourceBookingBundle\Util\BlockedSlots;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class MoveBlockedBookingsToBlockedPeriodsTest extends TestCase
@@ -42,7 +43,7 @@ class MoveBlockedBookingsToBlockedPeriodsTest extends TestCase
      */
     public function testCreatesBlockedPeriodsAndDeletesTheBlockedBookings(): void
     {
-        $connection = $this->connection();
+        $connection = $this->connectionMock();
         $connection
             ->method('fetchAllAssociative')
             ->willReturn([
@@ -115,7 +116,23 @@ class MoveBlockedBookingsToBlockedPeriodsTest extends TestCase
     /**
      * @param list<string> $bookingColumns
      */
-    private function connection(bool $tablesExist = true, array $bookingColumns = ['id', 'isblocked'], bool $found = true): Connection&MockObject
+    private function connection(bool $tablesExist = true, array $bookingColumns = ['id', 'isblocked'], bool $found = true): Connection&Stub
+    {
+        $stub = $this->createStub(Connection::class);
+        $this->configureConnection($stub, $tablesExist, $bookingColumns, $found);
+
+        return $stub;
+    }
+
+    private function connectionMock(bool $tablesExist = true, array $bookingColumns = ['id', 'isblocked'], bool $found = true): Connection&MockObject
+    {
+        $mock = $this->createMock(Connection::class);
+        $this->configureConnection($mock, $tablesExist, $bookingColumns, $found);
+
+        return $mock;
+    }
+
+    private function configureConnection(Connection&Stub $connection, bool $tablesExist = true, array $bookingColumns = ['id', 'isblocked'], bool $found = true): void
     {
         $schemaManager = $this->createStub(AbstractSchemaManager::class);
         $schemaManager
@@ -130,7 +147,6 @@ class MoveBlockedBookingsToBlockedPeriodsTest extends TestCase
                 : array_fill_keys(['id', 'title'], $this->createStub(Column::class)))
         ;
 
-        $connection = $this->createMock(Connection::class);
         $connection
             ->method('createSchemaManager')
             ->willReturn($schemaManager)
@@ -140,7 +156,5 @@ class MoveBlockedBookingsToBlockedPeriodsTest extends TestCase
             ->method('fetchOne')
             ->willReturn($found ? 1 : false)
         ;
-
-        return $connection;
     }
 }

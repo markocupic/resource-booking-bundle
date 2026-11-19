@@ -14,120 +14,85 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\Util;
 
-use Contao\Date;
 use Markocupic\ResourceBookingBundle\Config\RbbConfig;
 
-class DateHelper
+/**
+ * Date calculations of the week calendar in the default time zone.
+ *
+ * Pure functions: the current time is never read here, the callers pass it
+ * (see ClockInterface). Days and weeks are added in wall clock time, so a slot
+ * keeps its time of day across a daylight saving time change.
+ */
+final class DateHelper
 {
-    /**
-     * @throws \Exception
-     */
-    public static function addDaysToTime(int $intDays = 0, int|null $time = null): int
+    private function __construct()
     {
-        if (null === $time) {
-            $time = time();
-        }
-
-        if ($intDays < 0) {
-            $intDays = abs($intDays);
-            $strAddDays = '-'.$intDays.' days';
-        } else {
-            $strAddDays = '+'.$intDays.' days';
-        }
-
-        $tstamp = strtotime(Date::parse('Y-m-d H:i:s', $time).' '.$strAddDays);
-
-        if (false !== $tstamp) {
-            return $tstamp;
-        }
-
-        throw new \Exception('Could not generate a valid timestamp.');
     }
 
     /**
-     * Return begin weekday of the week the timestamp is in
-     * By default this is a monday.
+     * Returns the midnight of the first day of the week the timestamp is in.
      *
-     * @throws \Exception
+     * $beginWeek is the first day of the week (tl_resource_booking_time_slot_type.beginWeek),
+     * e.g. "monday"; an invalid value falls back to RbbConfig::RBB_DEFAULT_BEGIN_WEEK.
+     *
+     * "<weekday> this week" must not be used here: PHP always counts the week from
+     * monday, so "sunday this week" would return the sunday at the end of the week
+     * instead of the sunday at its beginning.
      */
-    public static function getFirstDayOfWeek(array $arrAppConfig, $tstamp = null): int
+    public static function getFirstDayOfWeek(string $beginWeek, int $timestamp): int
     {
-        if (null === $tstamp) {
-            $tstamp = time();
+        if (!\in_array($beginWeek, RbbConfig::RBB_WEEKDAYS, true)) {
+            $beginWeek = RbbConfig::RBB_DEFAULT_BEGIN_WEEK;
         }
 
-        $date = new \DateTime(Date::parse('Y-m-d', $tstamp));
+        $date = new \DateTimeImmutable(date('Y-m-d', $timestamp));
 
-        $date->setTime(0, 0, 0);
-
-        $beginWeek = $arrAppConfig['beginWeek'] ?? RbbConfig::RBB_DEFAULT_BEGIN_WEEK;
-
-        // RBB_WEEKDAYS starts with sunday (0) like the "w" format character.
-        $key = array_search($beginWeek, RbbConfig::RBB_WEEKDAYS, true);
-
-        if ((string) $key === $date->format('w')) {
-            // If the date is already configured begin week day, return it as-is
+        // RBB_WEEKDAYS starts with sunday (0) like the "w" format character
+        if ((string) array_search($beginWeek, RbbConfig::RBB_WEEKDAYS, true) === $date->format('w')) {
             return $date->getTimestamp();
         }
 
-        // Otherwise, return the date of the nearest "begin week day" in the past
-        // by default this is a monday
-        return $date->modify(\sprintf('last %s', $beginWeek))->getTimestamp();
+        return $date->modify('last '.$beginWeek)->getTimestamp();
     }
 
-    public static function isValidBookingTime(string $dateString): bool
+    /**
+     * Adds (or with a negative number subtracts) days, keeping the time of day.
+     */
+    public static function addDays(int $days, int $timestamp): int
     {
-        if ('24:00' === $dateString) {
+        return self::modify(\sprintf('%+d days', $days), $timestamp);
+    }
+
+    /**
+     * Adds (or with a negative number subtracts) weeks, keeping the time of day.
+     */
+    public static function addWeeks(int $weeks, int $timestamp): int
+    {
+        return self::modify(\sprintf('%+d weeks', $weeks), $timestamp);
+    }
+
+    /**
+     * Returns true for a time "hh:mm" (00:00 - 23:59) or "24:00".
+     */
+    public static function isValidBookingTime(string $time): bool
+    {
+        if ('24:00' === $time) {
             return true;
         }
 
-        $format = 'H:i';
-        $dateObj = \DateTime::createFromFormat($format, $dateString);
+        $date = \DateTimeImmutable::createFromFormat('H:i', $time);
 
-        return false !== $dateObj && $dateObj->format($format) === $dateString;
+        return false !== $date && $date->format('H:i') === $time;
     }
 
-    /**
-     * @throws \Exception
-     */
-    public static function addWeeksToTime(int $intWeeks = 0, int|null $time = null): int
+    private static function modify(string $modifier, int $timestamp): int
     {
-        if (null === $time) {
-            $time = time();
+        $timestamp = strtotime($modifier, $timestamp);
+
+        if (false === $timestamp) {
+            throw new \RuntimeException(\sprintf('Could not apply "%s" to the timestamp.', $modifier));
         }
 
-        if ($intWeeks < 0) {
-            $intWeeks = abs($intWeeks);
-            $strAddWeeks = '-'.$intWeeks.' weeks';
-        } else {
-            $strAddWeeks = '+'.$intWeeks.' weeks';
-        }
-
-        $tstamp = strtotime(Date::parse('Y-m-d H:i:s', $time).' '.$strAddWeeks);
-
-        if (false !== $tstamp) {
-            return $tstamp;
-        }
-
-        throw new \Exception('Could not generate a valid timestamp.');
-    }
-
-    /**
-     * Returns the first day of the week the timestamp (default: now) is in.
-     * By default, this is the timestamp of a monday.
-     *
-     * "<weekday> this week" must not be used here: PHP always counts the week
-     * from monday, so "sunday this week" would return the sunday at the end of
-     * the week instead of the sunday at its beginning.
-     *
-     * @throws \Exception
-     */
-    public static function getFirstDayOfCurrentWeek(array $arrAppConfig, int|null $timestamp = null): int
-    {
-        if (!$timestamp) {
-            $timestamp = time();
-        }
-
-        return static::getFirstDayOfWeek($arrAppConfig, $timestamp);
+        return $timestamp;
     }
 }

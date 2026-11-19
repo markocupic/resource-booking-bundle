@@ -16,7 +16,7 @@ namespace Markocupic\ResourceBookingBundle\Response;
 
 class AjaxResponseFactory
 {
-    public function create(string $action)
+    public function create(string $action): AjaxResponse
     {
         return new AjaxResponse($action);
     }

@@ -198,7 +198,7 @@ der Antwort weitere Daten anhängen, z. B. für ein angepasstes Template.
 | Methode | Zweck |
 |---|---|
 | `getAction()` | Aktion der Anfrage, z. B. `refreshDataRequest` (siehe [API](#api-des-wochenkalenders)) |
-| `getAjaxResponse()` | Antwort (`setData()`, `getAll()`, Meldungen, Status) |
+| `getAjaxResponse()` | Antwort (`setData()`, `getAllData()`, `mergeData()`, Meldungen, Status) |
 | `getAppState()` | Auswahl des Wochenkalenders (Modul, Seite, Ressource, Woche, Sprache) |
 | `getRequest()` | Request an die API (nicht die Seite; die Seite liefert `getAppState()->page`) |
 
@@ -209,6 +209,10 @@ Stornierung).
 > [!WARNING]
 > Alles in der Antwort ist für jeden Besucher der Seite sichtbar (Entwicklertools). Keine Personendaten fremder
 > Mitglieder hinzufügen.
+
+Die Kalenderdaten enthalten von Ressource, Ressourcentyp und Mitglied nur wenige Felder
+(`Api\Output\CalendarData::RESOURCE_FIELDS` usw.). Braucht ein eigenes Template ein weiteres Feld, hängt man es hier
+an, z. B. `$event->getAjaxResponse()->setData('roomNumber', $event->getAppState()->resource?->roomNumber)`.
 
 ```php
 <?php
@@ -276,6 +280,7 @@ use Markocupic\ResourceBookingBundle\AjaxController\ControllerInterface;
 use Markocupic\ResourceBookingBundle\AppState\AppState;
 use Markocupic\ResourceBookingBundle\DependencyInjection\Attribute\AsAjaxController;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
+use Markocupic\ResourceBookingBundle\Response\AjaxStatus;
 use Symfony\Component\HttpFoundation\Request;
 
 #[AsAjaxController('myCustomRequest')]
@@ -286,7 +291,7 @@ final class MyCustomController implements ControllerInterface
         $state = AppState::fromRequest($request);
 
         $ajaxResponse->setData('resourceId', $state->resource?->id);
-        $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
+        $ajaxResponse->setStatus(AjaxStatus::Success);
 
         return $ajaxResponse;
     }
@@ -307,8 +312,11 @@ Die Methoden der `AjaxResponse` im Überblick:
 
 | Methode | Zweck |
 |---|---|
+| `setResult(ApiResultInterface)` | typisiertes Ergebnis der Aktion (`Api\Output\…`, `toArray()`) |
 | `setData($key, $value)` / `getData($key)` | beliebige Daten an das Frontend übergeben |
-| `setStatus(…)` | `STATUS_SUCCESS`, `STATUS_WARNING` oder `STATUS_ERROR` |
-| `setConfirmationMessage()`, `setInfoMessage()`, `setWarningMessage()`, `setErrorMessage()` | Meldungen im Buchungstool anzeigen |
+| `getAllData()` / `mergeData(array)` | alle Daten lesen / mehrere Werte setzen (bestehende Schlüssel werden überschrieben) |
+| `setStatus(AjaxStatus)` | `AjaxStatus::Success`, `AjaxStatus::Warning` oder `AjaxStatus::Error` |
+| `setConfirmationMessage()`, `setInfoMessage()`, `setWarningMessage()`, `setErrorMessage()` | Meldungen im Buchungstool anzeigen (allgemein: `setMessage(MessageType, …)`) |
+| `toArray()` | JSON der Antwort; eine Fehlermeldung ersetzt Info- und Bestätigungsmeldung |
 
 [← Zurück zur README](../README.md)

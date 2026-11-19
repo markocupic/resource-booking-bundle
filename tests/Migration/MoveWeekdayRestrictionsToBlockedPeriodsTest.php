@@ -18,6 +18,8 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use Doctrine\DBAL\Schema\Column;
 use Markocupic\ResourceBookingBundle\Migration\MoveWeekdayRestrictionsToBlockedPeriods\MoveWeekdayRestrictionsToBlockedPeriods;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
 class MoveWeekdayRestrictionsToBlockedPeriodsTest extends TestCase
@@ -40,7 +42,7 @@ class MoveWeekdayRestrictionsToBlockedPeriodsTest extends TestCase
     {
         $inserts = [];
 
-        $connection = $this->connection(null, 3);
+        $connection = $this->connectionMock(null, 3);
         $connection
             ->method('fetchAllAssociative')
             ->willReturn([
@@ -82,7 +84,7 @@ class MoveWeekdayRestrictionsToBlockedPeriodsTest extends TestCase
         // Werkraum and Turnhalle: saturday and sunday
         $this->assertSame('Nicht buchbare Wochentage: Samstag, Sonntag', $inserts[0]['title']);
         $this->assertSame('Nicht buchbar', $inserts[0]['description']);
-        $this->assertSame(['1', '2'], unserialize($inserts[0]['resources']));
+        $this->assertSame('1,2', $inserts[0]['resources']);
         $this->assertSame('resources', $inserts[0]['scope']);
         $this->assertSame(0, $inserts[0]['dateTo']);
         $this->assertSame(
@@ -94,14 +96,30 @@ class MoveWeekdayRestrictionsToBlockedPeriodsTest extends TestCase
         );
 
         // Aula: sunday
-        $this->assertSame(['3'], unserialize($inserts[1]['resources']));
+        $this->assertSame('3', $inserts[1]['resources']);
         $this->assertSame([['weekday' => 'sunday', 'timeFrom' => '', 'timeTo' => '']], unserialize($inserts[1]['blockedTimes']));
     }
 
     /**
      * @param array<string, Column>|null $resourceColumns
      */
-    private function connection(array|null $resourceColumns, int $restrictedCount): Connection
+    private function connection(array|null $resourceColumns, int $restrictedCount): Connection&Stub
+    {
+        $stub = $this->createStub(Connection::class);
+        $this->configureConnection($stub, $resourceColumns, $restrictedCount);
+
+        return $stub;
+    }
+
+    private function connectionMock(array|null $resourceColumns, int $restrictedCount): Connection&MockObject
+    {
+        $mock = $this->createMock(Connection::class);
+        $this->configureConnection($mock, $resourceColumns, $restrictedCount);
+
+        return $mock;
+    }
+
+    private function configureConnection(Connection&Stub $connection, array|null $resourceColumns, int $restrictedCount): void
     {
         $column = $this->createStub(Column::class);
 
@@ -120,7 +138,6 @@ class MoveWeekdayRestrictionsToBlockedPeriodsTest extends TestCase
             )
         ;
 
-        $connection = $this->createMock(Connection::class);
         $connection
             ->method('createSchemaManager')
             ->willReturn($schemaManager)
@@ -130,7 +147,5 @@ class MoveWeekdayRestrictionsToBlockedPeriodsTest extends TestCase
             ->method('fetchOne')
             ->willReturn($restrictedCount)
         ;
-
-        return $connection;
     }
 }

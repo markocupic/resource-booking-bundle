@@ -129,7 +129,7 @@ class Configuration implements ConfigurationInterface
                         ->defaultTrue()
                     ->end()
                     ->arrayNode('permitted_form_fields')
-                        ->info('Custom form fields of the booking form have to be registered here. bookingDescription, itemsBooked and bookingRepeatStopWeekTstamp are always permitted.')
+                        ->info('Custom form fields of the booking form have to be registered here. The fields of the bundle (bookingDescription, requestedItems, repeatUntil, slots) are always permitted.')
                         ->scalarPrototype()->end()
                         ->defaultValue([])
                     ->end()

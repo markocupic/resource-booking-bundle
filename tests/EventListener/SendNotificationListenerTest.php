@@ -21,6 +21,7 @@ use Contao\Model\Collection;
 use Contao\ModuleModel;
 use Contao\PageModel;
 use Contao\TestCase\ContaoTestCase;
+use Markocupic\ResourceBookingBundle\AppState\AppConfig;
 use Markocupic\ResourceBookingBundle\AppState\AppState;
 use Markocupic\ResourceBookingBundle\Event\PostBookingEvent;
 use Markocupic\ResourceBookingBundle\Event\PostCancellingEvent;
@@ -111,7 +112,7 @@ class SendNotificationListenerTest extends ContaoTestCase
             ->willReturn([$booking])
         ;
 
-        $appState = new AppState('33_0', $this->createStub(ModuleModel::class), $this->createStub(PageModel::class), null, null, [], 0, 0, 0, 'de-CH');
+        $appState = new AppState('33_0', $this->createStub(ModuleModel::class), $this->createStub(PageModel::class), null, null, new AppConfig(), 'monday', 0, 0, 0, 'de-CH');
 
         $event = $this->createStub($eventClass);
         $event

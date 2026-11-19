@@ -98,14 +98,14 @@ $GLOBALS['TL_DCA']['tl_resource_booking_time_slot'] = [
             'sql'       => ['type' => 'integer', 'length' => 10, 'notnull' => true, 'unsigned' => true, 'default' => 0],
         ],
         'weekdays'    => [
-            'default'   => RbbConfig::RBB_WEEKDAYS,
+            'default'   => implode(',', RbbConfig::RBB_WEEKDAYS),
             'exclude'   => true,
             'filter'    => true,
             'inputType' => 'checkbox',
             'options'   => RbbConfig::RBB_WEEKDAYS,
             'reference' => &$GLOBALS['TL_LANG']['MSC']['DAYS_LONG'],
-            'eval'      => ['mandatory' => true, 'multiple' => true, 'tl_class' => 'clr'],
-            'sql'       => 'blob NULL',
+            'eval'      => ['mandatory' => true, 'multiple' => true, 'csv' => ',', 'tl_class' => 'clr'],
+            'sql'       => ['type' => 'text', 'notnull' => false],
         ],
         'cssID'       => [
             'exclude'   => true,

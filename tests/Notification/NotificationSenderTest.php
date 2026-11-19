@@ -25,6 +25,7 @@ use Markocupic\ResourceBookingBundle\Notification\TokenBuilder;
 use Markocupic\ResourceBookingBundle\NotificationType\BookingNotificationType;
 use Markocupic\ResourceBookingBundle\NotificationType\CancellationNotificationType;
 use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
@@ -36,7 +37,7 @@ class NotificationSenderTest extends ContaoTestCase
 
     public function testSendsTheNotificationOfTheResource(): void
     {
-        $notificationCenter = $this->getNotificationCenter();
+        $notificationCenter = $this->getNotificationCenterMock();
         $notificationCenter
             ->expects($this->once())
             ->method('sendNotification')
@@ -54,7 +55,7 @@ class NotificationSenderTest extends ContaoTestCase
 
     public function testSendsTheCancellationNotificationOfTheResource(): void
     {
-        $notificationCenter = $this->getNotificationCenter();
+        $notificationCenter = $this->getNotificationCenterMock();
         $notificationCenter
             ->expects($this->once())
             ->method('sendNotification')
@@ -66,7 +67,7 @@ class NotificationSenderTest extends ContaoTestCase
 
     public function testSendsNothingIfTheResourceHasNoNotification(): void
     {
-        $notificationCenter = $this->getNotificationCenter();
+        $notificationCenter = $this->getNotificationCenterMock();
         $notificationCenter
             ->expects($this->never())
             ->method('sendNotification')
@@ -77,7 +78,7 @@ class NotificationSenderTest extends ContaoTestCase
 
     public function testSendsNothingWithoutBookingsOrResource(): void
     {
-        $notificationCenter = $this->getNotificationCenter();
+        $notificationCenter = $this->getNotificationCenterMock();
         $notificationCenter
             ->expects($this->never())
             ->method('sendNotification')
@@ -98,7 +99,7 @@ class NotificationSenderTest extends ContaoTestCase
 
     public function testListenersCanCancelTheNotification(): void
     {
-        $notificationCenter = $this->getNotificationCenter();
+        $notificationCenter = $this->getNotificationCenterMock();
         $notificationCenter
             ->expects($this->never())
             ->method('sendNotification')
@@ -119,7 +120,7 @@ class NotificationSenderTest extends ContaoTestCase
 
     public function testListenersCanChangeTheTokensTheNotificationAndTheLocale(): void
     {
-        $notificationCenter = $this->getNotificationCenter([11 => 'A', 21 => 'B']);
+        $notificationCenter = $this->getNotificationCenterMock([11 => 'A', 21 => 'B']);
         $notificationCenter
             ->expects($this->once())
             ->method('sendNotification')
@@ -170,7 +171,7 @@ class NotificationSenderTest extends ContaoTestCase
 
     public function testDoesNotSendANotificationOfAnotherType(): void
     {
-        $notificationCenter = $this->getNotificationCenter([]);
+        $notificationCenter = $this->getNotificationCenterMock([]);
         $notificationCenter
             ->expects($this->never())
             ->method('sendNotification')
@@ -207,15 +208,28 @@ class NotificationSenderTest extends ContaoTestCase
     /**
      * @param array<int, string>|null $notifications notifications of the requested type (id => title)
      */
-    private function getNotificationCenter(array|null $notifications = null): NotificationCenter&MockObject
+    private function getNotificationCenter(array|null $notifications = null): NotificationCenter&Stub
     {
-        $notificationCenter = $this->createMock(NotificationCenter::class);
+        $stub = $this->createStub(NotificationCenter::class);
+        $this->configureGetNotificationCenter($stub, $notifications);
+
+        return $stub;
+    }
+
+    private function getNotificationCenterMock(array|null $notifications = null): NotificationCenter&MockObject
+    {
+        $mock = $this->createMock(NotificationCenter::class);
+        $this->configureGetNotificationCenter($mock, $notifications);
+
+        return $mock;
+    }
+
+    private function configureGetNotificationCenter(NotificationCenter&Stub $notificationCenter, array|null $notifications = null): void
+    {
         $notificationCenter
             ->method('getNotificationsForNotificationType')
             ->willReturnCallback(static fn (string $type): array => $notifications ?? (BookingNotificationType::NAME === $type ? [11 => 'Booking'] : [12 => 'Cancellation']))
         ;
-
-        return $notificationCenter;
     }
 
     private function getSender(NotificationCenter $notificationCenter, int $bookingNotification = 11, EventDispatcher|null $eventDispatcher = null, LoggerInterface|null $logger = null): NotificationSender

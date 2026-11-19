@@ -17,6 +17,7 @@ namespace Markocupic\ResourceBookingBundle\AjaxController;
 use Markocupic\ResourceBookingBundle\AppState\AppState;
 use Markocupic\ResourceBookingBundle\DependencyInjection\Attribute\AsAjaxController;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
+use Markocupic\ResourceBookingBundle\Response\AjaxStatus;
 use Markocupic\ResourceBookingBundle\WeekCalendar\CalendarDataBuilder;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -37,8 +38,8 @@ final class RefreshDataController implements ControllerInterface
      */
     public function generateResponse(Request $request, AjaxResponse $ajaxResponse): AjaxResponse
     {
-        $ajaxResponse->setStatus(AjaxResponse::STATUS_SUCCESS);
-        $ajaxResponse->setDataFromArray($this->calendarDataBuilder->build(AppState::fromRequest($request), $ajaxResponse));
+        $ajaxResponse->setStatus(AjaxStatus::Success);
+        $ajaxResponse->setResult($this->calendarDataBuilder->build(AppState::fromRequest($request), $ajaxResponse));
 
         return $ajaxResponse;
     }

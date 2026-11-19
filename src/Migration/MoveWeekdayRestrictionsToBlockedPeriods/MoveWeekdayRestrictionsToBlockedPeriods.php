@@ -21,6 +21,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
 use Markocupic\ResourceBookingBundle\Config\RbbConfig;
 use Markocupic\ResourceBookingBundle\Migration\BlockedPeriodMigrationTrait;
+use Markocupic\ResourceBookingBundle\Util\CsvList;
 
 /**
  * The bookable weekdays of a resource (tl_resource_booking_resource.restrictWeekdays/
@@ -119,7 +120,7 @@ class MoveWeekdayRestrictionsToBlockedPeriods extends AbstractMigration
                 'blockedTimes' => serialize(array_map(static fn (string $weekday): array => ['weekday' => $weekday, 'timeFrom' => '', 'timeTo' => ''], $weekdays)),
                 'scope' => 'resources',
                 'resourceTypes' => null,
-                'resources' => serialize(array_map('strval', $resourceIds)),
+                'resources' => CsvList::toString($resourceIds),
                 'published' => 1,
             ]);
 

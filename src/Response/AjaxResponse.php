@@ -14,162 +14,148 @@ declare(strict_types=1);
 
 namespace Markocupic\ResourceBookingBundle\Response;
 
-class AjaxResponse
+use Markocupic\ResourceBookingBundle\Api\Output\ApiResultInterface;
+
+/**
+ * Response of an Ajax request of the week calendar. The Ajax controllers set the status,
+ * the messages and the result; listeners of the AjaxResponseEvent may add or change data.
+ *
+ * JSON (toArray()):
+ *
+ *     {
+ *         "status": "success"|"warning"|"error"|null,
+ *         "messages": {"warning": …, "error": …, "confirm": …, "info": …},
+ *         "fieldErrors": {"<field>": "<message>"},
+ *         "data": {…},
+ *         "action": "<action>"
+ *     }
+ */
+final class AjaxResponse implements \JsonSerializable
 {
-    public const MESSAGE_CONFIRM = 'confirm';
+    private AjaxStatus|null $status = null;
 
-    public const MESSAGE_ERROR = 'error';
+    /**
+     * @var array<string, string>
+     */
+    private array $messages = [];
 
-    public const MESSAGE_INFO = 'info';
+    /**
+     * Messages per form field (field name => message), see FieldValidationException.
+     *
+     * @var array<string, string>
+     */
+    private array $fieldErrors = [];
 
-    public const MESSAGE_WARNING = 'warning';
+    /**
+     * @var array<string, mixed>
+     */
+    private array $data = [];
 
-    public const STATUS_ERROR = 'error';
-
-    public const STATUS_SUCCESS = 'success';
-
-    public const STATUS_WARNING = 'warning';
-
-    private array $arrData;
-
-    public function __construct(string $action)
+    public function __construct(private string $action)
     {
-        $this->arrData = [
-            'status' => null,
-            'messages' => [
-                static::MESSAGE_WARNING => null,
-                static::MESSAGE_ERROR => null,
-                static::MESSAGE_CONFIRM => null,
-                static::MESSAGE_INFO => null,
-            ],
-            // Messages per form field (field name => message), see FieldValidationException
-            'fieldErrors' => [],
-            'data' => [],
-        ];
-
-        $this->setAction($action);
     }
 
-    public function setAction(string $strAction): void
+    public function getAction(): string
     {
-        $this->arrData['action'] = $strAction;
+        return $this->action;
     }
 
-    public function prepareBeforeSend(bool $delInfAndConfMsgIfThereAreErrMsg = false): self
+    public function setAction(string $action): void
     {
-        if ($delInfAndConfMsgIfThereAreErrMsg && $this->hasErrorMessage()) {
-            $this->deleteInfoMessage();
-            $this->deleteConfirmationMessage();
-        }
-
-        return $this;
+        $this->action = $action;
     }
 
-    public function hasErrorMessage(): bool
+    public function getStatus(): AjaxStatus|null
     {
-        return !empty($this->arrData['messages'][static::MESSAGE_ERROR]);
+        return $this->status;
     }
 
-    public function deleteInfoMessage(): void
+    public function setStatus(AjaxStatus $status): void
     {
-        $this->arrData['messages'][static::MESSAGE_INFO] = null;
+        $this->status = $status;
     }
 
-    public function deleteConfirmationMessage(): void
+    public function getMessage(MessageType $type): string|null
     {
-        $this->arrData['messages'][static::MESSAGE_CONFIRM] = null;
-    }
-
-    public function getAll(): array
-    {
-        return $this->arrData;
+        return $this->messages[$type->value] ?? null;
     }
 
     /**
-     * @throws \Exception
+     * An empty message counts as no message.
      */
-    public function setStatus(string $strStatus): void
+    public function hasMessage(MessageType $type): bool
     {
-        if ($strStatus !== static::STATUS_ERROR && $strStatus !== static::STATUS_SUCCESS && $strStatus !== static::STATUS_WARNING) {
-            throw new \Exception(\sprintf('Status must be either %s, %s or %s and can not be "%s"', static::STATUS_ERROR, static::STATUS_WARNING, static::STATUS_SUCCESS, $strStatus));
-        }
-
-        $this->arrData['status'] = $strStatus;
+        return '' !== ($this->messages[$type->value] ?? '');
     }
 
-    public function getStatus(): string|null
+    public function setMessage(MessageType $type, string $message): void
     {
-        return $this->arrData['status'];
+        $this->messages[$type->value] = $message;
     }
 
-    public function getAction(): string|null
+    public function removeMessage(MessageType $type): void
     {
-        return $this->arrData['action'] ?? null;
+        unset($this->messages[$type->value]);
     }
 
     public function getConfirmationMessage(): string|null
     {
-        return $this->arrData['messages'][static::MESSAGE_CONFIRM];
+        return $this->getMessage(MessageType::Confirm);
     }
 
     public function hasConfirmationMessage(): bool
     {
-        return !empty($this->arrData['messages'][static::MESSAGE_CONFIRM]);
+        return $this->hasMessage(MessageType::Confirm);
     }
 
-    public function setConfirmationMessage(string $strMessage): void
+    public function setConfirmationMessage(string $message): void
     {
-        $this->arrData['messages'][static::MESSAGE_CONFIRM] = $strMessage;
-    }
-
-    public function getInfoMessage(): string|null
-    {
-        return $this->arrData['messages'][static::MESSAGE_INFO];
-    }
-
-    public function hasInfoMessage(): bool
-    {
-        return !empty($this->arrData['messages'][static::MESSAGE_INFO]);
-    }
-
-    public function setInfoMessage(string $strMessage): void
-    {
-        $this->arrData['messages'][static::MESSAGE_INFO] = $strMessage;
-    }
-
-    public function deleteErrorMessage(): void
-    {
-        $this->arrData['messages'][static::MESSAGE_ERROR] = null;
+        $this->setMessage(MessageType::Confirm, $message);
     }
 
     public function getErrorMessage(): string|null
     {
-        return $this->arrData['messages'][static::MESSAGE_ERROR];
+        return $this->getMessage(MessageType::Error);
     }
 
-    public function setErrorMessage(string $strMessage): void
+    public function hasErrorMessage(): bool
     {
-        $this->arrData['messages'][static::MESSAGE_ERROR] = $strMessage;
+        return $this->hasMessage(MessageType::Error);
     }
 
-    public function deleteWarningMessage(): void
+    public function setErrorMessage(string $message): void
     {
-        $this->arrData['messages'][static::MESSAGE_WARNING] = null;
+        $this->setMessage(MessageType::Error, $message);
+    }
+
+    public function getInfoMessage(): string|null
+    {
+        return $this->getMessage(MessageType::Info);
+    }
+
+    public function hasInfoMessage(): bool
+    {
+        return $this->hasMessage(MessageType::Info);
+    }
+
+    public function setInfoMessage(string $message): void
+    {
+        $this->setMessage(MessageType::Info, $message);
     }
 
     public function getWarningMessage(): string|null
     {
-        return $this->arrData['messages'][static::MESSAGE_WARNING];
+        return $this->getMessage(MessageType::Warning);
     }
 
     public function hasWarningMessage(): bool
     {
-        return !empty($this->arrData['messages'][static::MESSAGE_WARNING]);
+        return $this->hasMessage(MessageType::Warning);
     }
 
-    public function setWarningMessage(string $strMessage): void
+    public function setWarningMessage(string $message): void
     {
-        $this->arrData['messages'][static::MESSAGE_WARNING] = $strMessage;
+        $this->setMessage(MessageType::Warning, $message);
     }
 
     /**
@@ -178,7 +164,7 @@ class AjaxResponse
      */
     public function setFieldError(string $field, string $message): void
     {
-        $this->arrData['fieldErrors'][$field] = $message;
+        $this->fieldErrors[$field] = $message;
     }
 
     /**
@@ -186,31 +172,79 @@ class AjaxResponse
      */
     public function getFieldErrors(): array
     {
-        return $this->arrData['fieldErrors'];
+        return $this->fieldErrors;
     }
 
     public function hasFieldErrors(): bool
     {
-        return [] !== $this->arrData['fieldErrors'];
+        return [] !== $this->fieldErrors;
+    }
+
+    /**
+     * Sets the result of the action (typed data of the JSON response). Listeners of the
+     * AjaxResponseEvent can add further data with setData() or mergeData().
+     */
+    public function setResult(ApiResultInterface $result): void
+    {
+        $this->mergeData($result->toArray());
     }
 
     public function setData(string $key, mixed $value): void
     {
-        $this->arrData['data'][$key] = $value;
+        $this->data[$key] = $value;
     }
 
     public function getData(string $key): mixed
     {
-        if (isset($this->arrData['data'][$key])) {
-            return $this->arrData['data'][$key];
-        }
-
-        return null;
+        return $this->data[$key] ?? null;
     }
 
-    public function setDataFromArray(array $aValues): void
+    /**
+     * All data of the response (JSON key "data").
+     *
+     * @return array<string, mixed>
+     */
+    public function getAllData(): array
     {
-        $aBefore = $this->arrData['data'];
-        $this->arrData['data'] = array_merge($aBefore, $aValues);
+        return $this->data;
+    }
+
+    /**
+     * Adds the values to the data; existing keys are overwritten.
+     *
+     * @param array<string, mixed> $values
+     */
+    public function mergeData(array $values): void
+    {
+        $this->data = [...$this->data, ...$values];
+    }
+
+    /**
+     * The JSON of the response. An error message replaces the info and confirmation
+     * messages (e.g. "Booking successful" set by a listener before the error occurred).
+     *
+     * @return array{status: string|null, messages: array<string, string|null>, fieldErrors: array<string, string>, data: array<string, mixed>, action: string}
+     */
+    public function toArray(): array
+    {
+        $hasError = $this->hasErrorMessage();
+        $messages = [];
+
+        foreach (MessageType::cases() as $type) {
+            $messages[$type->value] = $hasError && \in_array($type, [MessageType::Info, MessageType::Confirm], true) ? null : $this->getMessage($type);
+        }
+
+        return [
+            'status' => $this->status?->value,
+            'messages' => $messages,
+            'fieldErrors' => $this->fieldErrors,
+            'data' => $this->data,
+            'action' => $this->action,
+        ];
+    }
+
+    public function jsonSerialize(): array
+    {
+        return $this->toArray();
     }
 }

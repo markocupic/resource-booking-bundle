@@ -62,7 +62,7 @@ noch von Migrationen gelesen.
   Leere Uhrzeiten = ganzer Tag. Keine Zeilen = der ganze Zeitraum ist gesperrt. Ungültige Zeilen werden ignoriert.
 - Beim Speichern: «bis» muss nach «von» liegen, Format 00:00–24:00 (`RBB.BE.timeToBeforeTimeFrom`,
   `RBB.BE.invalidBlockedTime`); vertauschte Daten werden getauscht; Hinweis auf betroffene zukünftige Buchungen.
-- Logik: `Util\ResourceBookingRestriction::isInBlockedPeriod()` / `getBlockedTimes()`;
+- Logik: `Restriction\BlockedPeriod::covers()` (`fromRow()`), Sperrzeiten als `Restriction\BlockedTime`;
   `ResourceBookingBlockedPeriodModel::findPublishedRows()` ist pro Request gecacht.
 - Früher gab es an der Ressource «Buchungen nur an ausgewählten Wochentagen» – das ist jetzt eine Sperrzeit.
 
@@ -72,21 +72,36 @@ Ein Slot ist buchbar (`Slot::isBookable()`, im Kalender mit 1 angefragten Einhei
 
 1. `isValidTimeSlot()`: Zeitfenster und Zeitplan veröffentlicht, Zeitplan = Zeitplan der Ressource, Start/Ende
    passen exakt zum Zeitfenster (auch bei Sommerzeit-Wechsel und Wiederholungen).
-2. `hasValidItemCount()`: `itemsBooked` ganze Zahl von 1 bis `itemsAvailable`.
+2. `hasValidItemCount()`: `requestedItems` ganze Zahl von 1 bis `itemsAvailable`.
 3. Nicht vom Admin gesperrt, im erlaubten Zeitraum (`weeksBack`/`weeksAhead`/`bookableUntil`, nicht in der
    Vergangenheit), Zeitfenster am Wochentag verfügbar, nicht in einer Sperrzeit, genug Stück frei.
 
-Request-Validierung: `Validator\BookingRequestValidator`. Systemfelder (`PROTECTED_BOOKING_FIELDS`: id, pid,
-member, confirmed, startTime, endTime, bookingUuid, …) werden nie aus dem Request übernommen, auch nicht
-über `permitted_form_fields`. Fehlerreihenfolge in
-`BookingTrait`: invalidTimeSlot → invalidItemsBooked → outsideBookingPeriod → invalidStartOrEndTime →
+Eingabe: typisierte Objekte in `Api\Input` mit `fromRequest()` – `CalendarQuery` (resType, res, date, initial),
+`BookingInput` (resourceId, slots[], requestedItems, repeatUntil, bookingDescription, formFields),
+`CancelBookingInput` (id aus der Route, deleteRepetitions). Parameter nur dort lesen, nie direkt im Controller.
+Ausgabe: typisierte Ergebnisse in `Api\Output` (`CalendarData`, `BookingPreview`, `BookingResult`, `CancelResult`),
+gesetzt mit `AjaxResponse::setResult()`. `CalendarData` schickt nur Whitelist-Felder (`RESOURCE_FIELDS`,
+`RESOURCE_TYPE_FIELDS`, `MEMBER_FIELDS`), nie ganze DB-Zeilen; neue Frontend-Felder dort ergänzen (Test
+`CalendarDataTest` prüft die Schlüssel). `setData()` nur noch für Listener auf `AjaxResponseEvent`.
+`AjaxResponse` ist typisiert (Status `Response\AjaxStatus`, Meldungen `Response\MessageType`); JSON über `toArray()`,
+Listener lesen/ändern Daten mit `getAllData()`/`mergeData()`.
+Zeit: aktuelle Zeit in Services nur über `ClockInterface` (optionaler Konstruktor-Parameter `= new NativeClock()`),
+kein `time()`; Tests mit `MockClock`. Wochen heissen `…WeekStart` (erster Tag der Woche), z. B. `activeWeekStart`.
+Speichern/Laden/Löschen von Buchungen nur über `Booking\BookingRepository` (Contao-Models, Sperre
+`lockResource()`), Stornoregeln in `Booking\CancellationRules`; die Ajax-Controller steuern nur den Ablauf.
+Buchungsablauf: `Booking\BookingRequestHandler` (`getResource()`, `createSlots()` inkl. Wiederholungen und
+Buchungsdaten, `getErrorKey()`); speichern, Transaktion und Events im `BookingController`.
+Request-Validierung: `Validator\BookingRequestValidator` (von `BookingInput::fromRequest()` aufgerufen). Systemfelder
+(`PROTECTED_BOOKING_FIELDS`: id, pid, member, confirmed, startTime, endTime, bookingUuid, …) werden nie aus dem
+Request übernommen, auch nicht über `permitted_form_fields`; eigene Felder überschreiben keine Felder des Bundles.
+Fehlerreihenfolge in `BookingRequestHandler::getErrorKey()`: invalidTimeSlot → invalidItemsBooked → outsideBookingPeriod → invalidStartOrEndTime →
 timeSlotNotAvailableOnWeekday → slotInBlockedPeriod → ausgebucht.
 
 Missbrauchsschutz beim Buchen: Ressource wird im `BookingController` per `SELECT … FOR UPDATE` gesperrt (zuerst
 Transaktion + Sperre, erst danach lesen – sonst alter Snapshot); Ressource muss zu den
-Ressourcen-Typen des Moduls gehören (`AbstractController::isResourceOfModule()`); `bookingDateSelection` max. 100
+Ressourcen-Typen des Moduls gehören (`BookingRequestHandler::isResourceOfModule()`); `slots` max. 100
 Einträge im Format `id-start-ende-woche` (`BookingRequestValidator::parseSlotSelection()`); Wiederholungen bis
-höchstens zur letzten buchbaren Woche (`BookingTrait::limitBookingRepeatStopWeek()`, max. 520). Stornieren nur bis
+höchstens zur letzten buchbaren Woche (`BookingRequestHandler::limitRepeatUntil()`, max. 520). Stornieren nur bis
 zum Ende der Buchung (`CancelController::isCancelableByTime()`), vergangene Serientermine bleiben.
 
 Neue Buchungen: `confirmed` = `autoConfirm` der Ressource. Unbestätigte Buchungen: Zelle orange,
@@ -111,7 +126,7 @@ Neue Buchungen: `confirmed` = `autoConfirm` der Ressource. Unbestätigte Buchung
 - Erlaubte Felder: Bundle-Konfiguration `displayable_member_fields` (Standard firstname, lastname, company, city,
   phone) und `displayable_booking_fields` (Standard title, description); nur diese stehen im Modul zur Auswahl
   (`DataContainer\Module`), und nur Felder, die im Modul gewählt **und** konfiguriert sind, gehen raus
-  (`Utils::getDisplayedMemberFields/BookingFields()`). `RBB_FORBIDDEN_MEMBER_FIELDS` (password, secret, backupCodes,
+  (`WeekCalendar\DisplayedFields::getMemberFields/getBookingFields()`). `RBB_FORBIDDEN_MEMBER_FIELDS` (password, secret, backupCodes,
   trustedTokenVersion, session) sind nie erlaubt.
 - Pro Buchung: `id`, `pid`, `itemsBooked`, `bookingTime`, `confirmed`, `canCancel`, `bookedByFullname`,
   `bookedByAnonymous`, `bookedBy<Feld>`, `booking<Feld>` – keine Originalfelder. Buchungsvorschau ohne fremde Buchungen.
@@ -151,7 +166,7 @@ Neue Buchungen: `confirmed` = `autoConfirm` der Ressource. Unbestätigte Buchung
   `sessionStorage` (`rbb:<Pfad+Query>:<moduleKey>`), Direktlinks per `?resType=`, `?res=`, `?date=`. Modul-Schlüssel
   `<id>_<index>` (`AppState\ModuleKeyGenerator`, Zähler am Main-Request) – mehrere Module pro Seite. Nie wieder
   Zustand in Services oder der Session ablegen; Abhängigkeiten per Konstruktor.
-- `tl_resource_booking.bookingSource` (`Booking\BookingSource`): `week_calendar` (setzt `BookingTrait`, geschützt in
+- `tl_resource_booking.bookingSource` (`Booking\BookingSource`): `week_calendar` (setzt `BookingRequestHandler`, geschützt in
   `BookingRequestValidator::PROTECTED_BOOKING_FIELDS`), `backend` (DCA-Default), Erweiterungen eigener Wert + Label in
   `TL_LANG.tl_resource_booking.bookingSources`. Nicht in der Palette (nur Filter/Show).
 - Benachrichtigungen (terminal42/notification_center, ehemals resource-booking-notification-bundle): Typen
@@ -171,12 +186,23 @@ Neue Buchungen: `confirmed` = `autoConfirm` der Ressource. Unbestätigte Buchung
 - Datenzugriff für Slots nur über `Slot\SlotDataProvider` (Pflicht in der `SlotFactory`, pro Request gecacht,
   `ResetInterface`): Mitglied, Zeitfenster, Zeitplan, Buchungen, Sperrzeiten; `WeekTableBuilder` lädt die Buchungen der Woche vorab (`SlotFactory::preloadBookings()`, eine Abfrage).
   Keine Abfragen pro Zelle einführen.
-- Zentrale Regeln (statisch, testbar): `Util\ResourceBookingRestriction` (`getBeginWeek`, `isValidTimeSlot`,
-  `isTimeSlotAvailableOnWeekday`, `isInBlockedPeriod`, `getWeeksBack/Ahead`, `getBookableUntil`,
-  `isAutoConfirmEnabled`, `timeToSeconds`).
-- Datum: `Util\DateHelper`. **Nie** `strtotime('<weekday> this week')` für den Wochenbeginn verwenden (PHP zählt
+- Zentrale Regeln (Namespace `Restriction`, testbar):
+  - `ResourceRules` (unveränderlich, `fromModel()`/`fromRow()`): `weeksBack`, `weeksAhead`, `bookableUntil`,
+    `autoConfirm`, `itemsAvailable`; Standardwerte bei leeren Feldern. `Slot::$resource` ist ein `ResourceRules`.
+  - `BlockedPeriod` (unveränderlich, `fromRow()`): `appliesTo()`, `covers()`, `getLabel()`; `BlockedTime` für die Zeiten.
+    `SlotDataProvider::getBlockedPeriods()` liefert `list<BlockedPeriod>`.
+  - `TimeSlotRules` (statisch, Modell oder Zeile): `getBeginWeek()`, `isAvailableOnWeekday()`, `isValidTimeSlot()`.
+  - `Util\TimeOfDay::toSeconds()`: Uhrzeit → Sekunden seit Mitternacht.
+- Listenfelder (`weekdays`, `resourceTypes`, `resources` der Sperrzeiten, `resourceBooking_*` des Moduls) sind CSV
+  (`'eval' => ['csv' => ',']`), nie `StringUtil::deserialize()`: lesen mit `Util\CsvList::parse()`/`parseIds()`
+  (liest auch noch serialisierte Altdaten), schreiben mit `CsvList::toString()`. Migration `ConvertSerializedListsToCsv`.
+  `blockedTimes`/`blockedSlots` bleiben serialisiert.
+  - Neue Regeln zu Ressource/Sperrzeit gehören in diese Objekte, nicht in Arrays.
+- Datum: `Util\DateHelper` (nur statisch, immer mit Zeitstempel; die aktuelle Zeit kommt aus der `ClockInterface`).
+  **Nie** `strtotime('<weekday> this week')` für den Wochenbeginn verwenden (PHP zählt
   die Woche immer ab Montag → bei Sonntag falscher Tag). Immer `DateHelper::getFirstDayOfWeek()`.
-- `Utils::getAppConfig()` liefert `beginWeek` (aus dem Zeitplan der aktiven Ressource) und `permittedFormFields`.
+- App-Konfiguration: `AppState\AppConfig` (Objekt, über `AppConfigResolver::getAppConfig($module)`). Der Wochenbeginn
+  kommt aus dem Zeitplan der aktiven Ressource (`AppConfigResolver::getBeginWeek()`, `AppState::$beginWeek`).
 - Events für Entwickler: siehe `docs/EVENTS.md` (Registrierung über Klassennamen, keine `rbb.event.*`-Namen mehr).
 
 ## Migrationen (`src/Migration`)
@@ -256,13 +282,36 @@ Alte Spalten erst nach erfolgreicher Migration löschen. Jede Verhaltensänderun
   entfernte `ParamReturnAndVarTagMalformsFixer` → ggf. `<13.3.16` verwenden.
 - `composer phpstan`.
 - Neue Regeln immer mit Tests absichern (Restriction-, Slot-, Validator-, Migrations-Tests vorhanden).
+- Funktionstests in `tests/Functional` (Suite `functional`, eigene Suite `unit` für den Rest): pro Test eine
+  neue SQLite-Datenbank im Arbeitsspeicher, Tabellen aus den DCA-Dateien (`Tests\Functional\DcaSchema`,
+  Basisklasse `FunctionalTestCase` mit `insertRow()`, `fetchIds()`, `createRealAdapter()`). Kein DB-Server
+  nötig, braucht `pdo_sqlite`. Zeitzone Europe/Zurich, Zeit über `MockClock`.
+  - Neue SQL-Definitionen im DCA im Array-Format; Strings kennt `DcaSchema` nur als `(medium)text/blob NULL`.
+  - SQLite kennt kein `SELECT … FOR UPDATE` (DBAL wirft `NotSupported`) und ist bei Spaltentypen lockerer.
+  - Nur `--testsuite unit` oder `--testsuite functional` ausführen: `composer unit-tests -- --testsuite unit`.
+- Integrationstests in `tests/Integration` (Suite `integration`): echter MySQL/MariaDB-Server, Symfony-Kernel mit
+  Contao (`tests/Integration/app/AppKernel.php`, Bundles und Konfiguration wie im Test-Kernel von Contao 5.7),
+  Basisklasse `IntegrationTestCase` (erweitert `Contao\TestCase\FunctionalTestCase`). Tabellen aus allen DCA,
+  vor jedem Test geleert. Echte Contao-Models, `BookingController`/`CancelController` über `AjaxRequestHandler`.
+  - Verbindung aus `RBB_TEST_DATABASE_URL` (lokal angelegt mit `tools/phpunit/batch/create-test-database.bat`,
+    Windows-Benutzervariable); ohne Variable übersprungen. DB-Name muss «test» enthalten (wird geleert).
+  - CI: Job `integration` in `.github/workflows/ci.yml` startet MySQL auf dem Runner (root/root, DB `rbb_test`).
+  - Kernel-Cache in `sys_get_temp_dir()/rbb-integration-tests`; `IntegrationTestCase` löscht ihn einmal pro
+    Testlauf (sonst bleibt ein Container mit entfernten Services stehen: «Class … not found»).
+  - `sendApiRequest()` setzt vor jedem Request den Zustand zurück wie ein neuer HTTP-Request: Contao-Model-Registry,
+    `SlotDataProvider` (Mitglied, Zeitfenster, Buchungen) und den statischen Cache der Sperrzeiten. Sonst gelten
+    Daten früherer Requests oder Tests (gleiche IDs nach `TRUNCATE`).
+  - Abgedeckt: Buchen (`BookingTest`), Stornieren (`CancelBookingTest`), Buchungsregeln über Vorschau und Buchung
+    (`BookingRulesTest`), Wochenansicht und Datenschutz fremder Buchungen (`RefreshDataTest`), Fehlerantworten
+    (`ApiErrorTest`).
 
 ## Arbeitsweise mit Claude (Cowork)
 
 - Der Ordner ist über die Desktop-App verbunden; dort gibt es Node, aber kein PHP und Windows-`node_modules`
   (Encore läuft dort nicht). PHP-Lint und `npm run build` laufen deshalb in der Cloud-Arbeitsumgebung; die
-  gebauten CSS-Dateien werden zurückgeschrieben. Packagist ist dort gesperrt → PHPUnit läuft nur lokal beim
-  Entwickler; Logik wird mit kleinen PHP-Skripten geprüft.
+  gebauten CSS-Dateien werden zurückgeschrieben. Packagist ist dort gesperrt; GitHub ist erreichbar:
+  PHPUnit 12, DBAL 4 und die nötigen Symfony-/Contao-Teile lassen sich von GitHub klonen. Damit laufen dort die
+  Restriction-, Slot- und Funktionstests; die ganze Suite läuft nur lokal beim Entwickler.
 - Nach Änderungen an DCA, Sprachdateien oder Templates: `vendor/bin/contao-console cache:clear`; nach
   Schema-Änderungen: `contao-console contao:migrate`.
 - Commit-Messages: Englisch, Betreff im Imperativ, darunter Stichpunkte.

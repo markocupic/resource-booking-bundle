@@ -8,11 +8,24 @@
     <php>
         <ini name="display_errors" value="1" />
         <ini name="error_reporting" value="-1" />
+        <env name="KERNEL_CLASS" value="Markocupic\ResourceBookingBundle\Tests\Integration\app\AppKernel" />
+        <env name="APP_SECRET" value="rbb-integration-tests" />
     </php>
 
     <testsuites>
-        <testsuite name="Resource Booking Bundle">
+        <testsuite name="unit">
             <directory>../../tests</directory>
+            <exclude>../../tests/Functional</exclude>
+            <exclude>../../tests/Integration</exclude>
+        </testsuite>
+        <!-- Needs the PHP extension pdo_sqlite (SQLite database in memory, see tests/Functional/DcaSchema.php) -->
+        <testsuite name="functional">
+            <directory>../../tests/Functional</directory>
+        </testsuite>
+        <!-- Needs a MySQL/MariaDB test database: environment variable RBB_TEST_DATABASE_URL, otherwise skipped
+             (see tools/phpunit/batch/create-test-database.bat and tests/Integration/IntegrationTestCase.php) -->
+        <testsuite name="integration">
+            <directory>../../tests/Integration</directory>
         </testsuite>
     </testsuites>
 </phpunit>

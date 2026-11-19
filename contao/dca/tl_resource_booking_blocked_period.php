@@ -162,14 +162,14 @@ $GLOBALS['TL_DCA']['tl_resource_booking_blocked_period'] = [
             'exclude'    => true,
             'inputType'  => 'checkbox',
             'foreignKey' => 'tl_resource_booking_resource_type.title',
-            'eval'       => ['mandatory' => true, 'multiple' => true, 'tl_class' => 'clr'],
-            'sql'        => 'blob NULL',
+            'eval'       => ['mandatory' => true, 'multiple' => true, 'csv' => ',', 'tl_class' => 'clr'],
+            'sql'        => ['type' => 'text', 'notnull' => false],
         ],
         'resources'     => [
             'exclude'   => true,
             'inputType' => 'checkbox',
-            'eval'      => ['mandatory' => true, 'multiple' => true, 'tl_class' => 'clr'],
-            'sql'       => 'blob NULL',
+            'eval'      => ['mandatory' => true, 'multiple' => true, 'csv' => ',', 'tl_class' => 'clr'],
+            'sql'       => ['type' => 'text', 'notnull' => false],
         ],
         'resource'      => [
             'exclude'   => true,

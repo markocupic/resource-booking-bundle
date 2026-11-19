@@ -19,18 +19,23 @@ use Contao\Model\Collection;
 use Contao\ModuleModel;
 use Contao\PageModel;
 use Contao\TestCase\ContaoTestCase;
+use Markocupic\ResourceBookingBundle\AppState\AppConfig;
+use Markocupic\ResourceBookingBundle\AppState\AppConfigResolver;
 use Markocupic\ResourceBookingBundle\AppState\AppState;
 use Markocupic\ResourceBookingBundle\AppState\AppStateFactory;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceTypeModel;
-use Markocupic\ResourceBookingBundle\Util\DateHelper;
-use Markocupic\ResourceBookingBundle\Util\Utils;
 use Markocupic\ResourceBookingBundle\Util\WeekBoundaries;
 use Symfony\Component\HttpFoundation\Request;
 
 class AppStateFactoryTest extends ContaoTestCase
 {
-    private const APP_CONFIG = ['beginWeek' => 'monday', 'autoSelectFirstResource' => true, 'permittedFormFields' => []];
+    // Wednesday
+    private const NOW = '2026-11-04 12:00';
+
+    private const FIRST_WEEK = '2026-10-05 00:00';
+
+    private const LAST_WEEK = '2026-12-28 00:00';
 
     /**
      * @var array<int, ResourceBookingResourceTypeModel>
@@ -119,7 +124,7 @@ class AppStateFactoryTest extends ContaoTestCase
 
     public function testTheSingleResourceTypeIsSelectedIfTheAutoSelectionIsDisabled(): void
     {
-        $factory = $this->getFactory(['default' => ['autoSelectFirstResource' => false]]);
+        $factory = $this->getFactory(autoSelectFirstResource: false);
 
         // Two resource types: nothing is selected
         $this->assertSame([null, null], $factory->resolveSelection($this->getModule([7, 8]), 0, 0, true));
@@ -133,19 +138,32 @@ class AppStateFactoryTest extends ContaoTestCase
 
     public function testTheCurrentWeekIsDisplayedWithoutADate(): void
     {
-        $this->assertSame([1000, 500, 2000], $this->getFactory()->resolveWeeks(self::APP_CONFIG, null, 0, 1000));
+        $now = strtotime('2030-10-16 12:00');
+        [$activeWeek] = $this->getWeekFactory()->resolveWeeks('monday', null, 0, $now);
+
+        $this->assertSame(strtotime('2030-10-14 00:00'), $activeWeek);
     }
 
     public function testTheDateIsMovedToTheFirstDayOfItsWeek(): void
     {
-        // getFirstDayOfWeek() of the mocked DateHelper subtracts 5
-        $this->assertSame([1495, 500, 2000], $this->getFactory()->resolveWeeks(self::APP_CONFIG, null, 1500, 1000));
+        $now = strtotime('2030-10-16 12:00');
+        $factory = $this->getWeekFactory();
+
+        $this->assertSame(strtotime('2030-10-21 00:00'), $factory->resolveWeeks('monday', null, strtotime('2030-10-25 18:00'), $now)[0]);
+
+        // The timetable starts the week on sunday
+        $this->assertSame(strtotime('2030-10-20 00:00'), $factory->resolveWeeks('sunday', null, strtotime('2030-10-25 18:00'), $now)[0]);
     }
 
     public function testTheDisplayedWeekIsClampedToThePermittedWeeks(): void
     {
-        $this->assertSame([500, 500, 2000], $this->getFactory()->resolveWeeks(self::APP_CONFIG, null, 105, 1000));
-        $this->assertSame([2000, 500, 2000], $this->getFactory()->resolveWeeks(self::APP_CONFIG, null, 9005, 1000));
+        $now = strtotime('2030-10-16 12:00');
+        $first = strtotime('2030-10-07 00:00');
+        $last = strtotime('2030-12-30 00:00');
+        $factory = $this->getWeekFactory($first, $last);
+
+        $this->assertSame([$first, $first, $last], $factory->resolveWeeks('monday', null, strtotime('2029-01-01'), $now));
+        $this->assertSame([$last, $first, $last], $factory->resolveWeeks('monday', null, strtotime('2035-01-01'), $now));
     }
 
     public function testCreateBuildsTheAppState(): void
@@ -153,46 +171,51 @@ class AppStateFactoryTest extends ContaoTestCase
         $module = $this->getModule();
         $page = $this->createClassWithPropertiesStub(PageModel::class, ['id' => 5]);
 
-        $state = $this->getFactory()->create('33_1', $module, $page, ['resType' => '7', 'res' => '10', 'date' => '1500'], false, 'de_CH', 1000);
+        $state = $this->getFactory()->create('33_1', $module, $page, ['resType' => '7', 'res' => '10', 'date' => (string) strtotime('2026-11-20 10:00')], false, 'de_CH', strtotime(self::NOW));
 
         $this->assertSame('33_1', $state->moduleKey);
         $this->assertSame($module, $state->module);
         $this->assertSame($page, $state->page);
         $this->assertSame($this->types[7], $state->resourceType);
         $this->assertSame($this->resources[10], $state->resource);
-        $this->assertSame(self::APP_CONFIG, $state->appConfig);
-        $this->assertSame(1495, $state->activeWeekTstamp);
-        $this->assertSame(500, $state->firstPermittedWeekTstamp);
-        $this->assertSame(2000, $state->lastPermittedWeekTstamp);
+        $this->assertEquals(new AppConfig('default'), $state->appConfig);
+        $this->assertSame('monday', $state->beginWeek);
+        // The date is moved to the first day of its week
+        $this->assertSame(strtotime('2026-11-16 00:00'), $state->activeWeekStart);
+        $this->assertSame(strtotime(self::FIRST_WEEK), $state->firstPermittedWeekStart);
+        $this->assertSame(strtotime(self::LAST_WEEK), $state->lastPermittedWeekStart);
         $this->assertSame('de-CH', $state->language);
         $this->assertSame(10, $state->getResourceId());
     }
 
     public function testInvalidInputIsIgnored(): void
     {
-        $state = $this->getFactory()->create('33_0', $this->getModule(), $this->createStub(PageModel::class), ['resType' => 'undefined', 'res' => '9 OR 1=1', 'date' => '-5'], false, 'de', 1000);
+        $state = $this->getFactory()->create('33_0', $this->getModule(), $this->createStub(PageModel::class), ['resType' => 'undefined', 'res' => '9 OR 1=1', 'date' => '-5'], false, 'de', strtotime(self::NOW));
 
         $this->assertNull($state->resourceType);
         $this->assertNull($state->resource);
-        $this->assertSame(1000, $state->activeWeekTstamp);
+        $this->assertSame(strtotime('2026-11-02 00:00'), $state->activeWeekStart);
     }
 
     public function testADirectLinkMayContainADate(): void
     {
-        $state = $this->getFactory()->create('33_0', $this->getModule(), $this->createStub(PageModel::class), ['date' => '2026-11-20'], false, 'de', 1000);
+        $state = $this->getFactory()->create('33_0', $this->getModule(), $this->createStub(PageModel::class), ['date' => '2026-11-20'], false, 'de', strtotime(self::NOW));
+        $this->assertSame(strtotime('2026-11-16 00:00'), $state->activeWeekStart);
 
-        // Clamped to the last permitted week of the mocked WeekBoundaries
-        $this->assertSame(2000, $state->activeWeekTstamp);
+        $state = $this->getFactory()->create('33_0', $this->getModule(), $this->createStub(PageModel::class), ['date' => '2027-03-01'], false, 'de', strtotime(self::NOW));
 
-        $state = $this->getFactory()->create('33_0', $this->getModule(), $this->createStub(PageModel::class), ['date' => '2026-02-31'], false, 'de', 1000);
+        // Clamped to the last permitted week
+        $this->assertSame(strtotime(self::LAST_WEEK), $state->activeWeekStart);
+
+        $state = $this->getFactory()->create('33_0', $this->getModule(), $this->createStub(PageModel::class), ['date' => '2026-02-31'], false, 'de', strtotime(self::NOW));
 
         // Invalid date: current week
-        $this->assertSame(1000, $state->activeWeekTstamp);
+        $this->assertSame(strtotime('2026-11-02 00:00'), $state->activeWeekStart);
     }
 
     public function testTheAppStateTravelsWithTheRequest(): void
     {
-        $state = $this->getFactory()->create('33_0', $this->getModule(), $this->createStub(PageModel::class), [], false, 'de', 1000);
+        $state = $this->getFactory()->create('33_0', $this->getModule(), $this->createStub(PageModel::class), [], false, 'de', strtotime(self::NOW));
         $request = new Request();
         $state->attachTo($request);
 
@@ -210,39 +233,52 @@ class AppStateFactoryTest extends ContaoTestCase
     {
         return $this->createClassWithPropertiesStub(ModuleModel::class, [
             'id' => 33,
-            'resourceBooking_resourceTypes' => serialize(array_map('strval', $resourceTypeIds)),
+            'resourceBooking_resourceTypes' => implode(',', $resourceTypeIds),
             'resourceBooking_appConfig' => 'default',
         ]);
     }
 
-    /**
-     * @param array<string, array<string, mixed>> $appConfigs
-     */
-    private function getFactory(array $appConfigs = ['default' => ['autoSelectFirstResource' => true]]): AppStateFactory
+    private function getFactory(bool $autoSelectFirstResource = true): AppStateFactory
     {
-        $utils = $this->createStub(Utils::class);
-        $utils
+        $appConfigResolver = $this->createStub(AppConfigResolver::class);
+        $appConfigResolver
             ->method('getAppConfig')
-            ->willReturn(self::APP_CONFIG)
+            ->willReturn(new AppConfig('default', $autoSelectFirstResource))
         ;
 
-        $utils
-            ->method('getAppConfigByName')
-            ->willReturnCallback(static fn (string|null $name): array => $appConfigs[$name ?? 'default'])
+        $appConfigResolver
+            ->method('getBeginWeek')
+            ->willReturn('monday')
         ;
 
         $weekBoundaries = $this->createStub(WeekBoundaries::class);
         $weekBoundaries
             ->method('getFirstPermittedWeek')
-            ->willReturn(500)
+            ->willReturn(strtotime(self::FIRST_WEEK))
         ;
 
         $weekBoundaries
             ->method('getLastPermittedWeek')
-            ->willReturn(2000)
+            ->willReturn(strtotime(self::LAST_WEEK))
         ;
 
-        return new AppStateFactory($this->getFramework(), $utils, $weekBoundaries);
+        return new AppStateFactory($this->getFramework(), $appConfigResolver, $weekBoundaries);
+    }
+
+    private function getWeekFactory(int|null $firstWeek = null, int|null $lastWeek = null): AppStateFactory
+    {
+        $weekBoundaries = $this->createStub(WeekBoundaries::class);
+        $weekBoundaries
+            ->method('getFirstPermittedWeek')
+            ->willReturn($firstWeek ?? strtotime('2000-01-03'))
+        ;
+
+        $weekBoundaries
+            ->method('getLastPermittedWeek')
+            ->willReturn($lastWeek ?? strtotime('2099-12-28'))
+        ;
+
+        return new AppStateFactory($this->getFramework(), $this->createStub(AppConfigResolver::class), $weekBoundaries);
     }
 
     private function getFramework(): ContaoFramework
@@ -282,21 +318,9 @@ class AppStateFactoryTest extends ContaoTestCase
             )
         ;
 
-        $dateHelperAdapter = $this->createAdapterStub(['getFirstDayOfWeek', 'getFirstDayOfCurrentWeek']);
-        $dateHelperAdapter
-            ->method('getFirstDayOfWeek')
-            ->willReturnCallback(static fn (array $appConfig, int $tstamp): int => $tstamp - 5)
-        ;
-
-        $dateHelperAdapter
-            ->method('getFirstDayOfCurrentWeek')
-            ->willReturn(1000)
-        ;
-
         return $this->createContaoFrameworkStub([
             ResourceBookingResourceTypeModel::class => $typeAdapter,
             ResourceBookingResourceModel::class => $resourceAdapter,
-            DateHelper::class => $dateHelperAdapter,
         ]);
     }
 }

@@ -18,12 +18,13 @@ use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Util\LocaleUtil;
 use Contao\ModuleModel;
 use Contao\PageModel;
-use Contao\StringUtil;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingResourceTypeModel;
+use Markocupic\ResourceBookingBundle\Util\CsvList;
 use Markocupic\ResourceBookingBundle\Util\DateHelper;
-use Markocupic\ResourceBookingBundle\Util\Utils;
 use Markocupic\ResourceBookingBundle\Util\WeekBoundaries;
+use Symfony\Component\Clock\ClockInterface;
+use Symfony\Component\Clock\NativeClock;
 
 /**
  * Creates the AppState of a request from the selection sent by the front end.
@@ -37,8 +38,9 @@ class AppStateFactory
 {
     public function __construct(
         private readonly ContaoFramework $framework,
-        private readonly Utils $utils,
+        private readonly AppConfigResolver $appConfigResolver,
         private readonly WeekBoundaries $weekBoundaries,
+        private readonly ClockInterface $clock = new NativeClock(),
     ) {
     }
 
@@ -50,13 +52,13 @@ class AppStateFactory
      */
     public function create(string $moduleKey, ModuleModel $module, PageModel $page, array $input, bool $autoSelect, string $locale, int|null $now = null): AppState
     {
-        $now ??= time();
+        $now ??= $this->clock->now()->getTimestamp();
 
         [$resourceType, $resource] = $this->resolveSelection($module, self::toInt($input['resType'] ?? null), self::toInt($input['res'] ?? null), $autoSelect);
 
-        $appConfig = $this->utils->getAppConfig($module, $resource);
+        $beginWeek = $this->appConfigResolver->getBeginWeek($resource);
 
-        [$activeWeek, $firstWeek, $lastWeek] = $this->resolveWeeks($appConfig, $resource, self::toTimestamp($input['date'] ?? null), $now);
+        [$activeWeek, $firstWeek, $lastWeek] = $this->resolveWeeks($beginWeek, $resource, self::toTimestamp($input['date'] ?? null), $now);
 
         return new AppState(
             $moduleKey,
@@ -64,7 +66,8 @@ class AppStateFactory
             $page,
             $resourceType,
             $resource,
-            $appConfig,
+            $this->appConfigResolver->getAppConfig($module),
+            $beginWeek,
             $activeWeek,
             $firstWeek,
             $lastWeek,
@@ -80,7 +83,7 @@ class AppStateFactory
         $resourceTypeAdapter = $this->framework->getAdapter(ResourceBookingResourceTypeModel::class);
         $resourceAdapter = $this->framework->getAdapter(ResourceBookingResourceModel::class);
 
-        $moduleResourceTypeIds = array_map('intval', StringUtil::deserialize($module->resourceBooking_resourceTypes, true));
+        $moduleResourceTypeIds = CsvList::parseIds($module->resourceBooking_resourceTypes);
 
         $resourceType = null;
         $resource = null;
@@ -105,7 +108,7 @@ class AppStateFactory
         }
 
         // Nothing selected: display the first available resource (can be disabled in the app configuration)
-        if (null === $resourceType && $this->utils->getAppConfigByName(self::getAppConfigName($module))['autoSelectFirstResource']) {
+        if (null === $resourceType && $this->appConfigResolver->getAppConfig($module)->autoSelectFirstResource) {
             foreach ($resourceTypeAdapter->findPublishedByIds($moduleResourceTypeIds) ?? [] as $candidateType) {
                 $resources = $resourceAdapter->findPublishedByPid((int) $candidateType->id);
 
@@ -140,30 +143,23 @@ class AppStateFactory
      * Returns the displayed week and the first and last permitted week. The weeks
      * start with the first day of the week of the timetable of the resource.
      *
-     * @param array<string, mixed> $appConfig
+     * @param string $beginWeek First day of the week of the timetable, e.g. "monday"
      *
      * @return array{0: int, 1: int, 2: int}
      *
      * @throws \Exception
      */
-    public function resolveWeeks(array $appConfig, ResourceBookingResourceModel|null $resource, int $date, int $now): array
+    public function resolveWeeks(string $beginWeek, ResourceBookingResourceModel|null $resource, int $date, int $now): array
     {
-        $dateHelper = $this->framework->getAdapter(DateHelper::class);
-
-        $firstWeek = $this->weekBoundaries->getFirstPermittedWeek($appConfig, $resource);
-        $lastWeek = $this->weekBoundaries->getLastPermittedWeek($appConfig, $resource, $now);
+        $firstWeek = $this->weekBoundaries->getFirstPermittedWeek($beginWeek, $resource, $now);
+        $lastWeek = $this->weekBoundaries->getLastPermittedWeek($beginWeek, $resource, $now);
 
         // Without a date the current week is displayed. Otherwise, the date is moved to the first
         // day of its week (the timetables of the resources may start the week on other weekdays).
-        $activeWeek = $date > 0 ? $dateHelper->getFirstDayOfWeek($appConfig, $date) : $dateHelper->getFirstDayOfCurrentWeek($appConfig);
+        $activeWeek = DateHelper::getFirstDayOfWeek($beginWeek, $date > 0 ? $date : $now);
         $activeWeek = min(max($activeWeek, $firstWeek), $lastWeek);
 
         return [(int) $activeWeek, (int) $firstWeek, (int) $lastWeek];
-    }
-
-    private static function getAppConfigName(ModuleModel $module): string|null
-    {
-        return \is_string($module->resourceBooking_appConfig) && '' !== $module->resourceBooking_appConfig ? $module->resourceBooking_appConfig : null;
     }
 
     /**

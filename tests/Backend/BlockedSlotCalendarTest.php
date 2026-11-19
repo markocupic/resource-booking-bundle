@@ -42,7 +42,7 @@ class BlockedSlotCalendarTest extends ContaoTestCase
             ->willReturnOnConsecutiveCalls(2, 0)
         ;
 
-        $timeSlot = $this->createMock(ResourceBookingTimeSlotModel::class);
+        $timeSlot = $this->createStub(ResourceBookingTimeSlotModel::class);
         $timeSlot
             ->method('row')
             ->willReturn(['startTime' => 8 * 3600, 'endTime' => 9 * 3600])

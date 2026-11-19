@@ -18,6 +18,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Types\Types;
 use Markocupic\ResourceBookingBundle\Cron\MarkBookingsAsExpiredCron;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Clock\MockClock;
 
 class MarkBookingsAsExpiredCronTest extends TestCase
 {
@@ -38,9 +39,8 @@ class MarkBookingsAsExpiredCronTest extends TestCase
             )
         ;
 
-        $before = time();
-        (new MarkBookingsAsExpiredCron($connection))();
-        $after = time();
+        // The current time comes from the clock
+        (new MarkBookingsAsExpiredCron($connection, new MockClock('@1795046400')))();
 
         $this->assertSame(
             'UPDATE tl_resource_booking SET upcoming = 0 WHERE endTime < ? AND upcoming = ?',
@@ -48,9 +48,7 @@ class MarkBookingsAsExpiredCronTest extends TestCase
         );
 
         // First parameter is the "now" timestamp used as the cut-off.
-        $this->assertIsInt($captured['params'][0]);
-        $this->assertGreaterThanOrEqual($before, $captured['params'][0]);
-        $this->assertLessThanOrEqual($after, $captured['params'][0]);
+        $this->assertSame(1795046400, $captured['params'][0]);
 
         // Second parameter targets the currently "upcoming" bookings.
         $this->assertSame(1, $captured['params'][1]);

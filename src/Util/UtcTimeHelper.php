@@ -19,9 +19,9 @@ class UtcTimeHelper
     /**
      * Return a formatted time/date string based on the UTC timezone.
      */
-    public static function parse(string $strFormat, int $tstamp): string
+    public static function parse(string $format, int $tstamp): string
     {
-        return gmdate($strFormat, $tstamp);
+        return gmdate($format, $tstamp);
     }
 
     public static function parseEndTime(int $tstamp): string
@@ -42,10 +42,10 @@ class UtcTimeHelper
      *
      * @throws \Exception
      */
-    public static function strToTime(string $strDate): int
+    public static function strToTime(string $date): int
     {
         $utc = new \DateTimeZone('UTC');
-        $dt = new \DateTime($strDate, $utc);
+        $dt = new \DateTime($date, $utc);
 
         return (int) $dt->format('U');
     }

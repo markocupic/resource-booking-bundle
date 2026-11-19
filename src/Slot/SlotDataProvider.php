@@ -21,6 +21,7 @@ use Doctrine\DBAL\Connection;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingBlockedPeriodModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotModel;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingTimeSlotTypeModel;
+use Markocupic\ResourceBookingBundle\Restriction\BlockedPeriod;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Contracts\Service\ResetInterface;
 
@@ -58,7 +59,7 @@ class SlotDataProvider implements ResetInterface
     private array $preloadedBookings = [];
 
     /**
-     * @var list<array<string, mixed>>|null
+     * @var list<BlockedPeriod>|null
      */
     private array|null $blockedPeriods = null;
 
@@ -104,14 +105,13 @@ class SlotDataProvider implements ResetInterface
     }
 
     /**
-     * The published blocked periods (rows of tl_resource_booking_blocked_period),
-     * loaded once per request.
+     * The published blocked periods, loaded once per request.
      *
-     * @return list<array<string, mixed>>
+     * @return list<BlockedPeriod>
      */
     public function getBlockedPeriods(): array
     {
-        return $this->blockedPeriods ??= $this->framework->getAdapter(ResourceBookingBlockedPeriodModel::class)->findPublishedRows();
+        return $this->blockedPeriods ??= BlockedPeriod::listFromRows($this->framework->getAdapter(ResourceBookingBlockedPeriodModel::class)->findPublishedRows());
     }
 
     /**
