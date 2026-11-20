@@ -15,6 +15,7 @@ declare(strict_types=1);
 namespace Markocupic\ResourceBookingBundle\Tests\Integration\app;
 
 use Codefog\HasteBundle\CodefogHasteBundle;
+use Composer\InstalledVersions;
 use Contao\CoreBundle\ContaoCoreBundle;
 use Doctrine\Bundle\DoctrineBundle\DoctrineBundle;
 use Knp\Bundle\MenuBundle\KnpMenuBundle;
@@ -136,6 +137,23 @@ class AppKernel extends Kernel
                     ]);
                 }
             },
+        );
+
+        // Doctrine ORM 3 needs lazy objects: DoctrineBundle 3 uses the native lazy objects of PHP 8.4 by
+        // itself, DoctrineBundle 2 needs the LazyGhost objects of symfony/var-exporter (no longer in version 8)
+        $loader->load(
+            static function (ContainerBuilder $container): void {
+                $version = InstalledVersions::isInstalled('doctrine/doctrine-bundle') ? (string) InstalledVersions::getVersion('doctrine/doctrine-bundle') : '';
+
+                if ('' !== $version && version_compare($version, '3.0.0', '<')) {
+                    $container->loadFromExtension('doctrine', [
+                        'orm' => [
+                            'auto_generate_proxy_classes' => true,
+                            'enable_lazy_ghost_objects' => true,
+                        ],
+                    ]);
+                }
+            }
         );
     }
 
