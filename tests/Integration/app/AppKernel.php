@@ -139,21 +139,23 @@ class AppKernel extends Kernel
             },
         );
 
-        // Doctrine ORM 3 needs lazy objects: DoctrineBundle 3 uses the native lazy objects of PHP 8.4 by
-        // itself, DoctrineBundle 2 needs the LazyGhost objects of symfony/var-exporter (no longer in version 8)
+        // Doctrine ORM 3 needs lazy objects. DoctrineBundle 3 enables the native lazy objects of PHP 8.4 by
+        // itself. With DoctrineBundle 2 they are enabled here on PHP 8.4 (symfony/var-exporter 8 has no
+        // LazyGhost objects anymore), otherwise the LazyGhost objects of symfony/var-exporter are used.
         $loader->load(
             static function (ContainerBuilder $container): void {
                 $version = InstalledVersions::isInstalled('doctrine/doctrine-bundle') ? (string) InstalledVersions::getVersion('doctrine/doctrine-bundle') : '';
 
-                if ('' !== $version && version_compare($version, '3.0.0', '<')) {
-                    $container->loadFromExtension('doctrine', [
-                        'orm' => [
-                            'auto_generate_proxy_classes' => true,
-                            'enable_lazy_ghost_objects' => true,
-                        ],
-                    ]);
+                if ('' === $version || version_compare($version, '3.0.0', '>=')) {
+                    return;
                 }
-            }
+
+                $orm = \PHP_VERSION_ID >= 80400 && version_compare($version, '2.15.0', '>=')
+                    ? ['enable_native_lazy_objects' => true]
+                    : ['auto_generate_proxy_classes' => true, 'enable_lazy_ghost_objects' => true];
+
+                $container->loadFromExtension('doctrine', ['orm' => $orm]);
+            },
         );
     }
 
