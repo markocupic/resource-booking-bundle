@@ -199,7 +199,14 @@ abstract class IntegrationTestCase extends FunctionalTestCase
      */
     protected function insertRow(string $table, array $row): int
     {
-        $this->connection->insert($table, $row);
+        // Quoted column names: "groups" is a reserved word in MySQL 8
+        $quoted = [];
+
+        foreach ($row as $column => $value) {
+            $quoted[$this->connection->quoteSingleIdentifier($column)] = $value;
+        }
+
+        $this->connection->insert($table, $quoted);
 
         return (int) $this->connection->lastInsertId();
     }
