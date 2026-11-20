@@ -139,9 +139,10 @@ class AppKernel extends Kernel
             },
         );
 
-        // Doctrine ORM 3 needs lazy objects. DoctrineBundle 3 enables the native lazy objects of PHP 8.4 by
-        // itself. With DoctrineBundle 2 they are enabled here on PHP 8.4 (symfony/var-exporter 8 has no
-        // LazyGhost objects anymore), otherwise the LazyGhost objects of symfony/var-exporter are used.
+        // Doctrine ORM 3 needs lazy objects. With DoctrineBundle 2 (Contao 5.7) the LazyGhost objects of
+        // symfony/var-exporter are used, as in a Contao installation: the native lazy objects of PHP 8.4
+        // remove the proxy cache warmer that Contao decorates. symfony/var-exporter is therefore limited to
+        // version 7 (require-dev). DoctrineBundle 3 handles the lazy objects by itself.
         $loader->load(
             static function (ContainerBuilder $container): void {
                 $version = InstalledVersions::isInstalled('doctrine/doctrine-bundle') ? (string) InstalledVersions::getVersion('doctrine/doctrine-bundle') : '';
@@ -150,11 +151,12 @@ class AppKernel extends Kernel
                     return;
                 }
 
-                $orm = \PHP_VERSION_ID >= 80400 && version_compare($version, '2.15.0', '>=')
-                    ? ['enable_native_lazy_objects' => true]
-                    : ['auto_generate_proxy_classes' => true, 'enable_lazy_ghost_objects' => true];
-
-                $container->loadFromExtension('doctrine', ['orm' => $orm]);
+                $container->loadFromExtension('doctrine', [
+                    'orm' => [
+                        'auto_generate_proxy_classes' => true,
+                        'enable_lazy_ghost_objects' => true,
+                    ],
+                ]);
             },
         );
     }

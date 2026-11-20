@@ -43,6 +43,7 @@
         "phpstan/phpstan": "^2.2",
         "phpunit/phpunit": "^12.5|^13.0",
         "symfony/monolog-bundle": "^3.10 || ^4.0",
+        "symfony/var-exporter": "^6.4 || ^7.0",
         "symfony/webpack-encore-bundle": "^2.0"
     },
     "autoload": {
