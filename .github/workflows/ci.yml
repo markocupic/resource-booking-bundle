@@ -102,3 +102,25 @@ jobs:
         run: composer unit-tests -- --testsuite integration
         env:
           RBB_TEST_DATABASE_URL: mysql://root:root@127.0.0.1:3306/rbb_test
+
+  js-tests:
+    name: JavaScript tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install the dependencies
+        run: npm ci
+
+      - name: Run the JavaScript tests
+        run: npm test
+
+      - name: Build the assets
+        run: npm run build

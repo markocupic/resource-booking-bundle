@@ -56,7 +56,7 @@ class BookingRulesTest extends IntegrationTestCase
 
         $this->assertSame('success', $response['status'], json_encode($response));
         $this->assertTrue($response['data']['isBookable']);
-        $this->assertCount(1, $response['data']['slots']);
+        $this->assertCount(1, $response['fullData']['slots']);
         $this->assertNotEmpty($response['messages']['confirm']);
         $this->assertSame([], $this->fetchBookings());
     }
@@ -92,7 +92,7 @@ class BookingRulesTest extends IntegrationTestCase
 
         $this->assertSame('error', $response['status'], json_encode($response));
         $this->assertFalse($response['data']['isBookable']);
-        $this->assertFalse($response['data']['slots'][0]['hasValidItemCount']);
+        $this->assertFalse($response['fullData']['slots'][0]['hasValidItemCount']);
 
         $response = $this->book($module, $type, $resource, $this->monday(), requestedItems: 3);
 
@@ -109,7 +109,7 @@ class BookingRulesTest extends IntegrationTestCase
         $response = $this->validate($module, $type, $resource, $this->monday());
 
         $this->assertSame('error', $response['status'], json_encode($response));
-        $this->assertFalse($response['data']['slots'][0]['isAvailableOnWeekday']);
+        $this->assertFalse($response['fullData']['slots'][0]['isAvailableOnWeekday']);
 
         // Tuesday
         $tuesday = strtotime('+1 day', $this->weekStart) + 8 * 3600;
@@ -152,7 +152,7 @@ class BookingRulesTest extends IntegrationTestCase
         $response = $this->validate($module, $type, $resource, $tuesday);
 
         $this->assertSame('error', $response['status'], json_encode($response));
-        $this->assertFalse($response['data']['slots'][0]['isInBookingWindow']);
+        $this->assertFalse($response['fullData']['slots'][0]['isInBookingWindow']);
     }
 
     public function testAPastSlotCannotBeBooked(): void
@@ -164,7 +164,7 @@ class BookingRulesTest extends IntegrationTestCase
         $response = $this->validate($module, $type, $resource, $lastWeek);
 
         $this->assertSame('error', $response['status'], json_encode($response));
-        $this->assertFalse($response['data']['slots'][0]['isInBookingWindow']);
+        $this->assertFalse($response['fullData']['slots'][0]['isInBookingWindow']);
 
         $this->assertNotSame('success', $this->book($module, $type, $resource, $lastWeek)['status']);
         $this->assertSame([], $this->fetchBookings());
@@ -195,8 +195,8 @@ class BookingRulesTest extends IntegrationTestCase
         $response = $this->validate($module, $type, $resource, $this->monday());
 
         $this->assertSame('error', $response['status'], json_encode($response));
-        $this->assertTrue($response['data']['slots'][0]['isInBlockedPeriod']);
-        $this->assertSame('Der Raum wird renoviert.', $response['data']['slots'][0]['blockedPeriodDescription']);
+        $this->assertTrue($response['fullData']['slots'][0]['isInBlockedPeriod']);
+        $this->assertSame('Der Raum wird renoviert.', $response['fullData']['slots'][0]['blockedPeriodDescription']);
     }
 
     public function testAnUnpublishedBlockedPeriodDoesNotBlock(): void
@@ -259,7 +259,7 @@ class BookingRulesTest extends IntegrationTestCase
         $response = $this->validate($module, $type, $resource, $this->monday(), requestedItems: 2);
 
         $this->assertSame('success', $response['status'], json_encode($response));
-        $this->assertTrue($response['data']['slots'][0]['canFulfillRequestedItems']);
+        $this->assertTrue($response['fullData']['slots'][0]['canFulfillRequestedItems']);
     }
 
     /**

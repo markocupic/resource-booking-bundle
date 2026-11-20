@@ -211,6 +211,12 @@ Priorität -1024): Was ein Listener an den Daten ändert oder ergänzt, steht im
 `{{ slot.bookingFormUri }}` in einer Variante des Modul-Templates. Das HTML steht in `data.weekCalendarHtml`.
 Ebenso wird das Buchungsfenster nach den Listenern gerendert (`data.bookingWindowHtml`, `RenderBookingWindowListener`).
 
+Danach entfernt `ReduceResponseDataListener` (Priorität -2048) die Daten, aus denen das HTML gerendert wurde, aus der
+JSON-Antwort der Aktionen des Bundles: Der Browser erhält nur noch das HTML und einige Werte für Skripte
+(`ReduceResponseDataListener::DATA_KEYS`, z. B. `activeResourceId`, `activeWeekStart`, `isBooked`). Daten, die ein
+eigenes Skript im Browser braucht, mit einem Listener mit tieferer Priorität (z. B. `-4096`) per `setData()` anhängen.
+Die Antworten eigener Aktionen bleiben unverändert.
+
 > [!WARNING]
 > Alles in der Antwort ist für jeden Besucher der Seite sichtbar (Entwicklertools). Keine Personendaten fremder
 > Mitglieder hinzufügen.
@@ -321,6 +327,7 @@ Die Methoden der `AjaxResponse` im Überblick:
 | `setResult(ApiResultInterface)` | typisiertes Ergebnis der Aktion (`Api\Output\…`, `toArray()`) |
 | `setData($key, $value)` / `getData($key)` | beliebige Daten an das Frontend übergeben |
 | `getAllData()` / `mergeData(array)` | alle Daten lesen / mehrere Werte setzen (bestehende Schlüssel werden überschrieben) |
+| `retainData(array)` | nur die angegebenen Schlüssel behalten |
 | `setStatus(AjaxStatus)` | `AjaxStatus::Success`, `AjaxStatus::Warning` oder `AjaxStatus::Error` |
 | `setConfirmationMessage()`, `setInfoMessage()`, `setWarningMessage()`, `setErrorMessage()` | Meldungen im Buchungstool anzeigen (allgemein: `setMessage(MessageType, …)`) |
 | `toArray()` | JSON der Antwort; eine Fehlermeldung ersetzt Info- und Bestätigungsmeldung |

@@ -7,32 +7,38 @@
     Variants of this template are placed in templates/frontend_module/resource_booking_weekcalendar/
     (e.g. resource_booking_weekcalendar/my_variant.html.twig) and selected in the module settings.
     Most parts are blocks of the partials below and can be overridden one by one.
+
+    The partials are part of the Contao template hierarchy (@Contao/resource_booking/…): they can also be
+    overridden for all modules in templates/resource_booking/… (or a theme folder). Such an override uses the
+    original and only redefines blocks, e.g. templates/resource_booking/week_calendar/_time_slot_cell.html.twig:
+        {% use '@Contao/resource_booking/week_calendar/_time_slot_cell.html.twig' %}
+        {% block rbb_week_calendar_window__time_slot_cell__actions %}…{% endblock %}
 #}
 
 {% do addJavascriptResource(asset('js/app.js', 'markocupic_resource_booking')) %}
 {% do addCssResource(asset('css/frontend.css', 'markocupic_resource_booking')) %}
 
 {# Partials for mode "week-calendar" and  mode "booking_window" #}
-{% use '@MarkocupicResourceBooking/_logged_in_user.html.twig' %}
-{% use '@MarkocupicResourceBooking/_header.html.twig' %}
-{% use '@MarkocupicResourceBooking/_loading_indicator.html.twig' %}
-{% use '@MarkocupicResourceBooking/_status_message.html.twig' %}
-{% use '@MarkocupicResourceBooking/_messages.html.twig' %}
+{% use '@Contao/resource_booking/_logged_in_user.html.twig' %}
+{% use '@Contao/resource_booking/_header.html.twig' %}
+{% use '@Contao/resource_booking/_loading_indicator.html.twig' %}
+{% use '@Contao/resource_booking/_status_message.html.twig' %}
+{% use '@Contao/resource_booking/_messages.html.twig' %}
 
 {# Partials for mode "week-calendar": rendered on the server (block rbb_week_calendar_view, see WeekCalendarRenderer) #}
-{% use '@MarkocupicResourceBooking/week_calendar/_view.html.twig' %}
-{% use '@MarkocupicResourceBooking/week_calendar/_active_resource_description.html.twig' %}
-{% use '@MarkocupicResourceBooking/week_calendar/_filter_board.html.twig' %}
-{% use '@MarkocupicResourceBooking/week_calendar/_legend.html.twig' %}
-{% use '@MarkocupicResourceBooking/week_calendar/_table.html.twig' %}
-{% use '@MarkocupicResourceBooking/week_calendar/_time_slot_cell.html.twig' %}
+{% use '@Contao/resource_booking/week_calendar/_view.html.twig' %}
+{% use '@Contao/resource_booking/week_calendar/_active_resource_description.html.twig' %}
+{% use '@Contao/resource_booking/week_calendar/_filter_board.html.twig' %}
+{% use '@Contao/resource_booking/week_calendar/_legend.html.twig' %}
+{% use '@Contao/resource_booking/week_calendar/_table.html.twig' %}
+{% use '@Contao/resource_booking/week_calendar/_time_slot_cell.html.twig' %}
 
 {# Partials for mode "booking_window": rendered on the server (block rbb_booking_window_view, see RenderBookingWindowListener) #}
-{% use '@MarkocupicResourceBooking/booking_window/_view.html.twig' %}
-{% use '@MarkocupicResourceBooking/booking_window/_main_booking.html.twig' %}
-{% use '@MarkocupicResourceBooking/booking_window/_main_cancel.html.twig' %}
-{% use '@MarkocupicResourceBooking/booking_window/_info_table.html.twig' %}
-{% use '@MarkocupicResourceBooking/booking_window/_booking_form_inputs.html.twig' %}
+{% use '@Contao/resource_booking/booking_window/_view.html.twig' %}
+{% use '@Contao/resource_booking/booking_window/_main_booking.html.twig' %}
+{% use '@Contao/resource_booking/booking_window/_main_cancel.html.twig' %}
+{% use '@Contao/resource_booking/booking_window/_info_table.html.twig' %}
+{% use '@Contao/resource_booking/booking_window/_booking_form_inputs.html.twig' %}
 
 {# The styles of the bundle are scoped to the class .mod_resourceBookingWeekcalendar #}
 {% block attributes %}{{ attributes.addClass('mod_resourceBookingWeekcalendar').setIfExists('data-rbb-color-scheme', colorScheme|default(null)) }}{% endblock %}

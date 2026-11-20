@@ -1077,6 +1077,17 @@ $rbb-breakpoint-xl: 1200px;
         .rbb-cell-booking-description-box small {
           font-size: .8125rem;
         }
+
+        // Data about the booking person (module settings), one line each
+        .rbb-cell-booking-member-details {
+          position: relative;
+          z-index: 20;
+          margin: .125rem 0 0;
+          padding: 0;
+          list-style: none;
+          font-size: .8125rem;
+          overflow-wrap: anywhere;
+        }
       }
 
       // Own booking: owner name in the accent color, keep the space for the

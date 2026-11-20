@@ -66,11 +66,19 @@ class BookingPresenter
         // Fallback, if the name of the booking person must not be displayed
         $data['bookedByFullname'] = StringUtil::decodeEntities($this->translator->trans('RBB.anonymous', [], 'contao_default'));
         $data['bookedByAnonymous'] = true;
+        // Displayed data about the booking person apart from the name, in the order of the module
+        // settings: list of {field, label, value} for the template
+        $data['bookedByDetails'] = [];
 
         if (null !== $member) {
             // Data about the booking person (tl_member) as "bookedBy<Field>"
             foreach ($memberFields as $field) {
-                $data['bookedBy'.ucfirst($field)] = StringUtil::decodeEntities((string) ($member[$field] ?? ''));
+                $value = StringUtil::decodeEntities((string) ($member[$field] ?? ''));
+                $data['bookedBy'.ucfirst($field)] = $value;
+
+                if ('' !== trim($value) && !\in_array($field, ['firstname', 'lastname'], true)) {
+                    $data['bookedByDetails'][] = ['field' => $field, 'label' => $this->getFieldLabel('tl_member', $field), 'value' => $value];
+                }
             }
 
             $showFullname = \in_array('firstname', $memberFields, true) && \in_array('lastname', $memberFields, true);
@@ -93,5 +101,16 @@ class BookingPresenter
         $data['canCancel'] = $slotIsCancelable && $isOwn && null !== $member;
 
         return $data;
+    }
+
+    /**
+     * Label of a field from the language files of the DCA (e.g. tl_member.city.0), the field name as fallback.
+     */
+    private function getFieldLabel(string $table, string $field): string
+    {
+        $id = $table.'.'.$field.'.0';
+        $label = $this->translator->trans($id, [], 'contao_'.$table);
+
+        return $label === $id || '' === $label ? $field : StringUtil::decodeEntities($label);
     }
 }

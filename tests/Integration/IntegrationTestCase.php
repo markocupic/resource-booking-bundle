@@ -22,6 +22,9 @@ use Contao\TestCase\FunctionalTestCase;
 use Doctrine\DBAL\Connection;
 use Markocupic\ResourceBookingBundle\Api\ApiContext;
 use Markocupic\ResourceBookingBundle\Controller\FrontendModule\ResourceBookingWeekcalendarController;
+use Markocupic\ResourceBookingBundle\Event\AjaxResponseEvent;
+use Markocupic\ResourceBookingBundle\EventListener\ReduceResponseDataListener;
+use Markocupic\ResourceBookingBundle\EventListener\RenderWeekCalendarListener;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingBlockedPeriodModel;
 use Markocupic\ResourceBookingBundle\Slot\SlotDataProvider;
 use Markocupic\ResourceBookingBundle\Tests\Integration\app\AppKernel;
@@ -122,7 +125,8 @@ abstract class IntegrationTestCase extends FunctionalTestCase
      * Sends a request of the week calendar API to the Ajax controller of the action,
      * as WeekCalendarApiController does after the access checks.
      *
-     * @return array<string, mixed> The JSON response
+     * @return array<string, mixed> The JSON response, plus "fullData": all data of the response before
+     *                              ReduceResponseDataListener removed what the HTML was rendered from
      */
     protected function sendApiRequest(Request $request, string $action, int $moduleId, int $pageId): array
     {
@@ -148,6 +152,15 @@ abstract class IntegrationTestCase extends FunctionalTestCase
             file_put_contents($errorLog, '');
         }
 
+        // The data the HTML is rendered from, before it is removed from the JSON response (ReduceResponseDataListener)
+        $fullData = null;
+        $captureData = static function (AjaxResponseEvent $event) use (&$fullData): void {
+            $fullData = $event->getAjaxResponse()->getAllData();
+        };
+
+        $eventDispatcher = self::getContainer()->get('event_dispatcher');
+        $eventDispatcher->addListener(AjaxResponseEvent::class, $captureData, (RenderWeekCalendarListener::PRIORITY + ReduceResponseDataListener::PRIORITY) / 2);
+
         try {
             $response = self::getContainer()
                 ->get(AjaxRequestHandler::class)
@@ -155,6 +168,7 @@ abstract class IntegrationTestCase extends FunctionalTestCase
             ;
         } finally {
             $requestStack->pop();
+            $eventDispatcher->removeListener(AjaxResponseEvent::class, $captureData);
         }
 
         // The handler answers exceptions with a general message: display the logged exception
@@ -164,7 +178,12 @@ abstract class IntegrationTestCase extends FunctionalTestCase
             $this->fail(\sprintf("The request \"%s\" failed (HTTP %d).\n%s", $action, $response->getStatusCode(), '' !== $log ? $log : 'No error was logged (is symfony/monolog-bundle installed?).'));
         }
 
-        return json_decode((string) $response->getContent(), true, 512, JSON_THROW_ON_ERROR);
+        $json = json_decode((string) $response->getContent(), true, 512, JSON_THROW_ON_ERROR);
+
+        // Only for the tests, not part of the response: all data of the response before it was reduced
+        $json['fullData'] = $fullData ?? $json['data'];
+
+        return $json;
     }
 
     protected function logIn(string $username): FrontendUser

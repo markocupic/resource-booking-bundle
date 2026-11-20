@@ -37,8 +37,21 @@
                         {% if booking.bookedByFullname|default %}<span class="rbb-cell-booking-owner-box">{{ booking.bookedByFullname }}</span>{% endif %}
                         {% if activeResource.itemsAvailable|default(1) > 1 %}<span class="item-counter-box"> (-{{ booking.itemsBooked }})</span>{% endif %}
                     </span>
-                    {# Feel free and add more details about the booking owner (tl_member, if displayed in the module), e.g. #}
-                    {# {% if booking.bookedByCity|default %}<span class="rbb-cell-booking-owner-box">{{ booking.bookedByCity }}</span>{% endif %} #}
+                    {# Data about the booking person selected in the module settings (apart from the name), e.g. company, city,
+                       phone. Single fields are also available as booking.bookedBy<Field>, e.g. booking.bookedByCity.
+                       Other fields of the member (independent of the module settings, only for logged-in members), e.g.:
+                       {% set member = rbb_booking_member(booking) %}
+                       {% if member.street|default %}<li class="rbb-cell-booking-member-detail">{{ member.street }}</li>{% endif %}
+                       Careful: whatever the template displays is visible to all logged-in members. #}
+                    {% block rbb_week_calendar_window__time_slot_cell__member_details %}
+                        {% if booking.bookedByDetails|default([]) is not empty %}
+                            <ul class="rbb-cell-booking-member-details">
+                                {% for detail in booking.bookedByDetails %}
+                                    <li class="rbb-cell-booking-member-detail" data-field="{{ detail.field }}" title="{{ detail.label }}"><span class="rbb-visually-hidden">{{ detail.label }}: </span>{{ detail.value }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    {% endblock %}
                     {# Feel free and add more details about the booking (tl_resource_booking, if displayed in the module) #}
                     {% if booking.bookingDescription|default %}<span class="rbb-cell-booking-description-box"><small>{{ booking.bookingDescription }}</small></span>{% endif %}
                     {% if not booking.confirmed %}<span class="rbb-cell-booking-unconfirmed-box"><small>{{ ('RBB.awaitingConfirmation')|trans }}</small></span>{% endif %}

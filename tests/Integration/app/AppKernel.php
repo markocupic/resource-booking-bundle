@@ -48,6 +48,20 @@ use Webauthn\Bundle\WebauthnBundle;
  */
 class AppKernel extends Kernel
 {
+    /**
+     * Log channels of Contao (ContaoCoreExtension::prepend()).
+     */
+    private const CONTAO_LOG_CHANNELS = [
+        'contao.access',
+        'contao.configuration',
+        'contao.cron',
+        'contao.email',
+        'contao.error',
+        'contao.files',
+        'contao.forms',
+        'contao.general',
+    ];
+
     public function registerBundles(): array
     {
         $bundles = [
@@ -121,7 +135,7 @@ class AppKernel extends Kernel
                         ],
                     ]);
                 }
-            }
+            },
         );
     }
 
@@ -137,5 +151,13 @@ class AppKernel extends Kernel
     {
         $container->setParameter('rbb_test.config_dir', __DIR__.'/config');
         $container->register('monolog.logger.contao', NullLogger::class);
+
+        // Without the MonologBundle there are no log channels: the services of Contao still need
+        // the loggers of its channels (e.g. monolog.logger.contao.access)
+        if (!class_exists(MonologBundle::class)) {
+            foreach (self::CONTAO_LOG_CHANNELS as $channel) {
+                $container->register('monolog.logger.'.$channel, NullLogger::class);
+            }
+        }
     }
 }

@@ -49,7 +49,7 @@ class BookingPresenterTest extends TestCase
 
         $expectedKeys = [
             ...RbbConfig::RBB_ALWAYS_SENT_BOOKING_FIELDS,
-            'bookedByFullname', 'bookedByAnonymous', 'bookedByFirstname', 'bookedByLastname', 'bookedByCity',
+            'bookedByFullname', 'bookedByAnonymous', 'bookedByDetails', 'bookedByFirstname', 'bookedByLastname', 'bookedByCity',
             'bookingDescription', 'isOwn', 'canCancel',
         ];
 
@@ -58,6 +58,30 @@ class BookingPresenterTest extends TestCase
         $this->assertArrayNotHasKey('bookingUuid', $data);
         $this->assertSame('Hochfelden', $data['bookedByCity']);
         $this->assertSame('Training & Spiel', $data['bookingDescription']);
+    }
+
+    public function testTheDisplayedMemberFieldsApartFromTheNameAreListedWithTheirLabels(): void
+    {
+        $member = [...self::MEMBER, 'company' => 'Muster &amp; Co', 'phone' => ''];
+
+        $data = $this->createPresenter()->present(self::BOOKING, $member, 99, ['firstname', 'lastname', 'company', 'city', 'phone'], [], false);
+
+        // Order of the module settings, no name, no empty values; label from the language file (or the field name)
+        $this->assertSame(
+            [
+                ['field' => 'company', 'label' => 'Firma', 'value' => 'Muster & Co'],
+                ['field' => 'city', 'label' => 'city', 'value' => 'Hochfelden'],
+            ],
+            $data['bookedByDetails'],
+        );
+    }
+
+    public function testNoMemberDetailsWithoutDisplayedFields(): void
+    {
+        $presenter = $this->createPresenter();
+
+        $this->assertSame([], $presenter->present(self::BOOKING, self::MEMBER, 7, [], [], true)['bookedByDetails']);
+        $this->assertSame([], $presenter->present(self::BOOKING, null, 99, ['city'], [], true)['bookedByDetails']);
     }
 
     public function testCastsTheTypesForJavaScript(): void
@@ -119,7 +143,7 @@ class BookingPresenterTest extends TestCase
         $translator = $this->createStub(TranslatorInterface::class);
         $translator
             ->method('trans')
-            ->willReturnCallback(static fn (string $id): string => 'RBB.anonymous' === $id ? 'Anonym' : $id)
+            ->willReturnCallback(static fn (string $id): string => ['RBB.anonymous' => 'Anonym', 'tl_member.company.0' => 'Firma'][$id] ?? $id)
         ;
 
         return new BookingPresenter($translator);

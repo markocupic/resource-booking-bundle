@@ -52,10 +52,10 @@ class RenderBookingWindowListenerTest extends ContaoTestCase
             '/_rbb/api/bookings/validate',
             'POST',
             [
-                    'slots' => ['1-100-200-0', '1-300-400-0', ['manipulated']],
-                    'bookingDescription' => 'Probe',
-                    'nested' => ['a' => 'b'],
-                ],
+                'slots' => ['1-100-200-0', '1-300-400-0', ['manipulated']],
+                'bookingDescription' => 'Probe',
+                'nested' => ['a' => 'b'],
+            ],
         );
 
         $this->invoke($request, $response);

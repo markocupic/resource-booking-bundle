@@ -218,9 +218,12 @@ Alte Spalten erst nach erfolgreicher Migration löschen. Jede Verhaltensänderun
 
 - Templates: modernes Fragment-Template `contao/templates/twig/frontend_module/resource_booking_weekcalendar.html.twig`
   (erweitert `@Contao/frontend_module/_base.html.twig`, Varianten unter `…/resource_booking_weekcalendar/<name>`, Wrapper
-  behält die Klasse `mod_resourceBookingWeekcalendar`) bindet die Partials aus `templates/` per `{% use %}` ein (überschreibbar über Blöcke).
+  behält die Klasse `mod_resourceBookingWeekcalendar`) bindet die Partials aus `contao/templates/twig/resource_booking/` (`@Contao/resource_booking/…`, Teil der Contao-
+  Template-Hierarchie) per `{% use %}` ein. Überschreibbar über Blöcke in einer Variante oder global per Override in
+  `templates/resource_booking/…`, das das Original per `{% use %}` einbindet (Contao löst `use` dynamisch zum nächsten
+  Eltern-Template auf; ein `use`-Partial darf kein `extends` haben). Kein eigener Twig-Namespace mehr.
 - **Wochenansicht wird auf dem Server gerendert** (Kopfzeile, Filter, Hinweis, Tabelle, Legende; reines Twig, keine
-  Vue-Syntax): Block `rbb_week_calendar_view` (`templates/week_calendar/_view.html.twig`), gerendert von
+  Vue-Syntax): Block `rbb_week_calendar_view` (`resource_booking/week_calendar/_view.html.twig`), gerendert von
   `WeekCalendar\WeekCalendarRenderer` aus dem Modul-Template bzw. dessen Variante (`customTpl`), damit Varianten Blöcke
   überschreiben können. `TemplateWrapper::renderBlock()` reicht die Blöcke nicht an verschachtelte `block()`-Aufrufe
   weiter: der Renderer sammelt sie über die ganze Vererbungskette. `EventListener\RenderWeekCalendarListener`
@@ -234,7 +237,7 @@ Alte Spalten erst nach erfolgreicher Migration löschen. Jede Verhaltensänderun
   (`AjaxRequestHandler::process()` mit internem GET-Request, `initial=1`); nur bei einem Fehler lädt der Browser sie. Zelle: Block
   `rbb_week_calendar_window__time_slot_cell`, Knöpfe im Unterblock `…__time_slot_cell__actions` (z. B. Hochfelden).
 - **Buchungsfenster wird ebenfalls auf dem Server gerendert** (Block `rbb_booking_window_view`,
-  `templates/booking_window/_view.html.twig`): `EventListener\RenderBookingWindowListener` (gleiche Priorität) rendert es
+  `resource_booking/booking_window/_view.html.twig`): `EventListener\RenderBookingWindowListener` (gleiche Priorität) rendert es
   bei `bookingFormValidationRequest`, `bookingRequest`, `cancelBookingFormRequest` (neuer `CancelBookingFormController`,
   prüft Besitz und Zeit, ändert nichts) und `cancelBookingRequest` komplett neu, wie ein klassisches Formular:
   Variablen `bookingWindow` (`action`, `response`, `booking`, `showForm`), `messages`, `fieldErrors` (Liste mit `id`
@@ -259,6 +262,13 @@ Alte Spalten erst nach erfolgreicher Migration löschen. Jede Verhaltensänderun
   `data-iscancelable`, `data-isfullybooked`, `data-isoutsidebookingwindow`, `data-isavailableonweekday`,
   `data-isinblockedperiod`, `data-hasunconfirmedbookings`, `data-bookedbyanonymous` am Buchungseintrag, …).
   **`data-*`-Attribute der Zellen komplett kleinschreiben** (bestehende CSS-Selektoren und `dataset`).
+- Daten der buchenden Person in der Zelle: `booking.bookedByDetails` (im Modul gewählte Felder ausser Name, mit Label
+  aus `tl_member`, Block `…__time_slot_cell__member_details`); beliebige weitere Felder nur im Template per Twig-Funktion
+  `rbb_booking_member(booking)` (`Twig\BookingMemberExtension`, nur serverseitig, nicht im JSON, `null` für Gäste,
+  ohne `RBB_FORBIDDEN_MEMBER_FIELDS`, Cache pro Request mit `ResetInterface`).
+- JSON-Antworten: `ReduceResponseDataListener` (Priorität -2048) behält nach dem Rendern nur das HTML und
+  `DATA_KEYS` pro Aktion. Neue Daten für den Browser bewusst in `DATA_KEYS` aufnehmen, sonst landen sie nur im
+  Template. Integrationstests lesen die vollständigen Daten aus `$response['fullData']` (nur Test, `sendApiRequest()`).
 - Buchungsbutton: runder Plus-Kreis (`rbb_icon('fa-plus')`), Label nur für Screenreader.
 - Buchungs-/Stornierungsfenster: modaler `<dialog class="rbb-booking-dialog" data-rbb-dialog>` über dem Kalender
   (`showModal()` in `openBookingWindow()`, `close()` in `hideBookingWindow()`, Esc über das `cancel`-Event).

@@ -186,6 +186,16 @@ class AjaxResponseTest extends TestCase
         $this->assertSame([['id' => 1, 'timeSlotId' => 2, 'startTime' => 3, 'endTime' => 4]], $response->getData('bookings'));
     }
 
+    public function testRetainDataKeepsOnlyTheGivenKeys(): void
+    {
+        $response = new AjaxResponse('action');
+        $response->mergeData(['html' => '<div>', 'rows' => [1], 'id' => 3]);
+
+        $response->retainData(['html', 'id', 'missing']);
+
+        $this->assertSame(['html' => '<div>', 'id' => 3], $response->getAllData());
+    }
+
     public function testMergeDataOverwritesExistingKeys(): void
     {
         $response = new AjaxResponse('action');

@@ -981,6 +981,77 @@ die `data-rbb-*`-Attribute. `vue.global.prod.js` wird nicht mehr geladen.
   JavaScript-Tests mit Vitest: `npm test` (`tests/js`).
 * Nach dem Update: `npm install`, `npm run build` (bzw. die neuen Dateien in `public/`) und `cache:clear`.
 
+### Templates im Namespace `@Contao`
+
+Die Teil-Templates (Partials) liegen nicht mehr im Bundle-Namespace `@MarkocupicResourceBooking` (`templates/`),
+sondern in der Contao-Template-Hierarchie unter `contao/templates/twig/resource_booking/`. Die Blöcke und ihre
+Namen bleiben gleich.
+
+| Bisher | Neu |
+|---|---|
+| `@MarkocupicResourceBooking/_header.html.twig` (usw.) | `@Contao/resource_booking/_header.html.twig` |
+| `@MarkocupicResourceBooking/week_calendar/…` | `@Contao/resource_booking/week_calendar/…` |
+| `@MarkocupicResourceBooking/booking_window/…` | `@Contao/resource_booking/booking_window/…` |
+
+* Eigene Templates, die einen Partial per `{% use %}` oder `{% include %}` einbinden, auf den neuen Namen umstellen.
+* Neu lässt sich jeder Partial auch für alle Module überschreiben, ohne Variante des Modul-Templates: eine Datei mit
+  gleichem Pfad in `templates/resource_booking/…` (oder im Template-Ordner eines Themes), die das Original einbindet
+  und nur Blöcke neu definiert:
+
+  ```twig
+  {# templates/resource_booking/week_calendar/_time_slot_cell.html.twig #}
+  {% use '@Contao/resource_booking/week_calendar/_time_slot_cell.html.twig' %}
+
+  {% block rbb_week_calendar_window__time_slot_cell__actions %}
+      …
+  {% endblock %}
+  ```
+
+  Partials werden per `{% use %}` eingebunden und dürfen deshalb kein `{% extends %}` enthalten.
+* Nach dem Update `cache:clear`.
+
+### JSON-Antworten enthalten nur noch das HTML
+
+Wochenansicht und Buchungsfenster werden auf dem Server gerendert; die Daten, aus denen sie gerendert werden, gehen nicht
+mehr an den Browser. Der neue `ReduceResponseDataListener` (Priorität -2048, nach dem Rendern) entfernt sie aus der
+JSON-Antwort. Das verkleinert die Antworten deutlich und es gelangen keine Daten mehr in den Browser, die das Template
+nicht anzeigt.
+
+| Aktion | `data` der Antwort |
+|---|---|
+| `refreshDataRequest` | `weekCalendarHtml`, `activeResourceTypeId`, `activeResourceId`, `activeWeekStart` |
+| `bookingFormValidationRequest` | `bookingWindowHtml`, `isBookable` |
+| `bookingRequest` | `bookingWindowHtml`, `isBooked`, `bookings` (eigene Buchungen: `id`, `timeSlotId`, `startTime`, `endTime`) |
+| `cancelBookingFormRequest` | `bookingWindowHtml` |
+| `cancelBookingRequest` | `bookingWindowHtml`, `isCancelled`, `cancelledBookingIds` |
+
+* Weggefallen sind u. a. `rows`, `timeSlots`, `weekdays`, `filterBoard`, `activeWeek`, `activeResource`, `loggedInUser`,
+  `hasLoggedInUser` und `slots`. Twig-Templates und Listener des `AjaxResponseEvent` erhalten weiterhin alle Daten.
+* Eigene Skripte, die diese Daten aus der Antwort gelesen haben (z. B. in `rbb_after_booking_request`), brauchen einen
+  Listener mit tieferer Priorität als -2048, der die benötigten Werte per `setData()` anhängt.
+* Wurde kein HTML gerendert (Fehler) oder handelt es sich um eine eigene Aktion, bleibt die Antwort unverändert.
+* Neu: `AjaxResponse::retainData(array $keys)`.
+
+### Angaben zur buchenden Person in der Wochenansicht
+
+Die in den Moduleinstellungen gewählten «Angaben zur buchenden Person» (z. B. Firma, Ort, Telefonnummer) werden in der
+Zelle unter dem Namen angezeigt, in der Reihenfolge der Einstellungen; leere Werte werden ausgelassen. Vor- und
+Nachname bilden weiterhin den Namen. Die Daten stehen im Template als `booking.bookedByDetails` (Liste mit `field`,
+`label`, `value`; Bezeichnung aus den Sprachdateien von `tl_member`) und einzeln als `booking.bookedBy<Feld>`. Die
+Darstellung lässt sich im neuen Block `rbb_week_calendar_window__time_slot_cell__member_details` überschreiben.
+
+Weitere Daten des Mitglieds, unabhängig von den Moduleinstellungen, liefert die Twig-Funktion
+`rbb_booking_member(booking)` (Datensatz von `tl_member`, auch mit der ID der Buchung aufrufbar):
+
+```twig
+{% set member = rbb_booking_member(booking) %}
+{% if member.street|default %}<li class="rbb-cell-booking-member-detail">{{ member.street }}</li>{% endif %}
+```
+
+Die Daten stehen nur beim Rendern auf dem Server zur Verfügung und sind nicht Teil des JSON der API. Für Gäste (nicht
+eingeloggt) liefert die Funktion `null`; die Felder `password`, `secret`, `backupCodes`, `trustedTokenVersion` und
+`session` fehlen immer. **Was das Template anzeigt, sehen alle eingeloggten Mitglieder.**
+
 ### Farbschema pro Modul
 
 Neues Modulfeld `resourceBooking_colorScheme` («Farbschema»): leer = automatisch (Betriebssystem bzw.

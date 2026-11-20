@@ -58,8 +58,8 @@ class RefreshDataTest extends IntegrationTestCase
         $this->assertSame($this->weekStart, $response['data']['activeWeekStart']);
 
         // One time slot: one row with a cell per weekday
-        $this->assertCount(1, $response['data']['rows']);
-        $this->assertCount(7, $response['data']['rows'][0]['cellData']);
+        $this->assertCount(1, $response['fullData']['rows']);
+        $this->assertCount(7, $response['fullData']['rows'][0]['cellData']);
 
         $cell = $this->findCell($response, $this->weekStart + 8 * 3600);
 
@@ -75,8 +75,8 @@ class RefreshDataTest extends IntegrationTestCase
 
         $response = $this->refresh($module);
 
-        $this->assertFalse($response['data']['hasLoggedInUser']);
-        $this->assertNull($response['data']['loggedInUser']);
+        $this->assertFalse($response['fullData']['hasLoggedInUser']);
+        $this->assertNull($response['fullData']['loggedInUser']);
         $this->assertFalse($this->findCell($response, $this->weekStart + 8 * 3600)['isMemberLoggedIn']);
     }
 
@@ -88,8 +88,8 @@ class RefreshDataTest extends IntegrationTestCase
 
         $response = $this->refresh($module);
 
-        $this->assertTrue($response['data']['hasLoggedInUser']);
-        $this->assertSame(['firstname' => 'Alice', 'lastname' => 'Test'], $response['data']['loggedInUser']);
+        $this->assertTrue($response['fullData']['hasLoggedInUser']);
+        $this->assertSame(['firstname' => 'Alice', 'lastname' => 'Test'], $response['fullData']['loggedInUser']);
         $this->assertTrue($this->findCell($response, $this->weekStart + 8 * 3600)['isBookable']);
     }
 
@@ -104,7 +104,7 @@ class RefreshDataTest extends IntegrationTestCase
         // Header, filter with the selection, table with a "book" button per free slot
         $this->assertStringContainsString('<h2 class="rbb-header-headline">Werkraum</h2>', $html);
         $this->assertStringContainsString(\sprintf('<option value="%d" selected>', $this->resource), $html);
-        $this->assertStringContainsString(\sprintf('value="%d" selected>', $this->weekStart), $html);
+        $this->assertStringContainsString(\sprintf('value="%d" data-rbb-date="%s" selected>', $this->weekStart, date('Y-m-d', $this->weekStart)), $html);
         $this->assertStringContainsString('data-rbb-action="book"', $html);
         $this->assertStringContainsString(\sprintf('data-rbb-week="%d"', strtotime('+1 week', $this->weekStart)), $html);
 
@@ -172,6 +172,40 @@ class RefreshDataTest extends IntegrationTestCase
         $this->assertStringNotContainsString('bob@example.com', $json);
     }
 
+    public function testTheJsonResponseContainsTheHtmlButNotTheDataOfTheCalendar(): void
+    {
+        $module = $this->createModule([$this->resourceType]);
+        $alice = $this->createMember('alice');
+        $this->insertBookingRow($this->resource, $alice, $this->timeSlot, $this->weekStart + 8 * 3600, $this->weekStart + 9 * 3600);
+        $this->logIn('alice');
+
+        $response = $this->refresh($module);
+
+        $this->assertEqualsCanonicalizing(['weekCalendarHtml', 'activeResourceTypeId', 'activeResourceId', 'activeWeekStart'], array_keys($response['data']));
+        $this->assertStringContainsString('Alice Test', $response['data']['weekCalendarHtml']);
+        $this->assertArrayHasKey('rows', $response['fullData']);
+    }
+
+    public function testTheSelectedMemberFieldsAreDisplayedInTheWeekView(): void
+    {
+        $module = $this->createModule([$this->resourceType], [
+            'resourceBooking_displayClientPersonalData' => 1,
+            'resourceBooking_clientPersonalData' => 'firstname,lastname,company,city',
+        ]);
+
+        $bob = $this->createMember('bob');
+        $this->connection->update('tl_member', ['company' => 'Bob AG', 'city' => 'Bobwil'], ['id' => $bob]);
+        $this->insertBookingRow($this->resource, $bob, $this->timeSlot, $this->weekStart + 8 * 3600, $this->weekStart + 9 * 3600);
+        $this->createMember('alice');
+        $this->logIn('alice');
+
+        $html = $this->refresh($module)['data']['weekCalendarHtml'];
+
+        $this->assertStringContainsString('data-field="company"', $html);
+        $this->assertStringContainsString('Bob AG', $html);
+        $this->assertStringContainsString('Bobwil', $html);
+    }
+
     public function testOnlyThePermittedMemberFieldsOfOtherMembersAreDisplayed(): void
     {
         // email is not permitted in the bundle configuration (displayable_member_fields)
@@ -221,9 +255,9 @@ class RefreshDataTest extends IntegrationTestCase
         $response = $this->refresh($module, strtotime('+20 weeks', $this->weekStart));
         $lastWeek = strtotime('+4 weeks', strtotime('monday this week'));
 
-        $this->assertSame($lastWeek, $response['data']['filterBoard']['lastPermittedWeekStart']);
+        $this->assertSame($lastWeek, $response['fullData']['filterBoard']['lastPermittedWeekStart']);
         $this->assertSame($lastWeek, $response['data']['activeWeekStart']);
-        $this->assertTrue($response['data']['filterBoard']['jumpNextWeek']['disabled']);
+        $this->assertTrue($response['fullData']['filterBoard']['jumpNextWeek']['disabled']);
     }
 
     public function testTheFirstResourceIsSelectedOnTheFirstRequest(): void
@@ -257,7 +291,7 @@ class RefreshDataTest extends IntegrationTestCase
 
         $this->assertNotSame($otherResource, $response['data']['activeResourceId']);
         $this->assertNotSame($otherType, $response['data']['activeResourceTypeId']);
-        $this->assertSame([$this->resourceType], array_map('intval', array_column($response['data']['filterBoard']['resourceTypes'], 'id')));
+        $this->assertSame([$this->resourceType], array_map('intval', array_column($response['fullData']['filterBoard']['resourceTypes'], 'id')));
     }
 
     /**
@@ -285,7 +319,7 @@ class RefreshDataTest extends IntegrationTestCase
      */
     private function findCell(array $response, int $startTime): array
     {
-        foreach ($response['data']['rows'] as $row) {
+        foreach ($response['fullData']['rows'] as $row) {
             foreach ($row['cellData'] as $cell) {
                 if ($startTime === ($cell['startTime'] ?? null)) {
                     return $cell;

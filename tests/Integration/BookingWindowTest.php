@@ -148,15 +148,15 @@ class BookingWindowTest extends IntegrationTestCase
             'https://example.com/_rbb/api/bookings',
             'POST',
             [
-                    'resType' => (string) $this->resourceType,
-                    'res' => (string) $this->resource,
-                    'date' => date('Y-m-d', $weekStart),
-                    'resourceId' => (string) $this->resource,
-                    'slots' => [$this->currentSlotValue()],
-                    'requestedItems' => '1',
-                    'repeatUntil' => (string) $weekStart,
-                    ...$fields,
-                ],
+                'resType' => (string) $this->resourceType,
+                'res' => (string) $this->resource,
+                'date' => date('Y-m-d', $weekStart),
+                'resourceId' => (string) $this->resource,
+                'slots' => [$this->currentSlotValue()],
+                'requestedItems' => '1',
+                'repeatUntil' => (string) $weekStart,
+                ...$fields,
+            ],
         );
     }
 
@@ -169,11 +169,11 @@ class BookingWindowTest extends IntegrationTestCase
             'https://example.com/_rbb/api/actions/cancelBookingFormRequest',
             'POST',
             [
-                    'resType' => (string) $this->resourceType,
-                    'res' => (string) $this->resource,
-                    'date' => date('Y-m-d', strtotime('monday this week', $this->startTime)),
-                    'bookingId' => (string) $booking,
-                ],
+                'resType' => (string) $this->resourceType,
+                'res' => (string) $this->resource,
+                'date' => date('Y-m-d', strtotime('monday this week', $this->startTime)),
+                'bookingId' => (string) $booking,
+            ],
         );
 
         return $this->sendApiRequest($request, CancelBookingFormController::ACTION, $this->module, $this->page);

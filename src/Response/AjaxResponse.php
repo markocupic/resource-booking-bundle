@@ -220,6 +220,16 @@ final class AjaxResponse implements \JsonSerializable
     }
 
     /**
+     * Keeps only the given keys of the data (e.g. after the HTML has been rendered on the server).
+     *
+     * @param list<string> $keys
+     */
+    public function retainData(array $keys): void
+    {
+        $this->data = array_intersect_key($this->data, array_flip($keys));
+    }
+
+    /**
      * The JSON of the response. An error message replaces the info and confirmation
      * messages (e.g. "Booking successful" set by a listener before the error occurred).
      *
