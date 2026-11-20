@@ -75,6 +75,15 @@ class IconExtensionTest extends ContaoTestCase
         $this->assertStringContainsString('class="rbb-icon"', $result);
     }
 
+    public function testTheDefaultFolderIsThePublicFolderOfTheBundle(): void
+    {
+        // Independent of the project directory (e.g. the test kernel of the integration tests)
+        $result = $this->createExtension(new Filesystem())->generateIcon('fa-check-circle');
+
+        $this->assertStringContainsString('<svg', $result);
+        $this->assertStringContainsString('rbb-icon', $result);
+    }
+
     public function testThrowsWhenTheIconCannotBeFound(): void
     {
         $filesystem = $this->createMock(Filesystem::class);
@@ -107,6 +116,6 @@ class IconExtensionTest extends ContaoTestCase
 
         $framework = $this->createContaoFrameworkStub([StringUtil::class => $stringUtilAdapter]);
 
-        return new IconExtension($framework, $filesystem, '/project');
+        return new IconExtension($framework, $filesystem);
     }
 }

@@ -5,8 +5,8 @@ Encore
     .setPublicPath('/bundles/markocupicresourcebooking')
     .setManifestKeyPrefix('')
 
-    //.addEntry('backend', './assets/backend.js')
-    //.addEntry('frontend', './assets/frontend.js')
+    // Week calendar of the front end (assets/rbb/*.js, without dependencies)
+    .addEntry('js/app', './assets/app.js')
 
     .copyFiles({
         from: './assets/icons',
@@ -15,17 +15,12 @@ Encore
     .copyFiles({
         from: './assets',
         to: 'js/[path][name].[hash:8].[ext]',
-        pattern: /(app\.js|backend\.js)$/,
+        pattern: /backend\.js$/,
     })
     .copyFiles({
         from: './assets/styles',
         to: 'css/[path][name].[hash:8].[ext]',
         pattern: /(backend\.css)$/,
-    })
-    .copyFiles({
-        from: './node_modules/vue/dist',
-        to: 'vue/[path][name].[hash:8].[ext]',
-        pattern: /(vue\.global\.prod\.js)$/,
     })
 
     .disableSingleRuntimeChunk()

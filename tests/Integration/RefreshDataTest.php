@@ -93,6 +93,36 @@ class RefreshDataTest extends IntegrationTestCase
         $this->assertTrue($this->findCell($response, $this->weekStart + 8 * 3600)['isBookable']);
     }
 
+    public function testTheWeekViewIsRenderedOnTheServer(): void
+    {
+        $module = $this->createModule([$this->resourceType]);
+        $this->createMember('alice');
+        $this->logIn('alice');
+
+        $html = $this->refresh($module)['data']['weekCalendarHtml'];
+
+        // Header, filter with the selection, table with a "book" button per free slot
+        $this->assertStringContainsString('<h2 class="rbb-header-headline">Werkraum</h2>', $html);
+        $this->assertStringContainsString(\sprintf('<option value="%d" selected>', $this->resource), $html);
+        $this->assertStringContainsString(\sprintf('value="%d" selected>', $this->weekStart), $html);
+        $this->assertStringContainsString('data-rbb-action="book"', $html);
+        $this->assertStringContainsString(\sprintf('data-rbb-week="%d"', strtotime('+1 week', $this->weekStart)), $html);
+
+        // No client side template syntax
+        $this->assertStringNotContainsString('v-if', $html);
+        $this->assertStringNotContainsString('[[', $html);
+    }
+
+    public function testGuestsGetNoBookingButtonsInTheWeekView(): void
+    {
+        $module = $this->createModule([$this->resourceType]);
+
+        $html = $this->refresh($module)['data']['weekCalendarHtml'];
+
+        $this->assertStringContainsString('rbb-booking-table-main', $html);
+        $this->assertStringNotContainsString('data-rbb-action="book"', $html);
+    }
+
     public function testABookedOutSlotIsNotBookable(): void
     {
         $module = $this->createModule([$this->resourceType]);
@@ -217,10 +247,10 @@ class RefreshDataTest extends IntegrationTestCase
             'https://example.com/_rbb/api/calendar',
             'GET',
             [
-                    'resType' => (string) $otherType,
-                    'res' => (string) $otherResource,
-                    'date' => date('Y-m-d', $this->weekStart),
-                ],
+                'resType' => (string) $otherType,
+                'res' => (string) $otherResource,
+                'date' => date('Y-m-d', $this->weekStart),
+            ],
         );
 
         $response = $this->sendApiRequest($request, RefreshDataController::ACTION, $module, $this->page);
@@ -239,10 +269,10 @@ class RefreshDataTest extends IntegrationTestCase
             'https://example.com/_rbb/api/calendar',
             'GET',
             [
-                    'resType' => (string) $this->resourceType,
-                    'res' => (string) $this->resource,
-                    'date' => date('Y-m-d', $date ?? $this->weekStart),
-                ],
+                'resType' => (string) $this->resourceType,
+                'res' => (string) $this->resource,
+                'date' => date('Y-m-d', $date ?? $this->weekStart),
+            ],
         );
 
         return $this->sendApiRequest($request, RefreshDataController::ACTION, $module, $this->page);

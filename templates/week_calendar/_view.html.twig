@@ -1,0 +1,24 @@
+{% trans_default_domain "contao_default" %}
+
+{#
+    Week view (rendered on the server with the page and with every request of the week calendar,
+    see EventListener\RenderWeekCalendarListener): header, filter, description of the resource, table
+    and legend. The front end reads the selection from the selects of the filter.
+
+    Variables: the data of the week calendar (Api\Output\CalendarData::toArray(), changed by the
+    listeners of the AjaxResponseEvent), moduleKey and pageUrl. The template of the module is used,
+    so the blocks can be overridden in a variant of the module template.
+
+    Interactive elements are marked with data attributes (handled in app.js):
+      - data-rbb-week="<timestamp>"           jump to a week
+      - data-rbb-day="<index>"                day tab (small screens)
+      - data-rbb-action="book|cancel"         open the booking window for the slot
+        (see _time_slot_cell.html.twig)
+#}
+{% block rbb_week_calendar_view %}
+    {{ block('rbb_header') }}
+    {{ block('rbb_week_calendar_window__filter_board') }}
+    {{ block('rbb_week_calendar_window__active_resource_description') }}
+    {{ block('rbb_week_calendar_window__table') }}
+    {{ block('rbb_week_calendar_window__legend') }}
+{% endblock %}

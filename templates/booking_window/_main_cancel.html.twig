@@ -1,41 +1,44 @@
 {% trans_default_domain "contao_default" %}
 
+{# Cancel window (rendered on the server, see _view.html.twig) #}
 {% block rbb_booking_window__cancel_booking_form %}
     {# Start header #}
     {% block rbb_booking_window__cancel_booking_form__header %}
         <div class="rbb-booking-window-header">
             <h3 class="rbb-booking-window-header-title" id="rbbBookingWindowTitle_{{ moduleKey }}">
-                {{ ('RBB.cancel')|trans }}: [[ activeResource.title ]]
+                {{ ('RBB.cancel')|trans }}: {{ activeResource.title|default('') }}
             </h3>
-            <button type="button" @click="hideBookingWindow" class="rbb-close-window" aria-label="{{ ('RBB.close')|trans }}" title="{{ ('RBB.close')|trans }}">
+            <button type="button" data-rbb-action="close" class="rbb-close-window" aria-label="{{ ('RBB.close')|trans }}" title="{{ ('RBB.close')|trans }}">
                 <span aria-hidden="true">&times;</span>
             </button>
         </div>
     {% endblock %}
     {# Stop header #}
 
-    {# Start info table #}
-    {{ info_table|raw }}
-    {# End info table #}
+    {{ block('rbb_booking_window__info_table') }}
 
     {# Start delete repetitions switch #}
     {% block rbb_booking_window__cancel_booking_form__delete_repetitions_switch %}
-        <div v-if="bookingWindow.showCancelBookingForm" class="rbb-form-check rbb-delete-repetitions">
-            <input v-model="bookingWindow.deleteRepetitions" type="checkbox" class="rbb-form-check-input" id="deleteSiblingsWithSameBookingIdSwitch">
-            <label class="rbb-form-check-label" for="deleteSiblingsWithSameBookingIdSwitch">{{ ('RBB.deleteRepetitions')|trans }}</label>
-        </div>
+        {% if bookingWindow.showForm %}
+            <div class="rbb-form-check rbb-delete-repetitions">
+                <input type="checkbox" class="rbb-form-check-input" id="deleteRepetitions_{{ moduleKey }}" name="deleteRepetitions" value="1">
+                <label class="rbb-form-check-label" for="deleteRepetitions_{{ moduleKey }}">{{ ('RBB.deleteRepetitions')|trans }}</label>
+            </div>
+        {% endif %}
     {% endblock %}
     {# End delete repetitions switch #}
 
-    {{ messages|raw }}
+    {{ block('rbb_messages') }}
 
     {# Start footer #}
     {% block rbb_booking_window__cancel_booking_form__footer %}
         <div class="rbb-booking-window-footer">
-            <button type="button" class="rbb-btn rbb-btn--danger" v-if="bookingWindow.showCancelBookingButton" @click="cancelBookingRequest">
-                {{ ('RBB.cancelResource')|trans }}
-            </button>
-            <button type="button" class="rbb-btn rbb-btn--secondary rbb-js-close-booking-window" @click="hideBookingWindow">
+            {% if bookingWindow.showForm %}
+                <button type="button" class="rbb-btn rbb-btn--danger" data-rbb-action="cancel-booking">
+                    {{ ('RBB.cancelResource')|trans }}
+                </button>
+            {% endif %}
+            <button type="button" class="rbb-btn rbb-btn--secondary rbb-js-close-booking-window" data-rbb-action="close">
                 {{ ('RBB.close')|trans }}
             </button>
         </div>

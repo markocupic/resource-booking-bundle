@@ -1,18 +1,17 @@
 {% trans_default_domain "contao_default" %}
 
+{# Displayed until the week calendar is loaded (only if it could not be rendered with the page) #}
 {% block rbb_loading_indicator %}
-    <template v-if="isReady === false && lastResponseCode === 200">
-        <div class="rbb-loading-indicator">
-            {% block rbb_loading_indicator__icon %}
-                <div class="rbb-loading-spinner">
-                    {{ rbb_icon('fa-sync','rbb-icon-5x rbb-icon-spin')|raw }}
-                </div>
-            {% endblock %}
-            {% block rbb_loading_indicator__label %}
-                <div role="status">
-                    <span class="rbb-visually-hidden">{{ ('RBB.loading')|trans }}</span>
-                </div>
-            {% endblock %}
-        </div>
-    </template>
+    <div class="rbb-loading-indicator" data-rbb-loading{{ weekCalendarHtml|default ? ' hidden' }}>
+        {% block rbb_loading_indicator__icon %}
+            <div class="rbb-loading-spinner">
+                {{ rbb_icon('fa-sync','rbb-icon-5x rbb-icon-spin')|raw }}
+            </div>
+        {% endblock %}
+        {% block rbb_loading_indicator__label %}
+            <div role="status">
+                <span class="rbb-visually-hidden">{{ ('RBB.loading')|trans }}</span>
+            </div>
+        {% endblock %}
+    </div>
 {% endblock %}

@@ -1,33 +1,50 @@
 {% trans_default_domain "contao_default" %}
 
+{#
+    Table of the active week (rendered on the server, see _view.html.twig). The day displayed on small
+    screens (data-activedayindex, aria-pressed of the day tabs) is set by app.js.
+#}
 {% block rbb_week_calendar_window__table %}
-    <template v-if="rows.length > 0">
+    {% if rows is not empty %}
         {# Day selection, only displayed on small screens (one day at a time) #}
         {% block rbb_week_calendar_window__day_tabs %}
             <div class="rbb-day-tabs" role="group" aria-label="{{ ('RBB.filterDay')|trans }}">
-                <button v-for="weekday in weekdays" type="button" class="rbb-day-tab" :data-day-index="weekday.index" :aria-pressed="activeDayIndex === weekday.index ? 'true' : 'false'" :aria-label="weekday.title + ', ' + weekday.date" @click="activeDayIndex = weekday.index" @keydown.left.prevent="selectAdjacentDay(-1, true)" @keydown.right.prevent="selectAdjacentDay(1, true)">
-                    <span class="rbb-day-tab-name" aria-hidden="true">[[ getShortWeekday(weekday) ]]</span>
-                    <span class="rbb-day-tab-date" aria-hidden="true">[[ getShortDate(weekday) ]]</span>
-                </button>
+                {% for weekday in weekdays %}
+                    <button id="rbbDayTab_{{ moduleKey }}_{{ weekday.index }}" type="button" class="rbb-day-tab" data-rbb-day="{{ weekday.index }}" data-rbb-tstamp="{{ weekday.tstamp }}" data-day-index="{{ weekday.index }}" aria-pressed="false" aria-label="{{ weekday.title }}, {{ weekday.date }}">
+                        <span class="rbb-day-tab-name" aria-hidden="true">{{ weekday.titleShort|default(weekday.title|slice(0, 2)) }}</span>
+                        <span class="rbb-day-tab-date" aria-hidden="true">{{ weekday.tstamp|date('j.n.') }}</span>
+                    </button>
+                {% endfor %}
             </div>
         {% endblock %}
+
         {# The div based layout is exposed to assistive technology as a table (rows, column and row headers) #}
-        <div class="rbb-layout-table rbb-booking-table-main" :aria-busy="isBusy ? 'true' : 'false'" role="table" :aria-label="'{{ ('RBB.weekCalendar')|trans|e('js') }}: ' + (activeResource.title || '') + ', ' + (activeWeek.daySpan || '')" :data-activedayindex="activeDayIndex" @touchstart.passive="onTableTouchStart" @touchend="onTableTouchEnd">
+        <div class="rbb-layout-table rbb-booking-table-main" role="table" aria-label="{{ ('RBB.weekCalendar')|trans }}: {{ activeResource.title|default('') }}, {{ activeWeek.daySpan|default('') }}">
             <div class="rbb-layout-box-inner" role="rowgroup">
                 <div class="rbb-layout-row rbb-layout-row-head" role="row">
                     <div class="rbb-layout-cell rbb-cell-headline rbb-time-slot-indicator" role="columnheader"><strong>{{ ('RBB.time')|trans }}</strong></div>
-                    <div class="rbb-layout-cell rbb-cell-headline" role="columnheader" v-for="(weekday, index) in weekdays" :data-day-index="weekday.index"><strong class="rbb-weekday-title">[[ weekday.title ]]</strong> <span class="rbb-weekday-date">[[ weekday.date ]]</span></div>
+                    {% for weekday in weekdays %}
+                        <div class="rbb-layout-cell rbb-cell-headline" role="columnheader" data-day-index="{{ weekday.index }}"><strong class="rbb-weekday-title">{{ weekday.title }}</strong> <span class="rbb-weekday-date">{{ weekday.date }}</span></div>
+                    {% endfor %}
                 </div>
 
-                <div v-for="(row, rowIndex) in rows" :data-row-index="rowIndex" :id="row.rowData.cssRowId" class="rbb-layout-row" :class="row.rowData.cssRowClass" role="row">
-                    <!-- time indicator -->
-                    <div class="rbb-layout-cell rbb-time-slot-indicator" role="rowheader" :class="timeSlots[rowIndex].cssClass ? timeSlots[rowIndex].cssClass : ''">[[ timeSlots[rowIndex].timeSpanString ]]</div>
-                    <!-- slots -->
-                    <div class="rbb-layout-cell rbb-time-slot-cell" role="cell" v-for="(slot, colIndex) in row.cellData" :class="timeSlots[rowIndex].cssClass ? timeSlots[rowIndex].cssClass : ''" :data-day-index="slot.index" :data-ismemberloggedin="slot.isMemberLoggedIn" :data-iscancelable="slot.isCancelable" :data-isfullybooked="slot.isFullyBooked" :data-isbookable="!slot.isCancelable && slot.isBookable" :data-isbooked="slot.hasBookings" :data-isoutsidebookingwindow="!slot.isInBookingWindow" :data-isavailableonweekday="slot.isAvailableOnWeekday" :data-isinblockedperiod="slot.isInBlockedPeriod" :data-hasunconfirmedbookings="slot.hasBookings && slot.bookings.some((booking) => !booking.confirmed) ? 'true' : 'false'">
-                        {{ time_slot_cell|raw }}
+                {% for row in rows %}
+                    {% set rowIndex = loop.index0 %}
+                    {% set timeSlot = timeSlots[rowIndex]|default({}) %}
+                    <div data-row-index="{{ rowIndex }}" id="{{ row.rowData.cssRowId|default('') }}" class="rbb-layout-row {{ row.rowData.cssRowClass|default('') }}" role="row">
+                        {# time indicator #}
+                        <div class="rbb-layout-cell rbb-time-slot-indicator {{ timeSlot.cssClass|default('') }}" role="rowheader">{{ timeSlot.timeSpanString|default('') }}</div>
+                        {# slots #}
+                        {% for slot in row.cellData %}
+                            {% set colIndex = loop.index0 %}
+                            {% set hasUnconfirmedBookings = slot.hasBookings and slot.bookings|filter(booking => not booking.confirmed)|length > 0 %}
+                            <div class="rbb-layout-cell rbb-time-slot-cell {{ timeSlot.cssClass|default('') }}" role="cell" data-day-index="{{ slot.index }}" data-ismemberloggedin="{{ slot.isMemberLoggedIn ? 'true' : 'false' }}" data-iscancelable="{{ slot.isCancelable ? 'true' : 'false' }}" data-isfullybooked="{{ slot.isFullyBooked ? 'true' : 'false' }}" data-isbookable="{{ not slot.isCancelable and slot.isBookable ? 'true' : 'false' }}" data-isbooked="{{ slot.hasBookings ? 'true' : 'false' }}" data-isoutsidebookingwindow="{{ not slot.isInBookingWindow ? 'true' : 'false' }}" data-isavailableonweekday="{{ slot.isAvailableOnWeekday ? 'true' : 'false' }}" data-isinblockedperiod="{{ slot.isInBlockedPeriod ? 'true' : 'false' }}" data-hasunconfirmedbookings="{{ hasUnconfirmedBookings ? 'true' : 'false' }}">
+                                {{ block('rbb_week_calendar_window__time_slot_cell') }}
+                            </div>
+                        {% endfor %}
                     </div>
-                </div>
+                {% endfor %}
             </div>
         </div>
-    </template>
+    {% endif %}
 {% endblock %}

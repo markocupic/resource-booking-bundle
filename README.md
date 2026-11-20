@@ -11,7 +11,6 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Contao-5.7%20%7C%206-f47c00?style=flat-square" alt="Contao 5.7 | 6">
   <img src="https://img.shields.io/badge/PHP-%E2%89%A5%208.3-777bb4?style=flat-square" alt="PHP ≥ 8.3">
-  <img src="https://img.shields.io/badge/Vue.js-3-42b883?style=flat-square" alt="Vue.js 3">
   <img src="https://img.shields.io/badge/Lizenz-MIT-blue?style=flat-square" alt="Lizenz MIT">
 </p>
 
@@ -135,7 +134,7 @@ Standardmässig folgt der Wochenkalender der Einstellung des Betriebssystems bzw
 
 ### Zusätzliche Mitgliederdaten anzeigen
 
-Soll in der Buchungsübersicht z. B. auch die Firma oder der Wohnort erscheinen, wählen Sie das Feld in den Moduleinstellungen aus und ergänzen das Template, etwa mit `[[ booking.bookedByCompany ]]` oder `[[ booking.bookedByCity ]]`.
+Soll in der Buchungsübersicht z. B. auch die Firma oder der Wohnort erscheinen, wählen Sie das Feld in den Moduleinstellungen aus und ergänzen in einer Variante des Modul-Templates den Block `rbb_week_calendar_window__time_slot_cell`, etwa mit `{{ booking.bookedByCompany }}` oder `{{ booking.bookedByCity }}`.
 
 <details>
 <summary>Screenshots dazu anzeigen</summary>
@@ -146,7 +145,7 @@ Soll in der Buchungsübersicht z. B. auch die Firma oder der Wohnort erscheinen,
 </details>
 
 > [!NOTE]
-> `[[ … ]]` ist kein Contao-Insert-Tag, sondern die Platzhalter-Schreibweise von Vue.js.
+> Wochenansicht und Buchungsfenster werden auf dem Server mit Twig gerendert; die Templates enthalten reines Twig.
 
 <a id="zeitplaene-automatisch"></a>
 
@@ -208,6 +207,8 @@ markocupic_resource_booking:
             # Zusätzliche Felder im Buchungsformular
             permitted_form_fields: [phone, email]
 ```
+
+Zusätzliche Felder ergänzen Sie in einer Variante des Modul-Templates im Block `rbb_booking_window__booking_form_inputs`. Das Buchungsfenster wird auf dem Server gerendert; damit Eingaben beim Prüfen der Auswahl erhalten bleiben, setzen Sie die gesendeten Werte wieder ein, z. B. `<input name="phone" value="{{ form.phone|default('') }}">`.
 
 ## 🧩 Erweitern mit Events
 

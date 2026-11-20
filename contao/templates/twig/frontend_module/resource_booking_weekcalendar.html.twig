@@ -9,7 +9,6 @@
     Most parts are blocks of the partials below and can be overridden one by one.
 #}
 
-{% do addJavascriptResource(asset('vue/vue.global.prod.js', 'markocupic_resource_booking')) %}
 {% do addJavascriptResource(asset('js/app.js', 'markocupic_resource_booking')) %}
 {% do addCssResource(asset('css/frontend.css', 'markocupic_resource_booking')) %}
 
@@ -20,14 +19,16 @@
 {% use '@MarkocupicResourceBooking/_status_message.html.twig' %}
 {% use '@MarkocupicResourceBooking/_messages.html.twig' %}
 
-{# Partials for mode "week-calendar" #}
+{# Partials for mode "week-calendar": rendered on the server (block rbb_week_calendar_view, see WeekCalendarRenderer) #}
+{% use '@MarkocupicResourceBooking/week_calendar/_view.html.twig' %}
 {% use '@MarkocupicResourceBooking/week_calendar/_active_resource_description.html.twig' %}
 {% use '@MarkocupicResourceBooking/week_calendar/_filter_board.html.twig' %}
 {% use '@MarkocupicResourceBooking/week_calendar/_legend.html.twig' %}
 {% use '@MarkocupicResourceBooking/week_calendar/_table.html.twig' %}
 {% use '@MarkocupicResourceBooking/week_calendar/_time_slot_cell.html.twig' %}
 
-{# Partials for mode "booking_window" #}
+{# Partials for mode "booking_window": rendered on the server (block rbb_booking_window_view, see RenderBookingWindowListener) #}
+{% use '@MarkocupicResourceBooking/booking_window/_view.html.twig' %}
 {% use '@MarkocupicResourceBooking/booking_window/_main_booking.html.twig' %}
 {% use '@MarkocupicResourceBooking/booking_window/_main_cancel.html.twig' %}
 {% use '@MarkocupicResourceBooking/booking_window/_info_table.html.twig' %}
@@ -36,105 +37,106 @@
 {# The styles of the bundle are scoped to the class .mod_resourceBookingWeekcalendar #}
 {% block attributes %}{{ attributes.addClass('mod_resourceBookingWeekcalendar').setIfExists('data-rbb-color-scheme', colorScheme|default(null)) }}{% endblock %}
 
+{# Messages of the week calendar (e.g. "select a resource", network error), written by app.js #}
+{% block rbb_week_calendar_window__messages %}
+    <div class="rbb-filter-form-messages" role="status" aria-live="polite" data-rbb-messages="week">
+        {% for type, message in weekCalendarMessages|default({}) %}
+            {% if message %}
+                <div class="rbb-alert rbb-alert--{{ {error: 'danger', confirm: 'success'}[type]|default(type) }}" data-rbb-message="{{ type }}">{{ rbb_icon({confirm: 'fa-check-circle', info: 'fa-info-circle'}[type]|default('fa-exclamation-circle'), 'rbb-icon-2x')|raw }}<span data-rbb-message-text>{{ message }}</span></div>
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endblock %}
+
+{# Messages of the browser in the booking window if the window has no place for them: the HTML of the window
+   (block rbb_messages, _messages.html.twig) contains its own [data-rbb-messages="window"] next to the messages
+   of the server. #}
+{% block rbb_booking_window__client_messages %}
+    <div class="rbb-message-box" role="alert" data-rbb-messages="window"></div>
+{% endblock %}
+
+{# Markup of a message written by app.js (the text is inserted into [data-rbb-message-text]), as in _messages.html.twig #}
+{% block rbb_message_templates %}
+    {% for type, message in {warning: ['warning', 'fa-exclamation-circle'], error: ['danger', 'fa-exclamation-circle'], confirm: ['success', 'fa-check-circle'], info: ['info', 'fa-info-circle']} %}
+        <template data-rbb-message-template="{{ type }}">
+            <div class="rbb-alert rbb-alert--{{ message[0] }}" data-rbb-message="{{ type }}">{{ rbb_icon(message[1], 'rbb-icon-2x')|raw }}<span data-rbb-message-text></span></div>
+        </template>
+    {% endfor %}
+{% endblock %}
+
 {% block content %}
-    <div id="resourceBookingApp_{{ moduleKey }}" v-cloak>
-        <div class="rbb-app" :class="isReady ? 'rbb-is-ready' : ''">
-            {{ block('rbb_header') }}
-            {{ block('rbb_loading_indicator') }}
-            {{ block('rbb_status_message') }}
+    {#
+        Options of the front end (app.js): tokens, URLs of the API and texts of errors detected in the browser.
+        The selection (resource type, resource, week) is read from the HTML of the week calendar.
+    #}
+    {% set rbb_options = {
+        requestToken: csrfToken,
+        moduleKey: moduleKey,
+        accessToken: accessToken,
+        apiUrls: apiUrls,
+        texts: {
+            networkError: ('RBB.ERR.networkError')|trans,
+            accessTokenExpired: ('RBB.ERR.accessTokenExpired')|trans,
+            accessDenied: ('RBB.ERR.accessDenied')|trans,
+        },
+    } %}
 
-            {# Start rbb_application_container #}
-            {% block rbb_application_container %}
-                <div class="rbb-vue-application">
+    <div id="resourceBookingApp_{{ moduleKey }}" class="rbb-app{{ weekCalendarHtml ? ' rbb-is-ready' }}" data-rbb-app>
+        {{ block('rbb_loading_indicator') }}
+        {{ block('rbb_status_message') }}
 
-                    {# Start main window (stays visible behind the booking dialog) #}
-                    {% block rbb_week_calendar_window %}
-                        <div class="rbb-week-calendar">
-                            {{ block('rbb_week_calendar_window__filter_board') }}
-                            {{ block('rbb_week_calendar_window__active_resource_description') }}
-                            {% with {time_slot_cell: block('rbb_week_calendar_window__time_slot_cell')} %}
-                                {{ block('rbb_week_calendar_window__table') }}
-                            {% endwith %}
-                            {{ block('rbb_week_calendar_window__legend') }}
+        {# Start rbb_application_container #}
+        {% block rbb_application_container %}
+            <div class="rbb-application">
+
+                {# Start main window (stays visible behind the booking dialog) #}
+                {% block rbb_week_calendar_window %}
+                    <div class="rbb-week-calendar" aria-busy="false" data-rbb-week-calendar>
+                        {{ block('rbb_week_calendar_window__messages') }}
+                        {# HTML of the week view, rendered on the server (block rbb_week_calendar_view), with the page
+                           and with every request of the week calendar #}
+                        <div class="rbb-week-calendar-view" data-rbb-week-calendar-view>{{ weekCalendarHtml|raw }}</div>
+                    </div>
+                {% endblock %}
+                {# End main window #}
+
+                {# Start booking window (modal dialog: focus stays in the dialog, Esc closes it) #}
+                {% block rbb_booking_window %}
+                    <dialog class="rbb-booking-dialog" aria-labelledby="rbbBookingWindowTitle_{{ moduleKey }}" data-rbb-dialog>
+                        <div class="rbb-booking-window" aria-busy="false">
+                            {{ block('rbb_booking_window__client_messages') }}
+                            {# HTML of the window, rendered on the server (block rbb_booking_window_view) #}
+                            <div class="rbb-booking-window-view" data-rbb-booking-window-view></div>
                         </div>
-                    {% endblock %}
-                    {# End main window #}
+                    </dialog>
+                {% endblock %}
+                {# End booking window #}
+            </div>
+        {% endblock %}
+        {# End rbb_application_container #}
 
-                    {# Start booking window mode === 'booking-window' (modal dialog: focus stays in the dialog, Esc closes it) #}
-                    {% block rbb_booking_window %}
-                        <dialog class="rbb-booking-dialog" :class="{'rbb-booking-dialog--wide': bookingWindow.action === 'showBookingForm'}" ref="bookingDialog" aria-labelledby="rbbBookingWindowTitle_{{ moduleKey }}" @cancel.prevent="hideBookingWindow">
-                        <div class="rbb-booking-window" v-if="mode === 'booking-window' && hasLoggedInUser">
-                            {# Start booking window #}
-                            <template v-if="bookingWindow.action === 'showBookingForm'">
-                                {% with {
-                                    messages: block('rbb_messages'),
-                                    info_table: block('rbb_booking_window__info_table'),
-                                    booking_form_inputs: block('rbb_booking_window__booking_form_inputs'),
-                                } %}
-                                    {{ block('rbb_booking_window__booking_form') }}
-                                {% endwith %}
-                            </template>
-                            {# End booking window #}
-
-                            {# Start cancel booking window #}
-                            <template v-if="bookingWindow.action === 'showCancelBookingForm'">
-                                {% with {
-                                    info_table: block('rbb_booking_window__info_table'),
-                                    messages: block('rbb_messages'),
-                                } %}
-                                    {{ block('rbb_booking_window__cancel_booking_form') }}
-                                {% endwith %}
-                            </template>
-                            {# End cancel booking window #}
-                        </div>
-                        </dialog>
-                    {% endblock %}
-                    {# End booking window mode === 'booking-window' #}
-                </div>
-            {% endblock %}
-            {# End rbb_application_container #}
-        </div>
+        {{ block('rbb_message_templates') }}
     </div>
 
     {% block rbb_initialization_script %}
         <script>
             document.addEventListener('DOMContentLoaded', () => {
-                new ResourceBookingApp('#resourceBookingApp_{{ moduleKey }}', {
-                    'requestToken': '{{ csrfToken|e('js') }}',
-                    'moduleKey': '{{ moduleKey|e('js') }}',
-                    'accessToken': '{{ accessToken|e('js') }}',
-                    'apiUrls': {{ apiUrls|json_encode|raw }},
-                    'texts': {
-                        'networkError': '{{ ('RBB.ERR.networkError')|trans|e('js') }}',
-                        'accessTokenExpired': '{{ ('RBB.ERR.accessTokenExpired')|trans|e('js') }}',
-                        'accessDenied': '{{ ('RBB.ERR.accessDenied')|trans|e('js') }}',
-                    },
-                });
+                new ResourceBookingApp(document.getElementById('resourceBookingApp_{{ moduleKey|e('js') }}'), {{ rbb_options|json_encode|raw }});
             });
             {#
-            // Make usage of event listeners to hook into the booking request
-            document.addEventListener('rbb_before_booking_request', (e) =>{
-                // Get the vue.js instance
-                const vueInstance = e.detail.instance
-
-                // Get the form data object
+            // Hook into the booking request (see docs/EVENTS.md)
+            document.addEventListener('rbb_before_booking_request', (e) => {
+                // The week calendar (ResourceBookingApp) and the form data
+                const app = e.detail.instance;
                 const formData = e.detail.formData;
 
-                // Do not fire the booking request
+                // Do not send the booking request and display an error message
                 e.detail.blnSend = false;
-
-                // Display an error message
-                vueInstance.setMessage('error', 'Here comes the error message');
+                app.setMessage('error', 'Here comes the error message');
             });
 
-            document.addEventListener('rbb_after_booking_request', (e) =>{
-               // Get the vue.js instance
-                const vueInstance = e.detail.instance
-
-                // Get the form data object
-                const formData = e.detail.formData;
-
-                // Do not fire the booking request
+            document.addEventListener('rbb_after_booking_request', (e) => {
+                const app = e.detail.instance;
                 const response = e.detail.response;
             });
             #}

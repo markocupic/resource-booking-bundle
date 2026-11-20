@@ -1,64 +1,62 @@
 {% trans_default_domain "contao_default" %}
 
+{# Rendered on the server (see _view.html.twig). The selection of the front end is read from the selects (see app.js); data-rbb-date: date for the URL of the page #}
 {% block rbb_week_calendar_window__filter_board %}
-    <form class="rbb-filter-board-form" action="{{ app.request.getUri() }}" method="get">
-        <div v-if="filterBoard" class="rbb-filter-board">
-            {% block rbb_filter_board__button_prev %}
-                <div class="rbb-go-back-one-week">
-                    <button @click="jumpWeekRequest(filterBoard.jumpPrevWeek.tstamp,$event)" :data-tstamp="filterBoard.jumpPrevWeek.tstamp" type="button" class="rbb-btn rbb-btn--primary rbb-btn--block" title="{{ ('RBB.1WeekBack')|trans }}" aria-label="{{ ('RBB.1WeekBack')|trans }}" :class="filterBoard.jumpPrevWeek.disabled ? 'disabled' : ''" :aria-disabled="filterBoard.jumpPrevWeek.disabled ? 'true' : 'false'" :disabled="filterBoard.jumpPrevWeek.disabled">
-                        {{ rbb_icon('fa-chevron-left')|raw }}
-                    </button>
-                </div>
-            {% endblock %}
+    <form class="rbb-filter-board-form" action="{{ pageUrl|default('') }}" method="get">
+        {% if filterBoard is defined and filterBoard %}
+            <div class="rbb-filter-board">
+                {% block rbb_filter_board__button_prev %}
+                    <div class="rbb-go-back-one-week">
+                        <button id="rbbPrevWeek_{{ moduleKey }}" data-rbb-week="{{ filterBoard.jumpPrevWeek.tstamp }}" type="button" class="rbb-btn rbb-btn--primary rbb-btn--block{{ filterBoard.jumpPrevWeek.disabled ? ' disabled' }}" title="{{ ('RBB.1WeekBack')|trans }}" aria-label="{{ ('RBB.1WeekBack')|trans }}" aria-disabled="{{ filterBoard.jumpPrevWeek.disabled ? 'true' : 'false' }}"{{ filterBoard.jumpPrevWeek.disabled ? ' disabled' }}>
+                            {{ rbb_icon('fa-chevron-left')|raw }}
+                        </button>
+                    </div>
+                {% endblock %}
 
-            {% block rbb_filter_board__resource_type_select %}
-                <div class="rbb-ressource-type-select">
-                    <label for="ctrlResType_{{ moduleKey }}" class="rbb-filter-label">{{ ('RBB.filterResourceType')|trans }}</label>
-                    <select id="ctrlResType_{{ moduleKey }}" class="rbb-form-control" name="resType" v-model="activeResourceTypeId">
-                        <option value="undefined">{{ ('RBB.formOptionSelectResourceType')|trans }}</option>
-                        <option v-for="(resourceType, index) in filterBoard.resourceTypes" :value="resourceType.id">[[ resourceType.title ]]</option>
-                    </select>
-                </div>
-            {% endblock %}
+                {% block rbb_filter_board__resource_type_select %}
+                    <div class="rbb-ressource-type-select">
+                        <label for="ctrlResType_{{ moduleKey }}" class="rbb-filter-label">{{ ('RBB.filterResourceType')|trans }}</label>
+                        <select id="ctrlResType_{{ moduleKey }}" class="rbb-form-control" name="resType">
+                            <option value="undefined">{{ ('RBB.formOptionSelectResourceType')|trans }}</option>
+                            {% for resourceType in filterBoard.resourceTypes %}
+                                <option value="{{ resourceType.id }}"{{ resourceType.id == activeResourceTypeId ? ' selected' }}>{{ resourceType.title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                {% endblock %}
 
-            {% block rbb_filter_board__resource_select %}
-                <div class="rbb-ressource-select">
-                    <label for="ctrlRes_{{ moduleKey }}" class="rbb-filter-label">{{ ('RBB.filterResource')|trans }}</label>
-                    <select id="ctrlRes_{{ moduleKey }}" class="rbb-form-control" name="res" v-model="activeResourceId" :disabled="activeResourceTypeId === 'undefined'">
-                        <option value="undefined">{{ ('RBB.formOptionSelectResource')|trans }}</option>
-                        <option v-for="(resource, index) in filterBoard.resources" :value="resource.id">[[ resource.title ]]</option>
-                    </select>
-                </div>
-            {% endblock %}
+                {% block rbb_filter_board__resource_select %}
+                    <div class="rbb-ressource-select">
+                        <label for="ctrlRes_{{ moduleKey }}" class="rbb-filter-label">{{ ('RBB.filterResource')|trans }}</label>
+                        <select id="ctrlRes_{{ moduleKey }}" class="rbb-form-control" name="res"{{ activeResourceTypeId == 'undefined' ? ' disabled' }}>
+                            <option value="undefined">{{ ('RBB.formOptionSelectResource')|trans }}</option>
+                            {% for resource in filterBoard.resources %}
+                                <option value="{{ resource.id }}"{{ resource.id == activeResourceId ? ' selected' }}>{{ resource.title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                {% endblock %}
 
-            {% block rbb_filter_board__week_select %}
-                <div class="rbb-week-select">
-                    <label for="date_{{ moduleKey }}" class="rbb-filter-label">{{ ('RBB.filterWeek')|trans }}</label>
-                    <select id="date_{{ moduleKey }}" :disabled="!rows.length" class="rbb-time-span-select rbb-form-control" name="date" v-model="activeWeekStart">
-                        <option v-for="(week, index) in filterBoard.weekSelection" :class="week.cssClass" :value="week.tstampBeginWeek">[[ week.optionText ]]</option>
-                    </select>
-                </div>
-            {% endblock %}
+                {% block rbb_filter_board__week_select %}
+                    <div class="rbb-week-select">
+                        <label for="date_{{ moduleKey }}" class="rbb-filter-label">{{ ('RBB.filterWeek')|trans }}</label>
+                        <select id="date_{{ moduleKey }}" class="rbb-time-span-select rbb-form-control" name="date"{{ rows is empty ? ' disabled' }}>
+                            {% for week in filterBoard.weekSelection %}
+                                {# Without timestamp: separator before the current week #}
+                                <option class="{{ week.cssClass|default('') }}" value="{{ week.tstampBeginWeek|default('') }}" data-rbb-date="{{ week.tstampBeginWeek is defined and week.tstampBeginWeek ? week.tstampBeginWeek|date('Y-m-d') }}"{{ week.tstampBeginWeek|default(null) == activeWeekStart ? ' selected' }}{{ week.tstampBeginWeek|default('') is same as('') ? ' disabled' }}>{{ week.optionText }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                {% endblock %}
 
-            {% block rbb_filter_board__button_next %}
-                <div class="rbb-go-ahead-one-week">
-                    <button @click="jumpWeekRequest(filterBoard.jumpNextWeek.tstamp,$event)" :data-tstamp="filterBoard.jumpNextWeek.tstamp" type="button" class="rbb-btn rbb-btn--primary rbb-btn--block" title="{{ ('RBB.1WeekAhead')|trans }}" aria-label="{{ ('RBB.1WeekAhead')|trans }}" :class="filterBoard.jumpNextWeek.disabled ? 'disabled' : ''" :aria-disabled="filterBoard.jumpNextWeek.disabled ? 'true' : 'false'" :disabled="filterBoard.jumpNextWeek.disabled">
-                        {{ rbb_icon('fa-chevron-right')|raw }}
-                    </button>
-                </div>
-            {% endblock %}
-        </div>
-        {% block rbb_filter_board__messages %}
-            {# The live region always exists; the messages are only displayed here while the booking dialog is closed,
-               otherwise they belong to the dialog (see _messages.html.twig) #}
-            <div class="rbb-filter-form-messages" v-if="messages" role="status" aria-live="polite">
-                <template v-if="mode === 'week-calendar'">
-                    <div v-if="messages.info" class="rbb-alert rbb-alert--info">[[ messages.info ]]</div>
-                    <div v-if="messages.error" class="rbb-alert rbb-alert--danger">[[ messages.error ]]</div>
-                    <div v-if="messages.confirm" class="rbb-alert rbb-alert--success">[[ messages.confirm ]]</div>
-                    <div v-if="messages.warning" class="rbb-alert rbb-alert--warning">[[ messages.warning ]]</div>
-                </template>
+                {% block rbb_filter_board__button_next %}
+                    <div class="rbb-go-ahead-one-week">
+                        <button id="rbbNextWeek_{{ moduleKey }}" data-rbb-week="{{ filterBoard.jumpNextWeek.tstamp }}" type="button" class="rbb-btn rbb-btn--primary rbb-btn--block{{ filterBoard.jumpNextWeek.disabled ? ' disabled' }}" title="{{ ('RBB.1WeekAhead')|trans }}" aria-label="{{ ('RBB.1WeekAhead')|trans }}" aria-disabled="{{ filterBoard.jumpNextWeek.disabled ? 'true' : 'false' }}"{{ filterBoard.jumpNextWeek.disabled ? ' disabled' }}>
+                            {{ rbb_icon('fa-chevron-right')|raw }}
+                        </button>
+                    </div>
+                {% endblock %}
             </div>
-        {% endblock %}
+        {% endif %}
     </form>
 {% endblock %}

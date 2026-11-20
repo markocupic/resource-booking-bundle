@@ -16,7 +16,6 @@ namespace Markocupic\ResourceBookingBundle\Twig;
 
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\StringUtil;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Filesystem\Path;
 use Twig\Extension\AbstractExtension;
@@ -24,13 +23,15 @@ use Twig\TwigFunction;
 
 class IconExtension extends AbstractExtension
 {
-    private const DEFAULT_ICON_FOLDER = 'vendor/markocupic/resource-booking-bundle/public/icons/frontend';
+    /**
+     * Icons of the bundle (public/icons/frontend), relative to this file: independent of where the
+     * bundle is installed (vendor directory, path repository, test kernel with another project dir).
+     */
+    private const DEFAULT_ICON_FOLDER = __DIR__.'/../../public/icons/frontend';
 
     public function __construct(
         private readonly ContaoFramework $framework,
         private readonly Filesystem $filesystem,
-        #[Autowire('%kernel.project_dir%')]
-        private readonly string $projectDir,
     ) {
     }
 
@@ -61,10 +62,9 @@ class IconExtension extends AbstractExtension
         if ($this->filesystem->exists($iconNameOrPath)) {
             $iconPath = $iconNameOrPath;
         } else {
-            // Use the default location:  'vendor/markocupic/resource-booking-bundle/public/icons/frontend'
+            // Use the default location: public/icons/frontend of the bundle
             $iconName = !str_ends_with($iconNameOrPath, '.svg') ? $iconNameOrPath.'.svg' : $iconNameOrPath;
-            $dirname = Path::join($this->projectDir, self::DEFAULT_ICON_FOLDER);
-            $iconPath = Path::join($dirname, $iconName);
+            $iconPath = Path::join(Path::canonicalize(self::DEFAULT_ICON_FOLDER), $iconName);
         }
 
         if (!$this->filesystem->exists($iconPath)) {

@@ -1,0 +1,26 @@
+{% trans_default_domain "contao_default" %}
+
+{#
+    Booking window (rendered on the server, see EventListener\RenderBookingWindowListener): booking
+    form or cancel form. Rendered again with every response of the window (opening, every change
+    in the form, booking, cancelling) like a classic form.
+
+    Variables: the data of the week calendar (CalendarData::toArray()), moduleKey, and
+      - bookingWindow.action    showBookingForm|showCancelBookingForm
+      - bookingWindow.response  data of the response (e.g. isBookable, slots, isBooked, isCancelled)
+      - bookingWindow.booking   booking of the cancel window ({id, bookingUuid}) or null
+      - bookingWindow.showForm  false after the booking/cancellation
+      - messages                messages of the response (warning, error, confirm, info)
+      - fieldErrors             messages per form field (list of {field, id, message})
+      - form                    values sent (filled in again), selectedSlots: selected time slots
+
+    Interactive elements (handled in app.js): data-rbb-action="close|submit-booking|cancel-booking",
+    data-rbb-slot (checkboxes of the time slots), data-rbb-booking-day (day buttons, small screens).
+#}
+{% block rbb_booking_window_view %}
+    {% if bookingWindow.action == 'showBookingForm' %}
+        {{ block('rbb_booking_window__booking_form') }}
+    {% else %}
+        {{ block('rbb_booking_window__cancel_booking_form') }}
+    {% endif %}
+{% endblock %}

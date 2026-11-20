@@ -1,141 +1,199 @@
 {% trans_default_domain "contao_default" %}
 
+{# Booking window (rendered on the server, see _view.html.twig) #}
 {% block rbb_booking_window__booking_form %}
+    {% set response = bookingWindow.response %}
+
     {# Start header #}
-    <div class="rbb-booking-window-header">
-        <h3 class="rbb-booking-window-header-title" id="rbbBookingWindowTitle_{{ moduleKey }}" v-if="bookingWindow.action === 'showBookingForm'">
-            {{ ('RBB.book')|trans }}: [[ activeResource.title ]]
-        </h3>
-        <button class="rbb-close-window" type="button" @click="hideBookingWindow" aria-label="{{ ('RBB.close')|trans }}" title="{{ ('RBB.close')|trans }}">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
+    {% block rbb_booking_window__booking_form__header %}
+        <div class="rbb-booking-window-header">
+            <h3 class="rbb-booking-window-header-title" id="rbbBookingWindowTitle_{{ moduleKey }}">
+                {{ ('RBB.book')|trans }}: {{ activeResource.title|default('') }}
+            </h3>
+            <button class="rbb-close-window" type="button" data-rbb-action="close" aria-label="{{ ('RBB.close')|trans }}" title="{{ ('RBB.close')|trans }}">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    {% endblock %}
     {# End header #}
 
-    {{ info_table|raw }}
+    {{ block('rbb_booking_window__info_table') }}
 
-    {{ messages|raw }}
+    {{ block('rbb_messages') }}
 
-    {# Messages per form field, linked to the fields with aria-describedby (see setFieldErrors() in app.js) #}
+    {# Messages per form field, the fields refer to them with aria-describedby (see setFieldErrors() in app.js) #}
     {% block rbb_booking_window__booking_form__field_errors %}
-        <div class="rbb-field-errors rbb-alert rbb-alert--danger" v-if="Object.keys(fieldErrors).length" role="alert">
-            {{ rbb_icon('fa-exclamation-circle','rbb-icon-2x')|raw }}
-            <ul class="rbb-field-errors-list">
-                <li v-for="(message, field) in fieldErrors" :id="getFieldErrorId(field)">[[ message ]]</li>
-            </ul>
-        </div>
+        {% if fieldErrors is not empty %}
+            <div class="rbb-field-errors rbb-alert rbb-alert--danger" role="alert">
+                {{ rbb_icon('fa-exclamation-circle','rbb-icon-2x')|raw }}
+                <ul class="rbb-field-errors-list">
+                    {% for fieldError in fieldErrors %}
+                        <li id="{{ fieldError.id }}">{{ fieldError.message }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
     {% endblock %}
 
     {# Start booking preview #}
     {% block rbb_booking_window__booking_form__booking_preview %}
-        <details class="rbb-booking-preview" v-if="bookingWindow.response.isBookable === false && isBusy === false">
-            {% block rbb_booking_window__booking_form__booking_preview_button %}
-                {# Start toggle button #}
-                <summary class="rbb-btn rbb-btn--danger rbb-btn--sm">
-                    {{ ('RBB.showOccupiedResources')|trans }}
-                </summary>
-                {# End toggle button #}
-            {% endblock %}
+        {% if response.isBookable is defined and response.isBookable is same as(false) %}
+            <details class="rbb-booking-preview">
+                {% block rbb_booking_window__booking_form__booking_preview_button %}
+                    <summary class="rbb-btn rbb-btn--danger rbb-btn--sm">
+                        {{ ('RBB.showOccupiedResources')|trans }}
+                    </summary>
+                {% endblock %}
 
-            {% block rbb_booking_window__booking_form__booking_preview_table %}
-                {# Start booking preview table #}
-                <div class="rbb-booking-preview-table rbb-layout-table" id="bookingPreview_{{ moduleKey }}">
-                    <div class="rbb-layout-box-inner">
-                        <div class="rbb-layout-row" :class="!slot.isBookable ? 'not-bookable' : 'bookable'" v-for="(slot, index) in bookingWindow.response.slots">
-                            <div class="rbb-layout-cell">
-                                <small>[[ slot.datimSpanString ]]: </small>
-                            </div>
-                            <div class="rbb-layout-cell">
-                                <span v-if="slot.isValidTimeSlot === false"><small>{{ ('RBB.ERR.invalidTimeSlot')|trans }}</small></span>
-                                <span v-else-if="slot.hasValidItemCount === false"><small>{{ ('RBB.ERR.invalidItemsBooked')|trans }}</small></span>
-                                <span v-else-if="!slot.isInBookingWindow"><small>{{ ('RBB.ERR.invalidStartOrEndTime')|trans }}</small></span>
-                                <span v-else-if="slot.isInBlockedPeriod && slot.blockedPeriodDescription"><small>[[ slot.blockedPeriodDescription ]]</small></span>
-                                <span v-else-if="slot.isInBlockedPeriod"><small>{{ ('RBB.blocked')|trans }}</small></span>
-                                <span v-else-if="slot.isAvailableOnWeekday === false"><small>{{ ('RBB.notAvailable')|trans }}</small></span>
-                                <span v-else-if="!slot.canFulfillRequestedItems"><small>{{ ('RBB.ERR.thisSlotHasNotEnoughItemsAvailable')|trans }}</small></span>
-                                <span v-else-if="slot.isFullyBooked"><small>{{ ('RBB.ERR.resourceIsAlreadyFullyBooked')|trans }}</small></span>
-                                <span v-else><small>{{ ('RBB.MSG.resourceAvailable')|trans }}</small></span>
-                            </div>
+                {% block rbb_booking_window__booking_form__booking_preview_table %}
+                    <div class="rbb-booking-preview-table rbb-layout-table" id="bookingPreview_{{ moduleKey }}">
+                        <div class="rbb-layout-box-inner">
+                            {% for slot in response.slots|default([]) %}
+                                <div class="rbb-layout-row {{ slot.isBookable ? 'bookable' : 'not-bookable' }}">
+                                    <div class="rbb-layout-cell">
+                                        <small>{{ slot.datimSpanString }}: </small>
+                                    </div>
+                                    <div class="rbb-layout-cell">
+                                        <small>
+                                            {%- if slot.isValidTimeSlot is same as(false) -%}
+                                                {{ ('RBB.ERR.invalidTimeSlot')|trans }}
+                                            {%- elseif slot.hasValidItemCount is same as(false) -%}
+                                                {{ ('RBB.ERR.invalidItemsBooked')|trans }}
+                                            {%- elseif not slot.isInBookingWindow -%}
+                                                {{ ('RBB.ERR.invalidStartOrEndTime')|trans }}
+                                            {%- elseif slot.isInBlockedPeriod and slot.blockedPeriodDescription|default -%}
+                                                {{ slot.blockedPeriodDescription }}
+                                            {%- elseif slot.isInBlockedPeriod -%}
+                                                {{ ('RBB.blocked')|trans }}
+                                            {%- elseif slot.isAvailableOnWeekday is same as(false) -%}
+                                                {{ ('RBB.notAvailable')|trans }}
+                                            {%- elseif not slot.canFulfillRequestedItems -%}
+                                                {{ ('RBB.ERR.thisSlotHasNotEnoughItemsAvailable')|trans }}
+                                            {%- elseif slot.isFullyBooked -%}
+                                                {{ ('RBB.ERR.resourceIsAlreadyFullyBooked')|trans }}
+                                            {%- else -%}
+                                                {{ ('RBB.MSG.resourceAvailable')|trans }}
+                                            {%- endif -%}
+                                        </small>
+                                    </div>
+                                </div>
+                            {% endfor %}
                         </div>
                     </div>
-                </div>
-                {# End booking preview table #}
-            {% endblock %}
-        </details>
+                {% endblock %}
+            </details>
+        {% endif %}
     {% endblock %}
     {# End booking preview #}
 
     {# Start booking form #}
     {% block rbb_booking_window__booking_form__form %}
-        <form v-if="!bookingWindow.response.isBooked" :aria-busy="isBusy ? 'true' : 'false'" class="rbb-booking-form rbb-js-booking-form" :class="isBusy ? 'rbb-opacity-0' : 'rbb-opacity-1'">
-            <div class="rbb-booking-form-grid">
-                <!-- start booking table -->
-                <div class="rbb-layout-table rbb-booking-table-booking-form" v-if="rows.length > 0">
-                    <div class="rbb-layout-box-inner rbb-custom-scroll-bar-thin">
-                        {# Start checkbox table #}
-                        <div class="rbb-layout-row">
-                            <div class="rbb-layout-cell rbb-cell-headline rbb-time-slot-indicator"><strong>{{ ('RBB.time')|trans }}</strong></div>
-                            <div class="rbb-layout-cell rbb-cell-headline" :data-day-index="weekday.index" v-for="(weekday, index) in weekdays"><strong>[[ weekday.titleShort ]]</strong></div>
-                        </div>
-                        <div class="rbb-layout-row" :class="row.rowData.cssRowClass" :data-row-index="rowIndex" v-for="(row, rowIndex) in rows">
-                            <div class="rbb-layout-cell rbb-time-slot-indicator">[[ timeSlots[rowIndex].timeSpanString ]]</div>
-                            <div class="rbb-layout-cell rbb-time-slot-cell" :data-day-index="slot.index" :data-isbookable="slot.isBookable && slot.isInBookingWindow" :data-isbooked="slot.hasBookings" :data-isfullybooked="slot.isFullyBooked" :data-isoutsidebookingwindow="!slot.isInBookingWindow" :data-isavailableonweekday="slot.isAvailableOnWeekday" :data-isinblockedperiod="slot.isInBlockedPeriod" v-for="(slot, colIndex) in row.cellData">
-                                <div v-if="slot.isBookable && !slot.isFullyBooked">
-                                    <div class="rbb-form-check">
-                                        <input class="rbb-form-check-input" type="checkbox" :id="slot.bookingCheckboxId" :aria-label="slot.datimSpanString" :value="slot.bookingCheckboxValue" v-model="bookingWindow.selectedTimeSlots" @change="bookingFormValidationRequest()">
-                                        <label class="rbb-form-check-label" :for="slot.bookingCheckboxId"></label>
-                                    </div>
+        {% if bookingWindow.showForm %}
+            <form class="rbb-booking-form rbb-js-booking-form" action="{{ pageUrl|default('') }}" method="post" novalidate>
+                <div class="rbb-booking-form-grid">
+                    {# Start checkbox table: only these checkboxes are sent (name="slots[]") #}
+                    {% if rows is not empty %}
+                        <div class="rbb-layout-table rbb-booking-table-booking-form">
+                            <div class="rbb-layout-box-inner rbb-custom-scroll-bar-thin">
+                                <div class="rbb-layout-row">
+                                    <div class="rbb-layout-cell rbb-cell-headline rbb-time-slot-indicator"><strong>{{ ('RBB.time')|trans }}</strong></div>
+                                    {% for weekday in weekdays %}
+                                        <div class="rbb-layout-cell rbb-cell-headline" data-day-index="{{ weekday.index }}"><strong>{{ weekday.titleShort|default(weekday.title) }}</strong></div>
+                                    {% endfor %}
                                 </div>
+                                {% for row in rows %}
+                                    {% set rowIndex = loop.index0 %}
+                                    <div class="rbb-layout-row {{ row.rowData.cssRowClass|default('') }}" data-row-index="{{ rowIndex }}">
+                                        <div class="rbb-layout-cell rbb-time-slot-indicator">{{ timeSlots[rowIndex].timeSpanString|default('') }}</div>
+                                        {% for slot in row.cellData %}
+                                            <div class="rbb-layout-cell rbb-time-slot-cell" data-day-index="{{ slot.index }}" data-isbookable="{{ slot.isBookable and slot.isInBookingWindow ? 'true' : 'false' }}" data-isbooked="{{ slot.hasBookings ? 'true' : 'false' }}" data-isfullybooked="{{ slot.isFullyBooked ? 'true' : 'false' }}" data-isoutsidebookingwindow="{{ not slot.isInBookingWindow ? 'true' : 'false' }}" data-isavailableonweekday="{{ slot.isAvailableOnWeekday ? 'true' : 'false' }}" data-isinblockedperiod="{{ slot.isInBlockedPeriod ? 'true' : 'false' }}">
+                                                {% if slot.isBookable and not slot.isFullyBooked %}
+                                                    <div class="rbb-form-check">
+                                                        <input class="rbb-form-check-input" type="checkbox" name="slots[]" data-rbb-slot id="{{ slot.bookingCheckboxId }}" aria-label="{{ slot.datimSpanString }}" value="{{ slot.bookingCheckboxValue }}"{{ slot.bookingCheckboxValue in selectedSlots ? ' checked' }}>
+                                                        <label class="rbb-form-check-label" for="{{ slot.bookingCheckboxId }}"></label>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% endfor %}
                             </div>
                         </div>
-                        {# End checkbox table #}
-                    </div>
-                </div>
+                    {% endif %}
 
-                {# Small screens: the same time slots as a list, one day at a time (the checkboxes share the v-model of the table) #}
-                {% block rbb_booking_window__booking_form__slot_list %}
-                    <div class="rbb-booking-slot-picker" v-if="rows.length > 0">
-                        <div class="rbb-booking-day-chips" role="group" aria-label="{{ ('RBB.filterDay')|trans }}">
-                            <button v-for="weekday in weekdays" type="button" class="rbb-booking-day-chip" :aria-pressed="bookingWindowDayIndex === weekday.index ? 'true' : 'false'" :aria-label="weekday.title + ', ' + weekday.date + (countSelectedSlotsOfDay(weekday.index) ? ': ' + countSelectedSlotsOfDay(weekday.index) + ' {{ ('RBB.selected')|trans|e('js') }}' : '')" @click="bookingWindowDayIndex = weekday.index">
-                                <span class="rbb-booking-day-chip-name" aria-hidden="true">[[ getShortWeekday(weekday) ]]</span>
-                                <span class="rbb-booking-day-chip-date" aria-hidden="true">[[ getShortDate(weekday) ]]</span>
-                                <span class="rbb-booking-day-chip-count" v-if="countSelectedSlotsOfDay(weekday.index)" aria-hidden="true">[[ countSelectedSlotsOfDay(weekday.index) ]]</span>
-                            </button>
-                        </div>
-                        <ul class="rbb-booking-slot-list">
-                            <template v-for="(row, rowIndex) in rows">
-                                <template v-for="slot in row.cellData">
-                                    <li v-if="slot.index === bookingWindowDayIndex" class="rbb-booking-slot-list-item" :data-isselectable="slot.isBookable && !slot.isFullyBooked ? 'true' : 'false'">
-                                        <label class="rbb-booking-slot-list-label" v-if="slot.isBookable && !slot.isFullyBooked" :for="'list_' + slot.bookingCheckboxId">
-                                            <input class="rbb-form-check-input" type="checkbox" :id="'list_' + slot.bookingCheckboxId" :aria-label="slot.datimSpanString" :value="slot.bookingCheckboxValue" v-model="bookingWindow.selectedTimeSlots" @change="bookingFormValidationRequest()">
-                                            <span class="rbb-booking-slot-list-time">[[ timeSlots[rowIndex].timeSpanString ]]</span>
-                                        </label>
-                                        <div class="rbb-booking-slot-list-label" v-else>
-                                            <span class="rbb-booking-slot-list-time">[[ timeSlots[rowIndex].timeSpanString ]]</span>
-                                            <span class="rbb-booking-slot-list-status" v-if="slot.isInBlockedPeriod && slot.blockedPeriodDescription">[[ slot.blockedPeriodDescription ]]</span>
-                                            <span class="rbb-booking-slot-list-status" v-else-if="slot.isInBlockedPeriod">{{ ('RBB.blocked')|trans }}</span>
-                                            <span class="rbb-booking-slot-list-status" v-else-if="slot.isFullyBooked">{{ ('RBB.legend.fullyBooked')|trans }}</span>
-                                            <span class="rbb-booking-slot-list-status" v-else>{{ ('RBB.notAvailable')|trans }}</span>
-                                        </div>
-                                    </li>
-                                </template>
-                            </template>
-                        </ul>
-                    </div>
-                {% endblock %}
-                {{ booking_form_inputs|raw }}
-            </div>
-        </form>
+                    {# Small screens: the same time slots as a list, one day at a time (the checkboxes are kept in sync with the table, see app.js) #}
+                    {% block rbb_booking_window__booking_form__slot_list %}
+                        {% if rows is not empty %}
+                            <div class="rbb-booking-slot-picker">
+                                <div class="rbb-booking-day-chips" role="group" aria-label="{{ ('RBB.filterDay')|trans }}">
+                                    {% for weekday in weekdays %}
+                                        {% set selectedCount = 0 %}
+                                        {% for row in rows %}
+                                            {% for slot in row.cellData %}
+                                                {% if slot.index == weekday.index and slot.bookingCheckboxValue in selectedSlots %}
+                                                    {% set selectedCount = selectedCount + 1 %}
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endfor %}
+                                        <button id="rbbBookingDay_{{ moduleKey }}_{{ weekday.index }}" type="button" class="rbb-booking-day-chip" data-rbb-booking-day="{{ weekday.index }}" aria-pressed="false" aria-label="{{ weekday.title }}, {{ weekday.date }}{{ selectedCount ? ': ' ~ selectedCount ~ ' ' ~ ('RBB.selected')|trans }}">
+                                            <span class="rbb-booking-day-chip-name" aria-hidden="true">{{ weekday.titleShort|default(weekday.title|slice(0, 2)) }}</span>
+                                            <span class="rbb-booking-day-chip-date" aria-hidden="true">{{ weekday.tstamp|date('j.n.') }}</span>
+                                            {% if selectedCount %}<span class="rbb-booking-day-chip-count" aria-hidden="true">{{ selectedCount }}</span>{% endif %}
+                                        </button>
+                                    {% endfor %}
+                                </div>
+                                <ul class="rbb-booking-slot-list">
+                                    {% for weekday in weekdays %}
+                                    {% for row in rows %}
+                                        {% set rowIndex = loop.index0 %}
+                                        {% for slot in row.cellData|filter(slot => slot.index == weekday.index) %}
+                                            <li class="rbb-booking-slot-list-item" data-day-index="{{ slot.index }}" data-isselectable="{{ slot.isBookable and not slot.isFullyBooked ? 'true' : 'false' }}" hidden>
+                                                {% if slot.isBookable and not slot.isFullyBooked %}
+                                                    <label class="rbb-booking-slot-list-label" for="list_{{ slot.bookingCheckboxId }}">
+                                                        <input class="rbb-form-check-input" type="checkbox" data-rbb-slot id="list_{{ slot.bookingCheckboxId }}" aria-label="{{ slot.datimSpanString }}" value="{{ slot.bookingCheckboxValue }}"{{ slot.bookingCheckboxValue in selectedSlots ? ' checked' }}>
+                                                        <span class="rbb-booking-slot-list-time">{{ timeSlots[rowIndex].timeSpanString|default('') }}</span>
+                                                    </label>
+                                                {% else %}
+                                                    <div class="rbb-booking-slot-list-label">
+                                                        <span class="rbb-booking-slot-list-time">{{ timeSlots[rowIndex].timeSpanString|default('') }}</span>
+                                                        <span class="rbb-booking-slot-list-status">
+                                                            {%- if slot.isInBlockedPeriod and slot.blockedPeriodDescription|default -%}
+                                                                {{ slot.blockedPeriodDescription }}
+                                                            {%- elseif slot.isInBlockedPeriod -%}
+                                                                {{ ('RBB.blocked')|trans }}
+                                                            {%- elseif slot.isFullyBooked -%}
+                                                                {{ ('RBB.legend.fullyBooked')|trans }}
+                                                            {%- else -%}
+                                                                {{ ('RBB.notAvailable')|trans }}
+                                                            {%- endif -%}
+                                                        </span>
+                                                    </div>
+                                                {% endif %}
+                                            </li>
+                                        {% endfor %}
+                                    {% endfor %}
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+                    {% endblock %}
+
+                    {{ block('rbb_booking_window__booking_form_inputs') }}
+                </div>
+            </form>
+        {% endif %}
     {% endblock %}
     {# End booking form #}
 
     {# Start footer #}
     {% block rbb_booking_window__booking_form__footer %}
         <div class="rbb-booking-window-footer">
-            <button class="rbb-btn rbb-btn--primary" type="button" v-if="!bookingWindow.response.isBooked" @click="bookingRequest">
-                {{ ('RBB.bookResource')|trans }}
-            </button>
-            <button class="rbb-btn rbb-btn--secondary rbb-js-close-booking-window" type="button" @click="hideBookingWindow">
+            {% if bookingWindow.showForm %}
+                <button class="rbb-btn rbb-btn--primary" type="button" data-rbb-action="submit-booking">
+                    {{ ('RBB.bookResource')|trans }}
+                </button>
+            {% endif %}
+            <button class="rbb-btn rbb-btn--secondary rbb-js-close-booking-window" type="button" data-rbb-action="close">
                 {{ ('RBB.close')|trans }}
             </button>
         </div>

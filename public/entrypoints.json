@@ -1,8 +1,13 @@
 {
   "entrypoints": {
+    "js/app": {
+      "js": [
+        "/bundles/markocupicresourcebooking/js/app.556d337e.js"
+      ]
+    },
     "css/frontend": {
       "css": [
-        "/bundles/markocupicresourcebooking/css/frontend.4fd701a1.css"
+        "/bundles/markocupicresourcebooking/css/frontend.ae951769.css"
       ]
     },
     "css/backend": {

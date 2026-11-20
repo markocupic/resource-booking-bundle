@@ -5,19 +5,21 @@
         <div class="rbb-layout-box-inner">
             <div class="rbb-layout-row rbb-row-first">
                 <div class="rbb-layout-cell rbb-column-0 rbb-column-first"><strong>{{ ('RBB.resource')|trans }}</strong></div>
-                <div class="rbb-layout-cell rbb-column-1 rbb-column-last">[[ activeResource.title ]]<span v-if="activeResource.itemsAvailable > 1"> ([[ activeResource.itemsAvailable ]]x)</span></div>
+                <div class="rbb-layout-cell rbb-column-1 rbb-column-last">{{ activeResource.title|default('') }}{% if activeResource.itemsAvailable|default(1) > 1 %}<span> ({{ activeResource.itemsAvailable }}x)</span>{% endif %}</div>
             </div>
             <div class="rbb-layout-row">
                 <div class="rbb-layout-cell rbb-column-0 rbb-column-first"><strong>{{ ('RBB.fullname')|trans }}</strong></div>
-                <div class="rbb-layout-cell rbb-column-1 rbb-column-last">[[ loggedInUser.firstname ]] [[ loggedInUser.lastname ]]</div>
+                <div class="rbb-layout-cell rbb-column-1 rbb-column-last">{{ loggedInUser.firstname|default('') }} {{ loggedInUser.lastname|default('') }}</div>
             </div>
-            <div class="rbb-layout-row" v-if="bookingWindow.booking">
-                <div class="rbb-layout-cell rbb-column-0 rbb-column-first"><strong>{{ ('RBB.bookingIdAndUuid')|trans }}</strong></div>
-                <div class="rbb-layout-cell rbb-column-1 rbb-column-last">[[ bookingWindow.booking.id ]] / [[ bookingWindow.booking.bookingUuid ]]</div>
-            </div>
+            {% if bookingWindow.booking %}
+                <div class="rbb-layout-row">
+                    <div class="rbb-layout-cell rbb-column-0 rbb-column-first"><strong>{{ ('RBB.bookingIdAndUuid')|trans }}</strong></div>
+                    <div class="rbb-layout-cell rbb-column-1 rbb-column-last">{{ bookingWindow.booking.id }} / {{ bookingWindow.booking.bookingUuid }}</div>
+                </div>
+            {% endif %}
             <div class="rbb-layout-row rbb-row-last">
                 <div class="rbb-layout-cell rbb-column-0 rbb-column-first"><strong>{{ ('RBB.week')|trans }}</strong></div>
-                <div class="rbb-layout-cell rbb-column-1 rbb-column-last">[[ activeWeek.weekNumber ]]/[[ activeWeek.year ]]: [[ activeWeek.dateStart ]] - [[ activeWeek.dateEnd ]]</div>
+                <div class="rbb-layout-cell rbb-column-1 rbb-column-last">{{ activeWeek.weekNumber|default('') }}/{{ activeWeek.year|default('') }}: {{ activeWeek.dateStart|default('') }} - {{ activeWeek.dateEnd|default('') }}</div>
             </div>
         </div>
     </div>

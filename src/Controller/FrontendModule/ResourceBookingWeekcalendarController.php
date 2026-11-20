@@ -20,9 +20,14 @@ use Contao\CoreBundle\DependencyInjection\Attribute\AsFrontendModule;
 use Contao\CoreBundle\Twig\FragmentTemplate;
 use Contao\ModuleModel;
 use Contao\PageModel;
+use Markocupic\ResourceBookingBundle\AjaxController\RefreshDataController;
 use Markocupic\ResourceBookingBundle\Api\AccessTokenManager;
+use Markocupic\ResourceBookingBundle\Api\ApiContext;
 use Markocupic\ResourceBookingBundle\AppState\ModuleKeyGenerator;
+use Markocupic\ResourceBookingBundle\EventListener\RenderWeekCalendarListener;
 use Markocupic\ResourceBookingBundle\User\LoggedInFrontendUser;
+use Markocupic\ResourceBookingBundle\WeekCalendar\AjaxRequestHandler;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
@@ -42,6 +47,8 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
         private readonly ModuleKeyGenerator $moduleKeyGenerator,
         private readonly RequestStack $requestStack,
         private readonly UrlGeneratorInterface $urlGenerator,
+        private readonly AjaxRequestHandler $ajaxRequestHandler,
+        private readonly LoggerInterface|null $contaoErrorLogger = null,
     ) {
     }
 
@@ -76,6 +83,16 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
         $user = $this->loggedInUser->getLoggedInUser();
 
         $template->set('accessToken', !$page instanceof PageModel ? '' : $this->accessTokenManager->create((int) $model->id, (int) $page->id, $moduleKey, null === $user ? null : (int) $user->id));
+
+        /*
+         * The week calendar is rendered with the page (selection of the query string, e.g. a link
+         * "?resType=1&res=2&date=2026-11-23"): no loading indicator, readable without JavaScript.
+         * The front end replaces it with every request of the week calendar.
+         */
+        $weekCalendar = $page instanceof PageModel ? $this->renderWeekCalendar($mainRequest, $request, $model, $page, $moduleKey) : null;
+
+        $template->set('weekCalendarHtml', $weekCalendar['html'] ?? '');
+        $template->set('weekCalendarMessages', $weekCalendar['messages'] ?? []);
         $template->set('apiUrls', [
             'calendar' => $this->urlGenerator->generate('markocupic_resource_booking_api_calendar'),
             'validateBooking' => $this->urlGenerator->generate('markocupic_resource_booking_api_validate_booking'),
@@ -92,7 +109,6 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
         $colorScheme = (string) $model->resourceBooking_colorScheme;
         $template->set('colorScheme', \in_array($colorScheme, ['light', 'dark'], true) ? $colorScheme : '');
 
-        // Let vue.js take care of the rest ;-)
         $response = $template->getResponse();
 
         // The page contains the access token of this visitor: it must never be stored in
@@ -101,5 +117,42 @@ class ResourceBookingWeekcalendarController extends AbstractFrontendModuleContro
         $response->headers->addCacheControlDirective('no-store');
 
         return $response;
+    }
+
+    /**
+     * Answers an internal request of the week calendar (refreshDataRequest, same as the API, incl.
+     * the AjaxResponseEvent). Errors are logged: the front end loads the week calendar then.
+     *
+     * @return array{html: string, messages: array<string, string|null>}|null
+     */
+    private function renderWeekCalendar(Request $mainRequest, Request $request, ModuleModel $model, PageModel $page, string $moduleKey): array|null
+    {
+        $parameters = ['initial' => '1'];
+
+        foreach (['resType', 'res', 'date'] as $name) {
+            $value = $mainRequest->query->all()[$name] ?? null;
+
+            if (\is_scalar($value)) {
+                $parameters[$name] = (string) $value;
+            }
+        }
+
+        // Only the selection: other parameters of the page are not passed on
+        $calendarRequest = Request::create($mainRequest->getSchemeAndHttpHost().$mainRequest->getBaseUrl().$mainRequest->getPathInfo(), Request::METHOD_GET, $parameters);
+        $calendarRequest->setLocale($request->getLocale());
+        $calendarRequest->attributes->set('_scope', 'frontend');
+        $calendarRequest->attributes->set('pageModel', $page);
+
+        try {
+            $response = $this->ajaxRequestHandler->process($calendarRequest, RefreshDataController::ACTION, new ApiContext($model, $page, $moduleKey));
+        } catch (\Throwable $e) {
+            $this->contaoErrorLogger?->error(\sprintf('Resource booking: The week calendar of module %d could not be rendered: %s', (int) $model->id, $e->getMessage()), ['exception' => $e]);
+
+            return null;
+        }
+
+        $html = $response->getData(RenderWeekCalendarListener::DATA_KEY);
+
+        return \is_string($html) ? ['html' => $html, 'messages' => $response->toArray()['messages']] : null;
     }
 }

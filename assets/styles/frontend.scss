@@ -175,6 +175,11 @@ $rbb-breakpoint-xl: 1200px;
     box-sizing: border-box;
   }
 
+  // Elements shown and hidden by app.js (hidden attribute): stronger than display of the classes (e.g. .rbb-alert)
+  [hidden] {
+    display: none !important;
+  }
+
   * {
     transition-duration: 0.5s;
     transition-property: opacity;
@@ -215,17 +220,6 @@ $rbb-breakpoint-xl: 1200px;
     }
   }
 
-  .rbb-app .rbb-vue-application {
-    visibility: hidden;
-  }
-
-  .rbb-app[v-cloak] {
-    display: none;
-  }
-
-  .rbb-app.rbb-is-ready .rbb-vue-application {
-    visibility: visible;
-  }
 
   // ---------------------------------------------------------------------------
   // Header: resource type, resource and week on the left, user on the right
@@ -321,6 +315,11 @@ $rbb-breakpoint-xl: 1200px;
   .rbb-delete-repetitions,
   .rbb-booking-window-footer {
     margin-top: var(--rbb-section-spacing);
+  }
+
+  // Messages of the browser in the booking window (app.js): no space while empty
+  .rbb-message-box[data-rbb-messages]:empty {
+    display: none;
   }
 
   .rbb-message-box:has(> .rbb-active-resource-description) {
@@ -1527,7 +1526,8 @@ $rbb-breakpoint-xl: 1200px;
       list-style: none;
     }
 
-    .rbb-booking-slot-list-item + .rbb-booking-slot-list-item {
+    // The list contains the slots of all days, only the active day is visible (hidden attribute, see app.js)
+    .rbb-booking-slot-list-item:not([hidden]) ~ .rbb-booking-slot-list-item:not([hidden]) {
       margin-top: .375rem;
     }
 

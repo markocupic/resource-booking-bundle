@@ -8,22 +8,22 @@
         "dev-server": "encore dev-server",
         "dev": "encore dev",
         "watch": "encore dev --watch",
-        "build": "encore production --progress"
+        "build": "encore production --progress",
+        "test": "vitest run"
     },
     "license": "MIT",
-    "dependencies": {
-        "vue": "^3.5"
-    },
     "devDependencies": {
         "@babel/preset-env": "^7.0",
         "@symfony/webpack-encore": "^5.0",
         "autoprefixer": "^10.2",
         "core-js": "^3.15",
         "file-loader": "^6.0",
+        "jsdom": "^26.0",
         "postcss-loader": "^8.1.1",
         "sass": "^1.87.0",
         "sass-loader": "^16.0.5",
-        "style-loader": "^4.0.0"
+        "style-loader": "^4.0.0",
+        "vitest": "^3.2"
     },
     "browserslist": [
         "defaults"

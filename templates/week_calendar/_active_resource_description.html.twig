@@ -1,9 +1,11 @@
 {% trans_default_domain "contao_default" %}
 
 {% block rbb_week_calendar_window__active_resource_description %}
-    <div v-if="activeResource.description" class="rbb-message-box">
-        <div class="rbb-active-resource-description rbb-alert rbb-alert--info">
-            {{ rbb_icon('fa-info-circle','rbb-icon-2x')|raw }}<span>[[ activeResource.description ]]</span>
+    {% if activeResource.description|default %}
+        <div class="rbb-message-box">
+            <div class="rbb-active-resource-description rbb-alert rbb-alert--info">
+                {{ rbb_icon('fa-info-circle','rbb-icon-2x')|raw }}<span>{{ activeResource.description }}</span>
+            </div>
         </div>
-    </div>
+    {% endif %}
 {% endblock %}

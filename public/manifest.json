@@ -1,8 +1,7 @@
 {
-  "css/frontend.css": "/bundles/markocupicresourcebooking/css/frontend.4fd701a1.css",
+  "js/app.js": "/bundles/markocupicresourcebooking/js/app.556d337e.js",
+  "css/frontend.css": "/bundles/markocupicresourcebooking/css/frontend.ae951769.css",
   "css/backend.css": "/bundles/markocupicresourcebooking/css/backend.19e2e7d7.css",
-  "vue/vue.global.prod.js": "/bundles/markocupicresourcebooking/vue/vue.global.prod.872012b0.js",
-  "js/app.js": "/bundles/markocupicresourcebooking/js/app.75656da3.js",
   "js/backend.js": "/bundles/markocupicresourcebooking/js/backend.70ecb29e.js",
   "icons/calendar.svg": "/bundles/markocupicresourcebooking/icons/calendar.svg",
   "icons/feather/calendar.svg": "/bundles/markocupicresourcebooking/icons/feather/calendar.svg",
@@ -15,6 +14,7 @@
   "icons/frontend/fa-check-circle.svg": "/bundles/markocupicresourcebooking/icons/frontend/fa-check-circle.svg",
   "icons/frontend/fa-exclamation-circle.svg": "/bundles/markocupicresourcebooking/icons/frontend/fa-exclamation-circle.svg",
   "icons/frontend/fa-plus.svg": "/bundles/markocupicresourcebooking/icons/frontend/fa-plus.svg",
-  "frontend.4fd701a1.css.map": "/bundles/markocupicresourcebooking/css/frontend.4fd701a1.css.map",
+  "app.556d337e.js.map": "/bundles/markocupicresourcebooking/js/app.556d337e.js.map",
+  "frontend.ae951769.css.map": "/bundles/markocupicresourcebooking/css/frontend.ae951769.css.map",
   "backend.19e2e7d7.css.map": "/bundles/markocupicresourcebooking/css/backend.19e2e7d7.css.map"
 }

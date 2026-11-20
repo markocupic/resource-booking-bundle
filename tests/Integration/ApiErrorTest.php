@@ -66,10 +66,10 @@ class ApiErrorTest extends IntegrationTestCase
             'https://example.com/_rbb/api/bookings/validate',
             'POST',
             [
-                    'resourceId' => '1',
-                    'slots' => ['1-abc'],
-                    'requestedItems' => '1',
-                ],
+                'resourceId' => '1',
+                'slots' => ['1-abc'],
+                'requestedItems' => '1',
+            ],
         );
 
         $response = $this->sendApiRequest($request, BookingFormValidationController::ACTION, $this->module, $this->page);

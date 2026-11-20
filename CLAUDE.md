@@ -9,7 +9,7 @@ Projektsprache: Deutsch (Schweizer Rechtschreibung, «ss» statt «ß»). Code, 
 ## Überblick
 
 - Contao-Bundle `markocupic/resource-booking-bundle`: Online-Reservation von Ressourcen (Zimmer, Geräte, Fahrzeuge)
-  in Zeitfenstern, Frontend als Wochenkalender (Vue 3), Buchen nur für eingeloggte Mitglieder.
+  in Zeitfenstern, Frontend als Wochenkalender (auf dem Server gerendert, kleines JS ohne Framework), Buchen nur für eingeloggte Mitglieder.
 - Unterstützt: **Contao 5.7 und 6**, PHP ≥ 8.3, Symfony 7.4/8. Ältere Versionen nicht mehr berücksichtigen.
 - Entwickelt in `C:\phpstorm\contao5\vendor\markocupic\resource-booking-bundle` (Testinstallation contao5;
   das Plugin `markocupic/resource-booking-hochfelden` liegt in `C:\phpstorm\contao5\vendor\markocupic\resource-booking-hochfelden`).
@@ -218,7 +218,39 @@ Alte Spalten erst nach erfolgreicher Migration löschen. Jede Verhaltensänderun
 
 - Templates: modernes Fragment-Template `contao/templates/twig/frontend_module/resource_booking_weekcalendar.html.twig`
   (erweitert `@Contao/frontend_module/_base.html.twig`, Varianten unter `…/resource_booking_weekcalendar/<name>`, Wrapper
-  behält die Klasse `mod_resourceBookingWeekcalendar`) bindet die Partials aus `templates/` per `{% use %}` ein (überschreibbar über Blöcke). Vue-Ausdrücke mit `[[ … ]]` (nicht `{{ }}`).
+  behält die Klasse `mod_resourceBookingWeekcalendar`) bindet die Partials aus `templates/` per `{% use %}` ein (überschreibbar über Blöcke).
+- **Wochenansicht wird auf dem Server gerendert** (Kopfzeile, Filter, Hinweis, Tabelle, Legende; reines Twig, keine
+  Vue-Syntax): Block `rbb_week_calendar_view` (`templates/week_calendar/_view.html.twig`), gerendert von
+  `WeekCalendar\WeekCalendarRenderer` aus dem Modul-Template bzw. dessen Variante (`customTpl`), damit Varianten Blöcke
+  überschreiben können. `TemplateWrapper::renderBlock()` reicht die Blöcke nicht an verschachtelte `block()`-Aufrufe
+  weiter: der Renderer sammelt sie über die ganze Vererbungskette. `EventListener\RenderWeekCalendarListener`
+  (AjaxResponseEvent, Priorität -1024, nach allen anderen Listenern) setzt `data.weekCalendarHtml` für
+  `refreshDataRequest`. Variablen = Daten von `CalendarData::toArray()` + `moduleKey` + `pageUrl`.
+  Interaktion per `data-rbb-*` (`data-rbb-week`, `data-rbb-day`, `data-rbb-action="book"` mit `data-rbb-slot`/
+  `data-rbb-resource`, `"cancel"` mit `data-rbb-booking-id`/`-uuid`), in `ResourceBookingApp` per Event-Delegation
+  (`onWeekCalendarClick/Change/Keydown`); fokussierbare Elemente mit stabiler `id` (Fokus bleibt beim Ersetzen
+  erhalten, `replaceHtml()`). Die Auswahl (resType/res/date) liest das JS aus den Selects des Filters, nie aus einem
+  eigenen Zustand. Beim Seitenaufruf rendert der Controller die Wochenansicht gleich mit
+  (`AjaxRequestHandler::process()` mit internem GET-Request, `initial=1`); nur bei einem Fehler lädt der Browser sie. Zelle: Block
+  `rbb_week_calendar_window__time_slot_cell`, Knöpfe im Unterblock `…__time_slot_cell__actions` (z. B. Hochfelden).
+- **Buchungsfenster wird ebenfalls auf dem Server gerendert** (Block `rbb_booking_window_view`,
+  `templates/booking_window/_view.html.twig`): `EventListener\RenderBookingWindowListener` (gleiche Priorität) rendert es
+  bei `bookingFormValidationRequest`, `bookingRequest`, `cancelBookingFormRequest` (neuer `CancelBookingFormController`,
+  prüft Besitz und Zeit, ändert nichts) und `cancelBookingRequest` komplett neu, wie ein klassisches Formular:
+  Variablen `bookingWindow` (`action`, `response`, `booking`, `showForm`), `messages`, `fieldErrors` (Liste mit `id`
+  wie `getFieldErrorId()` in `assets/rbb/dom.js`), `form` (gesendete Werte, in Feldern wieder einsetzen), `selectedSlots`, dazu die
+  Daten der Woche (`CalendarDataBuilder`). Nur die Checkboxen der Tabelle haben `name="slots[]"`; die Liste (mobil)
+  hat dieselben Werte ohne Namen und wird per `data-rbb-slot` synchronisiert. Buttons per `data-rbb-action`
+  (`close`, `submit-booking`, `cancel-booking`), Tages-Buttons `data-rbb-booking-day`, Listeneinträge per `hidden`.
+- **Kein Vue.** JS in `assets/rbb/` (ES-Module ohne Abhängigkeiten): `api.js` (`ApiClient`, `readJson`,
+  `appendSelection`), `dom.js` (reine DOM-Helfer, einzeln getestet), `ResourceBookingApp.js` (Ablauf); Einstieg
+  `assets/app.js` setzt `window.ResourceBookingApp`, Encore bündelt nach `js/app`. Das Skript setzt nur HTML vom Server
+  ein (`replaceHtml()`, im Fenster mit `keepTypedValues`), zeigt Meldungen des Browsers (Markup aus
+  `<template data-rbb-message-template>`, mit Icon; im Fenster in `[data-rbb-messages="window"]` des Blocks
+  `rbb_messages`, bei den Meldungen des Servers) und schaltet `hidden`/`aria-*`. Kein Markup im JS bauen, kein neuer Zustand,
+  der nicht im HTML steht. Öffentliche API (für Hochfelden u. a.): `setMessage()`, `getMessage()`, `deleteMessage(s)()`,
+  `apiFetch()`, `appendAppState()`, `refreshDataRequest()`, `options.apiUrls`; Events mit `detail.instance`.
+  Nur die Antwort der letzten Kalender-Anfrage zählt (`calendarRequestId`). URL per `history.replaceState`.
 - Aufbau Wochenkalender (wie Design-Vorlage «Weich & freundlich»): Kopfzeile `_header.html.twig` (Kategorie als
   Kicker, Ressource als Titel, «KW 47 · Montag, 16. bis Freitag, 20. November 2026»; rechts «Angemeldet als
   **Name**») → Filter mit sichtbaren Labels (Kategorie / Ressource / Woche) → Hinweis der Ressource (grüner Kasten)
@@ -226,19 +258,18 @@ Alte Spalten erst nach erfolgreicher Migration löschen. Jede Verhaltensänderun
 - Zell-Zustände über `data-*`-Attribute in `_table.html.twig` (`data-isbookable`, `data-isbooked`,
   `data-iscancelable`, `data-isfullybooked`, `data-isoutsidebookingwindow`, `data-isavailableonweekday`,
   `data-isinblockedperiod`, `data-hasunconfirmedbookings`, `data-bookedbyanonymous` am Buchungseintrag, …).
-  **`data-*`-Attribute immer komplett kleinschreiben:** Das Vue-Template steckt im HTML der Seite, der Browser
-  wandelt Attributnamen ohnehin in Kleinbuchstaben um (CSS-Selektoren und `dataset` müssen dazu passen).
+  **`data-*`-Attribute der Zellen komplett kleinschreiben** (bestehende CSS-Selektoren und `dataset`).
 - Buchungsbutton: runder Plus-Kreis (`rbb_icon('fa-plus')`), Label nur für Screenreader.
-- Buchungs-/Stornierungsfenster: modaler `<dialog class="rbb-booking-dialog" ref="bookingDialog">` über dem Kalender
+- Buchungs-/Stornierungsfenster: modaler `<dialog class="rbb-booking-dialog" data-rbb-dialog>` über dem Kalender
   (`showModal()` in `openBookingWindow()`, `close()` in `hideBookingWindow()`, Esc über das `cancel`-Event).
-- Mobile (< 576 px, `$rbb-breakpoint-sm`): Tagesansicht. Tages-Buttons `.rbb-day-tabs` (`aria-pressed`), Vue-Daten
+- Mobile (< 576 px, `$rbb-breakpoint-sm`): Tagesansicht. Tages-Buttons `.rbb-day-tabs` (`aria-pressed`),
   `activeDayIndex` (bleibt beim Aktualisieren erhalten, sonst heute bzw. erster Tag), Wischen (`onTableTouchEnd`,
   ≥ 50 px horizontal) und Pfeiltasten (`selectAdjacentDay()`); CSS blendet per `data-activedayindex` /
   `data-day-index` die übrigen Spalten und die Kopfzeile aus. Desktop unverändert.
   Filter mobil zweizeilig per `grid-area` ([<] Woche [>] / Kategorie | Ressource), `--rbb-section-spacing` 1.25rem,
-  Buchungsdialog mobil: Liste statt Checkbox-Tabelle (`.rbb-booking-slot-picker`, Tages-Buttons mit Zähler
-  `countSelectedSlotsOfDay()`, Vue-Daten `bookingWindowDayIndex` = Tag des angeklickten Slots), Checkbox-IDs mit
-  Präfix `list_` (die Tabelle bleibt im DOM), gleiches `v-model`. Footer `position: sticky`.
+  Buchungsdialog mobil: Liste statt Checkbox-Tabelle (`.rbb-booking-slot-picker`, Tages-Buttons,
+  `bookingWindowDayIndex` = Tag des angeklickten Slots, sonst erster Tag), Checkbox-IDs mit Präfix `list_` (die Tabelle
+  bleibt im DOM), Abgleich per `syncSlotCheckboxes()`. Footer `position: sticky`.
 - Barrierefreiheit (Ziel WCAG 2.2 AA): Wochenkalender mit ARIA-Tabellenrollen (`table`/`row`/`columnheader`/
   `rowheader`/`cell`), Kopfzeile mobil nur visuell ausblenden (nie `display: none`). Kontraste: Feldrahmen ≥ 3:1,
   Text ≥ 4.5:1 (vor neuen Farben nachrechnen). Dialog schliesst nie automatisch; nach Erfolg Fokus auf
@@ -246,12 +277,12 @@ Alte Spalten erst nach erfolgreicher Migration löschen. Jede Verhaltensänderun
   `aria-busy` an Tabelle/Formular während `isBusy`, Live-Bereich für Filter-Hinweise, `prefers-reduced-motion`
   respektieren, Touch-Klickflächen ≥ 44 px (`@media (pointer: coarse)`, `::after`).
 - Feldfehler: `FieldValidationException` (Feld => Meldung) → `AjaxResponse::fieldErrors` → `setFieldErrors()` in
-  `app.js` markiert Felder per `name` **nur innerhalb von `this.$el`** (mehrere Module pro Seite), IDs der Meldungen
+  `markFieldErrors()` markiert Felder per `name` **nur innerhalb des eigenen Formulars** (mehrere Module pro Seite), IDs der Meldungen
   `rbbFieldError_<moduleKey>_<feld>`. Keine zusätzliche allgemeine Meldung.
 - Polling alle 15 s nur bei sichtbarem Tab (`visibilitychange`, `online` → sofort neu laden). Netzwerkfehler über
   `handleRequestError()`: `connectionLost`-Hinweis, Daten bleiben sichtbar; HTTP-Fehler wie bisher Statusmeldung.
   Kein `alert()`.
-- Barrierefreiheit: Icon-Buttons mit `aria-label` (Text mit `|e('js')` in Vue-Ausdrücke einsetzen), Zustände nie nur
+- Barrierefreiheit: Icon-Buttons mit `aria-label`, Zustände nie nur
   über Farbe (eigene Buchung: Häkchen, `booking.isOwn`). Kein Ton/Audio.
 
 ### Stylesheet
@@ -265,7 +296,8 @@ Alte Spalten erst nach erfolgreicher Migration löschen. Jede Verhaltensänderun
 - Selects: eigenes Caret (`--rbb-select-caret`, SVG-Data-URI, hell `#52606d` / dunkel `#a7b1bc`).
 - Build: `npm run build` (Webpack Encore) → `public/css/frontend.<hash>.css` + `public/manifest.json` /
   `entrypoints.json`. Nach dem Build alte `frontend.*.css` löschen. `package.json` pinnt `webpack ~5.109.2`
-  (5.112 bricht Encores copy-files-loader).
+  (5.112 bricht Encores copy-files-loader). JS: `npm test` (Vitest + jsdom, `tests/js`, Konfiguration
+  `vitest.config.mjs`); jede neue Logik in `dom.js`/`api.js` bzw. jedes neue Verhalten der App mit Test.
 
 ## Backend / DCA
 

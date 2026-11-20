@@ -24,6 +24,7 @@ use Markocupic\ResourceBookingBundle\Api\ApiContext;
 use Markocupic\ResourceBookingBundle\Controller\FrontendModule\ResourceBookingWeekcalendarController;
 use Markocupic\ResourceBookingBundle\Model\ResourceBookingBlockedPeriodModel;
 use Markocupic\ResourceBookingBundle\Slot\SlotDataProvider;
+use Markocupic\ResourceBookingBundle\Tests\Integration\app\AppKernel;
 use Markocupic\ResourceBookingBundle\WeekCalendar\AjaxRequestHandler;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\Request;
@@ -140,6 +141,13 @@ abstract class IntegrationTestCase extends FunctionalTestCase
         $requestStack = self::getContainer()->get('request_stack');
         $requestStack->push($request);
 
+        // Only the errors of this request
+        $errorLog = AppKernel::getErrorLogPath();
+
+        if (is_file($errorLog)) {
+            file_put_contents($errorLog, '');
+        }
+
         try {
             $response = self::getContainer()
                 ->get(AjaxRequestHandler::class)
@@ -147,6 +155,13 @@ abstract class IntegrationTestCase extends FunctionalTestCase
             ;
         } finally {
             $requestStack->pop();
+        }
+
+        // The handler answers exceptions with a general message: display the logged exception
+        if ($response->getStatusCode() >= 500) {
+            $log = is_file($errorLog) ? trim((string) file_get_contents($errorLog)) : '';
+
+            $this->fail(\sprintf("The request \"%s\" failed (HTTP %d).\n%s", $action, $response->getStatusCode(), '' !== $log ? $log : 'No error was logged (is symfony/monolog-bundle installed?).'));
         }
 
         return json_decode((string) $response->getContent(), true, 512, JSON_THROW_ON_ERROR);

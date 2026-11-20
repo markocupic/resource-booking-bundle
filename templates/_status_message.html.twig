@@ -1,16 +1,12 @@
 {% trans_default_domain "contao_default" %}
 
+{# States of the connection, displayed by app.js (hidden attribute) #}
 {% block rbb_status_message %}
     {# The server cannot be reached (network error): the data displayed may be outdated #}
-    <div class="rbb-connection-lost rbb-alert rbb-alert--warning" v-if="connectionLost" role="status">
+    <div class="rbb-connection-lost rbb-alert rbb-alert--warning" role="status" data-rbb-connection-lost hidden>
         {{ rbb_icon('fa-exclamation-circle','rbb-icon-2x')|raw }}<span>{{ ('RBB.ERR.connectionLost')|trans }}</span>
     </div>
-    <template v-if="isReady === false && lastResponseCode !== 200">
-        <div class="rbb-status-message" v-if="lastResponseCode === 401">
-            {{ ('RBB.ERR.401')|trans }}
-        </div>
-        <div class="rbb-status-message" v-else>
-            {{ ('RBB.ERR.general')|trans }}
-        </div>
-    </template>
+    {# The week calendar could not be loaded: access denied (e.g. logged out) or another error #}
+    <div class="rbb-status-message" data-rbb-status="401" hidden>{{ ('RBB.ERR.401')|trans }}</div>
+    <div class="rbb-status-message" data-rbb-status="error" hidden>{{ ('RBB.ERR.general')|trans }}</div>
 {% endblock %}

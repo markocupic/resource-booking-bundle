@@ -206,6 +206,11 @@ Die Daten der Wochenansicht (`rows`, `timeSlots`, `activeResource`, `activeWeek`
 `refreshDataRequest` (Laden, Aktualisieren, Wechsel von Ressource oder Woche, auch nach einer Buchung oder
 Stornierung).
 
+Die Wochenansicht wird auf dem Server gerendert, **nach** allen anderen Listenern (`RenderWeekCalendarListener`,
+Priorität -1024): Was ein Listener an den Daten ändert oder ergänzt, steht im Twig-Template zur Verfügung, z. B.
+`{{ slot.bookingFormUri }}` in einer Variante des Modul-Templates. Das HTML steht in `data.weekCalendarHtml`.
+Ebenso wird das Buchungsfenster nach den Listenern gerendert (`data.bookingWindowHtml`, `RenderBookingWindowListener`).
+
 > [!WARNING]
 > Alles in der Antwort ist für jeden Besucher der Seite sichtbar (Entwicklertools). Keine Personendaten fremder
 > Mitglieder hinzufügen.
@@ -298,13 +303,14 @@ final class MyCustomController implements ControllerInterface
 }
 ```
 
-Im Template ruft man die Aktion über die Vue-Instanz auf, `apiFetch()` setzt Token und CSRF-Token:
+Im Template ruft man die Aktion über die Instanz von `ResourceBookingApp` auf (z. B. `event.detail.instance` in
+`rbb_before_booking_request`), `apiFetch()` setzt Token und CSRF-Token:
 
 ```js
 const formData = new FormData();
 // Auswahl des Wochenkalenders (Ressourcentyp, Ressource, Woche)
-vueInstance.appendAppState(formData);
-const response = await vueInstance.apiFetch('POST', vueInstance.options.apiUrls.action.replace('__action__', 'myCustomRequest'), formData);
+app.appendAppState(formData);
+const response = await app.apiFetch('POST', app.options.apiUrls.action.replace('__action__', 'myCustomRequest'), formData);
 const json = await response.json();
 ```
 

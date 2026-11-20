@@ -1,34 +1,62 @@
 {% trans_default_domain "contao_default" %}
 
+{#
+    Content of a cell of the week table (rendered on the server, see _table.html.twig).
+
+    Variables: slot (WeekCalendar\SlotPresenter, changed by the listeners of the AjaxResponseEvent),
+    rowIndex and colIndex (position of the slot, unique ids of the buttons), activeResource and
+    hasLoggedInUser.
+
+    The buttons carry the data of the booking window (handled in app.js):
+      - book:   data-rbb-action="book", data-rbb-slot (time slot), data-rbb-resource
+      - cancel: data-rbb-action="cancel", data-rbb-booking-id, data-rbb-booking-uuid
+#}
 {% block rbb_week_calendar_window__time_slot_cell %}
     <div class="rbb-time-slot-cell-inner">
-        <div class="rbb-cell-blocked-period-label" v-if="slot.isInBlockedPeriod && slot.blockedPeriodDescription && !slot.hasBookings">[[ slot.blockedPeriodDescription ]]</div>
-        <div class="rbb-cell-not-available-label" v-if="!slot.isAvailableOnWeekday && !slot.isInBlockedPeriod && !slot.hasBookings">{{ ('RBB.notAvailable')|trans }}</div>
+        {% if slot.isInBlockedPeriod and slot.blockedPeriodDescription|default and not slot.hasBookings %}
+            <div class="rbb-cell-blocked-period-label">{{ slot.blockedPeriodDescription }}</div>
+        {% endif %}
+        {% if not slot.isAvailableOnWeekday and not slot.isInBlockedPeriod and not slot.hasBookings %}
+            <div class="rbb-cell-not-available-label">{{ ('RBB.notAvailable')|trans }}</div>
+        {% endif %}
         {# Past slots or slots outside the booking period have no visible text: name the state for screen readers #}
-        <span class="rbb-visually-hidden" v-if="!slot.isInBookingWindow && !slot.hasBookings && !slot.isInBlockedPeriod && slot.isAvailableOnWeekday">{{ ('RBB.notBookable')|trans }}</span>
-        <div class="rbb-cell-free-label" v-if="slot.isBookable && !slot.hasBookings && slot.isInBookingWindow">{{ ('RBB.free')|trans }}</div>
-        <div class="rbb-cell-booking-still-available-box" v-if="slot.isAvailableOnWeekday && !slot.isInBlockedPeriod && activeResource.itemsAvailable > 1 && slot.remainingItems > 0 && slot.isInBookingWindow" :title="'{{ ('RBB.stillAvailable')|trans }}: ' + slot.remainingItems">+ [[ slot.remainingItems ]]</div>
-        <div class="rbb-booked-item" v-if="slot.hasBookings" v-for="booking in slot.bookings" :data-confirmed="booking.confirmed ? 'true' : 'false'" :data-bookedbyanonymous="booking.bookedByAnonymous ? 'true' : 'false'">
-            <span class="rbb-booked-item-header">
-                <span class="rbb-cell-booking-own-icon" v-if="booking.isOwn">{{ rbb_icon('fa-check-circle')|raw }}<span class="rbb-visually-hidden">{{ ('RBB.legend.own')|trans }}:</span></span>
-                <span class="rbb-cell-booking-owner-box" v-if="booking.bookedByFullname">[[ booking.bookedByFullname ]]</span>
-                <span class="item-counter-box" v-if="activeResource.itemsAvailable > 1"> (-[[ booking.itemsBooked ]])</span>
-            </span>
-            {# Feel free and add more details about the booking owner (tl_member) #}
-            {# <span class="rbb-cell-booking-owner-box" v-if="booking.bookedByStreet">[[ booking.bookedByStreet ]]</span> #}
-            {# <span class="rbb-cell-booking-owner-box" v-if="booking.bookedByPostal">[[ booking.bookedByPostal ]]</span> #}
-            {# <span class="rbb-cell-booking-owner-box" v-if="booking.bookedByCity">[[ booking.bookedByCity ]]</span> #}
-            {# Feel free and add more details about the booking (tl_resource_booking) #}
-            <span class="rbb-cell-booking-description-box" v-if="booking.bookingDescription"><small>[[ booking.bookingDescription ]]</small></span>
-            <span class="rbb-cell-booking-unconfirmed-box" v-if="!booking.confirmed"><small>{{ ('RBB.awaitingConfirmation')|trans }}</small></span>
-            {# <span class="rbb-cell-booking-description-box v-if="booking.bookingTitle"><small>[[ booking.bookingTitle ]]</small></span> #}
-            {# <span class="rbb-cell-booking-description-box v-if="booking.bookingBookingTime"><small>[[ booking.bookingBookingTime ]]</small></span> #}
-            <button class="rbb-btn-icon rbb-btn-cancel-booking" type="button" v-if="booking.canCancel" @click="openBookingWindow(slot, 'showCancelBookingForm', slot.memberBooking)" title="{{ ('RBB.cancelResource')|trans }}" :aria-label="'{{ ('RBB.cancelResource')|trans|e('js') }}: ' + slot.datimSpanString">
-                {{ rbb_icon('fa-times-circle','rbb-icon-cancel-booking')|raw }}
-            </button>
-        </div>
-        <button class="rbb-btn-icon rbb-btn-booking" type="button" v-if="hasLoggedInUser && (slot.isBookable && !slot.isCancelable)" @click="openBookingWindow(slot, 'showBookingForm', null)" title="{{ ('RBB.bookResource')|trans }}" :aria-label="'{{ ('RBB.bookResource')|trans|e('js') }}: ' + slot.datimSpanString">
-            {{ rbb_icon('fa-plus')|raw }}<span class="rbb-btn-booking-label">{{ ('RBB.book')|trans }}</span>
-        </button>
+        {% if not slot.isInBookingWindow and not slot.hasBookings and not slot.isInBlockedPeriod and slot.isAvailableOnWeekday %}
+            <span class="rbb-visually-hidden">{{ ('RBB.notBookable')|trans }}</span>
+        {% endif %}
+        {% if slot.isBookable and not slot.hasBookings and slot.isInBookingWindow %}
+            <div class="rbb-cell-free-label">{{ ('RBB.free')|trans }}</div>
+        {% endif %}
+        {% if slot.isAvailableOnWeekday and not slot.isInBlockedPeriod and activeResource.itemsAvailable|default(1) > 1 and slot.remainingItems > 0 and slot.isInBookingWindow %}
+            <div class="rbb-cell-booking-still-available-box" title="{{ ('RBB.stillAvailable')|trans }}: {{ slot.remainingItems }}">+ {{ slot.remainingItems }}</div>
+        {% endif %}
+        {% if slot.hasBookings %}
+            {% for booking in slot.bookings %}
+                <div class="rbb-booked-item" data-confirmed="{{ booking.confirmed ? 'true' : 'false' }}" data-bookedbyanonymous="{{ booking.bookedByAnonymous ? 'true' : 'false' }}">
+                    <span class="rbb-booked-item-header">
+                        {% if booking.isOwn %}<span class="rbb-cell-booking-own-icon">{{ rbb_icon('fa-check-circle')|raw }}<span class="rbb-visually-hidden">{{ ('RBB.legend.own')|trans }}:</span></span>{% endif %}
+                        {% if booking.bookedByFullname|default %}<span class="rbb-cell-booking-owner-box">{{ booking.bookedByFullname }}</span>{% endif %}
+                        {% if activeResource.itemsAvailable|default(1) > 1 %}<span class="item-counter-box"> (-{{ booking.itemsBooked }})</span>{% endif %}
+                    </span>
+                    {# Feel free and add more details about the booking owner (tl_member, if displayed in the module), e.g. #}
+                    {# {% if booking.bookedByCity|default %}<span class="rbb-cell-booking-owner-box">{{ booking.bookedByCity }}</span>{% endif %} #}
+                    {# Feel free and add more details about the booking (tl_resource_booking, if displayed in the module) #}
+                    {% if booking.bookingDescription|default %}<span class="rbb-cell-booking-description-box"><small>{{ booking.bookingDescription }}</small></span>{% endif %}
+                    {% if not booking.confirmed %}<span class="rbb-cell-booking-unconfirmed-box"><small>{{ ('RBB.awaitingConfirmation')|trans }}</small></span>{% endif %}
+                    {% if booking.canCancel %}
+                        <button id="rbbCancel_{{ moduleKey }}_{{ rowIndex }}_{{ colIndex }}_{{ loop.index0 }}" class="rbb-btn-icon rbb-btn-cancel-booking" type="button" data-rbb-action="cancel" data-rbb-booking-id="{{ slot.memberBooking.id|default(0) }}" data-rbb-booking-uuid="{{ slot.memberBooking.bookingUuid|default('') }}" title="{{ ('RBB.cancelResource')|trans }}" aria-label="{{ ('RBB.cancelResource')|trans }}: {{ slot.datimSpanString }}">
+                            {{ rbb_icon('fa-times-circle','rbb-icon-cancel-booking')|raw }}
+                        </button>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        {% endif %}
+        {# Buttons to book the slot: override this block to add e.g. a link for guests #}
+        {% block rbb_week_calendar_window__time_slot_cell__actions %}
+            {% if hasLoggedInUser and slot.isBookable and not slot.isCancelable %}
+                <button id="rbbBook_{{ moduleKey }}_{{ rowIndex }}_{{ colIndex }}" class="rbb-btn-icon rbb-btn-booking" type="button" data-rbb-action="book" data-rbb-slot="{{ slot.bookingCheckboxValue }}" data-rbb-resource="{{ slot.resourceId }}" title="{{ ('RBB.bookResource')|trans }}" aria-label="{{ ('RBB.bookResource')|trans }}: {{ slot.datimSpanString }}">
+                    {{ rbb_icon('fa-plus')|raw }}<span class="rbb-btn-booking-label">{{ ('RBB.book')|trans }}</span>
+                </button>
+            {% endif %}
+        {% endblock %}
     </div>
 {% endblock %}

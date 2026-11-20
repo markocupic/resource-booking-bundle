@@ -897,6 +897,90 @@ typisierten Eigenschaften statt in einem Array. Das JSON an das Frontend ist unv
 `setConfirmationMessage()`, `setErrorMessage()`, `setInfoMessage()`, `setWarningMessage()` und die passenden
 `get…()`/`has…()` bleiben. `AjaxResponseFactory::create()` hat den Rückgabetyp `AjaxResponse`.
 
+### Wochenansicht wird auf dem Server gerendert
+
+Kopfzeile, Filter, Hinweis der Ressource, Tabelle und Legende sind reines Twig und werden auf dem Server gerendert
+(Block `rbb_week_calendar_view`). Der Browser setzt das HTML ein (`data.weekCalendarHtml` der Antwort von
+`refreshDataRequest`).
+
+* Eigene Templates bzw. Varianten des Modul-Templates, die Blöcke der Wochenansicht überschreiben
+  (`rbb_header`, `rbb_week_calendar_window__filter_board`, `…__table`, `…__time_slot_cell`, `…__legend`,
+  `…__active_resource_description`), auf Twig umstellen: `[[ slot.x ]]` → `{{ slot.x }}`, `v-if` → `{% if %}`,
+  `v-for` → `{% for %}`, `@click` entfernen. Variablen: die Daten von `CalendarData` (z. B. `rows`, `filterBoard`,
+  `activeResource`), `moduleKey`, `pageUrl`; in der Zelle `slot`, `rowIndex`, `colIndex`.
+* Knöpfe in der Zelle über Datenattribute: `data-rbb-action="book|cancel"` (Attribute siehe «Vue entfernt»); die
+  Knöpfe stehen im neuen Block `rbb_week_calendar_window__time_slot_cell__actions` (zum Ergänzen einzeln überschreibbar).
+* Daten, die ein Listener des `AjaxResponseEvent` ergänzt (z. B. `slot.bookingFormUri`), stehen im Template zur
+  Verfügung: das HTML wird nach allen anderen Listenern gerendert.
+* Die Meldungen der Wochenansicht stehen im Block `rbb_week_calendar_window__messages` (bisher
+  `rbb_filter_board__messages` im Filter) über der Wochenansicht.
+* Nach dem Update `npm run build` (bzw. die neuen Dateien in `public/`) und `cache:clear`.
+
+### Buchungsfenster wird auf dem Server gerendert
+
+Auch das Buchungs- und das Stornierungsfenster sind reines Twig (Block `rbb_booking_window_view`). Bei jeder Antwort
+(Öffnen, Ändern der Auswahl, Buchen, Stornieren) rendert der Server das Fenster neu (`data.bookingWindowHtml`); die
+Meldungen und die Meldungen pro Feld sind Teil des HTML.
+
+* Eigene Blöcke des Fensters (`rbb_booking_window__booking_form…`, `…__booking_form_inputs`, `…__info_table`,
+  `…__cancel_booking_form…`, `rbb_messages`) auf Twig umstellen. Variablen: die Daten der Woche (`rows`, `weekdays`,
+  `timeSlots`, `activeResource`, `activeWeek`, `bookingRepeatsSelection`, `loggedInUser`), `bookingWindow`
+  (`action`, `response`, `booking`, `showForm`), `messages`, `fieldErrors`, `form`, `selectedSlots`, `moduleKey`.
+* **Eigene Formularfelder:** die gesendeten Werte wieder einsetzen, sonst gehen Eingaben beim Prüfen der Auswahl
+  verloren, z. B. `value="{{ form.phone|default('') }}"` bzw. `{{ form.consent|default('') == '1' ? ' checked' }}`.
+* Knöpfe über `data-rbb-action="close|submit-booking|cancel-booking"` (statt `@click`).
+* Neue Aktion `cancelBookingFormRequest` (`POST /_rbb/api/actions/cancelBookingFormRequest`, Feld `bookingId`): öffnet
+  das Stornierungsfenster nur für eine eigene, noch nicht vergangene Buchung.
+* Die JavaScript-Events `rbb_before_booking_request` und `rbb_after_booking_request` bleiben; `formData` enthält die
+  Felder des Formulars. Meldungen von `setMessage()` erscheinen oben im Fenster.
+* Entfernt aus `app.js`: `countSelectedSlotsOfDay()`, `getShortWeekday()`, `getShortDate()` und die Felder
+  `bookingWindow.response`, `selectedTimeSlots`, `deleteRepetitions`, `showCancelBookingForm`, `showCancelBookingButton`.
+
+### Vue entfernt, Wochenkalender mit der Seite gerendert
+
+Das Frontend braucht Vue nicht mehr. Wochenansicht und Buchungsfenster kommen fertig vom Server; ein kleines Skript
+ohne Abhängigkeiten (`assets/rbb/*.js`, gebündelt nach `public/js/app.<hash>.js`) setzt das HTML ein und reagiert auf
+die `data-rbb-*`-Attribute. `vue.global.prod.js` wird nicht mehr geladen.
+
+* **Wochenkalender beim Seitenaufruf:** Der Controller rendert die Wochenansicht direkt mit der Seite (Variablen
+  `weekCalendarHtml` und `weekCalendarMessages` im Modul-Template). Kein Ladeindikator, keine zusätzliche Anfrage beim
+  Laden. Schlägt das Rendern fehl, wird der Fehler geloggt und der Browser lädt die Ansicht wie bisher über die API.
+* **Konstruktor von `ResourceBookingWeekcalendarController`:** neue Argumente `AjaxRequestHandler $ajaxRequestHandler`
+  und `?LoggerInterface $contaoErrorLogger` (Autowiring; nur relevant, wenn der Controller selbst erweitert wird).
+* **`AjaxRequestHandler::process(Request, string $action, ApiContext): AjaxResponse`:** führt eine Aktion aus und gibt
+  die `AjaxResponse` zurück (nach dem `AjaxResponseEvent`), ohne `JsonResponse`. `handle()` verwendet sie weiterhin.
+* **Auswahl in der URL statt in der Session des Browsers:** Wechsel von Kategorie, Ressource oder Woche ändern die
+  Adresse der Seite (`?resType=…&res=…&date=2026-11-23`, per `history.replaceState`, nur bei einem Wochenkalender auf
+  der Seite). Neu laden und Link teilen zeigen dieselbe Woche. `sessionStorage` wird nicht mehr verwendet.
+* **Modul-Template:** ohne Vue-Syntax. Neu bzw. geändert:
+  * Wurzelelement `<div id="resourceBookingApp_<moduleKey>" class="rbb-app" data-rbb-app>`; die Klasse `rbb-is-ready`
+    ersetzt `v-cloak`.
+  * `[data-rbb-week-calendar-view]` (Wochenansicht), `<dialog data-rbb-dialog>` mit
+    `[data-rbb-booking-window-view]` (Buchungsfenster).
+  * Meldungen in `[data-rbb-messages="week"]` (Block `rbb_week_calendar_window__messages`) bzw.
+    `[data-rbb-messages="window"]` (Block `rbb_booking_window__client_messages`); das Markup einer Meldung kommt aus
+    den `<template data-rbb-message-template="error|warning|confirm|info">` im neuen Block `rbb_message_templates`
+    (mit Icon). Im Buchungsfenster stehen die Meldungen des Browsers (z. B. Prüfung der Felder vor dem Buchen) im
+    Block `rbb_messages` direkt bei den Meldungen des Servers (`[data-rbb-messages="window"]` in
+    `_messages.html.twig`); fehlt der Platz in einem eigenen Template, oben im Fenster.
+  * Ladeindikator `[data-rbb-loading]`, Hinweise `[data-rbb-connection-lost]`, `[data-rbb-status="401|error"]`
+    werden per `hidden` gezeigt.
+  * Initialisierung im Block `rbb_initialization_script`:
+    `new ResourceBookingApp(element, {requestToken, moduleKey, accessToken, apiUrls, texts})`.
+* **Zelle der Wochenansicht:** Der Knopf «buchen» trägt `data-rbb-slot` (Wert der Slot-Checkbox,
+  `slot.bookingCheckboxValue`) und `data-rbb-resource` (`slot.resourceId`) statt `data-rbb-row`/`data-rbb-col`; der
+  Knopf «stornieren» `data-rbb-booking-id` und `data-rbb-booking-uuid`. Tages-Buttons haben `data-rbb-tstamp`, die
+  Optionen der Woche `data-rbb-date` (Y-m-d). Eigene Overrides des Blocks
+  `rbb_week_calendar_window__time_slot_cell__actions` entsprechend anpassen.
+* **JavaScript für eigene Skripte:** Die Events `rbb_before_booking_request` und `rbb_after_booking_request` bleiben
+  gleich; `event.detail.instance` ist jetzt die `ResourceBookingApp` statt der Vue-Instanz. Öffentlich bleiben
+  `setMessage()`, `getMessage()`, `deleteMessage()`, `deleteMessages()`, `apiFetch()`, `appendAppState()`,
+  `refreshDataRequest()`, `options` (inkl. `apiUrls`), `mode` und `bookingWindow`. Vue-spezifische Eigenschaften
+  (`$el`, `$refs`, `$nextTick`, reaktive Daten) gibt es nicht mehr.
+* **Build:** `package.json` ohne `vue`; `app.js` wird mit Webpack Encore gebündelt (`addEntry('js/app', …)`).
+  JavaScript-Tests mit Vitest: `npm test` (`tests/js`).
+* Nach dem Update: `npm install`, `npm run build` (bzw. die neuen Dateien in `public/`) und `cache:clear`.
+
 ### Farbschema pro Modul
 
 Neues Modulfeld `resourceBooking_colorScheme` («Farbschema»): leer = automatisch (Betriebssystem bzw.

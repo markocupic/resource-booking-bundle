@@ -1,20 +1,22 @@
 {% trans_default_domain "contao_default" %}
 
+{# Messages of the response, rendered on the server (booking window) #}
 {% block rbb_messages %}
-    <template v-if="messages">
-        <div class="rbb-message-box" role="status" aria-live="polite">
-            <div class="rbb-alert rbb-alert--warning" v-if="messages.warning">
-                {{ rbb_icon('fa-exclamation-circle','rbb-icon-2x')|raw }}<span>[[ messages.warning ]]</span>
-            </div>
-            <div class="rbb-alert rbb-alert--success" v-if="messages.confirm">
-                {{ rbb_icon('fa-check-circle','rbb-icon-2x')|raw }}<span>[[ messages.confirm ]]</span>
-            </div>
-            <div class="rbb-alert rbb-alert--danger" v-if="messages.error">
-                {{ rbb_icon('fa-exclamation-circle','rbb-icon-2x')|raw }}<span>[[ messages.error ]]</span>
-            </div>
-            <div class="rbb-alert rbb-alert--info" v-if="messages.info">
-                {{ rbb_icon('fa-info-circle','rbb-icon-2x')|raw }}<span>[[ messages.info ]]</span>
-            </div>
-        </div>
-    </template>
+    {% set rbb_messages = messages|default({}) %}
+    {# Messages of the browser (e.g. checks of the fields before the booking request), written by app.js #}
+    <div class="rbb-message-box" role="alert" data-rbb-messages="window"></div>
+    <div class="rbb-message-box" role="status" aria-live="polite">
+        {% if rbb_messages.warning|default %}
+            <div class="rbb-alert rbb-alert--warning">{{ rbb_icon('fa-exclamation-circle','rbb-icon-2x')|raw }}<span>{{ rbb_messages.warning }}</span></div>
+        {% endif %}
+        {% if rbb_messages.confirm|default %}
+            <div class="rbb-alert rbb-alert--success">{{ rbb_icon('fa-check-circle','rbb-icon-2x')|raw }}<span>{{ rbb_messages.confirm }}</span></div>
+        {% endif %}
+        {% if rbb_messages.error|default %}
+            <div class="rbb-alert rbb-alert--danger">{{ rbb_icon('fa-exclamation-circle','rbb-icon-2x')|raw }}<span>{{ rbb_messages.error }}</span></div>
+        {% endif %}
+        {% if rbb_messages.info|default %}
+            <div class="rbb-alert rbb-alert--info">{{ rbb_icon('fa-info-circle','rbb-icon-2x')|raw }}<span>{{ rbb_messages.info }}</span></div>
+        {% endif %}
+    </div>
 {% endblock %}

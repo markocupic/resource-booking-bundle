@@ -20,6 +20,7 @@ use Markocupic\ResourceBookingBundle\Api\ApiContext;
 use Markocupic\ResourceBookingBundle\Api\Input\CalendarQuery;
 use Markocupic\ResourceBookingBundle\AppState\AppStateFactory;
 use Markocupic\ResourceBookingBundle\Event\AjaxResponseEvent;
+use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Markocupic\ResourceBookingBundle\Response\AjaxResponseFactory;
 use Markocupic\ResourceBookingBundle\Response\AjaxStatus;
 use Psr\Log\LoggerInterface;
@@ -56,29 +57,7 @@ class AjaxRequestHandler
         }
 
         try {
-            $query = CalendarQuery::fromRequest($request);
-
-            // Validated selection of the front end, attached to the request for the Ajax controllers
-            $appState = $this->appStateFactory->create(
-                $context->moduleKey,
-                $context->module,
-                $context->page,
-                $query->toSelection(),
-                $query->initial,
-                $request->getLocale(),
-            );
-
-            $appState->attachTo($request);
-
-            $ajaxResponse = $this->ajaxControllers
-                ->get($action)
-                ->generateResponse($request, $this->ajaxResponseFactory->create($action))
-            ;
-
-            // Other extensions can add data to the response
-            $this->eventDispatcher->dispatch(new AjaxResponseEvent($request, $ajaxResponse));
-
-            return $this->createJsonResponse($ajaxResponse->toArray());
+            return $this->createJsonResponse($this->process($request, $action, $context)->toArray());
         } catch (ResponseException $e) {
             // Contao responses (e.g. redirects) are passed through
             throw $e;
@@ -87,6 +66,43 @@ class AjaxRequestHandler
 
             return $this->createErrorResponse($action, 'RBB.ERR.somethingWentWrong', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
+    }
+
+    /**
+     * Answers the request with the controller of the action, including the AjaxResponseEvent.
+     * Also used by the front end module to render the week calendar with the page.
+     *
+     * @throws \InvalidArgumentException if no controller is registered for the action
+     */
+    public function process(Request $request, string $action, ApiContext $context): AjaxResponse
+    {
+        if (!$this->ajaxControllers->has($action)) {
+            throw new \InvalidArgumentException(\sprintf('No Ajax controller is registered for the action "%s".', $action));
+        }
+
+        $query = CalendarQuery::fromRequest($request);
+
+        // Validated selection of the front end, attached to the request for the Ajax controllers
+        $appState = $this->appStateFactory->create(
+            $context->moduleKey,
+            $context->module,
+            $context->page,
+            $query->toSelection(),
+            $query->initial,
+            $request->getLocale(),
+        );
+
+        $appState->attachTo($request);
+
+        $ajaxResponse = $this->ajaxControllers
+            ->get($action)
+            ->generateResponse($request, $this->ajaxResponseFactory->create($action))
+        ;
+
+        // Other extensions can add data to the response
+        $this->eventDispatcher->dispatch(new AjaxResponseEvent($request, $ajaxResponse));
+
+        return $ajaxResponse;
     }
 
     /**

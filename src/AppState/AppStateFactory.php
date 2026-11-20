@@ -177,7 +177,7 @@ class AppStateFactory
     }
 
     /**
-     * Values of the front end, e.g. "12", "" or "undefined" (nothing selected in Vue).
+     * Values of the front end, e.g. "12", "" or "undefined" (nothing selected in the front end).
      */
     private static function toInt(mixed $value): int
     {

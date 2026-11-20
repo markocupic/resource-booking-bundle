@@ -22,10 +22,15 @@ use Contao\FrontendUser;
 use Contao\ModuleModel;
 use Contao\PageModel;
 use Contao\TestCase\ContaoTestCase;
+use Markocupic\ResourceBookingBundle\AjaxController\RefreshDataController;
 use Markocupic\ResourceBookingBundle\Api\AccessTokenManager;
+use Markocupic\ResourceBookingBundle\Api\ApiContext;
 use Markocupic\ResourceBookingBundle\AppState\ModuleKeyGenerator;
 use Markocupic\ResourceBookingBundle\Controller\FrontendModule\ResourceBookingWeekcalendarController;
+use Markocupic\ResourceBookingBundle\EventListener\RenderWeekCalendarListener;
+use Markocupic\ResourceBookingBundle\Response\AjaxResponse;
 use Markocupic\ResourceBookingBundle\User\LoggedInFrontendUser;
+use Markocupic\ResourceBookingBundle\WeekCalendar\AjaxRequestHandler;
 use Symfony\Component\Clock\MockClock;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -139,6 +144,58 @@ class ResourceBookingWeekcalendarControllerTest extends ContaoTestCase
         }
     }
 
+    /**
+     * The week calendar is rendered with the page: same request as the API (refreshDataRequest),
+     * with the selection of the query string.
+     */
+    public function testRendersTheWeekCalendarWithThePage(): void
+    {
+        $calendar = new AjaxResponse(RefreshDataController::ACTION);
+        $calendar->setData(RenderWeekCalendarListener::DATA_KEY, '<div>week</div>');
+        $calendar->setInfoMessage('Select a resource');
+
+        $handler = $this->createMock(AjaxRequestHandler::class);
+        $handler
+            ->expects($this->once())
+            ->method('process')
+            ->with(
+                $this->callback(static fn (Request $request): bool => ['initial' => '1', 'resType' => '4', 'res' => '9', 'date' => '2026-11-23'] === $request->query->all() && 'de' === $request->getLocale()),
+                RefreshDataController::ACTION,
+                $this->callback(static fn (ApiContext $context): bool => '33_0' === $context->moduleKey && self::PAGE_ID === (int) $context->page->id),
+            )
+            ->willReturn($calendar)
+        ;
+
+        $template = new FragmentTemplate('frontend_module/resource_booking_weekcalendar', static fn (): Response => new Response());
+        $request = $this->createRequest('?resType=4&res=9&date=2026-11-23&foo[]=bar');
+        $request->setLocale('de');
+
+        $this->invokeProtected($this->getController(requestStack: $this->createRequestStack($request), ajaxRequestHandler: $handler), 'getResponse', [$template, $this->mockModuleModel(), $request]);
+
+        $this->assertSame('<div>week</div>', $template->getData()['weekCalendarHtml']);
+        $this->assertSame('Select a resource', $template->getData()['weekCalendarMessages']['info']);
+    }
+
+    /**
+     * If the week calendar cannot be rendered, the front end loads it.
+     */
+    public function testAnErrorIsLoggedAndTheWeekCalendarIsLoadedByTheFrontEnd(): void
+    {
+        $handler = $this->createStub(AjaxRequestHandler::class);
+        $handler
+            ->method('process')
+            ->willThrowException(new \RuntimeException('Database not available'))
+        ;
+
+        $template = new FragmentTemplate('frontend_module/resource_booking_weekcalendar', static fn (): Response => new Response());
+        $request = $this->createRequest();
+
+        $this->invokeProtected($this->getController(requestStack: $this->createRequestStack($request), ajaxRequestHandler: $handler), 'getResponse', [$template, $this->mockModuleModel(), $request]);
+
+        $this->assertSame('', $template->getData()['weekCalendarHtml']);
+        $this->assertSame([], $template->getData()['weekCalendarMessages']);
+    }
+
     public function testUsesTheModernTemplate(): void
     {
         $attribute = (new \ReflectionClass(ResourceBookingWeekcalendarController::class))->getAttributes(AsFrontendModule::class)[0]->newInstance();
@@ -146,8 +203,19 @@ class ResourceBookingWeekcalendarControllerTest extends ContaoTestCase
         $this->assertSame('frontend_module/resource_booking_weekcalendar', $attribute->attributes['template']);
     }
 
-    private function getController(ContaoCsrfTokenManager|null $contaoCsrfTokenManager = null, AccessTokenManager|null $accessTokenManager = null, int|null $memberId = null, RequestStack|null $requestStack = null): ResourceBookingWeekcalendarController
+    private function getController(ContaoCsrfTokenManager|null $contaoCsrfTokenManager = null, AccessTokenManager|null $accessTokenManager = null, int|null $memberId = null, RequestStack|null $requestStack = null, AjaxRequestHandler|null $ajaxRequestHandler = null): ResourceBookingWeekcalendarController
     {
+        if (null === $ajaxRequestHandler) {
+            $calendar = new AjaxResponse(RefreshDataController::ACTION);
+            $calendar->setData(RenderWeekCalendarListener::DATA_KEY, '<div>week</div>');
+
+            $ajaxRequestHandler = $this->createStub(AjaxRequestHandler::class);
+            $ajaxRequestHandler
+                ->method('process')
+                ->willReturn($calendar)
+            ;
+        }
+
         $loggedInUser = $this->createStub(LoggedInFrontendUser::class);
         $loggedInUser
             ->method('getLoggedInUser')
@@ -167,15 +235,16 @@ class ResourceBookingWeekcalendarControllerTest extends ContaoTestCase
             new ModuleKeyGenerator(),
             $requestStack ?? new RequestStack(),
             $urlGenerator,
+            $ajaxRequestHandler,
         );
     }
 
     /**
      * Request of the module with the page (set by __invoke()).
      */
-    private function createRequest(): Request
+    private function createRequest(string $queryString = ''): Request
     {
-        $request = Request::create('https://example.com/calendar');
+        $request = Request::create('https://example.com/calendar'.$queryString);
         $request->attributes->set('_rbb_page', $this->createClassWithPropertiesStub(PageModel::class, ['id' => self::PAGE_ID]));
 
         return $request;

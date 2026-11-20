@@ -294,14 +294,14 @@ class BookingRulesTest extends IntegrationTestCase
             'https://example.com/_rbb/api/bookings',
             'POST',
             [
-                    'resType' => (string) $type,
-                    'res' => (string) $resource,
-                    'date' => date('Y-m-d', $weekStart),
-                    'resourceId' => (string) $resource,
-                    'slots' => [self::slotValue($this->timeSlot, $startTime, $startTime + 3600)],
-                    'requestedItems' => (string) $requestedItems,
-                    'repeatUntil' => (string) $weekStart,
-                ],
+                'resType' => (string) $type,
+                'res' => (string) $resource,
+                'date' => date('Y-m-d', $weekStart),
+                'resourceId' => (string) $resource,
+                'slots' => [self::slotValue($this->timeSlot, $startTime, $startTime + 3600)],
+                'requestedItems' => (string) $requestedItems,
+                'repeatUntil' => (string) $weekStart,
+            ],
         );
     }
 }

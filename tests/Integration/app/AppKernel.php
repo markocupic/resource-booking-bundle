@@ -105,6 +105,32 @@ class AppKernel extends Kernel
 
         // Configuration of the bundle (as in ContaoManager\Plugin::registerContainerConfiguration())
         $loader->load(__DIR__.'/../../../config/config.yaml');
+
+        // Errors (e.g. exceptions caught by AjaxRequestHandler) are written to a file: the tests
+        // display them if a request fails (see IntegrationTestCase::sendApiRequest())
+        $loader->load(
+            static function (ContainerBuilder $container): void {
+                if (class_exists(MonologBundle::class)) {
+                    $container->loadFromExtension('monolog', [
+                        'handlers' => [
+                            'integration_tests' => [
+                                'type' => 'stream',
+                                'path' => self::getErrorLogPath(),
+                                'level' => 'error',
+                            ],
+                        ],
+                    ]);
+                }
+            }
+        );
+    }
+
+    /**
+     * Log file of the errors of the requests (see registerContainerConfiguration()).
+     */
+    public static function getErrorLogPath(): string
+    {
+        return sys_get_temp_dir().'/rbb-integration-tests/var/logs/errors.log';
     }
 
     protected function build(ContainerBuilder $container): void
